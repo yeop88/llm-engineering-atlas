@@ -76,3 +76,64 @@ def test_recommend_api(client):
     _wait(client, client.post("/api/apps/recommend", json=body | {"interest": "김치"}).json())
     assert client.get("/api/apps/cache").json()["hits"] >= hits + 30
     assert client.post("/api/apps/recommend", json=body | {"liked": [], "interest": ""}).status_code == 400
+
+
+# ── 분류 ────────────────────────────────────────────────────────────────────
+from app.apps import classify  # noqa: E402
+
+
+def _blobs(n_per=8, dim=16, seed=0):
+    rng = np.random.default_rng(seed)
+    centers = np.eye(3, dim) * 3
+    x = np.vstack([centers[i] + rng.normal(0, 0.3, (n_per, dim)) for i in range(3)])
+    return common.normalize(x.astype(np.float32)), [lab for lab in ("가", "나", "다") for _ in range(n_per)]
+
+
+@pytest.mark.parametrize("method", ["centroid", "knn", "logreg"])
+def test_classifier_methods_and_persistence(method, tmp_path):
+    x, y = _blobs()
+    clf = classify.Classifier(method, ["가", "나", "다"], k=3).fit(x, y)
+    pred = clf.predict(x, top=2)
+    assert [p["label"] for p in pred] == y and all(0 < p["confidence"] <= 1 for p in pred)
+    assert np.allclose(clf.predict_proba(x).sum(axis=1), 1)
+    clf.save(tmp_path / "m.joblib")
+    again = classify.Classifier.load(tmp_path / "m.joblib")
+    assert [p["label"] for p in again.predict(x)] == y
+
+
+def test_cross_validation_report():
+    x, y = _blobs()
+    cv, pred, warning = classify.cross_validate(x, y, "logreg", 5)
+    assert not warning and cv["accuracy"] == 1.0 and cv["folds"] == 5
+    assert np.array(cv["confusion"]).trace() == len(y)
+    cv, _, warning = classify.cross_validate(x[:9], y[:8] + ["나"], "centroid", 5)
+    assert cv is None and "2개 이상" in warning  # '가' 8개 + '나' 1개 → 교차검증 불가
+
+
+def test_classify_api(client):
+    data = client.get("/api/apps/presets/support_tickets").json()
+    assert {lab["name"] for lab in data["labels"]} == {it["label"] for it in data["items"]}
+    src = {"type": "texts", "items": data["items"]}
+    mid = _model(client)
+    job = _wait(
+        client,
+        client.post(
+            "/api/apps/classify/train", json={"model_id": mid, "source": src, "method": "centroid", "name": "라우팅 테스트"}
+        ).json(),
+    )
+    assert job["status"] == "done", job
+    res = job["result"]
+    assert res["metrics"]["folds"] == 5 and len(res["metrics"]["per_class"]) == 5 and res["saved"]["n_train"] == 50
+    saved_id = res["saved"]["id"]
+    pred = client.post(f"/api/apps/classifiers/{saved_id}/predict", json={"texts": [data["items"][0]["text"], "새 문장"]}).json()
+    assert len(pred["results"]) == 2 and pred["results"][0]["label"] in res["labels"]
+    assert any(m["id"] == saved_id for m in client.get("/api/apps/models?kind=classifier").json())
+
+    zs = _wait(client, client.post("/api/apps/classify/zero-shot", json={"model_id": mid, "source": src, "labels": data["labels"]}).json())
+    assert zs["status"] == "done" and "metrics" in zs["result"] and len(zs["result"]["items"]) == 50
+
+    unlabeled = {"type": "texts", "items": [{"text": "라벨 없음"}, {"text": "둘"}]}
+    bad = _wait(client, client.post("/api/apps/classify/train", json={"model_id": mid, "source": unlabeled}).json())
+    assert bad["status"] == "error" and "라벨" in bad["error"]
+    assert client.delete(f"/api/apps/models/{saved_id}").status_code == 200
+    assert client.post(f"/api/apps/classifiers/{saved_id}/predict", json={"texts": ["x"]}).status_code == 404

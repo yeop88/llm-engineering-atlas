@@ -120,11 +120,14 @@ def embed(
     truncate_dim: int | None = None,
     job: Job | None = None,
     progress: tuple[float, float] = (0.0, 0.9),
+    task: str | None = None,
 ) -> np.ndarray:
-    """정규화된 임베딩 (n, d). 캐시에 없는 것만 인코딩하고 job 진행률을 갱신한다."""
+    """정규화된 임베딩 (n, d). 캐시에 없는 것만 인코딩하고 job 진행률을 갱신한다.
+    task(classification | clustering | similarity)를 주면 모델에 정의된 작업 프롬프트를 쓴다."""
     if not texts:
         return np.zeros((0, 1), dtype=np.float32)
-    cached = cache.get_many(spec.hf_id, role, truncate_dim, texts)
+    key_role = f"{role}:{task}" if task else role
+    cached = cache.get_many(spec.hf_id, key_role, truncate_dim, texts)
     todo = [i for i, v in enumerate(cached) if v is None]
     if todo:
         manager = get_manager()
@@ -134,8 +137,8 @@ def embed(
         for start in range(0, len(todo), batch):
             idx = todo[start : start + batch]
             part = [texts[i] for i in idx]
-            r = manager.encode(lm, part, role, truncate_dim=truncate_dim, batch_size=batch)
-            cache.put_many(spec.hf_id, role, truncate_dim, part, r.embeddings)
+            r = manager.encode(lm, part, role, truncate_dim=truncate_dim, batch_size=batch, task=task)
+            cache.put_many(spec.hf_id, key_role, truncate_dim, part, r.embeddings)
             for i, v in zip(idx, r.embeddings, strict=True):
                 cached[i] = v
             if job:

@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}텍스트 분류{% endblock %}
+{% block content %}
+<a href="/apps" class="small">← 응용</a>
+<h1>텍스트 분류</h1>
+<p class="lead">감성분석, 고객·AS 문의 라우팅, 스팸 판별처럼 텍스트를 정해진 라벨로 나눕니다. 라벨 설명만으로 바로 분류(제로샷)하거나, 라벨 붙은 예시로 분류기를 학습해 저장하고 API 로 씁니다.</p>
+
+<div class="tabs">
+  <button data-tab="t-train">퓨샷 학습</button>
+  <button data-tab="t-zero">제로샷</button>
+  <button data-tab="t-saved">저장된 분류기</button>
+</div>
+
+<section class="tab-panel" id="t-train">
+  <div class="grid cols-2">
+    <div class="card stack">
+      <h2>라벨 붙은 예시</h2>
+      <div id="tr-src"></div>
+    </div>
+    <div class="card stack">
+      <h2>학습 설정</h2>
+      <div class="row">
+        <div class="field grow"><label>임베딩 모델</label><select id="tr-model"></select></div>
+        <div class="field"><label>차원</label><select id="tr-dim"></select></div>
+      </div>
+      <div class="row">
+        <div class="field grow"><label>방법</label>
+          <select id="tr-method"><option value="logreg">로지스틱 회귀 (권장)</option><option value="centroid">중심점 (라벨별 평균 벡터)</option><option value="knn">k-최근접 이웃</option></select></div>
+        <div class="field" id="tr-k-wrap" hidden><label>k</label><input id="tr-k" type="number" value="5" min="1" max="50"></div>
+      </div>
+      <div class="small muted">로지스틱 회귀는 예시가 수십 개 이상일 때 가장 정확합니다. 중심점은 예시가 아주 적거나(라벨당 2~5개) 라벨이 자주 바뀔 때, kNN 은 한 라벨 안에 여러 유형이 섞여 있을 때 유리합니다. 정확도는 5겹 교차검증(라벨 비율 유지)으로 잽니다.</div>
+      <div class="row"><label class="row" style="margin:0"><input type="checkbox" id="tr-save" checked> 전체 데이터로 학습해 저장</label><div class="field grow"><input id="tr-name" placeholder="이름 (예: 문의 라우팅 v1)"></div></div>
+      <div class="row"><span class="spacer"></span><button class="btn primary" id="tr-run">학습·평가</button></div>
+    </div>
+  </div>
+  <div class="card" id="tr-progress" hidden style="margin-top:16px"></div>
+  <div id="tr-out" style="margin-top:16px"></div>
+</section>
+
+<section class="tab-panel" id="t-zero">
+  <div class="grid cols-2">
+    <div class="card stack">
+      <h2>분류할 텍스트</h2>
+      <div id="zs-src"></div>
+    </div>
+    <div class="card stack">
+      <h2>라벨 정의</h2>
+      <div><label>한 줄에 하나, <code>라벨: 설명</code> (설명이 자세할수록 정확)</label><textarea id="zs-labels" rows="7" placeholder="긍정: 제품에 만족하고 칭찬하는 리뷰&#10;부정: 불만이 있고 환불을 원하는 리뷰"></textarea></div>
+      <div class="row">
+        <div class="field grow"><label>임베딩 모델</label><select id="zs-model"></select></div>
+        <div class="field"><label>차원</label><select id="zs-dim"></select></div>
+      </div>
+      <div class="small muted">텍스트와 "라벨: 설명" 문장의 유사도로 고릅니다. 학습 데이터 없이 바로 쓸 수 있지만 보통 학습한 분류기보다 정확도가 낮습니다. 입력에 정답 라벨(<code>[라벨] 텍스트</code>)이 있으면 정확도도 계산합니다.</div>
+      <div class="row"><span class="spacer"></span><button class="btn primary" id="zs-run">분류</button></div>
+    </div>
+  </div>
+  <div class="card" id="zs-progress" hidden style="margin-top:16px"></div>
+  <div id="zs-out" style="margin-top:16px"></div>
+</section>
+
+<section class="tab-panel" id="t-saved">
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>이름</th><th>라벨</th><th>방법 · 임베딩</th><th class="num">학습 수</th><th class="num">교차검증 정확도</th><th>만든 시각</th><th></th></tr></thead>
+    <tbody id="sv-rows"></tbody>
+  </table></div>
+  <div class="card stack" style="margin-top:16px">
+    <h2>예측해 보기</h2>
+    <div class="row"><div class="field grow"><label>분류기</label><select id="pd-model"></select></div></div>
+    <div><label>텍스트 (한 줄에 하나)</label><textarea id="pd-text" rows="4">택배가 아직 안 왔어요
+환불은 언제 되나요?
+전원이 안 켜집니다</textarea></div>
+    <div class="row"><span class="spacer"></span><button class="btn primary" id="pd-run">예측</button></div>
+    <div id="pd-out"></div>
+    <details><summary>API 로 호출하기</summary><pre class="small" id="pd-api"></pre></details>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/apps.js') }}"></script>
+<script>
+let trSrc, zsSrc, trModel, zsModel;
+const pctf = v => (v * 100).toFixed(1) + "%";
+
+function metricsHtml(m, labels) {
+  const max = Math.max(1, ...m.confusion.flat());
+  return `<div class="grid cols-2">
+    <div><h3>라벨별 성능</h3><div class="table-wrap"><table><tr><th>라벨</th><th class="num">정밀도</th><th class="num">재현율</th><th class="num">F1</th><th class="num">개수</th></tr>
+      ${m.per_class.map(c => `<tr><td>${esc(c.label)}</td><td class="num">${pctf(c.precision)}</td><td class="num">${pctf(c.recall)}</td><td class="num ${c.f1 < 0.7 ? "rank-bad" : ""}">${pctf(c.f1)}</td><td class="num">${c.support}</td></tr>`).join("")}</table></div></div>
+    <div><h3>혼동행렬 <span class="small muted">행 = 정답, 열 = 예측</span></h3><div style="overflow:auto"><table class="heatmap"><tr><th></th>${labels.map(l => `<th title="${esc(l)}">${esc(l)}</th>`).join("")}</tr>
+      ${m.confusion.map((row, i) => `<tr><th>${esc(labels[i])}</th>${row.map((v, j) => `<td style="background:${v ? `color-mix(in srgb, ${i === j ? "var(--series-1)" : "var(--status-critical)"} ${Math.round(15 + 70 * v / max)}%, transparent)` : "transparent"}" title="정답 ${esc(labels[i])} → 예측 ${esc(labels[j])}">${v || ""}</td>`).join("")}</tr>`).join("")}</table></div></div>
+  </div>`;
+}
+function errorsHtml(errs) {
+  if (!errs?.length) return "";
+  return `<details style="margin-top:12px"><summary>틀린 예시 ${errs.length}개</summary><div class="table-wrap" style="margin-top:8px"><table><tr><th>텍스트</th><th>정답</th><th>예측</th></tr>
+    ${errs.map(e => `<tr><td class="small">${esc(e.text)}</td><td><span class="badge muted">${esc(e.gold)}</span></td><td><span class="badge err">${esc(e.pred)}</span></td></tr>`).join("")}</table></div></details>`;
+}
+
+// ── 학습 ──
+$("#tr-method").addEventListener("change", e => ($("#tr-k-wrap").hidden = e.target.value !== "knn"));
+$("#tr-run").onclick = async e => {
+  const body = { ...trModel(), source: trSrc.get(), method: $("#tr-method").value, k: +$("#tr-k").value, save: $("#tr-save").checked, name: $("#tr-name").value };
+  const r = await Apps.run(e.target, $("#tr-progress"), "/api/apps/classify/train", body);
+  if (!r) return;
+  const m = r.metrics;
+  $("#tr-out").innerHTML = `<div class="card stack">
+    <div class="row between"><h2>결과 · ${esc({ logreg: "로지스틱 회귀", centroid: "중심점", knn: "kNN" }[r.method])}</h2><span class="small muted">${r.n_items}개 · ${r.seconds}s</span></div>
+    ${r.warning ? `<div class="warnbox">${esc(r.warning)}</div>` : ""}
+    ${m ? `<div class="grid cols-3"><div class="stat"><div class="label">정확도 (${m.folds}겹 교차검증)</div><div class="value">${pctf(m.accuracy)}</div></div>
+      <div class="stat"><div class="label">Macro F1</div><div class="value">${pctf(m.macro_f1)}</div></div>
+      <div class="stat"><div class="label">라벨 수</div><div class="value">${r.labels.length}</div><div class="small muted">${Object.entries(r.counts).map(([k, v]) => `${esc(k)} ${v}`).join(" · ")}</div></div></div>
+      ${metricsHtml(m, r.labels)}${errorsHtml(r.errors)}` : ""}
+    ${r.saved ? `<div class="warnbox" style="border-color:var(--ok)">분류기 #${r.saved.id} "${esc(r.saved.name)}" 저장됨 — <a href="#t-saved">저장된 분류기</a>에서 예측하거나 API 로 호출하세요.</div>` : ""}
+  </div>`;
+  loadSaved();
+};
+
+// ── 제로샷 ──
+function parseLabels() {
+  return $("#zs-labels").value.split("\n").map(s => s.trim()).filter(Boolean).map(l => {
+    const i = l.indexOf(":");
+    return i > 0 ? { name: l.slice(0, i).trim(), description: l.slice(i + 1).trim() } : { name: l, description: "" };
+  });
+}
+$("#zs-run").onclick = async e => {
+  const labels = parseLabels();
+  if (labels.length < 2) return toast("라벨을 2개 이상 적으세요", "err");
+  const r = await Apps.run(e.target, $("#zs-progress"), "/api/apps/classify/zero-shot", { ...zsModel(), source: zsSrc.get(), labels });
+  if (!r) return;
+  const m = r.metrics;
+  $("#zs-out").innerHTML = `<div class="card stack"><div class="row between"><h2>제로샷 결과</h2><span class="small muted">${r.n_items}개 · ${r.seconds}s</span></div>
+    ${m ? `<div class="grid cols-2"><div class="stat"><div class="label">정확도</div><div class="value">${pctf(m.accuracy)}</div></div><div class="stat"><div class="label">Macro F1</div><div class="value">${pctf(m.macro_f1)}</div></div></div>${metricsHtml(m, r.labels)}${errorsHtml(r.errors)}` : ""}
+    <details ${m ? "" : "open"}><summary>항목별 예측</summary><div class="table-wrap" style="margin-top:8px"><table><tr><th>텍스트</th><th>예측</th><th class="num">확신도</th><th>다른 후보</th></tr>
+      ${r.items.map(it => `<tr><td class="small">${esc(it.text)}</td><td><span class="badge ${it.label && it.label !== it.top[0].label ? "err" : "ok"}">${esc(it.top[0].label)}</span></td><td class="num">${pctf(it.confidence)}</td>
+        <td class="small muted">${it.top.slice(1).map(t => `${esc(t.label)} ${pctf(t.p)}`).join(" · ")}</td></tr>`).join("")}</table></div></details></div>`;
+};
+
+// ── 저장된 분류기 ──
+async function loadSaved() {
+  const rows = await api("/api/apps/models?kind=classifier");
+  $("#sv-rows").innerHTML = rows.map(m => `<tr><td>${m.id}</td><td><b>${esc(m.name)}</b></td><td class="small">${m.labels.map(esc).join(", ")}</td>
+    <td class="small">${esc(m.method)} · <span class="mono">${esc(m.model_hf_id)}</span>${m.truncate_dim ? ` · ${m.truncate_dim}d` : ""}</td><td class="num">${m.n_train}</td>
+    <td class="num">${m.metrics.accuracy != null ? pctf(m.metrics.accuracy) : "-"}</td><td class="small nowrap">${fmtDate(m.created_at)}</td>
+    <td class="right"><button class="btn sm danger" onclick="delSaved(${m.id})">삭제</button></td></tr>`).join("") || '<tr><td colspan="8" class="empty">저장된 분류기가 없습니다. 퓨샷 학습 탭에서 만드세요.</td></tr>';
+  $("#pd-model").innerHTML = rows.map(m => `<option value="${m.id}">#${m.id} ${esc(m.name)}</option>`).join("");
+  updateApi();
+}
+function updateApi() {
+  const id = $("#pd-model").value || "{id}";
+  $("#pd-api").textContent = `curl -X POST ${location.origin}/api/apps/classifiers/${id}/predict \\\n  -H "Content-Type: application/json" \\\n  -d '{"texts": ["택배가 아직 안 왔어요"]}'`;
+}
+$("#pd-model").addEventListener("change", updateApi);
+async function delSaved(id) {
+  if (!confirm(`분류기 #${id} 를 삭제할까요?`)) return;
+  await api(`/api/apps/models/${id}`, { method: "DELETE" }); toast("삭제했습니다", "ok"); loadSaved();
+}
+$("#pd-run").onclick = async e => {
+  if (!$("#pd-model").value) return toast("저장된 분류기가 없습니다", "err");
+  const texts = $("#pd-text").value.split("\n").map(s => s.trim()).filter(Boolean);
+  const r = await busy(e.target, () => api(`/api/apps/classifiers/${$("#pd-model").value}/predict`, { method: "POST", body: { texts } }));
+  $("#pd-out").innerHTML = `<div class="small muted">${r.seconds}s</div><table><tr><th>텍스트</th><th>예측</th><th class="num">확신도</th><th>다른 후보</th></tr>
+    ${r.results.map(x => `<tr><td>${esc(x.text)}</td><td><span class="badge ok">${esc(x.label)}</span></td><td class="num">${pctf(x.confidence)}</td><td class="small muted">${x.top.slice(1).map(t => `${esc(t.label)} ${pctf(t.p)}`).join(" · ")}</td></tr>`).join("")}</table>`;
+};
+
+(async () => {
+  initTabs();
+  trSrc = await Apps.sourcePicker($("#tr-src"), { app: "classify", labels: "required", placeholder: "[긍정] 배송이 빨라요\n[부정] 일주일 만에 고장 났어요" });
+  zsSrc = await Apps.sourcePicker($("#zs-src"), { app: "classify", labels: "optional" });
+  zsSrc.root.addEventListener("preset", e => {
+    if (e.detail.labels) $("#zs-labels").value = e.detail.labels.map(l => `${l.name}: ${l.description}`).join("\n");
+  });
+  trModel = await Apps.modelPicker($("#tr-model"), $("#tr-dim"));
+  zsModel = await Apps.modelPicker($("#zs-model"), $("#zs-dim"));
+  loadSaved();
+})();
+</script>
+{% endblock %}

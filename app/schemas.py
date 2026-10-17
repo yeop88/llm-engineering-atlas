@@ -231,3 +231,26 @@ class RecommendRequest(AppModelRef):
     top_k: int = Field(default=10, ge=1, le=100)
     diversity: float = Field(default=0.15, ge=0, le=1)  # 0 = 관련도만, 1 = 다양성만
     negative_weight: float = Field(default=0.5, ge=0, le=2)
+
+
+class LabelSpec(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    description: str = ""
+
+
+class ZeroShotRequest(AppModelRef):
+    source: AppSource
+    labels: list[LabelSpec] = Field(min_length=2, max_length=100)
+    temperature: float = Field(default=0.05, gt=0, le=1)
+
+
+class TrainClassifierRequest(AppModelRef):
+    source: AppSource  # 라벨이 있는 예시
+    method: Literal["centroid", "knn", "logreg"] = "logreg"
+    k: int = Field(default=5, ge=1, le=50)
+    save: bool = True
+    name: str = Field(default="", max_length=200)
+
+
+class PredictRequest(BaseModel):
+    texts: list[str] = Field(min_length=1, max_length=5000)

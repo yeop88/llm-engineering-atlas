@@ -115,6 +115,18 @@ class LoadedModel:
         }
 
 
+# 작업별로 모델 설정(config_sentence_transformers.json)에서 찾아볼 프롬프트 이름 (앞쪽 우선)
+TASK_PROMPTS = {
+    "classification": ("Classification", "classification"),
+    "clustering": ("Clustering", "clustering"),
+    "similarity": ("SentenceSimilarity", "STS", "sts_query", "sts"),
+}
+
+
+def task_prompt_name(prompts: dict[str, str], task: str) -> str | None:
+    return next((n for n in TASK_PROMPTS.get(task, ()) if n in prompts), None)
+
+
 @dataclass
 class EncodeResult:
     embeddings: np.ndarray
@@ -272,7 +284,10 @@ class ModelManager:
         truncate_dim: int | None = None,
         normalize: bool = True,
         batch_size: int | None = None,
+        task: str | None = None,
     ) -> EncodeResult:
+        """task(classification | clustering | similarity)를 주면 모델에 그 작업용 프롬프트가 정의돼 있을 때 그것을 쓴다
+        (예: EmbeddingGemma 의 Classification). 없으면 role 기준 프롬프트를 쓴다."""
         spec = lm.spec
         if spec.is_reranker:
             raise ValueError(f"{spec.hf_id} 는 리랭커라 임베딩을 만들 수 없습니다. 임베딩 모델을 선택하세요.")
@@ -280,6 +295,9 @@ class ModelManager:
         prompt_name = {"query": spec.query_prompt, "document": spec.document_prompt}.get(role, "")
         prefix = {"query": spec.query_prefix, "document": spec.document_prefix}.get(role, "")
         extra = copy.deepcopy({"query": spec.query_kwargs, "document": spec.document_kwargs}.get(role, {}))
+
+        if task and (task_prompt := task_prompt_name(lm.prompts, task)):
+            prompt_name, prefix, extra = task_prompt, "", {}
 
         kwargs: dict[str, Any] = {}
         if prompt_name:
