@@ -10,6 +10,7 @@
 | 영역 | 기능 |
 |---|---|
 | 문서 검색 (RAG) | PDF·DOCX·HWP·HWPX 등 업로드, 청킹 전략 5종(법령·판결문 구조 포함) 미리보기·비교, 벡터 인덱스(Qdrant 기본 / pgvector / MariaDB), 의미·한국어 형태소 BM25·하이브리드(RRF) 검색, 리랭커, 최대 4개 설정 나란히 비교 |
+| 의미 기반 응용 | 콘텐츠 추천(취향 벡터·MMR) |
 | 모델 카탈로그 | 임베딩·리랭커 구분, 제공사·공개일·파라미터·차원(Matryoshka)·컨텍스트·라이선스·언어·모달리티 관리, 필터/정렬, 즐겨찾기, 프롬프트·로드 옵션 편집 |
 | Hub 연동 | 실시간 검색, 메타데이터 자동 추출(프롬프트, trust_remote_code, gated 등), 원클릭 등록, 통계 동기화 |
 | 다운로드 | 백그라운드 다운로드 + 바이트 진행률, ONNX/GGUF 등 불필요 파일 제외, 캐시 용량 표시/삭제 |
@@ -64,6 +65,7 @@ uv run uvicorn app.main:app --reload --port 8000
 ## 문서
 
 - [docs/rag.md](docs/rag.md) — 문서 검색(RAG): 업로드·청킹·벡터 DB·하이브리드 검색·리랭커
+- [docs/apps.md](docs/apps.md) — 의미 기반 응용 (추천 등)
 - [docs/gpu.md](docs/gpu.md) — CPU · CUDA · ROCm 설치
 - [docs/architecture.md](docs/architecture.md) — 구조와 동작 방식
 - [docs/models.md](docs/models.md) — 카탈로그 모델 목록과 선택 가이드

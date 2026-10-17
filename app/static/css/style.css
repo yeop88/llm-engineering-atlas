@@ -93,7 +93,9 @@ input, select, textarea {
 }
 textarea { min-height: 120px; resize: vertical; font-family: inherit; }
 textarea.mono { font-family: ui-monospace, Consolas, monospace; }
-input[type=checkbox] { width: auto; }
+input[type=checkbox], input[type=radio], input[type=range] { width: auto; }
+input[type=range] { width: 100%; }
+[hidden] { display: none !important; }  /* .row·.stack 의 display:flex 가 hidden 속성을 덮어쓰지 않게 */
 select[multiple] { min-height: 180px; }
 .field { min-width: 140px; }
 .field.grow { flex: 1; }

@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 from app.config import BASE_DIR, get_settings  # noqa: E402
 from app.crud import seed_catalog  # noqa: E402
 from app.db import SessionLocal, init_db  # noqa: E402
-from app.routers import benchmarks, models, pages, playground, rag  # noqa: E402
+from app.routers import apps, benchmarks, models, pages, playground, rag  # noqa: E402
 from app.services.jobs import jobs  # noqa: E402
 from app.services.model_manager import get_manager  # noqa: E402
 from app.services.runtime import sampler  # noqa: E402
@@ -48,4 +48,5 @@ app.include_router(models.router)
 app.include_router(playground.router)
 app.include_router(benchmarks.router)
 app.include_router(rag.router)
+app.include_router(apps.router)
 app.include_router(pages.router)

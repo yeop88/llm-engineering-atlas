@@ -42,3 +42,18 @@ def model_detail(request: Request, model_id: int) -> HTMLResponse:
 @router.get("/collections/{collection_id}", response_class=HTMLResponse)
 def collection_detail(request: Request, collection_id: int) -> HTMLResponse:
     return templates.TemplateResponse(request, "collection_detail.html", {"nav": "rag", "collection_id": collection_id})
+
+
+APP_PAGES = {"recommend": "콘텐츠 추천"}
+
+
+@router.get("/apps", response_class=HTMLResponse)
+def apps_hub(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "apps.html", {"nav": "apps", "available": list(APP_PAGES)})
+
+
+@router.get("/apps/{name}", response_class=HTMLResponse)
+def app_page(request: Request, name: str) -> HTMLResponse:
+    if name not in APP_PAGES:
+        return templates.TemplateResponse(request, "apps.html", {"nav": "apps", "available": list(APP_PAGES)}, status_code=404)
+    return templates.TemplateResponse(request, f"app_{name}.html", {"nav": "apps", "app_name_key": name, "app_title": APP_PAGES[name]})

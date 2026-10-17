@@ -192,3 +192,42 @@ class SearchConfig(BaseModel):
 class SearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=2000)
     configs: list[SearchConfig] = Field(min_length=1, max_length=4)
+
+
+# ── 의미 기반 응용 ───────────────────────────────────────────────────────────
+class AppTextItem(BaseModel):
+    text: str
+    label: str = ""
+    id: str | None = None
+
+
+class AppSource(BaseModel):
+    """직접 입력(texts) 또는 문서 검색 컬렉션(collection)."""
+
+    type: Literal["texts", "collection"] = "texts"
+    items: list[AppTextItem] | None = Field(default=None, max_length=20000)
+    collection_id: int | None = None
+    unit: Literal["document", "chunk"] = "document"
+    chunk_set_id: int | None = None
+    limit: int = Field(default=2000, ge=1, le=20000)
+    max_chars: int = Field(default=2000, ge=100, le=20000)
+
+
+class AppItemsRequest(BaseModel):
+    source: AppSource
+    limit: int = Field(default=500, ge=1, le=5000)
+
+
+class AppModelRef(BaseModel):
+    model_id: int
+    truncate_dim: int | None = Field(default=None, ge=8)
+
+
+class RecommendRequest(AppModelRef):
+    source: AppSource
+    liked: list[str] = Field(default_factory=list)
+    disliked: list[str] = Field(default_factory=list)
+    interest: str = ""
+    top_k: int = Field(default=10, ge=1, le=100)
+    diversity: float = Field(default=0.15, ge=0, le=1)  # 0 = 관련도만, 1 = 다양성만
+    negative_weight: float = Field(default=0.5, ge=0, le=2)

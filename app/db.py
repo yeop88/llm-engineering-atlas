@@ -180,6 +180,26 @@ class VectorIndex(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
+# ── 의미 기반 응용 ───────────────────────────────────────────────────────────
+class AppModel(Base):
+    """학습해서 저장한 응용 모델(분류기 · 이상 탐지기). 가중치는 data/app_models/{id}.joblib."""
+
+    __tablename__ = "app_models"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    kind: Mapped[str] = mapped_column(String(20), index=True)  # classifier | anomaly
+    name: Mapped[str] = mapped_column(String(200))
+    model_id: Mapped[int | None] = mapped_column(ForeignKey("embedding_models.id", ondelete="SET NULL"), nullable=True)
+    model_hf_id: Mapped[str] = mapped_column(String(200))
+    truncate_dim: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    method: Mapped[str] = mapped_column(String(40))
+    labels: Mapped[list[Any]] = mapped_column(default=list)
+    config: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    metrics: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    n_train: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
 _settings = get_settings()
 _is_sqlite = _settings.db_url.startswith("sqlite")
 engine = create_engine(_settings.db_url, connect_args={"check_same_thread": False} if _is_sqlite else {})

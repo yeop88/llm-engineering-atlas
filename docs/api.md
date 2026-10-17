@@ -49,6 +49,17 @@ POST /api/collections/1/search
 
 응답의 각 결과에는 `results[]`(문서·쪽·조문 제목·본문·점수·순위), `timings_ms`, `query_tokens` 가 들어 있습니다.
 
+## 의미 기반 응용
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/apps/presets?app=` · `/api/apps/presets/{name}` | 예시 데이터 |
+| POST | `/api/apps/items` | 입력 소스 펼쳐 보기 `{"source": {...}}` |
+| GET | `/api/apps/cache` | 임베딩 캐시 통계 |
+| POST | `/api/apps/recommend` | 콘텐츠 추천 (작업) |
+
+입력 소스: `{"type": "texts", "items": [{"text", "label"?, "id"?}]}` 또는 `{"type": "collection", "collection_id", "unit": "document"|"chunk", "chunk_set_id"?}`
+
 ## Hub
 
 | 메서드 | 경로 | 설명 |

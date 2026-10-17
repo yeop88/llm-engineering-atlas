@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}콘텐츠 추천{% endblock %}
+{% block content %}
+<a href="/apps" class="small">← 응용</a>
+<h1>콘텐츠 추천</h1>
+<p class="lead">아이템에 👍/👎 를 누르거나 관심사를 적으면 취향 벡터를 만들어 추천합니다. "다양성"을 올리면 비슷한 것만 몰리지 않게 골고루 고릅니다(MMR).</p>
+
+<div class="grid cols-2">
+  <div class="card stack">
+    <h2>① 추천 대상 아이템</h2>
+    <div id="src"></div>
+    <div class="row">
+      <div class="field grow"><label>임베딩 모델</label><select id="model"></select></div>
+      <div class="field"><label>차원</label><select id="dim"></select></div>
+    </div>
+    <div class="row"><span class="spacer"></span><button class="btn" id="load">아이템 불러오기</button></div>
+  </div>
+  <div class="card stack">
+    <h2>② 취향</h2>
+    <div><label>관심사 (선택)</label><input id="interest" placeholder="예: 인공지능 검색 기술과 보안"></div>
+    <div class="row">
+      <div class="field"><label>추천 수</label><input id="topk" type="number" value="8" min="1" max="100"></div>
+      <div class="field grow"><label>다양성 <span id="div-v" class="mono"></span></label><input id="diversity" type="range" min="0" max="1" step="0.05" value="0.15"></div>
+    </div>
+    <div class="small muted" id="taste">👍 0 · 👎 0</div>
+    <div id="items" class="stack" style="max-height:420px;overflow:auto"><div class="empty">① 에서 아이템을 불러오세요</div></div>
+    <div class="row"><span class="spacer"></span><button class="btn primary" id="run">추천 받기</button></div>
+  </div>
+</div>
+<div class="card" id="progress" hidden style="margin-top:16px"></div>
+<div class="card" id="out" style="margin-top:16px" hidden></div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/apps.js') }}"></script>
+<script>
+const votes = {};  // key -> 1 | -1
+let picker, model;
+const updateTaste = () => {
+  const v = Object.values(votes);
+  $("#taste").textContent = `👍 ${v.filter(x => x > 0).length} · 👎 ${v.filter(x => x < 0).length}`;
+};
+$("#diversity").addEventListener("input", e => ($("#div-v").textContent = e.target.value));
+$("#div-v").textContent = $("#diversity").value;
+
+$("#load").onclick = async e => {
+  const r = await busy(e.target, () => api("/api/apps/items", { method: "POST", body: { source: picker.get(), limit: 500 } }));
+  Object.keys(votes).forEach(k => delete votes[k]); updateTaste();
+  $("#items").innerHTML = r.items.map(it => `<div class="row" style="flex-wrap:nowrap;align-items:flex-start" data-key="${esc(it.key)}">
+      <button class="btn sm" data-vote="1" title="좋아요">👍</button><button class="btn sm" data-vote="-1" title="싫어요">👎</button>
+      <div class="small">${it.label ? `<span class="badge muted">${esc(it.label)}</span> ` : ""}${it.filename ? `<b>${esc(it.filename)}</b> ` : ""}${esc(it.text)}</div></div>`).join("")
+    + (r.n > r.items.length ? `<div class="small muted">처음 ${r.items.length}개만 표시 (전체 ${r.n}개가 추천 대상)</div>` : "");
+};
+$("#items").addEventListener("click", e => {
+  const b = e.target.closest("[data-vote]"); if (!b) return;
+  const row = b.closest("[data-key]"); const k = row.dataset.key; const v = +b.dataset.vote;
+  votes[k] = votes[k] === v ? 0 : v;
+  row.querySelectorAll("[data-vote]").forEach(x => x.classList.toggle("primary", votes[k] === +x.dataset.vote));
+  updateTaste();
+});
+$("#run").onclick = async e => {
+  const body = { ...model(), source: picker.get(), liked: Object.keys(votes).filter(k => votes[k] > 0), disliked: Object.keys(votes).filter(k => votes[k] < 0),
+                 interest: $("#interest").value, top_k: +$("#topk").value, diversity: +$("#diversity").value };
+  const r = await Apps.run(e.target, $("#progress"), "/api/apps/recommend", body);
+  if (!r) return;
+  $("#out").hidden = false;
+  $("#out").innerHTML = `<div class="row between"><h2>추천 결과</h2><span class="small muted">대상 ${r.n_items}개 · 평균 관련도 ${r.coverage} · 추천끼리 평균 유사도 ${r.intra_similarity} (낮을수록 다양) · ${r.seconds}s</span></div>
+    ${r.results.map(x => `<div class="rank-item"><div class="row between small"><span><span class="badge ${x.rank === 1 ? "ok" : "muted"}">#${x.rank}</span> ${x.label ? `<span class="badge muted">${esc(x.label)}</span>` : ""} ${x.filename ? `<b>${esc(x.filename)}</b>` : ""}</span><b class="mono">${x.score.toFixed(3)}</b></div>
+      <div class="small">${esc(x.text)}</div>
+      ${x.because ? `<div class="small muted">추천 이유: 👍 한 "${esc(x.because.text)}" 와 유사도 ${x.because.similarity}</div>` : ""}</div>`).join("")}`;
+};
+(async () => {
+  picker = await Apps.sourcePicker($("#src"), { app: "recommend", labels: "optional" });
+  model = await Apps.modelPicker($("#model"), $("#dim"));
+})();
+</script>
+{% endblock %}
