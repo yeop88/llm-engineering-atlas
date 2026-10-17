@@ -5,7 +5,7 @@ import time
 import numpy as np
 import pytest
 
-from app.apps import common
+from app.apps import anomaly, common
 from app.apps.recommend import recommend
 
 
@@ -250,3 +250,79 @@ def test_near_duplicates_no_chaining():
     res = dedup.near_duplicates([common.Item(key=k, text=k) for k in "abc"], v, threshold=0.88)
     assert res["n_groups"] == 1 and [m["key"] for m in res["groups"][0]["members"]] == ["a", "b"]
     assert res["nn_similarity"]["median"] > 0.88 and sum(h["n"] for h in res["nn_similarity"]["hist"]) == 3
+
+
+# ── 이상·신종 탐지 ──────────────────────────────────────────────────────────
+def _anom_blobs(seed=0):
+    """정상(축 0 근처) 120개, 알려진 유형 '스팸'(축 1 근처) 8개, 신종(축 2 근처) 4개."""
+    rng = np.random.default_rng(seed)
+
+    def blob(axis, n):
+        base = np.zeros(6)
+        base[axis] = 1.0
+        return common.normalize((base + rng.normal(0, 0.08, (n, 6))).astype(np.float32))
+
+    return blob(0, 120), blob(1, 8), blob(2, 4)
+
+
+@pytest.mark.parametrize("method", list(anomaly.METHODS))
+def test_detector_known_and_novel(method):
+    normal, spam, novel = _anom_blobs()
+    x = np.vstack([normal[:100], spam[:6]])
+    y = ["정상"] * 100 + ["스팸"] * 6
+    det = anomaly.Detector(method, k=3).fit(x, y, [f"t{i}" for i in range(len(y))])
+    assert det.groups == ["정상", "스팸"]
+    preds = det.predict(np.vstack([normal[100:], spam[6:], novel]))
+    verdicts = [p["verdict"] for p in preds]
+    assert verdicts[:20].count("정상") >= 16  # 경계 95% → 정상 대부분 통과
+    assert verdicts[20:22] == ["스팸", "스팸"]
+    assert verdicts[22:] == [anomaly.NOVEL] * 4
+    assert all(p["anomaly_score"] > 1 for p in preds[20:])
+    gold = ["정상"] * 20 + ["스팸"] * 2 + ["새 유형"] * 4
+    m = anomaly.evaluate(det, gold, preds)
+    assert m["novel"]["recall"] == 1.0 and m["auc"] > 0.95 and m["confusion"]["labels"] == ["정상", "스팸", anomaly.NOVEL]
+
+
+def test_detector_validation_and_persistence(tmp_path):
+    normal, spam, _ = _anom_blobs()
+    with pytest.raises(common.AppError):
+        anomaly.Detector().fit(normal[:3], [""] * 3, ["a"] * 3)  # 정상 5개 미만
+    with pytest.raises(common.AppError):
+        anomaly.Detector(normal_label="ok").fit(normal, ["정상"] * 120, ["a"] * 120)  # 정상 라벨 없음
+    det = anomaly.Detector().fit(np.vstack([normal, spam[:2]]), [""] * 120 + ["스팸"] * 2, ["a"] * 122)
+    assert det.groups == ["정상"] and len(det.warnings) == 1  # 2개뿐인 유형은 제외하고 경고
+    assert "불안정" in anomaly.Detector().fit(normal[:20], [""] * 20, ["a"] * 20).warnings[0]
+    assert anomaly.conformal_threshold(np.arange(25.0), 0.95) == 24.0 and anomaly.conformal_threshold(np.arange(100.0), 0.9) == 90.0
+    det.save(tmp_path / "d.joblib")
+    again = anomaly.Detector.load(tmp_path / "d.joblib")
+    assert again.predict(spam[:1])[0]["verdict"] == anomaly.NOVEL
+
+
+def test_explore_ranks_outliers():
+    normal, _, novel = _anom_blobs()
+    items = [common.Item(key=str(i), text=str(i), label="정상") for i in range(120)] + [
+        common.Item(key=f"n{i}", text="x", label="이상") for i in range(2)
+    ]
+    res = anomaly.explore(items, np.vstack([normal, novel[:2]]), "knn", 5, 0.95, "정상")
+    assert {o["key"] for o in res["outliers"][:2]} == {"n0", "n1"}
+    assert res["metrics"]["auc"] == 1.0 and sum(h["n"] for h in res["hist"]) == 122
+
+
+def test_anomaly_api_and_saved_detector(client):
+    mid = _model(client)
+    p = client.get("/api/apps/presets/spam_messages").json()
+    body = {"model_id": mid, "source": {"type": "texts", "items": p["items"]}, "test": p["test"], "save": True, "name": "문자"}
+    job = _wait(client, client.post("/api/apps/anomaly", json=body).json())
+    assert job["status"] == "done", job
+    r = job["result"]
+    assert r["mode"] == "detect" and [g["label"] for g in r["groups"]] == ["정상", "광고", "스미싱"]
+    assert len(r["items"]) == len(p["test"]) and "accuracy" in r["metrics"] and r["saved"]["kind"] == "anomaly"
+    sid = r["saved"]["id"]
+    out = client.post(f"/api/apps/detectors/{sid}/score", json={"texts": ["오늘 저녁 7시에 만나요"]}).json()
+    assert out["results"][0]["verdict"] in ("정상", "광고", "스미싱", anomaly.NOVEL) and "boundary" in out["results"][0]
+    assert client.post(f"/api/apps/classifiers/{sid}/predict", json={"texts": ["a"]}).status_code == 404  # 종류가 다름
+    # 검사 데이터 없이 → 학습 데이터 안에서 이상치 찾기
+    job = _wait(client, client.post("/api/apps/anomaly", json={"model_id": mid, "source": {"type": "texts", "items": p["items"]}}).json())
+    assert job["status"] == "done" and job["result"]["mode"] == "explore" and "auc" in job["result"]["metrics"]
+    assert client.delete(f"/api/apps/models/{sid}").status_code == 200
+    assert any(x["name"] == "security_events" for x in client.get("/api/apps/presets?app=anomaly").json())

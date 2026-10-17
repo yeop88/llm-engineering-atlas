@@ -44,7 +44,13 @@ def collection_detail(request: Request, collection_id: int) -> HTMLResponse:
     return templates.TemplateResponse(request, "collection_detail.html", {"nav": "rag", "collection_id": collection_id})
 
 
-APP_PAGES = {"recommend": "콘텐츠 추천", "classify": "텍스트 분류", "cluster": "클러스터링", "dedup": "중복·표절 검사"}
+APP_PAGES = {
+    "recommend": "콘텐츠 추천",
+    "classify": "텍스트 분류",
+    "cluster": "클러스터링",
+    "dedup": "중복·표절 검사",
+    "anomaly": "이상·신종 탐지",
+}
 
 
 @router.get("/apps", response_class=HTMLResponse)

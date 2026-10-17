@@ -10,11 +10,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import crud
-from app.apps import classify, cluster, common, dedup, recommend
+from app.apps import anomaly, classify, cluster, common, dedup, recommend
 from app.config import BASE_DIR, get_settings
 from app.db import AppModel, EmbeddingModel, SessionLocal, get_db
 from app.rag.korean import split_sentences
 from app.schemas import (
+    AnomalyRequest,
     AppItemsRequest,
     ClusterRequest,
     DedupRequest,
@@ -318,3 +319,76 @@ def run_plagiarism(body: PlagiarismRequest, db: DB) -> dict:
     return submit(
         "plagiarism", f"표절 검사 ({spec.hf_id.split('/')[-1]})", [spec.hf_id], body.model_dump(exclude={"suspect", "reference"}), fn
     )
+
+
+# ── 이상·신종 탐지 ──────────────────────────────────────────────────────────
+@router.post("/anomaly")
+def run_anomaly(body: AnomalyRequest, db: DB) -> dict:
+    spec = crud.get_spec(db, body.model_id, "embedding")
+    src = body.source.model_dump()
+    test = [it for it in (body.test or []) if it.text.strip()]
+
+    def fn(job: Job, s: Session) -> dict[str, Any]:
+        its = common.resolve_source(s, src)
+        texts = [it.text for it in its] + [it.text.strip() for it in test]
+        x = common.embed(spec, texts, "plain", body.truncate_dim, job, (0.0, 0.8), task="classification")
+        job.update(0.85, "경계 학습 중")
+        xt, xs = x[: len(its)], x[len(its) :]
+        if not test:
+            res = anomaly.explore(its, xt, body.method, body.k, body.quantile, body.normal_label)
+            return res | {"n_items": len(its)}
+        det = anomaly.Detector(body.method, body.k, body.quantile, body.normal_label).fit(
+            xt, [it.label for it in its], [it.text for it in its]
+        )
+        preds = det.predict(xs)
+        out: dict[str, Any] = {"mode": "detect", "n_items": len(its), "n_test": len(test), **det.info()}
+        out["items"] = [{"text": it.text.strip(), "gold": it.label.strip()} | p for it, p in zip(test, preds, strict=True)]
+        counts: dict[str, int] = {}
+        for p in preds:
+            counts[p["verdict"]] = counts.get(p["verdict"], 0) + 1
+        out["counts"] = counts
+        gold = [it.label.strip() for it in test]
+        if all(gold):
+            out["metrics"] = anomaly.evaluate(det, gold, preds)
+            known = set(det.groups)
+            cat = ["정상" if g == det.normal_label else ("기존 유형" if g in known else "신종") for g in gold]
+            out["hist"] = anomaly.score_hist([p["anomaly_score"] for p in preds], cat)
+            out["summary"] = {k: out["metrics"][k] for k in ("accuracy", "auc", "false_alarm_rate") if k in out["metrics"]} | (
+                {"novel_recall": out["metrics"]["novel"]["recall"]} if "novel" in out["metrics"] else {}
+            )
+        else:
+            out["hist"] = anomaly.score_hist([p["anomaly_score"] for p in preds])
+            out["summary"] = counts
+        if body.save:
+            m = AppModel(
+                kind="anomaly", name=body.name or f"탐지기 {'·'.join(det.groups)[:60]}", model_id=spec.id, model_hf_id=spec.hf_id,
+                truncate_dim=body.truncate_dim, method=body.method, labels=det.groups,
+                config={"k": body.k, "quantile": body.quantile, "normal_label": body.normal_label, "role": "plain", "task": "classification"},
+                metrics=out.get("summary", {}), n_train=len(det.train_y),
+            )  # fmt: skip
+            s.add(m)
+            s.commit()
+            det.save(artifact_path(m.id))
+            out["saved"] = _app_model_out(m)
+        return out
+
+    mode = "신종 탐지" if test else "이상치 찾기"
+    return submit(
+        "anomaly",
+        f"{mode} · {anomaly.METHODS[body.method]} ({spec.hf_id.split('/')[-1]})",
+        [spec.hf_id],
+        body.model_dump(exclude={"source", "test"}) | {"n_test": len(test)},
+        fn,
+    )
+
+
+@router.post("/detectors/{app_model_id}/score")
+def score(app_model_id: int, body: PredictRequest, db: DB) -> dict:
+    """저장된 탐지기로 판정 (동기). verdict = 정상 라벨 / 알려진 유형 / 신종."""
+    m, spec = _load_app_model(db, app_model_id, "anomaly")
+    det = anomaly.Detector.load(artifact_path(m.id))
+    started = time.perf_counter()
+    x = common.embed(spec, body.texts, "plain", m.truncate_dim, task=m.config.get("task"))
+    preds = det.predict(x)
+    return {"detector": {"id": m.id, "name": m.name, "method": m.method, "groups": det.groups}, "seconds": round(time.perf_counter() - started, 3),
+            "results": [{"text": t} | p for t, p in zip(body.texts, preds, strict=True)]}  # fmt: skip

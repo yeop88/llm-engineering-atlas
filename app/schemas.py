@@ -275,3 +275,14 @@ class PlagiarismRequest(AppModelRef):
     reference: AppSource
     threshold: float = Field(default=0.85, ge=0.5, le=1.0)  # 이 이상이면 의역(재사용)
     copy_lex: float = Field(default=0.6, ge=0.1, le=1.0)  # 글자 3-gram 자카드가 이 이상이면 복사
+
+
+class AnomalyRequest(AppModelRef):
+    source: AppSource  # 학습 데이터: 정상(라벨 없음 또는 정상 라벨) + 이미 아는 이상 유형(라벨)
+    test: list[AppTextItem] | None = Field(default=None, max_length=20000)  # 없으면 학습 데이터 안에서 이상치 찾기
+    method: Literal["knn", "lof", "iforest", "centroid"] = "knn"
+    k: int = Field(default=5, ge=1, le=50)
+    quantile: float = Field(default=0.9, ge=0.5, le=0.999)  # 정상 예시 중 이 비율이 경계 안에 들어오게
+    normal_label: str = Field(default="정상", min_length=1, max_length=60)
+    save: bool = False
+    name: str = Field(default="", max_length=200)
