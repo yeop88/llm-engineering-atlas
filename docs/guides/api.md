@@ -28,7 +28,7 @@
 | GET | `/api/vector-stores` | 벡터 DB 연결 상태 (qdrant / pgvector / mariadb) |
 | GET / POST | `/api/collections` | 컬렉션 목록 / 생성 `{"name", "domain", "description"}` |
 | GET / PATCH / DELETE | `/api/collections/{id}` | 상세(문서·청크 세트·인덱스) / 수정 / 삭제(벡터 DB 데이터 포함) |
-| POST | `/api/collections/{id}/documents` | 파일 업로드 (multipart `files`, 여러 개) → `added`, `skipped` |
+| POST | `/api/collections/{id}/documents` | 파일 업로드 (multipart `files`, 여러 개) → `added`, `skipped`. 이미지 · 영상도 받음(영상은 프레임 추출 결과가 `warning` 에) |
 | GET / DELETE | `/api/documents/{id}` | 본문 보기 / 삭제(청크·벡터 함께) |
 | POST | `/api/collections/{id}/chunk-preview` | 청킹 미리보기 `{"method", "size", "overlap", ...}` → 통계·예시 |
 | POST | `/api/collections/{id}/chunk-sets` | 청크 세트 생성 (백그라운드 작업) |
@@ -37,6 +37,7 @@
 | POST | `/api/indexes` | `{"chunk_set_id", "model_id", "store": "qdrant", "truncate_dim": null}` → 인덱스 구축 작업 |
 | POST | `/api/indexes/{id}/rebuild` · DELETE `/api/indexes/{id}` | 다시 구축 / 삭제 |
 | POST | `/api/collections/{id}/search` | 검색 비교 (아래) |
+| GET | `/api/chunks/{id}/media` · `/api/documents/{id}/media` | 이미지 · 영상 프레임 청크의 그림 / 이미지 · 영상 원본 (검색 결과의 `media.url` · `media.source_url`) |
 
 ```http
 POST /api/collections/1/search

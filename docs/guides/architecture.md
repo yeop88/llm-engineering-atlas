@@ -15,11 +15,13 @@ app/
     stats.py           부트스트랩 신뢰구간 · 짝지은 비교
     llm.py · llm_api.py LLM 클라이언트(OpenAI 호환 · Claude, 스트리밍) · 연결 API
     korean.py          Kiwi 형태소 · 문장 분리 · 명사구
+    media.py           이미지 · 영상 프레임 파일 위치(data/media/doc-<id>/) · 안전한 경로 해석
     vectorstores/      VectorStore 인터페이스 + Qdrant · pgvector · MariaDB (작은 인덱스는 정확 검색)
     system_api.py      작업 · 실행 이력 · 시스템 정보 API
   stages/            LLM 시스템 엔지니어링 맵의 단계 — 뒤 단계가 앞 단계를 가져다 쓴다
     embedding/         1 · 데이터 임베딩: catalog · hub · model_manager · benchmark · public_benchmarks · projection, datasets/
     rag/               2 · RAG 검색: parsers · chunking · bm25 · fusion · service(검색·리랭킹) · evaluation · answer
+    multimodal/        멀티모달: media(이미지 · 영상 수집, 프레임 추출 · 같은 장면 제외) — 결과는 RAG 컬렉션의 미디어 문서
     search_lab/        4 · 검색 향상: enhance(질의 재작성 · HyDE · 다중 질의, LLM 변형 캐시)
     finetune/          파인튜닝: data(학습 쌍) · trainer · service(학습 → 등록 → 전후 비교 → 기록)
     apps/              의미 기반 응용: 추천 · 분류 · 군집 · 중복 · 이상 · 키워드, presets/

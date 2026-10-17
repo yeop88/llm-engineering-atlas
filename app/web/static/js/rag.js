@@ -34,12 +34,19 @@ async function load() {
 }
 
 // ── ① 문서 ──
+// 이미지 · 영상 문서: 원본 링크와 영상 정보(길이 · 같은 장면으로 뺀 프레임 수)를 보여 준다
+function mediaBadge(d) {
+  const m = d.meta?.media;
+  if (!m) return "";
+  const info = m.kind === "video" ? `영상 ${m.duration ?? "?"}초 · ${m.interval}초 간격 · 같은 장면 ${m.skipped_same_scene}장 제외` : `이미지 ${m.width}×${m.height}`;
+  return `<div class="small muted"><span class="badge">${m.kind === "video" ? "영상" : "이미지"}</span> ${info} · <a href="/api/documents/${d.id}/media" target="_blank" rel="noopener">원본</a></div>`;
+}
 function renderDocs() {
-  $("#file-types").textContent = `(${opts.file_types.join(" ")} · 최대 ${opts.max_upload_mb}MB)`;
+  $("#file-types").textContent = `(${opts.file_types.join(" ")} · 이미지·영상 ${(opts.media_types || []).join(" ")} · 최대 ${opts.max_upload_mb}MB)`;
   $("#d-rows").innerHTML = col.documents.map(d => `<tr>
-    <td><b>${esc(d.filename)}</b>${d.meta?.warning ? `<div class="warnbox small">${esc(d.meta.warning)}</div>` : ""}</td>
+    <td><b>${esc(d.filename)}</b>${d.meta?.warning ? `<div class="warnbox small">${esc(d.meta.warning)}</div>` : ""}${mediaBadge(d)}</td>
     <td class="small">${esc(d.title)}</td><td class="num">${fmtBytes(d.size_bytes)}</td><td class="num">${fmtNum(d.n_chars)}</td>
-    <td class="num">${d.n_pages}${d.meta?.page_kind === "section" ? " 구역" : d.meta?.page_kind === "page" ? " 쪽" : ""}</td>
+    <td class="num">${d.n_pages}${d.meta?.page_kind === "section" ? " 구역" : d.meta?.page_kind === "page" ? " 쪽" : d.meta?.page_kind === "media" ? (d.meta.media.kind === "video" ? " 프레임" : " 장") : ""}</td>
     <td class="small nowrap">${fmtDate(d.created_at)}</td>
     <td class="right nowrap"><button class="btn sm" onclick="viewDoc(${d.id})">본문</button><button class="btn sm danger" onclick="delDoc(${d.id}, '${esc(d.filename)}')">삭제</button></td></tr>`).join("")
     || '<tr><td colspan="7" class="empty">문서가 없습니다</td></tr>';
@@ -268,10 +275,16 @@ $("#q-run").onclick = async e => {
       ${res.results.map(x => `<div class="rank-item">
         <div class="row between small" style="flex-wrap:nowrap"><span><span class="badge ${x.rank === 1 ? "ok" : "muted"}">#${x.rank}</span> <b>${esc(x.filename)}</b>${x.page ? ` · ${x.page}쪽` : ""}${x.heading ? ` · ${esc(x.heading)}` : ""}</span><b class="mono">${x.score.toFixed(3)}</b></div>
         <div class="small muted mono" style="margin:2px 0">${["dense", "bm25"].filter(k => x.ranks[k]).map(k => `${k === "dense" ? "의미" : "BM25"} #${x.ranks[k]} (${x.scores[k].toFixed(3)})`).join(" · ")}${x.ranks.before_rerank ? ` · 리랭크 전 #${x.ranks.before_rerank}` : ""}</div>
+        ${x.media ? mediaThumb(x) : ""}
         <div class="small" style="white-space:pre-wrap">${highlight(x.text.length > 500 ? x.text.slice(0, 500) + "…" : x.text, res.query_tokens)}</div></div>`).join("") || '<div class="empty">결과 없음</div>'}
     </div>`;
   }).join("");
 };
+// 이미지 · 영상 프레임 결과: 썸네일, 누르면 원본(영상은 그 장면 시각부터 — 미디어 조각 #t=초)
+function mediaThumb(x) {
+  const href = x.media.source_url + (x.media.t != null ? `#t=${x.media.t}` : "");
+  return `<a href="${href}" target="_blank" rel="noopener" title="원본 열기"><img src="${x.media.url}" alt="${esc(x.text)}" loading="lazy" style="max-height:140px;max-width:100%;border-radius:6px;margin:4px 0;display:block"></a>`;
+}
 $("#q").addEventListener("keydown", e => { if (e.key === "Enter") $("#q-run").click(); });
 
 load().then(initTabs);

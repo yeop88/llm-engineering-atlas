@@ -24,7 +24,7 @@
 | **4 검색 향상** | ✅ | 질의 재작성 · HyDE · 다중 질의(원 질의와 RRF 융합, LLM 변형 캐시), 검색 설정 `enhance` 로 검색 · 평가 · 답변 어디서든 적용, 기법별 나란히 비교 · 평가 세트 비교 (문맥 청크는 예정) |
 | **5 파인튜닝** | ✅ | 컬렉션 지문으로 학습 쌍 생성(LLM 질문 · ICT, 평가 근거 누수 방지), 대조 학습, 카탈로그 자동 등록, 학습 전후 짝지은 비교 · 다시 비교, 실행 기록(모델 카드) |
 | **6~8 라우팅 · 증류 · 양자화 · 에이전트 · 강화학습** | ⬜ | 원리 · 왜 · 계획 (예정) |
-| 멀티모달 | 🟡 | 텍스트로 이미지 검색(EmbeddingGemma 2 · Qwen3-VL-Embedding · Jina v5 Omni · CLIP) |
+| 멀티모달 | ✅ | 텍스트로 이미지 검색(EmbeddingGemma 2 · Qwen3-VL-Embedding · Jina v5 Omni · CLIP), 이미지 · 영상을 컬렉션에 올려 장면 검색(영상 프레임 추출 · 같은 장면 제외, 썸네일 · 장면 시각으로 이동) |
 | 의미 응용 | ✅ | 추천(MMR) · 분류(제로샷 · 학습, 분류기 저장/예측 API) · 군집 · 중복/표절 · 이상/신종 탐지 · 키워드/요약 |
 | 공통 | ✅ | LLM 연결(로컬 llama.cpp · OpenAI 호환 · Claude API, 기본 Gemma 4 E4B), 모든 실행 이력 · 추세 · 내보내기, 대시보드 |
 
@@ -32,7 +32,7 @@
 
 ## 기술 스택 (2026-10 최신 안정 버전)
 
-Python 3.14.6 · FastAPI 0.143.3 · Uvicorn 0.54.0 · Starlette 1.8 · Pydantic 2.14 · SQLAlchemy 2.1.5 · Alembic 1.20 · sentence-transformers 6.1.0 (+ train: datasets 5.1 · accelerate 1.15) · transformers 5.20.1 · PyTorch 2.14.1 (CPU / CUDA 12.6·13.0 / ROCm 7.2) · huggingface-hub 1.33.0 · pyarrow 26 · httpx 0.28 · Qdrant 1.19 (qdrant-client 1.19) · pgvector 0.8.7 (PostgreSQL 18) · MariaDB 13.0 · Kiwi 0.24 (한국어 형태소) · Jinja2 · Chart.js 4.5.1 (CDN) · pytest 9.1 · ruff 0.17 · uv 0.12
+Python 3.14.6 · FastAPI 0.143.3 · Uvicorn 0.54.0 · Starlette 1.8 · Pydantic 2.14 · SQLAlchemy 2.1.5 · Alembic 1.20 · sentence-transformers 6.1.0 (+ train: datasets 5.1 · accelerate 1.15) · transformers 5.20.1 · PyTorch 2.14.1 (CPU / CUDA 12.6·13.0 / ROCm 7.2) · huggingface-hub 1.33.0 · pyarrow 26 · httpx 0.28 · Qdrant 1.19 (qdrant-client 1.19) · pgvector 0.8.7 (PostgreSQL 18) · MariaDB 13.0 · Kiwi 0.24 (한국어 형태소) · PyAV 19 (영상 프레임) · Jinja2 · Chart.js 4.5.1 (CDN) · pytest 9.1 · ruff 0.17 · uv 0.12
 
 로컬 LLM(선택): llama.cpp `llama-server` b11669(v0.7.0, Vulkan) + Gemma 4 E4B QAT q4_0 — [docs/guides/llm.md](docs/guides/llm.md)
 

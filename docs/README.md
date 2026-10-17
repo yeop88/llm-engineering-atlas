@@ -25,7 +25,7 @@ LLM Engineering Atlas 의 문서는 [전체 맵](map.md)의 단계 순서로 정
 | 7b | [양자화](stages/7b-quant/README.md) | ⬜ 예정 | 가중치 · 벡터를 낮은 비트로 바꿔 메모리와 지연을 줄인다 | — |
 | 8a | [에이전틱 AI](stages/8a-agent/README.md) | ⬜ 예정 | LLM 이 계획을 세우고 도구를 여러 번 써서 어려운 질문을 푼다 | — |
 | 8b | [강화학습](stages/8b-rl/README.md) | ⬜ 예정 | 보상 · 선호 신호로 모델의 행동을 최적화한다 | — |
-| M | [멀티모달](stages/multimodal/README.md) | 🟡 기초 있음 | 이미지 · 텍스트를 같은 벡터 공간에서 다룬다 | [멀티모달](stages/multimodal/multimodal.md) |
+| M | [멀티모달](stages/multimodal/README.md) | ✅ 구현됨 | 이미지 · 영상 장면을 텍스트와 같은 벡터 공간에서 찾는다 | [멀티모달: 모델 · 이미지 · 영상 컬렉션 · 실측](stages/multimodal/multimodal.md) |
 | A | [의미 응용](stages/apps/README.md) | ✅ 구현됨 | 임베딩으로 추천 · 분류 · 군집 · 중복 · 이상 탐지 · 키워드를 만든다 | [의미 응용](stages/apps/apps.md) |
 
 ## 가이드

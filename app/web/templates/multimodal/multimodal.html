@@ -17,11 +17,52 @@ EmbeddingGemma 2 는 멀티모달 프로필로 로드할 때 비전 인코더가
   </div>
 </div>
 <div id="m-out" class="row" style="align-items:flex-start; margin-top:16px; overflow-x:auto; flex-wrap:nowrap"></div>
-<p class="small muted" style="margin-top:20px">오디오/비디오 임베딩은 추가 의존성이 필요합니다 — docs/stages/multimodal/multimodal.md 참고.</p>
+<div class="card stack" style="margin-top:20px">
+  <h2>이미지 · 영상 컬렉션 검색</h2>
+  <div class="small muted">위 검색은 올린 이미지를 그 자리에서만 비교합니다. 이미지 · 영상을 계속 쌓아 두고 찾으려면 <a href="/collections">RAG 컬렉션</a>에 올리세요 —
+    영상은 일정 간격으로 프레임을 뽑아(같은 장면 제외) 프레임마다 청크가 됩니다. 멀티모달 모델로 벡터 인덱스를 만들면 여기서 장면을 글로 찾을 수 있습니다.</div>
+  <div class="row">
+    <div class="field"><label>컬렉션</label><select id="g-col"></select></div>
+    <div class="field grow"><label>인덱스 (이미지 · 프레임이 있는 청크 세트)</label><select id="g-idx"></select></div>
+  </div>
+  <div class="row" style="flex-wrap:nowrap"><input id="g-q" placeholder="예: 바다 위를 나는 드론, 빨간 지붕" style="flex:1"><div class="field"><input id="g-k" type="number" value="12" min="1" max="100" style="width:70px" title="결과 수"></div><button class="btn primary" id="g-run">찾기</button></div>
+  <div id="g-out" class="thumbs"></div>
+</div>
+<p class="small muted" style="margin-top:20px">오디오 임베딩은 추가 의존성이 필요합니다 — docs/stages/multimodal/multimodal.md 참고.</p>
 {% endblock %}
 {% block scripts %}
 <script>
 const urls = {};
+// ── 컬렉션 갤러리 검색: RAG 검색 API 를 그대로 쓰고 결과를 썸네일 격자로 보여 준다 ──
+async function gLoad() {
+  const cols = await api("/api/collections");
+  $("#g-col").innerHTML = cols.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("") || '<option value="">컬렉션 없음</option>';
+  const saved = localGet("mm-col");
+  if (saved && cols.some(c => String(c.id) === saved)) $("#g-col").value = saved;
+  await gIdx();
+}
+async function gIdx() {
+  if (!$("#g-col").value) return;
+  const d = await api(`/api/collections/${$("#g-col").value}`);
+  // 이미지 · 프레임이 든 청크 세트의 인덱스만 고르게 한다 — 글만 있는 인덱스는 이 화면에서 의미가 없다
+  const media = new Set(d.chunk_sets.filter(c => c.stats?.n_media).map(c => c.id));
+  const idx = d.indexes.filter(i => i.status === "ready" && media.has(i.chunk_set_id));
+  $("#g-idx").innerHTML = idx.map(i => `<option value="${i.id}">${esc(i.model_hf_id.split("/").pop())} · #${i.id}</option>`).join("") || '<option value="">이미지 · 영상 인덱스 없음</option>';
+}
+$("#g-col").addEventListener("change", () => { localSet("mm-col", $("#g-col").value); gIdx(); });
+$("#g-run").onclick = async e => {
+  const q = $("#g-q").value.trim();
+  if (!q || !$("#g-idx").value) return toast("인덱스와 검색어가 필요합니다", "err");
+  const r = await busy(e.target, () => api(`/api/collections/${$("#g-col").value}/search`, { method: "POST", body: { query: q, configs: [{ mode: "dense", index_id: +$("#g-idx").value, top_k: +$("#g-k").value || 12 }] } }));
+  const res = r.results[0];
+  if (res.error) { $("#g-out").innerHTML = `<div class="errbox">${esc(res.error)}</div>`; return; }
+  $("#g-out").innerHTML = res.results.map(x => x.media
+    ? `<figure><a href="${x.media.source_url}${x.media.t != null ? `#t=${x.media.t}` : ""}" target="_blank" rel="noopener"><img src="${x.media.url}" alt="${esc(x.text)}" loading="lazy"></a><figcaption>#${x.rank} ${esc(x.text)} <span class="mono">${x.score.toFixed(3)}</span></figcaption></figure>`
+    : `<figure><div class="small" style="padding:6px">${esc(x.text.slice(0, 120))}</div><figcaption>#${x.rank} ${esc(x.filename)} <span class="mono">${x.score.toFixed(3)}</span></figcaption></figure>`).join("") || '<div class="empty">결과 없음</div>';
+};
+$("#g-q").addEventListener("keydown", e => { if (e.key === "Enter") $("#g-run").click(); });
+gLoad();
+
 fillModelSelect($("#m-models"), { multimodal: true });
 $("#m-files").addEventListener("change", () => {
   Object.values(urls).forEach(URL.revokeObjectURL);
