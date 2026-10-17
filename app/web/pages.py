@@ -58,6 +58,7 @@ PAGES = {
     "/llm": ("rag/llm.html", "llm"),
     "/rag/answer": ("rag/answer.html", "rag_answer"),
     "/finetune": ("finetune/finetune.html", "finetune"),
+    "/search-lab": ("search_lab/search_lab.html", "search_lab"),
     "/roadmap": ("roadmap.html", "roadmap"),
 }
 

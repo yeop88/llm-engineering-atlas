@@ -20,16 +20,19 @@ app/
   stages/            LLM 시스템 엔지니어링 맵의 단계 — 뒤 단계가 앞 단계를 가져다 쓴다
     embedding/         1 · 데이터 임베딩: catalog · hub · model_manager · benchmark · public_benchmarks · projection, datasets/
     rag/               2 · RAG 검색: parsers · chunking · bm25 · fusion · service(검색·리랭킹) · evaluation · answer
+    search_lab/        4 · 검색 향상: enhance(질의 재작성 · HyDE · 다중 질의, LLM 변형 캐시)
     finetune/          파인튜닝: data(학습 쌍) · trainer · service(학습 → 등록 → 전후 비교 → 기록)
     apps/              의미 기반 응용: 추천 · 분류 · 군집 · 중복 · 이상 · 키워드, presets/
     (각 단계의 *_api.py · api.py 가 그 단계의 HTTP API)
+  pipeline/          단계 연결 계층 — 단계들을 이어 붙이는 진입점
+    search.py          run_search: 2 RAG 검색(+3 리랭킹)에 4 검색 향상을 끼움. 모든 검색 API 가 여기를 거침
   web/               화면
     pages.py           페이지 라우터
     templates/         base · dashboard · history · roadmap + 단계별 하위 폴더(embedding · rag · finetune · multimodal · apps)
     static/            css · js
 ```
 
-의존 방향: `web → stages → core`, 단계끼리는 흐름도 앞 단계만 가져다 씁니다(예: `rag` 는 `embedding.model_manager`, `finetune` 은 `rag.evaluation` 을 씀). 새 단계(리랭킹 고도화 · 라우팅 · 증류 · 양자화 · 에이전트 · 강화학습)는 `app/stages/<단계>/` 로 추가합니다([roadmap.md](../map.md)).
+의존 방향: `web · *_api → pipeline → stages → core`, 단계끼리는 흐름도 앞 단계만 가져다 씁니다(예: `rag` 는 `embedding.model_manager`, `finetune` 은 `rag.evaluation` 을 씀). 앞 단계 화면에서 뒤 단계 기능을 켜야 할 때(예: 2 RAG 의 검색 · 평가 · 답변에서 4 검색 향상)는 단계끼리 직접 가져다 쓰지 않고 API 가 `pipeline` 을 부릅니다 — 단계 내부 로직은 `pipeline` 을 모릅니다. 예외로 `core` 의 모델 CRUD 는 1 임베딩의 모델 관리자 · 카탈로그를 씁니다. 이 규칙은 `tests/test_search_lab.py::test_dependency_direction` 이 검사합니다. 새 단계(리랭킹 고도화 · 라우팅 · 증류 · 양자화 · 에이전트 · 강화학습)는 `app/stages/<단계>/` 로 추가합니다([roadmap.md](../map.md)).
 
 ## 요청 흐름
 

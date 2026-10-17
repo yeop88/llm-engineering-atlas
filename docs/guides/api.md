@@ -49,6 +49,15 @@ POST /api/collections/1/search
 
 응답의 각 결과에는 `results[]`(문서·쪽·조문 제목·본문·점수·순위), `timings_ms`, `query_tokens` 가 들어 있습니다.
 
+검색 설정(`SearchConfig`)에 `enhance` 를 넣으면 4 검색 향상이 적용됩니다. 검색 비교 · 조합 평가(`/api/eval-sets/{id}/evaluate`) · 답변 생성 · 답변 평가 모두 같은 형식입니다.
+
+```json
+{"mode": "dense", "index_id": 3,
+ "enhance": {"technique": "rewrite", "keep_original": true, "n": 3, "provider": null, "model": null}}
+```
+
+`technique`: `none`(기준선) · `rewrite`(질의 재작성) · `hyde`(가상 문서, 문서 역할로 인코딩) · `multi`(다중 질의 `n`개). 응답에 `enhance`(LLM 이 만든 변형 · LLM 시간 · 캐시 사용 여부)가 붙고, `timings_ms.llm` 에 변형 생성 시간이 들어갑니다.
+
 ## 의미 기반 응용
 
 | 메서드 | 경로 | 설명 |

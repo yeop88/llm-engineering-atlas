@@ -4,7 +4,12 @@
 
 ## [Unreleased]
 
+### 추가
+- **4 검색 향상**: 질의 재작성 · HyDE(가상 문서를 문서 역할로 인코딩) · 다중 질의, 변형 검색과 원 질의 검색을 RRF 로 합치고 리랭커는 합친 뒤 원 질의로 한 번, LLM 변형은 temperature 0 · 질문별 캐시. 검색 설정의 `enhance` 로 검색 비교 · 조합 평가 · 답변 생성 어디서든 켤 수 있음. 검색 향상 테스트 화면(`/search-lab`: 기법별 나란히 비교 · 평가 세트 비교) — `docs/stages/4-search-lab/search-lab.md`
+- **단계 연결 계층**(`app/pipeline`): 모든 검색 API 가 `run_search` 를 거쳐 다음 단계를 끼워 넣는 연결점. 단계 의존 방향을 검사하는 테스트
+
 ### 변경
+- 리랭커 점수 계산을 `rag.service.rerank_scores` 로 분리(검색 향상이 여러 검색을 합친 뒤 한 번만 재정렬하려고), 검색 설정에 인코딩 역할(`encode_role`) 추가
 - 프로젝트 이름을 **LLM Engineering Atlas**(`llm-engineering-atlas`, 이전 Embedding Lab)로 변경하고 목표를 임베딩 → RAG → 리랭킹 → 라우팅 → 소형/대형 모델의 전체 흐름으로 넓힘. 저장소 주소도 바뀜(옛 주소는 자동 연결)
 - **코드 구조를 흐름도 단계별로 재편**: `app/core`(공통 기반) · `app/stages/<단계>`(embedding · rag · finetune · apps — 서비스 · API · 데이터를 한 폴더에) · `app/web`(페이지 · 단계별 템플릿 하위 폴더 · 정적 파일). 작업 · 실행 이력 · 시스템 API 를 `core/system_api.py` 로 분리. API 주소와 동작은 그대로 — `docs/architecture.md`
 - **단계 레지스트리**(`app/stages/registry.py`): 흐름도의 모든 단계(1 임베딩 ~ 8 에이전트·강화학습, 곁가지 멀티모달·의미 응용)의 원리 · 왜 · 어떻게 · 상태 · 화면 · 할 일을 한곳에 정의. 메뉴를 흐름도 순서로 다시 만들고, 각 화면 위에 그 단계의 원리 · 왜 · 어떻게 패널, 단계 소개 페이지(`/stages/<단계>`), 맵 페이지(상태 · 부분/전체 연결 계획)를 모두 여기서 생성

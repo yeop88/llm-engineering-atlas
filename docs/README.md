@@ -18,7 +18,7 @@ LLM Engineering Atlas 의 문서는 [전체 맵](map.md)의 단계 순서로 정
 | 1 | [데이터 임베딩](stages/1-embedding/README.md) | ✅ 구현됨 | 텍스트·이미지를 의미 벡터로 바꾸는 모델을 고르고 비교한다 | [모델 카탈로그](stages/1-embedding/models.md) · [벤치마크](stages/1-embedding/benchmarks.md) · [시각화](stages/1-embedding/visualization.md) |
 | 2 | [RAG 검색](stages/2-rag/README.md) | ✅ 구현됨 | 내 문서에서 근거를 찾아 LLM 이 그 근거로 답하게 한다 | [문서 검색(RAG)](stages/2-rag/rag.md) · [LLM 연결](guides/llm.md) |
 | 3 | [리랭킹](stages/3-rerank/README.md) | 🟡 기초 있음 | 1단계 검색이 고른 후보를 정밀하게 다시 줄 세운다 | [RAG 조합 평가 실측](stages/2-rag/rag.md) |
-| 4 | [검색 향상](stages/4-search-lab/README.md) | ⬜ 예정 | 모델을 바꾸지 않고 질의 · 문서를 다듬어 검색을 좋게 한다 | — |
+| 4 | [검색 향상](stages/4-search-lab/README.md) | ✅ 구현됨 | 모델을 바꾸지 않고 질의를 LLM 으로 다듬어 검색을 좋게 한다 | [검색 향상: 기법 · 측정 기록](stages/4-search-lab/search-lab.md) |
 | 5 | [파인튜닝](stages/5-finetune/README.md) | ✅ 구현됨 | 임베딩 모델을 내 문서 분야에 맞게 추가 학습한다 | [파인튜닝: 왜 · 어떻게 · 실행 기록](stages/5-finetune/finetune.md) |
 | 6 | [라우팅](stages/6-routing/README.md) | ⬜ 예정 | 질문의 난이도 · 종류를 먼저 분류해 처리할 모델을 고른다 | — |
 | 7a | [지식 증류](stages/7a-distill/README.md) | ⬜ 예정 | 큰 모델의 판단을 작은 모델이 따라 하도록 학습한다 | — |
