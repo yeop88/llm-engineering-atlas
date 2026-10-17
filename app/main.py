@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title=get_settings().app_name,
     description="오픈소스 임베딩 모델 카탈로그 관리 · 다운로드 · 테스트 · 벤치마크",
-    version="0.1.0",
+    version="0.2.0",
     lifespan=lifespan,
 )
 app.mount("/static", StaticFiles(directory=BASE_DIR / "app" / "static"), name="static")

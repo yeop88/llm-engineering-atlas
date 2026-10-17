@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-18
+
 ### 추가
 - **파인튜닝 테스트**: 컬렉션 지문으로 (질문, 정답 지문) 쌍 생성(LLM 질문 · ICT), 평가 세트 근거가 든 지문은 학습에서 제외(누수 방지), MultipleNegativesRankingLoss(Cached · Matryoshka 선택) 학습, 카탈로그 자동 등록, 학습 전후 짝지은 비교·다시 비교, 실행 기록(모델 카드 README.md), 손실 곡선 — `docs/finetune.md` (마이그레이션 0005, `sentence-transformers[train]`)
 - **AI 엔지니어링 로드맵** 항목: 임베딩 → RAG → 리랭킹 → 라우팅 → 소형/대형 모델 흐름도와 리랭킹 고도화 · 에이전틱 AI · 강화학습 · 지식 증류 · 양자화 · 라우팅 계획(예정, 구현 없음) — `docs/roadmap.md`
