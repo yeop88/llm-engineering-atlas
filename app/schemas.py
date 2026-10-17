@@ -254,3 +254,11 @@ class TrainClassifierRequest(AppModelRef):
 
 class PredictRequest(BaseModel):
     texts: list[str] = Field(min_length=1, max_length=5000)
+
+
+class ClusterRequest(AppModelRef):
+    source: AppSource
+    method: Literal["kmeans", "agglomerative", "hdbscan"] = "kmeans"
+    k: int | None = Field(default=None, ge=2, le=200)  # 비우면 실루엣으로 자동 선택
+    k_max: int = Field(default=10, ge=2, le=50)
+    min_cluster_size: int = Field(default=5, ge=2, le=500)  # HDBSCAN

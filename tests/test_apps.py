@@ -137,3 +137,57 @@ def test_classify_api(client):
     assert bad["status"] == "error" and "라벨" in bad["error"]
     assert client.delete(f"/api/apps/models/{saved_id}").status_code == 200
     assert client.post(f"/api/apps/classifiers/{saved_id}/predict", json={"texts": ["x"]}).status_code == 404
+
+
+# ── 클러스터링 ──────────────────────────────────────────────────────────────
+from app.apps import cluster as clus  # noqa: E402
+
+
+def _items_from(y, texts=None):
+    texts = texts or [f"{lab} 문장 {i}" for i, lab in enumerate(y)]
+    return [common.Item(key=str(i), text=t, label=lab) for i, (t, lab) in enumerate(zip(texts, y, strict=True))]
+
+
+@pytest.mark.parametrize("method", ["kmeans", "agglomerative", "hdbscan"])
+def test_cluster_methods_recover_blobs(method):
+    x, y = _blobs(n_per=10)
+    texts = [{"가": "축구 경기 결과", "나": "김치 요리 방법", "다": "주식 시장 동향"}[lab] + f" {i}" for i, lab in enumerate(y)]
+    res = clus.cluster(_items_from(y, texts), x, method=method, k=None, k_max=6, min_cluster_size=4)
+    assert res["k"] == 3 and res["agreement"]["ari"] == 1.0 and res["agreement"]["purity"] == 1.0
+    assert res["silhouette"] > 0.5 and len(res["points"]) == 30
+    kw = {c["id"]: c["keywords"] for c in res["clusters"] if not c["noise"]}
+    assert any("축구" in k for k in kw.values()) and any("주식" in k for k in kw.values())
+    if method != "hdbscan":
+        assert res["k_scores"][1]["k"] == 3  # k=2,3,... 의 실루엣이 기록됨
+
+
+def test_cluster_explicit_k_and_errors():
+    x, y = _blobs(n_per=4)
+    assert clus.cluster(_items_from(y), x, "kmeans", k=2)["k"] == 2
+    with pytest.raises(common.AppError):
+        clus.cluster(_items_from(y[:3]), x[:3])
+    with pytest.raises(common.AppError):
+        clus.cluster(_items_from(y), x, "kmeans", k=12)
+
+
+def test_cluster_api(client):
+    presets = {p["name"] for p in client.get("/api/apps/presets?app=cluster").json()}
+    assert {"support_tickets", "sentiment_reviews"} <= presets
+    items = client.get("/api/apps/presets/support_tickets").json()["items"]
+    job = _wait(
+        client,
+        client.post(
+            "/api/apps/cluster", json={"model_id": _model(client), "source": {"type": "texts", "items": items}, "method": "kmeans", "k": 5}
+        ).json(),
+    )
+    assert job["status"] == "done", job
+    r = job["result"]
+    assert r["k"] == 5 and sum(c["size"] for c in r["clusters"]) == 50 and "agreement" in r
+    assert all(c["keywords"] for c in r["clusters"]) and all(len(c["representatives"]) <= 3 for c in r["clusters"])
+
+
+def test_cluster_all_noise_has_no_agreement():
+    rng = np.random.default_rng(3)
+    x = common.normalize(rng.standard_normal((8, 16)).astype(np.float32))  # 흩어진 점 → HDBSCAN 이 모두 노이즈
+    res = clus.cluster(_items_from(["가", "나"] * 4), x, "hdbscan", min_cluster_size=6)
+    assert res["k"] == 0 and "agreement" not in res and "노이즈" in res["warning"]

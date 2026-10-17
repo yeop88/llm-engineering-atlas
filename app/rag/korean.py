@@ -51,3 +51,16 @@ def split_sentences(text: str) -> list[str]:
         return [s.text.strip() for s in kiwi().split_into_sents(text) if s.text.strip()]
     except Exception:
         return [s.strip() for s in re.split(r"(?<=[.!?。])\s+|\n+", text) if s.strip()]
+
+
+# 키워드·주제어용: 명사·고유명사·어근·외국어·한자만 (동사 어간·숫자 제외)
+KEYWORD_TAGS = ("NNG", "NNP", "XR", "SL", "SH")
+
+
+def nouns_many(texts: list[str]) -> list[list[str]]:
+    if not texts:
+        return []
+    try:
+        return [[t.form.lower() for t in toks if t.tag.startswith(KEYWORD_TAGS) and len(t.form) > 1] for toks in kiwi().tokenize(texts)]
+    except Exception:
+        return [[t.lower() for t in _FALLBACK.findall(x) if not t.isdigit()] for x in texts]

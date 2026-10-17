@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}클러스터링{% endblock %}
+{% block content %}
+<a href="/apps" class="small">← 응용</a>
+<h1>클러스터링</h1>
+<p class="lead">비슷한 의미의 텍스트끼리 묶어 주제를 찾습니다. 고객 문의·리뷰·VOC 의 주제 발굴, 문서 군집화, 같은 이슈 묶기에 씁니다. 입력에 라벨(<code>[라벨] 텍스트</code>)이 있으면 군집이 라벨과 얼마나 맞는지도 계산합니다.</p>
+
+<div class="grid cols-2">
+  <div class="card stack"><h2>텍스트</h2><div id="src"></div></div>
+  <div class="card stack">
+    <h2>설정</h2>
+    <div class="row">
+      <div class="field grow"><label>임베딩 모델</label><select id="model"></select></div>
+      <div class="field"><label>차원</label><select id="dim"></select></div>
+    </div>
+    <div class="row">
+      <div class="field grow"><label>방법</label>
+        <select id="method"><option value="kmeans">K-means</option><option value="agglomerative">계층 (평균 연결)</option><option value="hdbscan">HDBSCAN (밀도 기반, 노이즈 분리)</option></select></div>
+      <div class="field" data-k><label>군집 수</label><input id="k" type="number" min="2" max="200" placeholder="자동"></div>
+      <div class="field" data-k><label>자동일 때 최대</label><input id="kmax" type="number" min="2" max="50" value="10"></div>
+      <div class="field" data-h hidden><label>최소 군집 크기</label><input id="mcs" type="number" min="2" max="500" value="5"></div>
+    </div>
+    <div class="small muted" id="method-hint"></div>
+    <div class="row"><span class="spacer"></span><button class="btn primary" id="run">군집화</button></div>
+  </div>
+</div>
+<div class="card" id="progress" hidden style="margin-top:16px"></div>
+<div id="out" style="margin-top:16px"></div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"
+        integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', path='js/apps.js') }}"></script>
+<script>
+let picker, model, chart = null, result = null, selected = null;
+const HINT = {
+  kmeans: "군집 수를 정하면 그만큼 나눕니다. 비우면 2~최대 사이에서 실루엣 점수(군집이 얼마나 잘 갈리는지)가 가장 높은 수를 고릅니다. 모든 텍스트가 어느 군집엔가 들어갑니다.",
+  agglomerative: "가까운 것부터 차례로 합쳐 나무 구조를 만든 뒤 원하는 개수에서 자릅니다(코사인 거리, 평균 연결). 크기가 고르지 않은 군집에 강합니다.",
+  hdbscan: "밀도가 높은 곳을 군집으로 잡고, 어디에도 속하지 않는 텍스트는 노이즈(-1)로 따로 둡니다. 군집 수를 정할 필요가 없고 이상한 텍스트를 걸러내는 데도 유용합니다.",
+};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const updateMethod = () => {
+  const m = $("#method").value;
+  $$("[data-k]").forEach(e => (e.hidden = m === "hdbscan"));
+  $$("[data-h]").forEach(e => (e.hidden = m !== "hdbscan"));
+  $("#method-hint").textContent = HINT[m];
+};
+$("#method").addEventListener("change", updateMethod);
+
+function drawMap() {
+  const r = result;
+  chart?.destroy();
+  const few = r.clusters.filter(c => !c.noise).length <= 3;  // 3개 이하만 색으로 구분 (그 이상은 강조 방식)
+  const series = [1, 2, 3].map(i => css(`--series-${i}`));
+  const colorOf = c => (c < 0 ? css("--chart-axis") : few ? series[r.clusters.findIndex(x => x.id === c) % 3] : selected === c ? css("--series-1") : css("--series-other"));
+  const centers = {};
+  r.points.forEach(p => { (centers[p.cluster] ||= []).push(p); });
+  const labelPlugin = { id: "clusterLabels", afterDatasetsDraw(ch) {
+    const { ctx, scales } = ch; ctx.save(); ctx.font = `600 12px ${getComputedStyle(document.body).fontFamily}`; ctx.textAlign = "center"; ctx.fillStyle = css("--text");
+    Object.entries(centers).forEach(([c, ps]) => { if (+c < 0) return;
+      const x = ps.reduce((s, p) => s + p.x, 0) / ps.length, y = ps.reduce((s, p) => s + p.y, 0) / ps.length;
+      ctx.fillText(`C${c}`, scales.x.getPixelForValue(x), scales.y.getPixelForValue(y) - 10); });
+    ctx.restore(); } };
+  chart = new Chart($("#map"), {
+    type: "scatter",
+    data: { datasets: [{ data: r.points.map(p => ({ ...p })), pointRadius: r.points.map(p => (selected === p.cluster ? 6 : 4.5)),
+      backgroundColor: r.points.map(p => colorOf(p.cluster)), borderColor: css("--panel"), borderWidth: 1.5, clip: 10 }] },
+    plugins: [labelPlugin],
+    options: { responsive: true, maintainAspectRatio: false, animation: false, layout: { padding: 12 },
+      scales: { x: { ticks: { display: false }, grid: { color: css("--chart-grid") }, title: { display: true, text: "PC1", color: css("--muted") } },
+                y: { ticks: { display: false }, grid: { color: css("--chart-grid") }, title: { display: true, text: "PC2", color: css("--muted") } } },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: css("--panel"), titleColor: css("--text"), bodyColor: css("--text"), borderColor: css("--border"), borderWidth: 1,
+        callbacks: { title: i => `C${i[0].raw.cluster}${i[0].raw.label ? " · " + i[0].raw.label : ""}`, label: i => i.raw.text.slice(0, 60) } } },
+      onClick: (_, els) => { if (els.length) selectCluster(r.points[els[0].index].cluster); } },
+  });
+}
+function selectCluster(c) {
+  selected = selected === c ? null : c;
+  $$("#clusters [data-c]").forEach(el => (el.style.outline = +el.dataset.c === selected ? "2px solid var(--accent)" : ""));
+  drawMap();
+}
+function downloadCsv() {
+  const rows = [["key", "cluster", "keywords", "label", "text"]];
+  const kw = Object.fromEntries(result.clusters.map(c => [c.id, c.keywords.join(" ")]));
+  result.points.forEach(p => rows.push([p.key, p.cluster, kw[p.cluster] || "", p.label || "", p.text]));
+  const csv = "﻿" + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "clusters.csv"; a.click();
+}
+
+$("#run").onclick = async e => {
+  const m = $("#method").value;
+  const body = { ...model(), source: picker.get(), method: m, k: m !== "hdbscan" && $("#k").value ? +$("#k").value : null, k_max: +$("#kmax").value, min_cluster_size: +$("#mcs").value };
+  const r = await Apps.run(e.target, $("#progress"), "/api/apps/cluster", body);
+  if (!r) return;
+  result = r; selected = null;
+  const a = r.agreement;
+  $("#out").innerHTML = `<div class="card stack">
+    <div class="row between"><h2>결과</h2><span class="small muted">${r.n_items}개 · ${r.seconds}s <button class="btn sm" onclick="downloadCsv()">CSV</button></span></div>
+    ${r.warning ? `<div class="warnbox">${esc(r.warning)}</div>` : ""}
+    <div class="grid cols-4">
+      <div class="stat"><div class="label">군집 수</div><div class="value">${r.k}</div>${r.k_scores ? '<div class="small muted">실루엣으로 자동 선택</div>' : ""}</div>
+      <div class="stat"><div class="label">실루엣 (−1~1, 클수록 잘 갈림)</div><div class="value">${r.silhouette ?? "-"}</div></div>
+      <div class="stat"><div class="label">노이즈</div><div class="value">${r.noise}</div></div>
+      ${a ? `<div class="stat"><div class="label">정답 라벨과 일치 (ARI · 순도)</div><div class="value">${a.ari}</div><div class="small muted">순도 ${(a.purity * 100).toFixed(1)}% · 라벨 ${a.n_labels}종</div></div>` : "<div></div>"}
+    </div>
+    ${r.k_scores ? `<details><summary>군집 수별 실루엣</summary><div style="margin-top:8px">${r.k_scores.map(s => `<div class="row small" style="flex-wrap:nowrap;gap:8px"><span class="mono" style="width:40px">k=${s.k}</span>
+      <div style="flex:1;background:var(--code);border-radius:4px"><div class="bar" style="width:${Math.max(2, (s.silhouette || 0) * 200)}%;${s.k === r.k ? "" : "opacity:.45"}"></div></div><span class="mono" style="width:60px;text-align:right">${s.silhouette ?? "-"}</span></div>`).join("")}</div></details>` : ""}
+    <div class="grid cols-2">
+      <div><h3>군집 지도 <span class="small muted">PCA 2D · 두 축이 분산의 ${(r.explained_variance * 100).toFixed(0)}% 설명 · 점이나 군집 카드를 누르면 강조</span></h3>
+        <div class="chart-box" style="height:420px"><canvas id="map" role="img" aria-label="군집 지도"></canvas></div></div>
+      <div><h3>군집</h3><div id="clusters" class="stack" style="max-height:440px;overflow:auto">${r.clusters.map(c => `
+        <div class="card" data-c="${c.id}" style="padding:10px;cursor:pointer" onclick="selectCluster(${c.id})">
+          <div class="row between small"><b>${c.noise ? "노이즈 (어느 군집에도 속하지 않음)" : `C${c.id}`}</b><span class="muted">${c.size}개${c.noise ? "" : ` · 응집도 ${c.cohesion}`}</span></div>
+          ${c.keywords.length ? `<div style="margin:4px 0">${c.keywords.map(k => `<span class="badge">${esc(k)}</span>`).join(" ")}</div>` : ""}
+          ${Object.keys(c.gold_labels).length ? `<div class="small muted">정답 라벨: ${Object.entries(c.gold_labels).map(([k, v]) => `${esc(k)} ${v}`).join(" · ")}</div>` : ""}
+          ${c.representatives.map(x => `<div class="small" style="margin-top:2px">· ${esc(x.text)}</div>`).join("")}
+        </div>`).join("")}</div></div>
+    </div></div>`;
+  if (typeof Chart !== "undefined") drawMap();
+};
+
+(async () => {
+  updateMethod();
+  picker = await Apps.sourcePicker($("#src"), { app: "cluster", labels: "optional" });
+  model = await Apps.modelPicker($("#model"), $("#dim"));
+})();
+</script>
+{% endblock %}

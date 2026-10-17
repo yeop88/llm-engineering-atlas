@@ -64,3 +64,32 @@ API: `POST /api/apps/recommend {"model_id", "source", "liked": [키], "disliked"
 - 예시가 50건 정도로 적을 때는 제로샷이 학습보다 나을 수도 있습니다. 데이터가 쌓이면 학습 방식이 유리해집니다.
 
 API: `POST /api/apps/classify/zero-shot {"model_id", "source", "labels": [{"name", "description"}]}`, `POST /api/apps/classify/train {"model_id", "source", "method": "logreg"|"centroid"|"knn", "k", "save", "name"}` → 작업. `POST /api/apps/classifiers/{id}/predict {"texts"}` → 즉시 응답. `GET /api/apps/models?kind=classifier`, `DELETE /api/apps/models/{id}`.
+
+## 클러스터링
+
+비슷한 의미의 텍스트끼리 묶어 **주제를 발굴**합니다. 고객 문의·리뷰·VOC 주제 분석, 문서 군집화, 같은 이슈 묶기에 씁니다.
+
+| 방법 | 동작 | 언제 |
+|---|---|---|
+| **K-means** | 정한 개수로 나눔. 개수를 비우면 2~최대 사이에서 **실루엣 점수**가 가장 높은 개수를 자동 선택 | 대부분의 경우 |
+| **계층 (평균 연결)** | 가까운 것부터 합쳐 나무를 만든 뒤 개수에서 자름 (코사인 거리) | 군집 크기가 고르지 않을 때 |
+| **HDBSCAN** | 밀도가 높은 곳만 군집으로, 나머지는 **노이즈**로 분리. 개수 지정 불필요 | 데이터가 많고 잡음을 걸러내고 싶을 때 |
+
+- **군집 키워드**: 군집을 한 문서로 보고 TF-IDF 를 매기는 c-TF-IDF 로, 그 군집에 유독 많이 나오는 **명사**(Kiwi 형태소)를 뽑습니다.
+- **대표 문장**: 군집 중심과 가장 가까운 3개. **응집도**는 군집 안 텍스트와 중심의 평균 유사도입니다.
+- **정답과 비교**: 입력에 라벨이 있으면 **ARI**(조정 랜드 지수, 1 = 완전 일치, 0 = 우연 수준)와 **순도**(각 군집의 다수 라벨 비율)를 계산합니다(노이즈 제외).
+- **군집 지도**: PCA 2D. 군집이 4개 이상이면 색으로 구분되지 않으므로 모두 회색으로 그리고, 군집 카드나 점을 누르면 그 군집만 강조합니다. 결과는 CSV 로 내려받습니다.
+- 모델에 군집용 프롬프트가 있으면(예: EmbeddingGemma 의 `Clustering`) 자동으로 씁니다.
+
+### 실측 (K-means, 군집 수 = 정답 라벨 수)
+
+| 데이터 | EmbeddingGemma 2 | BGE-M3 |
+|---|---|---|
+| 기사 30건 (6개 분야) | **ARI 0.91 · 순도 96.7%** | ARI 0.28 · 순도 63.3% |
+| 고객·AS 문의 50건 (5개 부서) | **ARI 0.47 · 순도 74%** | ARI 0.32 · 순도 66% |
+
+- 같은 모델이라도 분류와 군집화 성능은 다릅니다. BGE-M3 는 감성 분류에서 앞섰지만 군집화에서는 EmbeddingGemma 2(군집용 프롬프트 사용)가 크게 앞섰습니다. 쓰려는 작업으로 직접 비교하세요.
+- 실루엣 자동 선택은 짧은 문장에서 군집 수를 적게 고르는 경향이 있습니다(문의 50건 → 2~4개). 기대하는 주제 수가 있으면 직접 지정하세요.
+- HDBSCAN 은 짧고 다양한 텍스트 50건 정도에서는 대부분을 노이즈로 둡니다. 수백 건 이상에서 유용합니다.
+
+API: `POST /api/apps/cluster {"model_id", "source", "method": "kmeans"|"agglomerative"|"hdbscan", "k": null, "k_max": 10, "min_cluster_size": 5}` → 작업.

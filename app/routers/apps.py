@@ -10,10 +10,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import crud
-from app.apps import classify, common, recommend
+from app.apps import classify, cluster, common, recommend
 from app.config import BASE_DIR, get_settings
 from app.db import AppModel, EmbeddingModel, SessionLocal, get_db
-from app.schemas import AppItemsRequest, PredictRequest, RecommendRequest, TrainClassifierRequest, ZeroShotRequest
+from app.schemas import AppItemsRequest, ClusterRequest, PredictRequest, RecommendRequest, TrainClassifierRequest, ZeroShotRequest
 from app.services.jobs import Job, jobs
 from app.services.model_manager import ModelSpec
 
@@ -50,7 +50,7 @@ def presets(app: str | None = None) -> list[dict]:
     out = []
     for p in sorted(PRESET_DIR.glob("*.json")):
         data = json.loads(p.read_text(encoding="utf-8"))
-        if app and data.get("app") != app:
+        if app and app != data.get("app") and app not in data.get("also", []):  # 다른 기능에서도 쓸 수 있는 예시
             continue
         out.append({k: data[k] for k in ("name", "app", "title", "description") if k in data} | {"n": len(data.get("items", []))})
     return out
@@ -242,3 +242,29 @@ def predict(app_model_id: int, body: PredictRequest, db: DB) -> dict:
     preds = clf.predict(x)
     return {"classifier": {"id": m.id, "name": m.name, "method": m.method}, "seconds": round(time.perf_counter() - started, 3),
             "results": [{"text": t} | p for t, p in zip(body.texts, preds, strict=True)]}  # fmt: skip
+
+
+# ── 클러스터링 ──────────────────────────────────────────────────────────────
+@router.post("/cluster")
+def run_cluster(body: ClusterRequest, db: DB) -> dict:
+    spec = crud.get_spec(db, body.model_id, "embedding")
+    src = body.source.model_dump()
+
+    def fn(job: Job, s: Session) -> dict[str, Any]:
+        its = common.resolve_source(s, src)
+        x = common.embed(spec, [it.text for it in its], "plain", body.truncate_dim, job, (0.0, 0.7), task="clustering")
+        job.update(0.75, "군집 수 찾는 중" if body.method != "hdbscan" and not body.k else "군집화 중")
+        res = cluster.cluster(its, x, body.method, body.k, body.k_max, body.min_cluster_size)
+        res["n_items"] = len(its)
+        res["summary"] = {"k": res["k"], "silhouette": res["silhouette"], "noise": res["noise"]} | (
+            {"ari": res["agreement"]["ari"]} if "agreement" in res else {}
+        )
+        return res
+
+    return submit(
+        "cluster",
+        f"클러스터링 · {cluster.METHODS[body.method]} ({spec.hf_id.split('/')[-1]})",
+        [spec.hf_id],
+        body.model_dump(exclude={"source"}),
+        fn,
+    )
