@@ -387,6 +387,30 @@ class AnswerEvalRequest(LLMRef):
     seed: int = 0
 
 
+# ── 흐름 연결 실행 (맵) ─────────────────────────────────────────────────────
+class FlowConfig(BaseModel):
+    """한 가지 연결 방식. 검색 설정(SearchConfig)에 향상 · 리랭커가 들어 있고, 답변 단계는 켜고 끌 수 있다."""
+
+    label: str = Field(default="", max_length=200)
+    config: SearchConfig
+    answer: bool = True
+    context_top: int = Field(default=5, ge=1, le=20)
+    max_context_chars: int = Field(default=6000, ge=500, le=60000)
+    max_tokens: int = Field(default=500, ge=50, le=8000)
+
+
+class FlowRunRequest(LLMRef):
+    question: str = Field(min_length=1, max_length=2000)
+    flow: FlowConfig
+
+
+class FlowEvalRequest(LLMRef):
+    eval_set_id: int
+    flows: list[FlowConfig] = Field(min_length=1, max_length=4)  # 첫 번째가 비교 기준
+    max_queries: int | None = Field(default=10, ge=1, le=1000)  # 답변 단계는 로컬 LLM 으로 질문당 수십 초
+    seed: int = 0
+
+
 # ── 파인튜닝 ────────────────────────────────────────────────────────────────
 class FinetuneCreate(BaseModel):
     name: str = Field(default="", max_length=200)
