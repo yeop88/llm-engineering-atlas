@@ -7,7 +7,7 @@
 
 ## 주요 기능
 
-화면은 기능 묶음으로 나뉩니다: **임베딩 테스트**(모델 · Hub 검색 · 플레이그라운드 · 벤치마크) · **RAG 테스트**(컬렉션 · 답변 생성 · LLM 연결) · **파인튜닝 테스트** · **멀티모달 테스트** · **의미 응용** · **이력**.
+화면은 기능 묶음으로 나뉩니다: **임베딩 테스트**(모델 · Hub 검색 · 플레이그라운드 · 벤치마크) · **RAG 테스트**(컬렉션 · 답변 생성 · LLM 연결) · **파인튜닝 테스트** · **멀티모달 테스트** · **의미 응용** · **AI 엔지니어링 로드맵**(예정 항목) · **이력**.
 
 | 영역 | 기능 |
 |---|---|
@@ -71,6 +71,7 @@ uv run uvicorn app.main:app --reload --port 8000
 - [docs/rag.md](docs/rag.md) — 문서 검색(RAG): 업로드·청킹·벡터 DB·하이브리드 검색·리랭커
 - [docs/llm.md](docs/llm.md) — LLM 연동 (OpenAI 호환 · Claude)
 - [docs/finetune.md](docs/finetune.md) — 파인튜닝: 왜 · 어떻게 · 실행 기록
+- [docs/roadmap.md](docs/roadmap.md) — AI 엔지니어링 로드맵 (리랭킹 · 에이전트 · 강화학습 · 증류 · 양자화 · 라우팅)
 - [docs/apps.md](docs/apps.md) — 의미 기반 응용 (추천·분류·클러스터링·중복/표절·이상 탐지·키워드/요약)
 - [docs/gpu.md](docs/gpu.md) — CPU · CUDA · ROCm 설치
 - [docs/architecture.md](docs/architecture.md) — 구조와 동작 방식

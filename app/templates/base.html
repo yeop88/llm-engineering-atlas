@@ -22,6 +22,10 @@
         ("finetune", "/finetune", "파인튜닝 테스트"),
         ("멀티모달 테스트", [("multimodal", "/multimodal", "이미지 · 텍스트", "이미지 임베딩 · 교차 검색")]),
         ("apps", "/apps", "의미 응용"),
+        ("AI 엔지니어링 (예정)", [("roadmap", "/roadmap", "전체 로드맵", "임베딩 → RAG → 리랭킹 → 라우팅 흐름"),
+                                ("roadmap_rerank", "/roadmap#rerank", "리랭킹", "정밀 재정렬 고도화"), ("roadmap_agent", "/roadmap#agent", "에이전틱 AI", "다단계 검색 · 도구 사용"),
+                                ("roadmap_rl", "/roadmap#rl", "강화학습", "보상 · 선호 학습"), ("roadmap_distill", "/roadmap#distill", "지식 증류", "큰 모델 → 작은 모델"),
+                                ("roadmap_quant", "/roadmap#quant", "양자화", "int8 · 4bit · binary"), ("roadmap_routing", "/roadmap#routing", "라우팅", "난이도별 모델 배분")]),
         ("history", "/history", "이력"),
       ] %}
       {% for item in items %}

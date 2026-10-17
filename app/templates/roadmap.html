@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}AI 엔지니어링 로드맵{% endblock %}
+{% block content %}
+<h1>AI 엔지니어링 로드맵</h1>
+<p class="lead">임베딩·RAG·파인튜닝이 모델의 '지식'을 다룬다면, 아래 항목은 이를 실제 서비스에서 <b>싸고 빠르고 정확하게</b> 돌리기 위한 시스템 구성 요소입니다. 아직 구현하지 않은 예정 항목이며, 진행할 때 이 페이지의 각 항목이 테스트 화면으로 바뀝니다.</p>
+
+<div class="card stack">
+  <h2>전체 흐름</h2>
+  <div class="flow">
+    <div class="flow-row">
+      <span class="flow-box done">데이터 임베딩</span><span class="flow-arrow">→</span>
+      <span class="flow-box done">RAG 검색</span><span class="flow-arrow">→</span>
+      <a class="flow-box plan" href="#rerank">리랭킹 (정밀 필터링)</a>
+    </div>
+    <div class="flow-down">↓</div>
+    <div class="flow-row">
+      <a class="flow-box plan" href="#routing">라우팅 (난이도 분류)</a>
+      <div class="flow-branch">
+        <div><span class="flow-arrow">→</span> 쉬운 질문: <a class="flow-box plan" href="#distill">지식 증류</a> · <a class="flow-box plan" href="#quant">양자화</a>된 소형 모델</div>
+        <div><span class="flow-arrow">→</span> 어려운 질문: <a class="flow-box done" href="/finetune">파인튜닝</a> · <a class="flow-box plan" href="#rl">강화학습</a>된 <a class="flow-box plan" href="#agent">에이전트 LLM</a></div>
+      </div>
+    </div>
+  </div>
+  <div class="small muted"><span class="flow-box done sm">구현됨</span> <span class="flow-box plan sm">예정</span> — 임베딩·RAG 검색·파인튜닝이 모델의 지식(파라미터 기억·외부 문서 기억)을 다루고, 리랭킹·에이전트·양자화·라우팅은 이를 현실에서 적은 비용으로 빠르게 돌리는 RAGOps / AI 엔지니어링 요소입니다.</div>
+</div>
+
+<div class="grid cols-2" style="margin-top:16px">
+  {% set items = [
+    ("rerank", "리랭킹 (Re-ranking)", "기초 있음 · 고도화 예정",
+     "1단계 검색(빠르지만 거친 벡터·BM25)이 고른 후보를, 질문과 문서를 함께 읽는 크로스 인코더로 다시 줄 세워 정확도를 올립니다.",
+     ["지금: 검색 비교·조합 평가에서 리랭커 11종 선택 가능 (CPU 에서는 질문당 수십 초)", "리랭커 전용 벤치마크와 후보 수(top-k)·지연 곡선", "LLM 리랭커(목록형 재정렬)와 크로스 인코더 비교", "양자화·ONNX 로 리랭커 속도 개선 후 재측정"]),
+    ("agent", "에이전틱 AI (LLM Agents)", "예정",
+     "LLM 이 한 번 검색하고 답하는 대신, 스스로 계획을 세워 검색을 여러 번 하고 도구(계산·DB 조회·문서 열람)를 써서 복잡한 질문을 풉니다.",
+     ["질문 분해 → 여러 번 검색 → 근거 종합 (다단계 RAG)", "도구 호출: 문서 필터·조문 조회·계산기", "단계별 기록(추론·검색·도구 결과)과 비용·시간 측정", "평가 세트로 단일 검색 RAG 와 정답률 비교"]),
+    ("rl", "강화학습 (RL)", "예정",
+     "정답 근거 인용·사용자 피드백 같은 보상 신호로 모델의 행동(검색 방법·답변 방식)을 최적화합니다.",
+     ["보상 설계: 근거 인용 정확도 · 환각 없음 · 답변 길이", "선호 데이터(좋은 답 / 나쁜 답) 수집 화면", "DPO 등 선호 학습으로 소형 LLM 조정 실험", "학습 전후 답변 평가 지표 비교"]),
+    ("distill", "지식 증류 (Distillation)", "예정",
+     "큰 모델(교사)의 판단을 작은 모델(학생)이 따라 하도록 학습시켜, 비슷한 품질을 훨씬 적은 비용으로 냅니다.",
+     ["임베딩: 큰 임베딩 모델 → 작은 모델로 벡터 증류", "리랭커: 크로스 인코더 점수 → 임베딩 모델로 증류", "LLM: 큰 LLM 답변 → 소형 LLM 학습 데이터", "크기·속도·정확도 3축 비교표"]),
+    ("quant", "양자화 (Quantization)", "예정",
+     "가중치·벡터를 낮은 정밀도(int8·4bit·binary)로 바꿔 메모리와 지연을 줄이고, 정확도 손실을 측정합니다.",
+     ["임베딩 벡터 int8 · binary 양자화와 재점수(rescoring)", "모델 양자화: ONNX · OpenVINO · int8 로 인코딩 속도", "LLM GGUF 비트 수(4·5·8bit)별 답변 품질·속도", "벡터 DB 용량·검색 지연 비교"]),
+    ("routing", "라우팅 (Model Routing)", "예정",
+     "질문의 난이도·종류를 먼저 분류해, 쉬운 질문은 작고 빠른 모델이, 어려운 질문은 크고 정확한 모델이 처리하게 나눕니다.",
+     ["질문 난이도·의도 분류기 (의미 응용의 분류기 재사용)", "규칙 · 임베딩 분류 · LLM 판단 라우터 비교", "모델별 비용·지연·정답률을 함께 본 최적 배분", "라우팅 전후 평균 비용과 품질 비교"]),
+  ] %}
+  {% for key, title, state, why, plans in items %}
+  <div class="card stack" id="{{ key }}">
+    <div class="row between"><h2>{{ title }}</h2><span class="badge {{ 'ok' if state.startswith('기초') else '' }}">{{ state }}</span></div>
+    <div>{{ why }}</div>
+    <div><b class="small">이 앱에서 할 일</b>
+      <ul class="small" style="margin:6px 0 0 18px">{% for p in plans %}<li>{{ p }}</li>{% endfor %}</ul></div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

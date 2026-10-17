@@ -210,3 +210,15 @@ mark { background: color-mix(in srgb, #fab219 45%, transparent); color: inherit;
 .src.flash { box-shadow: 0 0 0 3px var(--accent-weak); }
 .caret { animation: blink 1s steps(2) infinite; color: var(--muted); }
 @keyframes blink { 50% { opacity: 0; } }
+
+/* 로드맵 흐름도 */
+.flow { display: flex; flex-direction: column; gap: 8px; }
+.flow-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.flow-branch { display: flex; flex-direction: column; gap: 8px; }
+.flow-down { padding-left: 24px; color: var(--muted); }
+.flow-arrow { color: var(--muted); }
+.flow-box { display: inline-block; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); color: var(--text); text-decoration: none; }
+.flow-box.sm { padding: 1px 8px; font-size: 12px; }
+.flow-box.done { background: color-mix(in srgb, var(--ok) 14%, transparent); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.flow-box.plan { border-style: dashed; }
+a.flow-box:hover { border-color: var(--accent); text-decoration: none; }

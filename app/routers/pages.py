@@ -23,6 +23,7 @@ PAGES = {
     "/llm": ("llm.html", "llm"),
     "/rag/answer": ("rag_answer.html", "rag_answer"),
     "/finetune": ("finetune.html", "finetune"),
+    "/roadmap": ("roadmap.html", "roadmap"),
 }
 
 
