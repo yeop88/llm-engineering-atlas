@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "LLM Engineering Atlas"
+    # 화면의 문서 링크가 가리키는 저장소 (docs/*.md 를 GitHub 에서 연다)
+    repo_url: str = "https://github.com/yeop88/llm-engineering-atlas"
     data_dir: Path = BASE_DIR / "data"
     database_url: str | None = None
 

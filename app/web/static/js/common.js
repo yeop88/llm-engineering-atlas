@@ -154,3 +154,10 @@ window.addEventListener("hashchange", () => {
 // 브라우저 저장소 (사생활 보호 모드 등에서 막혀도 동작하도록)
 function localGet(key) { try { return localStorage.getItem(key); } catch { return null; } }
 function localSet(key, value) { try { localStorage.setItem(key, value); } catch { /* 저장 안 해도 동작에 지장 없음 */ } }
+
+// 단계 설명 패널: 처음엔 펼쳐 보여 주고, 접으면 그 단계는 접힌 채로 기억
+document.querySelectorAll("details.stage-info").forEach(d => {
+  const key = "stage-info-" + d.dataset.stage;
+  d.open = localGet(key) !== "closed";
+  d.addEventListener("toggle", () => localSet(key, d.open ? "open" : "closed"));
+});

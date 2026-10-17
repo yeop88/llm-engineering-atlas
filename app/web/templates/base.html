@@ -11,33 +11,16 @@
   <header class="topbar">
     <a class="brand" href="/">◆ {{ app_name }}</a>
     <nav>
-      {# (키, 주소, 이름) 또는 (묶음 이름, [(키, 주소, 이름, 설명), ...]) #}
-      {% set items = [
-        ("dashboard", "/", "대시보드"),
-        ("임베딩 테스트", [("models", "/models", "모델", "카탈로그 · 다운로드 · 로드"), ("hub", "/hub", "Hub 검색", "새 모델 찾아 가져오기"),
-                         ("playground", "/playground", "플레이그라운드", "임베딩 · 유사도 · 검색 · 지도"), ("benchmark", "/benchmark", "벤치마크", "데이터셋 · 공개 벤치마크 · 신뢰구간")]),
-        ("RAG 테스트", [("rag", "/collections", "컬렉션", "문서 · 청킹 · 인덱스 · 검색 비교 · 평가"),
-                       ("rag_answer", "/rag/answer", "답변 생성", "검색 근거로 LLM 답변 · 인용 · 환각 검증"),
-                       ("llm", "/llm", "LLM 연결", "로컬 · OpenAI 호환 · Claude 설정 확인")]),
-        ("finetune", "/finetune", "파인튜닝 테스트"),
-        ("멀티모달 테스트", [("multimodal", "/multimodal", "이미지 · 텍스트", "이미지 임베딩 · 교차 검색")]),
-        ("apps", "/apps", "의미 응용"),
-        ("AI 엔지니어링 (예정)", [("roadmap", "/roadmap", "전체 로드맵", "임베딩 → RAG → 리랭킹 → 라우팅 흐름"),
-                                ("roadmap_rerank", "/roadmap#rerank", "리랭킹", "정밀 재정렬 고도화"), ("roadmap_agent", "/roadmap#agent", "에이전틱 AI", "다단계 검색 · 도구 사용"),
-                                ("roadmap_rl", "/roadmap#rl", "강화학습", "보상 · 선호 학습"), ("roadmap_distill", "/roadmap#distill", "지식 증류", "큰 모델 → 작은 모델"),
-                                ("roadmap_quant", "/roadmap#quant", "양자화", "int8 · 4bit · binary"), ("roadmap_routing", "/roadmap#routing", "라우팅", "난이도별 모델 배분")]),
-        ("history", "/history", "이력"),
-      ] %}
-      {% for item in items %}
-        {% if item[1] is string %}
-          <a href="{{ item[1] }}" class="{{ 'active' if nav == item[0] }}">{{ item[2] }}</a>
+      {# 메뉴는 단계 레지스트리(app/stages/registry.py)에서 만든다 — 흐름도 순서 #}
+      {% for item in nav_items %}
+        {% if item.href %}
+          <a href="{{ item.href }}" class="{{ 'active' if nav in item['keys'] }}">{{ item.label }}</a>
         {% else %}
-          {% set active = nav in item[1] | map(attribute=0) | list %}
           <div class="nav-group">
-            <button type="button" class="{{ 'active' if active }}" aria-haspopup="true">{{ item[0] }} ▾</button>
+            <button type="button" class="{{ 'active' if nav in item['keys'] }}" aria-haspopup="true">{{ item.label }} ▾</button>
             <div class="nav-menu" role="menu">
-              {% for key, href, label, desc in item[1] %}
-                <a href="{{ href }}" role="menuitem" class="{{ 'active' if nav == key }}"><b>{{ label }}</b><span>{{ desc }}</span></a>
+              {% for sub in item['items'] %}
+                <a href="{{ sub.href }}" role="menuitem" class="{{ 'active' if nav == sub.key }}"><b>{{ sub.label }}</b><span>{{ sub.desc }}</span></a>
               {% endfor %}
             </div>
           </div>
@@ -48,6 +31,20 @@
     <span class="badge muted" title="카탈로그 기준">카탈로그 {{ catalog_version }}</span>
   </header>
   <main class="container">
+    {% set st = stage_for_nav(nav) %}
+    {% if st and nav != "stage_" ~ st.key %}
+    {# 이 화면이 흐름도의 어느 단계인지, 그 단계의 원리 · 왜 · 어떻게 #}
+    <details class="stage-info" data-stage="{{ st.key }}">
+      <summary><span class="stage-no">{{ st.no }}</span> <b>{{ st.title }}</b> <span class="muted">{{ st.en }}</span> — {{ st.summary }}
+        <span class="badge {{ 'ok' if st.status == 'done' else ('warn' if st.status == 'basic' else '') }}">{{ st.status_label }}</span></summary>
+      <div class="stage-grid">
+        <div><h4>원리</h4><p>{{ st.principle }}</p></div>
+        <div><h4>왜 하는가</h4><p>{{ st.why }}</p></div>
+        <div><h4>어떻게 (이 앱에서)</h4><ul>{% for h in st.how %}<li>{{ h }}</li>{% endfor %}</ul></div>
+      </div>
+      <div class="small"><a href="/stages/{{ st.key }}">단계 소개</a> · <a href="/roadmap">맵에서 보기</a>{% for title, path in st.docs %} · <a href="{{ doc_url(path) }}" target="_blank" rel="noopener">{{ title }}</a>{% endfor %}</div>
+    </details>
+    {% endif %}
     {% block content %}{% endblock %}
   </main>
   <div id="toasts"></div>

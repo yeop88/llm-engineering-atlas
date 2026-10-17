@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ stage.title }}{% endblock %}
+{% block content %}
+{% set flow = registry.MAIN_FLOW %}
+{% set idx = (flow | map(attribute="key") | list).index(stage.key) if stage.flow == "main" else -1 %}
+<a href="/roadmap" class="small">← 맵</a>
+<div class="row between" style="align-items:flex-end">
+  <h1><span class="stage-no">{{ stage.no }}</span> {{ stage.title }} <span class="muted" style="font-weight:400;font-size:18px">{{ stage.en }}</span></h1>
+  <span class="badge {{ 'ok' if stage.status == 'done' else ('warn' if stage.status == 'basic' else '') }}">{{ stage.status_label }}</span>
+</div>
+<p class="lead">{{ stage.summary }}</p>
+
+<div class="grid cols-3">
+  <div class="card stack"><h2>원리</h2><p>{{ stage.principle }}</p></div>
+  <div class="card stack"><h2>왜 하는가</h2><p>{{ stage.why }}</p></div>
+  <div class="card stack"><h2>어떻게 (이 앱에서)</h2><ul>{% for h in stage.how %}<li>{{ h }}</li>{% endfor %}</ul></div>
+</div>
+
+<div class="grid cols-2" style="margin-top:16px">
+  <div class="card stack">
+    <h2>화면</h2>
+    {% if stage.pages %}
+      {% for p in stage.pages %}<a class="card" href="{{ p.href }}" style="padding:10px;color:inherit"><b>{{ p.label }}</b> <span class="small muted">{{ p.desc }}</span></a>{% endfor %}
+    {% else %}
+      <div class="empty">아직 이 단계의 테스트 화면이 없습니다. 진행하면 여기에 생깁니다.</div>
+    {% endif %}
+  </div>
+  <div class="card stack">
+    <h2>앞으로 할 일</h2>
+    {% if stage.plans %}<ul>{% for p in stage.plans %}<li>{{ p }}</li>{% endfor %}</ul>{% else %}<div class="small muted">계획된 추가 작업이 없습니다.</div>{% endif %}
+    {% if stage.docs %}<h3>문서</h3><div class="small">{% for title, path in stage.docs %}<a href="{{ doc_url(path) }}" target="_blank" rel="noopener">{{ title }}</a>{{ " · " if not loop.last }}{% endfor %}</div>{% endif %}
+  </div>
+</div>
+
+{% if idx >= 0 %}
+<div class="row between" style="margin-top:20px">
+  {% if idx > 0 %}{% set p = flow[idx - 1] %}<a class="btn" href="/stages/{{ p.key }}">← {{ p.no }} {{ p.title }}</a>{% else %}<span></span>{% endif %}
+  {% if idx < flow | length - 1 %}{% set n = flow[idx + 1] %}<a class="btn" href="/stages/{{ n.key }}">{{ n.no }} {{ n.title }} →</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

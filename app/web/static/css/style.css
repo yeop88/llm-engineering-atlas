@@ -63,11 +63,11 @@ p.lead { color: var(--muted); margin: 0 0 18px; }
 }
 .brand { font-weight: 700; color: var(--text); font-size: 15px; }
 .topbar nav { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
-.topbar nav a { padding: 6px 10px; border-radius: 8px; color: var(--muted); }
+.topbar nav a { padding: 6px 9px; border-radius: 8px; color: var(--muted); }
 .topbar nav a.active, .topbar nav a:hover { background: var(--accent-weak); color: var(--accent); text-decoration: none; }
 /* 기능 묶음 드롭다운: 마우스를 올리거나 키보드로 포커스하면 펼침 */
 .nav-group { position: relative; }
-.nav-group > button { font: inherit; padding: 6px 10px; border-radius: 8px; color: var(--muted); background: none; border: 0; cursor: pointer; }
+.nav-group > button { font: inherit; padding: 6px 9px; border-radius: 8px; color: var(--muted); background: none; border: 0; cursor: pointer; }
 .nav-group > button.active, .nav-group:hover > button, .nav-group:focus-within > button { background: var(--accent-weak); color: var(--accent); }
 .nav-menu { display: none; position: absolute; top: 100%; left: 0; z-index: 50; min-width: 260px; padding: 6px; margin-top: 2px;
   background: var(--panel); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, .12); }
@@ -221,4 +221,19 @@ mark { background: color-mix(in srgb, #fab219 45%, transparent); color: inherit;
 .flow-box.sm { padding: 1px 8px; font-size: 12px; }
 .flow-box.done { background: color-mix(in srgb, var(--ok) 14%, transparent); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
 .flow-box.plan { border-style: dashed; }
+.flow-box.basic { background: color-mix(in srgb, var(--warn) 10%, transparent); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+.flow-box .stage-no { min-width: 0; padding: 0 5px; font-size: 12px; }
 a.flow-box:hover { border-color: var(--accent); text-decoration: none; }
+
+/* 단계 설명 패널 (원리 · 왜 · 어떻게) */
+.stage-info { margin: 0 0 16px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); }
+.stage-info > summary { cursor: pointer; list-style: none; }
+.stage-info > summary::-webkit-details-marker { display: none; }
+.stage-info > summary::before { content: "▸ "; color: var(--muted); }
+.stage-info[open] > summary::before { content: "▾ "; }
+.stage-no { display: inline-block; min-width: 26px; padding: 0 6px; border-radius: 6px; background: var(--accent-weak); color: var(--accent); font-weight: 700; text-align: center; }
+.stage-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 10px 0 6px; }
+.stage-grid h4 { margin: 0 0 4px; font-size: 13px; color: var(--muted); }
+.stage-grid p, .stage-grid ul { margin: 0; font-size: 14px; line-height: 1.6; }
+.stage-grid ul { padding-left: 18px; }
+@media (max-width: 900px) { .stage-grid { grid-template-columns: 1fr; } }
