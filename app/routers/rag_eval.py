@@ -1,5 +1,7 @@
 """문서 검색 평가 세트: 만들기(LLM 생성 · 문장 추출 · 직접 입력 · 가져오기) · 검토 · 내보내기."""
 
+import random
+import time
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -7,9 +9,10 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db import ChunkSet, Collection, Document, EvalSet, SessionLocal, get_db
-from app.rag import evaluation
-from app.schemas import EvalItemIn, EvalSetCreate, EvalSetGenerate, EvalSetUpdate
+from app import crud
+from app.db import ChunkSet, Collection, Document, EmbeddingModel, EvalSet, SessionLocal, TestRun, VectorIndex, get_db
+from app.rag import evaluation, service
+from app.schemas import EvalItemIn, EvalRunRequest, EvalSetCreate, EvalSetGenerate, EvalSetUpdate
 from app.services import llm
 from app.services.jobs import Job, jobs
 
@@ -153,3 +156,90 @@ def export_eval_set(set_id: int, db: DB) -> JSONResponse:
     keys = ("query", "doc_ids", "evidence", "type", "filename")
     body = {"name": s.name, "method": s.method, "config": s.config, "items": [{k: it[k] for k in keys if k in it} for it in s.items]}
     return JSONResponse(body, headers={"Content-Disposition": f'attachment; filename="eval_set_{s.id}.json"'})
+
+
+# ── 조합 평가 ───────────────────────────────────────────────────────────────
+MODE_LABEL = {"dense": "의미", "bm25": "BM25", "hybrid": "하이브리드"}
+
+
+def _describe(db: Session, collection_id: int, cfg: dict[str, Any]) -> tuple[str, list[str]]:
+    """설정 검증 + 자동 이름 + 쓰는 모델 목록."""
+    models: list[str] = []
+    if cfg["mode"] == "bm25":
+        cs = db.get(ChunkSet, cfg.get("chunk_set_id") or 0)
+        if cs is None and cfg.get("index_id"):
+            idx = db.get(VectorIndex, cfg["index_id"])
+            cs = db.get(ChunkSet, idx.chunk_set_id) if idx else None
+            cfg["chunk_set_id"], cfg["index_id"] = (cs.id if cs else None), None
+        if cs is None or cs.collection_id != collection_id:
+            raise HTTPException(400, "BM25 설정에는 이 컬렉션의 청크 세트가 필요합니다.")
+        parts = [cs.name, "BM25"]
+    else:
+        idx = db.get(VectorIndex, cfg.get("index_id") or 0)
+        cs = db.get(ChunkSet, idx.chunk_set_id) if idx else None
+        if idx is None or cs is None or cs.collection_id != collection_id:
+            raise HTTPException(400, "의미·하이브리드 설정에는 이 컬렉션의 벡터 인덱스가 필요합니다.")
+        models.append(idx.model_hf_id)
+        dim = f" {idx.truncate_dim}d" if idx.truncate_dim else ""
+        parts = [cs.name, idx.model_hf_id.split("/")[-1] + dim, MODE_LABEL[cfg["mode"]]]
+    if cfg.get("reranker_id"):
+        rr = db.get(EmbeddingModel, cfg["reranker_id"])
+        if rr is None or rr.kind != "reranker":
+            raise HTTPException(400, "리랭커 모델을 찾을 수 없습니다.")
+        models.append(rr.hf_id)
+        parts.append("+ " + rr.hf_id.split("/")[-1])
+    return " · ".join(parts), models
+
+
+@router.post("/eval-sets/{set_id}/evaluate", status_code=202)
+def evaluate(set_id: int, body: EvalRunRequest, db: DB) -> dict:
+    s = _eval_set(db, set_id)
+    if s.status != "ready" or not s.items:
+        raise HTTPException(400, "준비된 평가 세트가 아닙니다.")
+    configs, models = [], []
+    for c in body.configs:
+        cfg = c.model_dump() | {"top_k": max(10, c.top_k)}  # 지표를 @10 까지 계산
+        label, used = _describe(db, s.collection_id, cfg)
+        cfg["label"] = c.label or label
+        configs.append(cfg)
+        models += used
+    items = list(s.items)
+    if body.max_queries and body.max_queries < len(items):
+        items = random.Random(body.seed).sample(items, body.max_queries)
+    title = f"평가 · {s.name} · {len(configs)}개 조합 × 질문 {len(items)}"
+
+    def work(job: Job) -> dict[str, Any]:
+        started = time.perf_counter()
+        with SessionLocal() as sdb:
+            res = evaluation.run_eval(lambda q, cfg: service.search(sdb, q, cfg), items, configs, job)
+            res["eval_set"] = {"id": s.id, "name": s.name, "method": s.method, "n_items": len(s.items)}
+            seconds = time.perf_counter() - started
+            res["seconds"] = round(seconds, 1)
+            summary = {"best": res["results"][0]["label"] if res["results"] else None}
+            run = crud.record_run(
+                sdb, "rag_eval", list(dict.fromkeys(models)), title,
+                {"eval_set_id": s.id, "collection_id": s.collection_id, "configs": configs, "max_queries": body.max_queries},
+                res | {"summary": summary}, seconds * 1000,
+            )  # fmt: skip
+            res["run_id"] = run.id
+        return res
+
+    job = jobs.submit("rag_eval", title, work, eval_set_id=s.id)
+    return job.to_dict()
+
+
+@router.get("/eval-sets/{set_id}/runs")
+def eval_runs(set_id: int, db: DB, limit: int = 20) -> list[dict]:
+    """이 평가 세트로 돌린 조합 평가 이력 (최근순)."""
+    _eval_set(db, set_id)
+    rows = db.scalars(select(TestRun).where(TestRun.kind == "rag_eval").order_by(TestRun.created_at.desc()).limit(200))
+    out = []
+    for r in rows:
+        if (r.params or {}).get("eval_set_id") != set_id:
+            continue
+        best = next((e for e in r.result.get("results", []) if e.get("status") == "ok"), None)
+        out.append({"id": r.id, "title": r.title, "created_at": r.created_at.isoformat(), "n_configs": len(r.params.get("configs", [])),
+                    "best": best and {"label": best["label"], "metrics": best["metrics"]}})  # fmt: skip
+        if len(out) >= limit:
+            break
+    return out

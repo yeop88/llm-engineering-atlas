@@ -6,6 +6,7 @@
   청킹 방식(크기·겹침·경계)이 달라도 같은 기준으로 비교한다.
 """
 
+import math
 import random
 import re
 import threading
@@ -18,8 +19,8 @@ from sqlalchemy.orm import Session
 
 from app.db import Chunk, Document
 from app.rag.korean import split_sentences
-from app.services import llm
-from app.services.jobs import Job
+from app.services import llm, stats
+from app.services.jobs import Job, JobCancelled
 
 GRAM = 4
 EVIDENCE_HIT = 0.6  # 근거 문장의 n-gram 중 이 비율 이상이 청크에 있으면 '근거를 담은 청크'
@@ -233,4 +234,103 @@ def finalize(items: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[st
         "with_evidence": sum(1 for it in out if it.get("evidence")),
         "lexical_overlap": round(sum(ov) / len(ov), 3) if ov else None,
         "duplicates_removed": len(items) - len(out),
+    }
+
+
+# ── 평가 실행 ───────────────────────────────────────────────────────────────
+K_VALUES = (1, 3, 5, 10)
+PRIMARY = "ndcg@10"
+
+
+def judge(results: list[dict[str, Any]], item: dict[str, Any], ev_grams: set[str] | None) -> dict[str, Any]:
+    """검색 결과(순위순 청크) → 정답 순위. 근거 문장이 있으면 근거를 담은 첫 청크, 없으면 정답 문서의 첫 청크."""
+    docs = set(item["doc_ids"])
+    target_rank = doc_rank = None
+    seen_docs: list[int] = []
+    for i, r in enumerate(results, 1):
+        if r["document_id"] not in seen_docs:
+            seen_docs.append(r["document_id"])
+        if doc_rank is None and r["document_id"] in docs:
+            doc_rank = len(seen_docs)  # 문서 단위 순위 (같은 문서의 청크 여러 개는 한 번만 센다)
+        if target_rank is None:
+            hit = coverage(ev_grams, grams(r["text"])) >= EVIDENCE_HIT if ev_grams else r["document_id"] in docs
+            if hit:
+                target_rank = i
+    found_docs = len(docs & set(seen_docs[:5]))
+    return {"rank": target_rank, "doc_rank": doc_rank, "doc_recall@5": found_docs / len(docs)}
+
+
+def query_metrics(j: dict[str, Any]) -> dict[str, float]:
+    r = j["rank"]
+    m = {f"hit@{k}": float(r is not None and r <= k) for k in K_VALUES}
+    m["mrr@10"] = 1.0 / r if r is not None and r <= 10 else 0.0
+    m["ndcg@10"] = 1.0 / math.log2(r + 1) if r is not None and r <= 10 else 0.0
+    m["doc_mrr@10"] = 1.0 / j["doc_rank"] if j["doc_rank"] is not None and j["doc_rank"] <= 10 else 0.0
+    m["doc_recall@5"] = j["doc_recall@5"]
+    return m
+
+
+def run_eval(search_fn: Any, items: list[dict[str, Any]], configs: list[dict[str, Any]], job: Job | None = None) -> dict[str, Any]:
+    """configs 마다 모든 질문을 검색하고 지표 · 95% 구간 · 1위와의 짝지은 비교 · 질문 유형별 지표를 낸다.
+    search_fn(query, cfg) → service.search 결과 (테스트에서 바꿔 끼울 수 있게 주입)."""
+    ev = [grams(it["evidence"]) if it.get("evidence") else None for it in items]
+    total = len(items) * len(configs)
+    out = []
+    step = 0
+    for ci, cfg in enumerate(configs):
+        entry: dict[str, Any] = {"label": cfg.get("label") or f"설정 {ci + 1}", "config": cfg}
+        per_q: list[dict[str, Any]] = []
+        lat: list[float] = []
+        try:
+            for qi, it in enumerate(items):
+                step += 1
+                if job and (qi % 5 == 0 or qi == len(items) - 1):
+                    job.update(step / total * 0.97, f"[{ci + 1}/{len(configs)}] {entry['label']} — 질문 {qi + 1}/{len(items)}")
+                res = search_fn(it["query"], cfg)
+                lat.append(res.get("total_ms") or 0.0)
+                j = judge(res["results"], it, ev[qi])
+                top = res["results"][0] if res["results"] else None
+                per_q.append(j | query_metrics(j) | {"top1": {"filename": top["filename"], "text": top["text"][:160]} if top else None})
+        except JobCancelled:
+            raise
+        except Exception as exc:  # 인덱스 미준비·저장소 연결 실패 등은 그 설정만 실패로
+            entry |= {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
+            out.append(entry)
+            step = (ci + 1) * len(items)
+            continue
+        metric_names = list(per_q[0]) if per_q else []
+        metric_names = [m for m in metric_names if m not in ("rank", "doc_rank", "top1")]
+        entry["status"] = "ok"
+        entry["metrics"] = {m: round(sum(q[m] for q in per_q) / len(per_q), 4) for m in metric_names}
+        entry["ci"] = {m: stats.mean_ci([q[m] for q in per_q]) for m in (PRIMARY, "hit@5", "mrr@10")}
+        lat_sorted = sorted(lat)
+        entry["latency_ms"] = {"mean": round(sum(lat) / len(lat), 1), "p95": round(lat_sorted[min(len(lat) - 1, int(0.95 * len(lat)))], 1)}
+        by_type: dict[str, list[float]] = defaultdict(list)
+        for it, q in zip(items, per_q, strict=True):
+            by_type[it.get("type") or "manual"].append(q[PRIMARY])
+        entry["by_type"] = {t: {"n": len(v), PRIMARY: round(sum(v) / len(v), 4)} for t, v in by_type.items()}
+        entry["per_query"] = per_q
+        out.append(entry)
+
+    ok = sorted([e for e in out if e["status"] == "ok"], key=lambda e: -e["metrics"][PRIMARY])
+    if len(ok) > 1:
+        best = [q[PRIMARY] for q in ok[0]["per_query"]]
+        for e in ok[1:]:
+            e["vs_best"] = {"metric": PRIMARY, "against": ok[0]["label"], **stats.paired_mean([q[PRIMARY] for q in e["per_query"]], best)}
+    results = ok + [e for e in out if e["status"] != "ok"]
+    # 질문별 비교표: 설정마다 정답 순위만 (전체 per_query 는 결과에서 빼서 크기를 줄인다)
+    queries = [
+        {"id": it["id"], "query": it["query"], "type": it.get("type"), "filename": it.get("filename"),
+         "ranks": [e["per_query"][qi]["rank"] for e in ok],
+         "top1": [e["per_query"][qi]["top1"] for e in ok]}
+        for qi, it in enumerate(items)
+    ]  # fmt: skip
+    for e in ok:
+        del e["per_query"]
+    return {
+        "primary_metric": PRIMARY,
+        "n_queries": len(items),
+        "results": results,
+        "queries": queries,
+        "bootstrap": {"n": stats.N_BOOT, "level": stats.LEVEL},
     }

@@ -142,3 +142,107 @@ def test_eval_set_api(client, collection, monkeypatch):
     assert len(client.get(f"/api/collections/{cid}/eval-sets").json()) == 3
     assert client.delete(f"/api/eval-sets/{m['id']}").status_code == 200
     assert client.get(f"/api/eval-sets/{m['id']}").status_code == 404
+
+
+# ── 조합 평가 ───────────────────────────────────────────────────────────────
+def _chunk(doc, text):
+    return {"document_id": doc, "text": text, "filename": f"{doc}.txt"}
+
+
+def test_judge_evidence_and_doc_ranks():
+    item = {"doc_ids": [2], "evidence": "공문서는 어문규범에 맞추어 한글로 작성하여야 한다"}
+    results = [
+        _chunk(1, "해외직구 등록제"),
+        _chunk(1, "다른 내용"),
+        _chunk(3, "같은 내용 사본: 공문서는 어문규범에 맞추어 한글로 작성하여야 한다"),
+        _chunk(2, "법령 다른 조문"),
+    ]
+    j = evaluation.judge(results, item, evaluation.grams(item["evidence"]))
+    assert j["rank"] == 3  # 근거는 문서 id 와 상관없이 텍스트로 (사본 문서도 정답)
+    assert j["doc_rank"] == 3 and j["doc_recall@5"] == 1.0  # 문서 순위는 중복 문서를 한 번만 센다: 1, 3, 2
+    m = evaluation.query_metrics(j)
+    assert m["hit@1"] == 0 and m["hit@3"] == 1 and m["mrr@10"] == pytest.approx(1 / 3) and m["ndcg@10"] == pytest.approx(0.5)
+    no_ev = evaluation.judge(results, {"doc_ids": [2], "evidence": ""}, None)
+    assert no_ev["rank"] == 4  # 근거가 없으면 정답 문서의 첫 청크
+    assert evaluation.query_metrics(evaluation.judge([], item, evaluation.grams(item["evidence"])))["ndcg@10"] == 0
+
+
+def test_run_eval_ranks_configs_with_ci():
+    items = [
+        {
+            "id": f"q{i}",
+            "query": f"질문{i}",
+            "doc_ids": [i],
+            "evidence": f"정답 문장 번호 {i} 입니다",
+            "type": "fact" if i % 2 else "paraphrase",
+        }
+        for i in range(30)
+    ]
+
+    def search(q, cfg):
+        i = int(q[2:])
+        hit = _chunk(i, f"정답 문장 번호 {i} 입니다")
+        if cfg["label"] == "good":
+            res = [hit, _chunk(99, "x")]
+        elif cfg["label"] == "broken":
+            raise RuntimeError("인덱스 없음")
+        else:  # 짝수 질문(다른 표현)은 못 찾음
+            res = [_chunk(99, "x"), hit] if i % 2 else [_chunk(99, "x")]
+        return {"results": res, "total_ms": 10.0}
+
+    r = evaluation.run_eval(search, items, [{"label": "bad"}, {"label": "good"}, {"label": "broken"}])
+    labels = [e["label"] for e in r["results"]]
+    assert labels == ["good", "bad", "broken"] and r["results"][2]["status"] == "error"
+    good, bad = r["results"][0], r["results"][1]
+    assert good["metrics"]["ndcg@10"] == 1.0 and good["ci"]["ndcg@10"] == [1.0, 1.0]
+    assert bad["vs_best"]["significant"] and bad["vs_best"]["diff"] < 0
+    assert bad["by_type"]["paraphrase"]["ndcg@10"] == 0 and bad["by_type"]["fact"]["ndcg@10"] > 0
+    assert r["queries"][0]["ranks"] == [1, None] and "per_query" not in good and good["latency_ms"]["mean"] == 10.0
+
+
+def test_run_eval_stops_on_cancel():
+    from app.services.jobs import Job, JobCancelled
+
+    job = Job(id="x", kind="rag_eval", title="t")
+    calls = []
+
+    def search(q, cfg):
+        calls.append(cfg["label"])
+        job._cancel.set()  # 사용자가 취소 버튼을 누른 상태
+        return {"results": [], "total_ms": 1.0}
+
+    items = [{"id": f"q{i}", "query": "질문", "doc_ids": [1], "evidence": ""} for i in range(10)]
+    with pytest.raises(JobCancelled):  # 취소는 '그 설정만 실패'가 아니라 평가 전체를 멈춘다
+        evaluation.run_eval(search, items, [{"label": "a"}, {"label": "b"}], job)
+    assert set(calls) == {"a"}
+
+
+def test_evaluate_api(client, collection):
+    cid, cs_id, docs = collection
+    emb = next(m["id"] for m in client.get("/api/models").json() if m["hf_id"] == "nlpai-lab/KURE-v1")
+    rr = next(m["id"] for m in client.get("/api/models").json() if m["hf_id"] == "BAAI/bge-reranker-v2-m3")
+    idx = client.post("/api/indexes", json={"chunk_set_id": cs_id, "model_id": emb}).json()
+    assert _wait(client, idx["job"])["status"] == "done"
+    s = client.post(
+        f"/api/collections/{cid}/eval-sets",
+        json={"name": "평가", "items": [
+            {"query": "해외직구 구매대행업체 등록제 시행", "doc_ids": [docs["보도자료.txt"]]},
+            {"query": "공문서는 한글로 작성", "doc_ids": [docs["법령.txt"]], "evidence": "공문서는 어문규범에 맞추어 한글로 작성하여야 한다"},
+        ]},
+    ).json()  # fmt: skip
+    configs = [
+        {"index_id": idx["id"], "mode": "dense"},
+        {"index_id": idx["id"], "mode": "bm25"},  # 인덱스로 지정해도 BM25 는 그 청크 세트로
+        {"index_id": idx["id"], "mode": "hybrid", "reranker_id": rr},
+    ]
+    assert client.post(f"/api/eval-sets/{s['id']}/evaluate", json={"configs": [{"mode": "dense"}]}).status_code == 400
+    job = _wait(client, client.post(f"/api/eval-sets/{s['id']}/evaluate", json={"configs": configs}).json())
+    assert job["status"] == "done", job
+    r = job["result"]
+    assert r["n_queries"] == 2 and len(r["results"]) == 3 and all(e["status"] == "ok" for e in r["results"])
+    labels = {e["label"] for e in r["results"]}
+    assert any("BM25" in lab for lab in labels) and any("+ bge-reranker-v2-m3" in lab for lab in labels)
+    assert all("ci" in e and e["latency_ms"]["mean"] > 0 for e in r["results"])
+    assert len(r["queries"]) == 2 and len(r["queries"][0]["ranks"]) == 3
+    runs = client.get(f"/api/eval-sets/{s['id']}/runs").json()
+    assert runs[0]["id"] == r["run_id"] and runs[0]["n_configs"] == 3

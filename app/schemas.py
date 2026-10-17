@@ -343,3 +343,10 @@ class EvalSetGenerate(LLMRef):
     min_chars: int = Field(default=200, ge=20, le=4000)
     seed: int = 0
     concurrency: int = Field(default=4, ge=1, le=16)
+
+
+class EvalRunRequest(BaseModel):
+    configs: list[SearchConfig] = Field(min_length=1, max_length=32)  # 청킹 × 모델 × 검색 방식 × 리랭커 조합
+    max_queries: int | None = Field(default=None, ge=1, le=5000)  # 질문이 많을 때 무작위로 일부만
+    seed: int = 0
+

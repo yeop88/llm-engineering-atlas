@@ -140,3 +140,5 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/collections/{id}/eval-sets/generate` | 생성 (작업) `{"method": "llm"\|"sentence", "chunk_set_id", "n_passages", "styles", "provider"?, "model"?}` |
 | GET / PATCH / DELETE | `/api/eval-sets/{id}` | 조회(질문 포함) / 이름·질문 수정 / 삭제 |
 | GET | `/api/eval-sets/{id}/export` | JSON 내려받기 |
+| POST | `/api/eval-sets/{id}/evaluate` | 조합 평가 (작업) `{"configs": [SearchConfig, ...], "max_queries"?}` |
+| GET | `/api/eval-sets/{id}/runs` | 이 평가 세트의 조합 평가 이력 |
