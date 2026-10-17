@@ -1,0 +1,296 @@
+"""SentenceTransformer 모델 로딩/언로딩(LRU)과 역할(query/document)별 인코딩."""
+
+import copy
+import gc
+import logging
+import threading
+import time
+from collections import OrderedDict
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from typing import Any, Literal
+
+import numpy as np
+import torch
+from sentence_transformers import SentenceTransformer
+
+from app.config import get_settings
+from app.db import EmbeddingModel
+from app.services.runtime import resolve_device, resolve_dtype
+
+log = logging.getLogger(__name__)
+
+Role = Literal["query", "document", "plain"]
+
+
+@dataclass(frozen=True)
+class ModelSpec:
+    """DB 행의 스냅샷. 로딩/인코딩에 필요한 값만 담는다(스레드 간 안전하게 공유)."""
+
+    id: int
+    hf_id: str
+    modalities: tuple[str, ...]
+    trust_remote_code: bool
+    load_kwargs: dict[str, Any]
+    multimodal_load_kwargs: dict[str, Any]
+    query_prompt: str
+    document_prompt: str
+    query_prefix: str
+    document_prefix: str
+    query_kwargs: dict[str, Any]
+    document_kwargs: dict[str, Any]
+    max_seq_len: int | None = None
+
+    @classmethod
+    def from_row(cls, row: EmbeddingModel) -> ModelSpec:
+        return cls(
+            id=row.id,
+            hf_id=row.hf_id,
+            modalities=tuple(row.modalities or ["text"]),
+            trust_remote_code=row.trust_remote_code,
+            load_kwargs=copy.deepcopy(row.load_kwargs or {}),
+            multimodal_load_kwargs=copy.deepcopy(row.multimodal_load_kwargs or {}),
+            query_prompt=row.query_prompt or "",
+            document_prompt=row.document_prompt or "",
+            query_prefix=row.query_prefix or "",
+            document_prefix=row.document_prefix or "",
+            query_kwargs=copy.deepcopy(row.query_kwargs or {}),
+            document_kwargs=copy.deepcopy(row.document_kwargs or {}),
+            max_seq_len=row.max_seq_len,
+        )
+
+    @property
+    def is_multimodal(self) -> bool:
+        return any(m != "text" for m in self.modalities)
+
+    def profile_for(self, multimodal: bool) -> str:
+        return "multimodal" if multimodal and self.is_multimodal else "text"
+
+
+@dataclass
+class LoadedModel:
+    key: str
+    spec: ModelSpec
+    profile: str
+    model: SentenceTransformer
+    device: str
+    dtype: str
+    load_seconds: float
+    loaded_at: datetime
+    last_used: float = field(default_factory=time.time)
+    lock: threading.Lock = field(default_factory=threading.Lock)
+
+    @property
+    def dim(self) -> int | None:
+        return self.model.get_embedding_dimension()
+
+    @property
+    def prompts(self) -> dict[str, str]:
+        return dict(self.model.prompts or {})
+
+    def summary(self) -> dict[str, Any]:
+        return {
+            "key": self.key,
+            "model_id": self.spec.id,
+            "hf_id": self.spec.hf_id,
+            "profile": self.profile,
+            "device": self.device,
+            "dtype": self.dtype,
+            "dim": self.dim,
+            "max_seq_length": getattr(self.model, "max_seq_length", None),
+            "prompts": list(self.prompts),
+            "load_seconds": round(self.load_seconds, 2),
+            "loaded_at": self.loaded_at.isoformat(),
+            "last_used": datetime.fromtimestamp(self.last_used, UTC).isoformat(),
+        }
+
+
+@dataclass
+class EncodeResult:
+    embeddings: np.ndarray
+    seconds: float
+    applied: dict[str, Any]
+    warnings: list[str]
+
+
+class ModelManager:
+    def __init__(self, max_loaded: int):
+        self.max_loaded = max(1, max_loaded)
+        self._models: OrderedDict[str, LoadedModel] = OrderedDict()
+        self._lock = threading.RLock()
+        self._load_locks: dict[str, threading.Lock] = {}
+        self.errors: dict[str, str] = {}
+
+    @staticmethod
+    def key_for(spec: ModelSpec, multimodal: bool = False) -> str:
+        return f"{spec.hf_id}::{spec.profile_for(multimodal)}"
+
+    # ── 조회 ────────────────────────────────────────────────────────────────
+    def loaded(self) -> list[LoadedModel]:
+        with self._lock:
+            return list(self._models.values())
+
+    def is_loaded(self, hf_id: str) -> list[str]:
+        with self._lock:
+            return [lm.profile for lm in self._models.values() if lm.spec.hf_id == hf_id]
+
+    # ── 로딩 ────────────────────────────────────────────────────────────────
+    def get(self, spec: ModelSpec, multimodal: bool = False) -> LoadedModel:
+        key = self.key_for(spec, multimodal)
+        with self._lock:
+            lm = self._models.get(key)
+            if lm is not None and lm.spec == spec:
+                self._models.move_to_end(key)
+                lm.last_used = time.time()
+                return lm
+            load_lock = self._load_locks.setdefault(key, threading.Lock())
+
+        with load_lock:  # 같은 모델을 동시에 두 번 로드하지 않도록
+            with self._lock:
+                lm = self._models.get(key)
+                if lm is not None and lm.spec == spec:
+                    return lm
+                if lm is not None:  # 설정이 바뀌었으면 다시 로드
+                    self._drop(key)
+            lm = self._load(spec, multimodal, key)
+            with self._lock:
+                self._models[key] = lm
+                self._evict()
+            return lm
+
+    def _load(self, spec: ModelSpec, multimodal: bool, key: str) -> LoadedModel:
+        settings = get_settings()
+        device = resolve_device()
+        profile = spec.profile_for(multimodal)
+        kwargs = copy.deepcopy(spec.multimodal_load_kwargs if profile == "multimodal" else spec.load_kwargs)
+        model_kwargs = dict(kwargs.pop("model_kwargs", {}) or {})
+        dtype = resolve_dtype(device)
+        model_kwargs.setdefault("dtype", dtype)
+
+        log.info("모델 로드 시작: %s (%s, %s, %s)", spec.hf_id, profile, device, dtype)
+        started = time.perf_counter()
+        try:
+            model = SentenceTransformer(
+                spec.hf_id,
+                device=device,
+                trust_remote_code=spec.trust_remote_code,
+                token=settings.hf_token or None,
+                model_kwargs=model_kwargs,
+                **kwargs,
+            )
+        except Exception as exc:
+            self.errors[key] = f"{type(exc).__name__}: {exc}"
+            raise
+        self.errors.pop(key, None)
+        # 토크나이저에 model_max_length 가 없으면 사실상 무한대로 잡히므로 카탈로그 값으로 제한
+        current = getattr(model, "max_seq_length", None)
+        if spec.max_seq_len and (current is None or current > 1_000_000):
+            model.max_seq_length = spec.max_seq_len
+        elapsed = time.perf_counter() - started
+        log.info("모델 로드 완료: %s (%.1fs)", spec.hf_id, elapsed)
+        return LoadedModel(
+            key=key,
+            spec=spec,
+            profile=profile,
+            model=model,
+            device=device,
+            dtype=str(model_kwargs["dtype"]).replace("torch.", ""),
+            load_seconds=elapsed,
+            loaded_at=datetime.now(UTC),
+        )
+
+    def _evict(self) -> None:
+        while len(self._models) > self.max_loaded:
+            old_key = next(iter(self._models))
+            log.info("LRU 언로드: %s", old_key)
+            self._drop(old_key)
+
+    def _drop(self, key: str) -> None:
+        lm = self._models.pop(key, None)
+        if lm is None:
+            return
+        del lm
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    def unload(self, hf_id: str) -> int:
+        with self._lock:
+            keys = [k for k, lm in self._models.items() if lm.spec.hf_id == hf_id]
+            for k in keys:
+                self._drop(k)
+            return len(keys)
+
+    def unload_all(self) -> int:
+        with self._lock:
+            keys = list(self._models)
+            for k in keys:
+                self._drop(k)
+            return len(keys)
+
+    # ── 인코딩 ──────────────────────────────────────────────────────────────
+    def encode(
+        self,
+        lm: LoadedModel,
+        inputs: list[Any],
+        role: Role = "plain",
+        *,
+        truncate_dim: int | None = None,
+        normalize: bool = True,
+        batch_size: int | None = None,
+    ) -> EncodeResult:
+        spec = lm.spec
+        warnings: list[str] = []
+        prompt_name = {"query": spec.query_prompt, "document": spec.document_prompt}.get(role, "")
+        prefix = {"query": spec.query_prefix, "document": spec.document_prefix}.get(role, "")
+        extra = copy.deepcopy({"query": spec.query_kwargs, "document": spec.document_kwargs}.get(role, {}))
+
+        kwargs: dict[str, Any] = {}
+        if prompt_name:
+            if prompt_name in lm.prompts:
+                kwargs["prompt_name"] = prompt_name
+            else:
+                warnings.append(f"프롬프트 '{prompt_name}' 이(가) 모델에 없어 무시했습니다. 사용 가능: {list(lm.prompts) or '없음'}")
+        if prefix:
+            inputs = [prefix + x if isinstance(x, str) else x for x in inputs]
+
+        dim = lm.dim
+        if truncate_dim and dim and truncate_dim >= dim:
+            truncate_dim = None
+        lm.last_used = time.time()
+        started = time.perf_counter()
+        with lm.lock, torch.inference_mode():
+            emb = lm.model.encode(
+                inputs,
+                batch_size=batch_size or get_settings().default_batch_size,
+                normalize_embeddings=normalize,
+                truncate_dim=truncate_dim or None,
+                convert_to_numpy=True,
+                show_progress_bar=False,
+                **kwargs,
+                **extra,
+            )
+        seconds = time.perf_counter() - started
+        emb = np.asarray(emb, dtype=np.float32)
+        if not np.isfinite(emb).all():
+            warnings.append("임베딩에 NaN/Inf 가 포함되어 있습니다. dtype(float16 등) 설정을 확인하세요.")
+        applied = {
+            "role": role,
+            "prompt_name": kwargs.get("prompt_name"),
+            "prompt_text": lm.prompts.get(kwargs["prompt_name"]) if "prompt_name" in kwargs else None,
+            "prefix": prefix or None,
+            "extra_kwargs": extra or None,
+            "truncate_dim": truncate_dim,
+            "normalize": normalize,
+        }
+        return EncodeResult(embeddings=emb, seconds=seconds, applied=applied, warnings=warnings)
+
+
+_manager: ModelManager | None = None
+
+
+def get_manager() -> ModelManager:
+    global _manager
+    if _manager is None:
+        _manager = ModelManager(get_settings().max_loaded_models)
+    return _manager

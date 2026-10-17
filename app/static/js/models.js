@@ -1,0 +1,138 @@
+const params = new URLSearchParams(location.search);
+["q", "modality", "tag", "status", "sort"].forEach(k => { if (params.get(k)) $(`#f-${k}`).value = params.get(k); });
+
+let timer = null;
+let current = [];          // 현재 목록 (필터 적용 후)
+const selected = new Set(); // 선택한 모델 id (다운로드 진행 중 자동 새로고침에도 유지)
+
+async function load() {
+  const qs = new URLSearchParams();
+  ["q", "modality", "tag", "status", "sort"].forEach(k => { const v = $(`#f-${k}`).value; if (v) qs.set(k, v); });
+  history.replaceState(null, "", `?${qs}`);
+  current = await api(`/api/models?${qs}`);
+  [...selected].forEach(id => { if (!current.some(m => m.id === id)) selected.delete(id); });
+  $("#rows").innerHTML = current.map(row).join("") || '<tr><td colspan="11" class="empty">조건에 맞는 모델이 없습니다</td></tr>';
+  updateSelection();
+  loadExclusions();
+  clearTimeout(timer);
+  if (current.some(m => m.download_job)) timer = setTimeout(load, 1500);
+}
+
+function updateSelection() {
+  $("#sel-count").textContent = `${selected.size}개 선택`;
+  $("#btn-bulk-delete").disabled = selected.size === 0;
+  $("#sel-all").checked = current.length > 0 && current.every(m => selected.has(m.id));
+  $("#sel-all").indeterminate = selected.size > 0 && !$("#sel-all").checked;
+}
+
+async function loadExclusions() {
+  const ex = await api("/api/catalog/exclusions");
+  const btn = $("#btn-restore");
+  btn.hidden = ex.length === 0;
+  btn.textContent = `삭제한 기본 모델 복원 (${ex.length})`;
+  btn.title = ex.map(e => e.hf_id).join("\n");
+}
+
+// 삭제 대화상자: 단건/다건 공통
+function openDelete(ids) {
+  const targets = current.filter(m => ids.includes(m.id));
+  if (!targets.length) return;
+  const cacheBytes = targets.reduce((s, m) => s + (m.cached ? m.cache_size_bytes : 0), 0);
+  $("#del-msg").textContent = targets.length === 1 ? `${targets[0].hf_id} 을(를) 카탈로그에서 삭제할까요?` : `선택한 ${targets.length}개 모델을 카탈로그에서 삭제할까요?`;
+  $("#del-list").innerHTML = targets.length > 1 ? targets.map(m => esc(m.hf_id)).join("<br>") : "";
+  $("#del-cache").checked = false;
+  $("#del-cache-row").hidden = cacheBytes === 0;
+  $("#del-cache-size").textContent = cacheBytes ? `(${fmtBytes(cacheBytes)} 확보)` : "";
+  $("#del-go").onclick = async e => {
+    const r = await busy(e.target, () => api("/api/models/bulk-delete", { method: "POST", body: { ids: targets.map(m => m.id), delete_cache: $("#del-cache").checked } }));
+    $("#dlg-delete").close();
+    targets.forEach(m => selected.delete(m.id));
+    toast(`${r.deleted.length}개 모델 삭제${r.freed_bytes ? ` · ${fmtBytes(r.freed_bytes)} 확보` : ""}`, "ok");
+    load();
+  };
+  $("#dlg-delete").showModal();
+}
+
+function row(m) {
+  const dims = m.mrl_dims?.length ? `<div class="small muted" title="Matryoshka 차원">${m.mrl_dims.join("/")}</div>` : "";
+  const loaded = m.loaded_profiles.length > 0;
+  const dl = m.download_job
+    ? `<div class="progress" title="${esc(m.download_job.message)}"><div style="width:${pct(m.download_job.progress)}%"></div></div><div class="small muted">${esc(m.download_job.message)}</div>`
+    : "";
+  return `<tr>
+    <td><input type="checkbox" class="sel" value="${m.id}" ${selected.has(m.id) ? "checked" : ""} aria-label="${esc(m.hf_id)} 선택"></td>
+    <td><button class="btn sm" title="즐겨찾기" onclick="fav(${m.id}, ${!m.is_favorite})">${m.is_favorite ? "★" : "☆"}</button></td>
+    <td><a href="/models/${m.id}"><b>${esc(m.name)}</b></a><br>
+      <a class="small mono" href="https://huggingface.co/${esc(m.hf_id)}" target="_blank" rel="noopener">${esc(m.hf_id)}</a>
+      <div class="small muted">${esc(m.provider)}</div></td>
+    <td class="nowrap">${esc(m.release_date)}</td>
+    <td class="num">${esc(m.params)}</td>
+    <td class="num">${m.dim ?? "-"}${dims}</td>
+    <td class="num">${fmtNum(m.max_seq_len)}</td>
+    <td class="small">${esc(m.license)}</td>
+    <td class="small">${esc(m.languages)}<br><span class="muted">${m.modalities.join(" · ")}</span></td>
+    <td>${modelBadges(m)}${m.cached ? `<div class="small muted">${fmtBytes(m.cache_size_bytes)}</div>` : ""}${dl}</td>
+    <td class="right nowrap">
+      ${m.cached ? "" : `<button class="btn sm" onclick="download(${m.id}, this)" ${m.download_job ? "disabled" : ""}>다운로드</button>`}
+      ${loaded ? `<button class="btn sm" onclick="act(${m.id}, 'unload', this)">언로드</button>`
+               : `<button class="btn sm" onclick="act(${m.id}, 'load', this)">로드</button>`}
+      ${m.cached ? `<button class="btn sm danger" onclick="removeCache(${m.id}, '${esc(m.hf_id)}', this)">캐시 삭제</button>` : ""}
+      <a class="btn sm" href="/playground?model=${m.id}">테스트</a>
+      <button class="btn sm danger" title="카탈로그에서 삭제" onclick="openDelete([${m.id}])">삭제</button>
+    </td>
+  </tr>`;
+}
+
+async function download(id, btn) {
+  await busy(btn, () => api(`/api/models/${id}/download`, { method: "POST" }));
+  toast("다운로드를 시작했습니다");
+  load();
+}
+async function act(id, action, btn) {
+  const r = await busy(btn, () => api(`/api/models/${id}/${action}`, { method: "POST" }));
+  toast(action === "load" ? `로드 완료 (${r.load_seconds}s, ${r.dim}차원, ${r.device}/${r.dtype})` : "언로드했습니다", "ok");
+  load();
+}
+async function removeCache(id, hfId, btn) {
+  if (!confirm(`${hfId} 의 로컬 캐시를 삭제할까요?`)) return;
+  const r = await busy(btn, () => api(`/api/models/${id}/cache`, { method: "DELETE" }));
+  toast(`${fmtBytes(r.freed_bytes)} 확보`, "ok");
+  load();
+}
+async function fav(id, value) {
+  await api(`/api/models/${id}`, { method: "PATCH", body: { is_favorite: value } });
+  load();
+}
+
+$("#btn-add").onclick = () => $("#dlg-add").showModal();
+$("#add-go").onclick = async e => {
+  const id = $("#add-id").value.trim();
+  if (!id) return;
+  const m = await busy(e.target, () => api("/api/hub/import", { method: "POST", body: { hf_id: id } }));
+  $("#dlg-add").close();
+  toast(`${m.hf_id} 추가됨`, "ok");
+  location.href = `/models/${m.id}`;
+};
+
+$("#rows").addEventListener("change", e => {
+  if (!e.target.classList.contains("sel")) return;
+  const id = Number(e.target.value);
+  e.target.checked ? selected.add(id) : selected.delete(id);
+  updateSelection();
+});
+$("#sel-all").addEventListener("change", e => {
+  current.forEach(m => (e.target.checked ? selected.add(m.id) : selected.delete(m.id)));
+  $$("#rows .sel").forEach(cb => (cb.checked = e.target.checked));
+  updateSelection();
+});
+$("#btn-bulk-delete").onclick = () => openDelete([...selected]);
+$("#btn-restore").onclick = async e => {
+  if (!confirm("삭제했던 기본 카탈로그 모델을 모두 다시 등록할까요? (카탈로그 기본 설정으로 등록됩니다)")) return;
+  const r = await busy(e.target, () => api("/api/catalog/restore", { method: "POST" }));
+  toast(`${r.added}개 모델 복원`, "ok");
+  load();
+};
+
+["f-modality", "f-tag", "f-status", "f-sort"].forEach(id => $(`#${id}`).addEventListener("change", load));
+let qTimer; $("#f-q").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(load, 250); });
+load();

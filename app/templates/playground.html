@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}플레이그라운드{% endblock %}
+{% block content %}
+<h1>플레이그라운드</h1>
+<p class="lead">모델을 처음 사용하면 자동으로 다운로드·로드됩니다(시간이 걸릴 수 있음). ● 로드됨 · ○ 다운로드됨</p>
+
+<div class="tabs">
+  <button data-tab="t-retrieve">검색 비교 (여러 모델)</button>
+  <button data-tab="t-sim">유사도 행렬</button>
+  <button data-tab="t-embed">임베딩 확인</button>
+  <button data-tab="t-map">임베딩 지도</button>
+</div>
+
+<!-- 검색 비교 -->
+<section class="tab-panel" id="t-retrieve">
+  <div class="grid cols-2">
+    <div class="card stack">
+      <div><label>모델 (Ctrl/Shift 로 여러 개 선택, 최대 8개)</label><select id="r-models" multiple></select></div>
+      <div class="row">
+        <div class="field grow"><label>Matryoshka 차원</label><select id="r-dim"></select></div>
+        <div class="field"><label>Top-K</label><input id="r-k" type="number" value="5" min="1" max="100"></div>
+      </div>
+    </div>
+    <div class="card stack">
+      <div><label>쿼리</label><input id="r-query" value="태양에서 온 입자가 만드는 하늘의 빛"></div>
+      <div><label>문서 (한 줄에 하나)</label>
+        <textarea id="r-docs" rows="9">오로라는 태양풍의 대전 입자가 지구 자기장을 따라 극지방 대기와 충돌하며 빛을 내는 현상이다.
+Auroras occur when charged particles from the solar wind collide with gases in the upper atmosphere.
+태양광 패널은 반도체 셀로 햇빛을 직접 전기로 바꾼다.
+노을은 해가 질 때 빛이 대기를 길게 통과하며 붉은빛이 남아 보이는 현상이다.
+김치는 배추를 소금에 절여 양념에 버무린 발효 음식이다.
+The event horizon is the boundary around a black hole beyond which nothing can escape.
+번개는 구름 속 전하가 순간적으로 방전되며 생기는 빛과 소리다.</textarea></div>
+      <div class="row"><span class="spacer"></span><button class="btn primary" id="r-run">검색 실행</button></div>
+    </div>
+  </div>
+  <div id="r-out" class="row" style="align-items:flex-start; margin-top:16px; overflow-x:auto; flex-wrap:nowrap"></div>
+</section>
+
+<!-- 유사도 행렬 -->
+<section class="tab-panel" id="t-sim">
+  <div class="grid cols-2">
+    <div class="card stack">
+      <div><label>모델</label><select id="s-model"></select></div>
+      <div class="row">
+        <div class="field grow"><label>Matryoshka 차원</label><select id="s-dim"></select></div>
+        <div class="field"><label>역할(프롬프트)</label>
+          <select id="s-role"><option value="plain">plain (프롬프트 없음)</option><option value="query">query</option><option value="document">document</option></select></div>
+      </div>
+    </div>
+    <div class="card stack">
+      <div><label>문장 (한 줄에 하나, 2~64개)</label>
+        <textarea id="s-texts" rows="8">고양이가 소파 위에서 자고 있다.
+A cat is sleeping on the sofa.
+소파에서 강아지가 놀고 있다.
+주식 시장이 오늘 크게 하락했다.
+The stock market fell sharply today.
+오늘 날씨가 맑고 따뜻하다.</textarea></div>
+      <div class="row"><span class="spacer"></span><button class="btn primary" id="s-run">행렬 계산</button></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px; overflow:auto" id="s-out"><div class="empty">결과가 여기에 표시됩니다</div></div>
+</section>
+
+<!-- 임베딩 -->
+<section class="tab-panel" id="t-embed">
+  <div class="grid cols-2">
+    <div class="card stack">
+      <div><label>모델</label><select id="e-model"></select></div>
+      <div class="row">
+        <div class="field grow"><label>Matryoshka 차원</label><select id="e-dim"></select></div>
+        <div class="field"><label>역할</label>
+          <select id="e-role"><option value="query">query</option><option value="document">document</option><option value="plain">plain</option></select></div>
+        <div class="field"><label>미리보기 값 개수</label><input id="e-preview" type="number" value="16" min="0" max="4096"></div>
+        <label class="row" style="align-self:end"><input type="checkbox" id="e-norm" checked> L2 정규화</label>
+      </div>
+    </div>
+    <div class="card stack">
+      <div><label>텍스트 (한 줄에 하나)</label><textarea id="e-texts" rows="5">임베딩 모델 테스트 문장입니다.
+EmbeddingGemma 2 is a multimodal embedding model.</textarea></div>
+      <div class="row"><span class="spacer"></span><button class="btn primary" id="e-run">임베딩 생성</button></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px" id="e-out"><div class="empty">결과가 여기에 표시됩니다</div></div>
+</section>
+
+<!-- 임베딩 지도 -->
+<section class="tab-panel" id="t-map">
+  <div class="grid cols-2">
+    <div class="card stack">
+      <div><label>모델 (최대 3개 — 모델별 지도를 나란히 표시)</label><select id="p-models" multiple></select></div>
+      <div class="row">
+        <div class="field"><label>투영 방법</label>
+          <select id="p-method"><option value="pca">PCA (빠름, 전체 구조)</option><option value="tsne">t-SNE (군집 강조, 10개 이상)</option></select></div>
+        <div class="field"><label>역할(프롬프트)</label>
+          <select id="p-role"><option value="plain">plain</option><option value="query">query</option><option value="document">document</option></select></div>
+      </div>
+      <label class="row"><input type="checkbox" id="p-pair" checked> 그룹이 2개이고 개수가 같으면 i번째끼리 의미 쌍으로 보고 선으로 연결 · 정렬도 계산</label>
+      <label class="row"><input type="checkbox" id="p-labels"> 점 옆에 문장 앞부분 표시</label>
+      <p class="small muted" style="margin:0">축 값에는 의미가 없습니다. 점 사이 거리와 무리 짓는 모양만 비교하세요. 2D로 줄이면서 정보가 손실되므로 정확한 비교는 아래 정렬도 표(원래 차원 기준)를 보세요.</p>
+    </div>
+    <div class="card stack">
+      <div><label>문장 (한 줄에 하나, <code>그룹: 문장</code> 형식이면 그룹별 색으로 구분 · 3~300개)</label>
+        <textarea id="p-texts" rows="12">ko: 고양이가 소파 위에서 자고 있다.
+ko: 주식 시장이 오늘 크게 하락했다.
+ko: 내일은 하루 종일 비가 온다.
+ko: 아이들이 운동장에서 축구를 한다.
+ko: 나는 아침마다 커피를 마신다.
+ko: 폭설 때문에 항공편이 취소되었다.
+ko: 의사가 충분한 휴식을 권했다.
+ko: 그녀는 10년 넘게 피아노를 쳤다.
+en: A cat is sleeping on the sofa.
+en: The stock market fell sharply today.
+en: It will rain all day tomorrow.
+en: Children are playing soccer on the playground.
+en: I drink coffee every morning.
+en: The flight was cancelled due to heavy snow.
+en: The doctor recommended plenty of rest.
+en: She has played the piano for over ten years.</textarea></div>
+      <div class="row"><span class="small muted" id="p-count"></span><span class="spacer"></span><button class="btn primary" id="p-run">지도 그리기</button></div>
+    </div>
+  </div>
+  <div id="p-out" style="margin-top:16px"></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"
+        integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', path='js/charts.js') }}"></script>
+<script src="{{ url_for('static', path='js/playground.js') }}"></script>
+{% endblock %}

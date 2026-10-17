@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}모델 상세{% endblock %}
+{% block content %}
+<div class="row between">
+  <div>
+    <a href="/models" class="small">← 모델 목록</a>
+    <h1 id="title">…</h1>
+    <div class="row"><a id="hf-link" class="mono small" target="_blank" rel="noopener"></a><span id="badges"></span></div>
+  </div>
+  <div class="row">
+    <button class="btn" id="b-sync" title="Hub 다운로드 수/좋아요/gated/라이선스 갱신, 빈 스펙 보완">Hub 동기화</button>
+    <button class="btn" id="b-download">다운로드</button>
+    <button class="btn primary" id="b-load">로드</button>
+    <button class="btn" id="b-load-mm" hidden>멀티모달로 로드</button>
+    <button class="btn" id="b-unload">언로드</button>
+    <button class="btn danger" id="b-delete">삭제</button>
+  </div>
+</div>
+<div id="dl-progress" style="margin:10px 0"></div>
+<div id="error"></div>
+
+<div class="grid cols-2" style="margin-top:14px">
+  <form class="card stack" id="form">
+    <h2>카탈로그 정보</h2>
+    <div class="grid cols-2">
+      <div><label>표시 이름</label><input name="name"></div>
+      <div><label>제공사</label><input name="provider"></div>
+      <div><label>공개일</label><input name="release_date" placeholder="YYYY-MM-DD"></div>
+      <div><label>파라미터</label><input name="params"></div>
+      <div><label>임베딩 차원</label><input name="dim" type="number"></div>
+      <div><label>Matryoshka 차원 (쉼표)</label><input name="mrl_dims" data-type="intlist" placeholder="768,512,256,128"></div>
+      <div><label>최대 시퀀스 길이</label><input name="max_seq_len" type="number"></div>
+      <div><label>라이선스</label><input name="license"></div>
+      <div><label>언어</label><input name="languages"></div>
+      <div><label>모달리티 (쉼표)</label><input name="modalities" data-type="list" placeholder="text,image"></div>
+      <div><label>태그 (쉼표)</label><input name="tags" data-type="list"></div>
+      <div class="row" style="align-items:end; gap:16px">
+        <label class="row"><input type="checkbox" name="trust_remote_code"> trust_remote_code</label>
+        <label class="row"><input type="checkbox" name="gated"> gated</label>
+      </div>
+    </div>
+    <h3 style="margin-top:8px">프롬프트 / 인코딩 설정</h3>
+    <p class="small muted" style="margin:0">prompt_name 은 모델 설정(<code>config_sentence_transformers.json</code>)에 정의된 이름이어야 합니다. 정의되지 않은 모델은 prefix 로 직접 붙이세요.</p>
+    <div class="grid cols-2">
+      <div><label>쿼리 prompt_name</label><input name="query_prompt" list="prompt-names"></div>
+      <div><label>문서 prompt_name</label><input name="document_prompt" list="prompt-names"></div>
+      <div><label>쿼리 prefix</label><input name="query_prefix"></div>
+      <div><label>문서 prefix</label><input name="document_prefix"></div>
+      <div><label>쿼리 encode kwargs (JSON)</label><textarea class="mono" name="query_kwargs" data-type="json" rows="2" style="min-height:52px"></textarea></div>
+      <div><label>문서 encode kwargs (JSON)</label><textarea class="mono" name="document_kwargs" data-type="json" rows="2" style="min-height:52px"></textarea></div>
+      <div><label>로드 kwargs - 텍스트 (JSON)</label><textarea class="mono" name="load_kwargs" data-type="json" rows="3" style="min-height:70px"></textarea></div>
+      <div><label>로드 kwargs - 멀티모달 (JSON)</label><textarea class="mono" name="multimodal_load_kwargs" data-type="json" rows="3" style="min-height:70px"></textarea></div>
+    </div>
+    <datalist id="prompt-names"></datalist>
+    <div><label>메모</label><textarea name="notes" rows="4"></textarea></div>
+    <div class="row"><span class="spacer"></span><button class="btn primary" type="submit">저장</button></div>
+  </form>
+
+  <div class="stack">
+    <div class="card">
+      <h2>런타임 / Hub</h2>
+      <div class="kv" id="runtime"></div>
+    </div>
+    <div class="card stack">
+      <h2>빠른 테스트</h2>
+      <div class="row">
+        <div class="field grow"><label>쿼리</label><input id="qt-query" value="북극광은 왜 생기나요?"></div>
+      </div>
+      <div><label>문서 (한 줄에 하나)</label>
+        <textarea id="qt-docs">오로라는 태양풍의 대전 입자가 지구 자기장을 따라 극지방 대기와 충돌하며 빛을 내는 현상이다.
+Auroras occur when charged particles from the solar wind collide with gases in the upper atmosphere.
+김치는 배추를 소금에 절여 양념에 버무린 발효 음식이다.
+The marathon is a long-distance race of 42.195 km.</textarea></div>
+      <div class="row"><span class="spacer"></span><button class="btn primary" id="qt-run">검색 실행</button></div>
+      <div id="qt-out"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>const MODEL_ID = {{ model_id }};</script>
+<script src="{{ url_for('static', path='js/model_detail.js') }}"></script>
+{% endblock %}

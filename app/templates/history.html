@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}이력{% endblock %}
+{% block content %}
+<h1>테스트 이력</h1>
+<p class="lead">플레이그라운드·멀티모달·임베딩 지도·벤치마크 실행 기록입니다 (SQLite: <code>data/app.db</code>).</p>
+<div class="card row" style="margin-bottom:14px">
+  <div class="field"><label>종류</label>
+    <select id="kind"><option value="">전체</option><option value="benchmark">benchmark</option><option value="retrieval">retrieval</option>
+      <option value="similarity">similarity</option><option value="embed">embed</option><option value="projection">projection</option><option value="multimodal">multimodal</option></select></div>
+  <div class="small muted" id="summary" style="align-self:end"></div>
+  <span class="spacer"></span>
+  <div class="row" style="align-self:end">
+    <span class="small muted" id="sel-count">0개 선택</span>
+    <button class="btn sm danger" id="btn-del-sel" disabled>선택 삭제</button>
+    <button class="btn sm danger" id="btn-del-all">전체 삭제</button>
+  </div>
+</div>
+<div class="table-wrap"><table>
+  <thead><tr><th><input type="checkbox" id="sel-all" aria-label="전체 선택"></th><th>#</th><th>종류</th><th>제목</th><th>모델</th><th class="num">소요</th><th>시간</th><th></th></tr></thead>
+  <tbody id="rows"></tbody>
+</table></div>
+<dialog id="dlg"><div class="row between"><h2 id="dlg-title"></h2><button class="btn sm" onclick="$('#dlg').close()">닫기</button></div><pre id="dlg-body"></pre></dialog>
+{% endblock %}
+{% block scripts %}
+<script>
+let runs = [];
+const selected = new Set();
+
+async function load() {
+  const kind = $("#kind").value;
+  const [list, summary] = await Promise.all([api(`/api/runs?limit=500${kind ? `&kind=${kind}` : ""}`), api("/api/runs/summary")]);
+  runs = list;
+  [...selected].forEach(id => { if (!runs.some(r => r.id === id)) selected.delete(id); });
+  $("#summary").textContent = `전체 ${summary.total}건 · ` + Object.entries(summary.by_kind).map(([k, n]) => `${k} ${n}`).join(" · ");
+  $("#btn-del-all").textContent = kind ? `'${kind}' 전체 삭제` : "전체 삭제";
+  $("#btn-del-all").disabled = (kind ? summary.by_kind[kind] || 0 : summary.total) === 0;
+  $("#rows").innerHTML = runs.map(r => `<tr>
+    <td><input type="checkbox" class="sel" value="${r.id}" ${selected.has(r.id) ? "checked" : ""} aria-label="#${r.id} 선택"></td>
+    <td>${r.id}</td><td><span class="badge muted">${r.kind}</span></td><td>${esc(r.title)}</td>
+    <td class="small mono">${r.model_hf_ids.map(esc).join("<br>")}</td><td class="num">${(r.duration_ms / 1000).toFixed(2)}s</td><td class="small nowrap">${fmtDate(r.created_at)}</td>
+    <td class="right nowrap">${r.kind === "benchmark" ? `<a class="btn sm" href="/benchmark" onclick="sessionStorage.setItem('run', ${r.id})">결과 보기</a>` : ""}
+      <button class="btn sm" onclick="show(${r.id})">JSON</button><button class="btn sm danger" onclick="del(${r.id})">삭제</button></td></tr>`).join("")
+    || '<tr><td colspan="8" class="empty">기록 없음</td></tr>';
+  updateSelection();
+}
+function updateSelection() {
+  $("#sel-count").textContent = `${selected.size}개 선택`;
+  $("#btn-del-sel").disabled = selected.size === 0;
+  $("#sel-all").checked = runs.length > 0 && runs.every(r => selected.has(r.id));
+  $("#sel-all").indeterminate = selected.size > 0 && !$("#sel-all").checked;
+}
+async function show(id) { const r = await api(`/api/runs/${id}`); $("#dlg-title").textContent = `#${r.id} ${r.title}`; $("#dlg-body").textContent = JSON.stringify(r, null, 2); $("#dlg").showModal(); }
+async function del(id) {
+  if (!confirm(`이력 #${id} 을(를) 삭제할까요?`)) return;
+  await api(`/api/runs/${id}`, { method: "DELETE" }); selected.delete(id); toast("삭제했습니다", "ok"); load();
+}
+$("#btn-del-sel").onclick = async e => {
+  if (!confirm(`선택한 ${selected.size}건의 이력을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  const r = await busy(e.target, () => api("/api/runs/bulk-delete", { method: "POST", body: { ids: [...selected] } }));
+  selected.clear(); toast(`${r.deleted}건 삭제`, "ok"); load();
+};
+$("#btn-del-all").onclick = async e => {
+  const kind = $("#kind").value;
+  const scope = kind ? `'${kind}' 종류의 이력을 모두` : "모든 이력을";
+  if (!confirm(`${scope} 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  const r = await busy(e.target, () => api(`/api/runs?confirm=true${kind ? `&kind=${kind}` : ""}`, { method: "DELETE" }));
+  selected.clear(); toast(`${r.deleted}건 삭제`, "ok"); load();
+};
+$("#rows").addEventListener("change", e => {
+  if (!e.target.classList.contains("sel")) return;
+  const id = Number(e.target.value);
+  e.target.checked ? selected.add(id) : selected.delete(id);
+  updateSelection();
+});
+$("#sel-all").addEventListener("change", e => {
+  runs.forEach(r => (e.target.checked ? selected.add(r.id) : selected.delete(r.id)));
+  $$("#rows .sel").forEach(cb => (cb.checked = e.target.checked));
+  updateSelection();
+});
+$("#kind").addEventListener("change", () => { selected.clear(); load(); });
+load();
+</script>
+{% endblock %}

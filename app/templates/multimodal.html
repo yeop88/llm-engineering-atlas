@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}멀티모달{% endblock %}
+{% block content %}
+<h1>멀티모달 검색 (텍스트 → 이미지)</h1>
+<p class="lead">이미지를 올리고 텍스트로 검색합니다. EmbeddingGemma 2 · Qwen3-VL-Embedding · Jina v5 Omni · CLIP 처럼 <code>image</code> 모달리티가 있는 모델만 표시됩니다.
+EmbeddingGemma 2 는 멀티모달 프로필로 로드할 때 비전 인코더가 추가됩니다(텍스트 전용 프로필과 같은 벡터 공간).</p>
+
+<div class="grid cols-2">
+  <div class="card stack">
+    <div><label>모델 (여러 개 선택 가능)</label><select id="m-models" multiple></select></div>
+    <div><label>텍스트 쿼리</label><input id="m-query" value="해질녘 바닷가"></div>
+    <div class="row"><span class="spacer"></span><button class="btn primary" id="m-run">검색</button></div>
+  </div>
+  <div class="card stack">
+    <div><label>이미지 (여러 장, 최대 64장)</label><input type="file" id="m-files" accept="image/*" multiple></div>
+    <div class="thumbs" id="m-thumbs"><div class="empty">이미지를 선택하세요</div></div>
+  </div>
+</div>
+<div id="m-out" class="row" style="align-items:flex-start; margin-top:16px; overflow-x:auto; flex-wrap:nowrap"></div>
+<p class="small muted" style="margin-top:20px">오디오/비디오 임베딩은 추가 의존성이 필요합니다 — docs/multimodal.md 참고.</p>
+{% endblock %}
+{% block scripts %}
+<script>
+const urls = {};
+fillModelSelect($("#m-models"), { multimodal: true });
+$("#m-files").addEventListener("change", () => {
+  Object.values(urls).forEach(URL.revokeObjectURL);
+  const files = [...$("#m-files").files];
+  files.forEach(f => (urls[f.name] = URL.createObjectURL(f)));
+  $("#m-thumbs").innerHTML = files.map(f => `<figure><img src="${urls[f.name]}" alt=""><figcaption>${esc(f.name)}</figcaption></figure>`).join("") || '<div class="empty">이미지를 선택하세요</div>';
+});
+$("#m-run").onclick = async e => {
+  const ids = selectedIds($("#m-models"));
+  const files = [...$("#m-files").files];
+  if (!ids.length || !files.length) return toast("모델과 이미지를 선택하세요", "err");
+  const form = new FormData();
+  form.append("model_ids", ids.join(","));
+  form.append("query", $("#m-query").value);
+  files.forEach(f => form.append("files", f));
+  $("#m-out").innerHTML = '<div class="empty">모델 로드 및 인코딩 중…</div>';
+  const r = await busy(e.target, () => api("/api/multimodal/retrieve", { method: "POST", form }));
+  $("#m-out").innerHTML = r.results.map(res => `<div class="card result-col" style="flex:1">
+    <h3 class="mono" style="word-break:break-all">${esc(res.hf_id)}</h3>
+    ${res.error ? `<div class="errbox">${esc(res.error)}</div>` : `<div class="small muted">${res.seconds}s · Q: ${appliedInfo(res.applied.query)}</div>${warningsHtml(res.warnings)}
+    <div class="thumbs" style="margin-top:8px">${res.ranking.map((x, i) => `<figure><img src="${urls[x.name]}" alt="">
+      <figcaption><span class="badge ${i === 0 ? "ok" : "muted"}">#${i + 1}</span> <b class="mono">${x.score.toFixed(3)}</b><br>${esc(x.name)}</figcaption></figure>`).join("")}</div>`}
+  </div>`).join("");
+};
+</script>
+{% endblock %}

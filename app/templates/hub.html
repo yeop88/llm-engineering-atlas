@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Hub 검색{% endblock %}
+{% block content %}
+<h1>Hugging Face Hub 검색</h1>
+<p class="lead"><code>sentence-similarity</code> / <code>feature-extraction</code> 태그의 모델을 실시간으로 검색해 카탈로그에 추가합니다.</p>
+
+<div class="card row" style="margin-bottom:14px">
+  <div class="field grow"><label>검색어</label><input id="q" placeholder="예: embedding, ko, bge, qwen3, gemma" value="embedding"></div>
+  <div class="field"><label>정렬</label>
+    <select id="sort"><option value="downloads">다운로드</option><option value="likes">좋아요</option><option value="created_at">최신 생성</option><option value="last_modified">최근 수정</option></select></div>
+  <div class="field"><label>파이프라인</label>
+    <select id="pipe"><option value="">둘 다</option><option value="sentence-similarity">sentence-similarity</option><option value="feature-extraction">feature-extraction</option></select></div>
+  <div class="field"><label>개수</label><select id="limit"><option>20</option><option selected>40</option><option>100</option></select></div>
+  <div style="align-self:end"><button class="btn primary" id="go">검색</button></div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>모델</th><th class="num">다운로드</th><th class="num">좋아요</th><th>생성일</th><th>라이브러리</th><th>라이선스</th><th class="right"></th></tr></thead>
+    <tbody id="rows"><tr><td colspan="7" class="empty">검색어를 입력하세요</td></tr></tbody>
+  </table>
+</div>
+
+<dialog id="dlg">
+  <div class="row between"><h2 id="dlg-title"></h2><button class="btn sm" onclick="$('#dlg').close()">닫기</button></div>
+  <div id="dlg-body"></div>
+</dialog>
+{% endblock %}
+{% block scripts %}
+<script>
+async function search(btn) {
+  const qs = new URLSearchParams({ q: $("#q").value, sort: $("#sort").value, limit: $("#limit").value });
+  if ($("#pipe").value) qs.set("pipeline_tag", $("#pipe").value);
+  $("#rows").innerHTML = '<tr><td colspan="7" class="empty">검색 중…</td></tr>';
+  const rows = await busy(btn, () => api(`/api/hub/search?${qs}`));
+  $("#rows").innerHTML = rows.map(r => `<tr>
+    <td><a class="mono" href="https://huggingface.co/${esc(r.hf_id)}" target="_blank" rel="noopener">${esc(r.hf_id)}</a>
+      ${r.gated ? '<span class="badge warn">gated</span>' : ""} ${r.sentence_transformers ? '<span class="badge">ST</span>' : ""}
+      <div class="small muted">${esc(r.pipeline_tag || "")}</div></td>
+    <td class="num">${fmtNum(r.downloads)}</td><td class="num">${fmtNum(r.likes)}</td>
+    <td class="nowrap">${(r.created_at || "").slice(0, 10)}</td><td class="small">${esc(r.library || "-")}</td><td class="small">${esc(r.license || "-")}</td>
+    <td class="right nowrap"><button class="btn sm" onclick="info('${esc(r.hf_id)}', this)">상세</button>
+      ${r.registered_id ? `<a class="btn sm" href="/models/${r.registered_id}">등록됨 →</a>` : `<button class="btn sm primary" onclick="importModel('${esc(r.hf_id)}', this)">추가</button>`}</td>
+  </tr>`).join("") || '<tr><td colspan="7" class="empty">결과 없음</td></tr>';
+}
+async function info(id, btn) {
+  const m = await busy(btn, () => api(`/api/hub/info?hf_id=${encodeURIComponent(id)}`));
+  $("#dlg-title").textContent = id;
+  const prompts = Object.entries(m.prompts || {});
+  $("#dlg-body").innerHTML = `<div class="kv">${[
+    ["파라미터", m.params], ["차원(추정)", m.dim], ["최대 길이", fmtNum(m.max_seq_len)], ["라이선스", m.license], ["언어", m.languages],
+    ["모달리티", m.modalities.join(", ")], ["trust_remote_code", m.trust_remote_code], ["gated", m.gated], ["저장소 크기", fmtBytes(m.size_bytes)],
+    ["sentence-transformers", m.sentence_transformers], ["쿼리/문서 프롬프트", `${m.query_prompt || "-"} / ${m.document_prompt || "-"}`],
+  ].map(([k, v]) => `<div>${k}</div><div>${esc(v ?? "-")}</div>`).join("")}</div>
+  ${prompts.length ? `<h3 style="margin-top:14px">정의된 프롬프트</h3><pre>${esc(prompts.map(([k, v]) => `${k}: ${v}`).join("\n"))}</pre>` : ""}`;
+  $("#dlg").showModal();
+}
+async function importModel(id, btn) {
+  const m = await busy(btn, () => api("/api/hub/import", { method: "POST", body: { hf_id: id } }));
+  toast(`${m.hf_id} 추가됨`, "ok");
+  btn.outerHTML = `<a class="btn sm" href="/models/${m.id}">등록됨 →</a>`;
+}
+$("#go").onclick = e => search(e.target);
+$("#q").addEventListener("keydown", e => { if (e.key === "Enter") search($("#go")); });
+search($("#go"));
+</script>
+{% endblock %}
