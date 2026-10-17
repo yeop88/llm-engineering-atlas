@@ -8,6 +8,7 @@ Role = Literal["query", "document", "plain"]
 
 class ModelBase(BaseModel):
     name: str | None = None
+    kind: Literal["embedding", "reranker"] | None = None
     provider: str | None = None
     release_date: str | None = None
     params: str | None = None
@@ -46,6 +47,7 @@ class ModelOut(BaseModel):
     id: int
     hf_id: str
     name: str
+    kind: str
     provider: str
     release_date: str
     params: str
@@ -137,3 +139,56 @@ class ProjectionRequest(BaseModel):
 class BulkDelete(BaseModel):
     ids: list[int] = Field(min_length=1, max_length=500)
     delete_cache: bool = False
+
+
+# ── 문서 검색 (RAG) ──────────────────────────────────────────────────────────
+class CollectionCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    description: str = ""
+    domain: Literal["general", "legal", "support", "internal", "product", "other"] = "general"
+
+
+class CollectionUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = None
+    domain: Literal["general", "legal", "support", "internal", "product", "other"] | None = None
+
+
+class ChunkStrategy(BaseModel):
+    method: Literal["recursive", "fixed", "sentence", "legal", "page"] = "recursive"
+    size: int = Field(default=800, ge=100, le=8000)
+    overlap: int = Field(default=100, ge=0, le=4000)
+    overlap_sentences: int = Field(default=1, ge=0, le=5)
+    min_chars: int = Field(default=20, ge=0, le=1000)
+    include_title: bool = True
+
+
+class ChunkSetCreate(BaseModel):
+    name: str = Field(default="", max_length=200)
+    strategy: ChunkStrategy = ChunkStrategy()
+
+
+class IndexCreate(BaseModel):
+    chunk_set_id: int
+    model_id: int
+    store: Literal["qdrant", "pgvector", "mariadb"] | None = None  # 비우면 기본 저장소
+    truncate_dim: int | None = Field(default=None, ge=8)
+
+
+class SearchConfig(BaseModel):
+    label: str = ""
+    index_id: int | None = None  # 의미 검색(dense/hybrid)에 필요
+    chunk_set_id: int | None = None  # BM25 만 쓸 때
+    mode: Literal["dense", "bm25", "hybrid"] = "hybrid"
+    fusion: Literal["rrf", "weighted"] = "rrf"
+    alpha: float = Field(default=0.5, ge=0, le=1)  # weighted 에서 의미 검색 가중치
+    top_k: int = Field(default=10, ge=1, le=100)
+    candidates: int = Field(default=50, ge=1, le=500)
+    reranker_id: int | None = None
+    rerank_top: int = Field(default=30, ge=1, le=200)
+    doc_ids: list[int] | None = None
+
+
+class SearchRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=2000)
+    configs: list[SearchConfig] = Field(min_length=1, max_length=4)

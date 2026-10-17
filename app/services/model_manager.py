@@ -40,6 +40,7 @@ class ModelSpec:
     query_kwargs: dict[str, Any]
     document_kwargs: dict[str, Any]
     max_seq_len: int | None = None
+    kind: str = "embedding"  # embedding | reranker
 
     @classmethod
     def from_row(cls, row: EmbeddingModel) -> ModelSpec:
@@ -57,13 +58,20 @@ class ModelSpec:
             query_kwargs=copy.deepcopy(row.query_kwargs or {}),
             document_kwargs=copy.deepcopy(row.document_kwargs or {}),
             max_seq_len=row.max_seq_len,
+            kind=row.kind or "embedding",
         )
 
     @property
     def is_multimodal(self) -> bool:
         return any(m != "text" for m in self.modalities)
 
+    @property
+    def is_reranker(self) -> bool:
+        return self.kind == "reranker"
+
     def profile_for(self, multimodal: bool) -> str:
+        if self.is_reranker:
+            return "reranker"
         return "multimodal" if multimodal and self.is_multimodal else "text"
 
 
@@ -72,7 +80,7 @@ class LoadedModel:
     key: str
     spec: ModelSpec
     profile: str
-    model: SentenceTransformer
+    model: Any  # SentenceTransformer 또는 CrossEncoder(리랭커)
     device: str
     dtype: str
     load_seconds: float
@@ -82,11 +90,12 @@ class LoadedModel:
 
     @property
     def dim(self) -> int | None:
-        return self.model.get_embedding_dimension()
+        fn = getattr(self.model, "get_embedding_dimension", None)
+        return fn() if fn else None
 
     @property
     def prompts(self) -> dict[str, str]:
-        return dict(self.model.prompts or {})
+        return dict(getattr(self.model, "prompts", None) or {})
 
     def summary(self) -> dict[str, Any]:
         return {
@@ -97,7 +106,8 @@ class LoadedModel:
             "device": self.device,
             "dtype": self.dtype,
             "dim": self.dim,
-            "max_seq_length": getattr(self.model, "max_seq_length", None),
+            "kind": self.spec.kind,
+            "max_seq_length": getattr(self.model, "max_seq_length", None) or getattr(self.model, "max_length", None),
             "prompts": list(self.prompts),
             "load_seconds": round(self.load_seconds, 2),
             "loaded_at": self.loaded_at.isoformat(),
@@ -169,22 +179,28 @@ class ModelManager:
 
         log.info("모델 로드 시작: %s (%s, %s, %s)", spec.hf_id, profile, device, dtype)
         started = time.perf_counter()
+        common = {
+            "device": device,
+            "trust_remote_code": spec.trust_remote_code,
+            "token": settings.hf_token or None,
+            "model_kwargs": model_kwargs,
+        }
         try:
-            model = SentenceTransformer(
-                spec.hf_id,
-                device=device,
-                trust_remote_code=spec.trust_remote_code,
-                token=settings.hf_token or None,
-                model_kwargs=model_kwargs,
-                **kwargs,
-            )
+            if spec.is_reranker:
+                from sentence_transformers import CrossEncoder
+
+                # 긴 컨텍스트 리랭커(8K~40K)를 그대로 쓰면 메모리·시간이 폭증하므로 기본 길이를 제한
+                kwargs.setdefault("max_length", min(spec.max_seq_len or settings.reranker_max_length, settings.reranker_max_length))
+                model = CrossEncoder(spec.hf_id, **common, **kwargs)
+            else:
+                model = SentenceTransformer(spec.hf_id, **common, **kwargs)
         except Exception as exc:
             self.errors[key] = f"{type(exc).__name__}: {exc}"
             raise
         self.errors.pop(key, None)
         # 토크나이저에 model_max_length 가 없으면 사실상 무한대로 잡히므로 카탈로그 값으로 제한
         current = getattr(model, "max_seq_length", None)
-        if spec.max_seq_len and (current is None or current > 1_000_000):
+        if not spec.is_reranker and spec.max_seq_len and (current is None or current > 1_000_000):
             model.max_seq_length = spec.max_seq_len
         elapsed = time.perf_counter() - started
         log.info("모델 로드 완료: %s (%.1fs)", spec.hf_id, elapsed)
@@ -228,6 +244,24 @@ class ModelManager:
                 self._drop(k)
             return len(keys)
 
+    # ── 리랭킹 ──────────────────────────────────────────────────────────────
+    def rerank(self, lm: LoadedModel, query: str, documents: list[str], batch_size: int | None = None) -> tuple[np.ndarray, float]:
+        """(질의, 문서) 쌍의 관련도 점수. 클수록 관련 있음 (척도는 모델마다 다름)."""
+        if not lm.spec.is_reranker:
+            raise ValueError(f"{lm.spec.hf_id} 는 리랭커가 아닙니다.")
+        if not documents:
+            return np.zeros(0, dtype=np.float32), 0.0
+        lm.last_used = time.time()
+        started = time.perf_counter()
+        with lm.lock, torch.inference_mode():
+            scores = lm.model.predict(
+                [(query, d) for d in documents], batch_size=batch_size or get_settings().default_batch_size, show_progress_bar=False
+            )
+        scores = np.asarray(scores, dtype=np.float32).reshape(len(documents), -1)
+        if scores.shape[1] > 1:  # 다중 레이블 모델은 마지막(관련) 레이블 사용
+            scores = scores[:, -1:]
+        return scores[:, 0], time.perf_counter() - started
+
     # ── 인코딩 ──────────────────────────────────────────────────────────────
     def encode(
         self,
@@ -240,6 +274,8 @@ class ModelManager:
         batch_size: int | None = None,
     ) -> EncodeResult:
         spec = lm.spec
+        if spec.is_reranker:
+            raise ValueError(f"{spec.hf_id} 는 리랭커라 임베딩을 만들 수 없습니다. 임베딩 모델을 선택하세요.")
         warnings: list[str] = []
         prompt_name = {"query": spec.query_prompt, "document": spec.document_prompt}.get(role, "")
         prefix = {"query": spec.query_prefix, "document": spec.document_prefix}.get(role, "")

@@ -15,6 +15,23 @@ FastAPI 라우터 ── models / playground / benchmarks / pages
    └─ services/benchmark.py ─ 데이터셋 + 지표 계산
 ```
 
+## 문서 검색 (RAG) 구성
+
+```
+업로드 ─ rag/parsers ─▶ Document(pages)            ── 앱 DB (SQLite 기본, Alembic 관리)
+            │
+   ChunkSet(전략) ─ rag/chunking + rag/korean(Kiwi 형태소) ─▶ Chunk(text, tokens)
+            │
+   VectorIndex(모델·저장소) ─ ModelManager.encode(document) ─▶ vectorstores/{qdrant|pgvector|mariadb}
+            │
+검색 ─ encode(query) → store.search ┐
+     └ rag/bm25 (청크 세트별 메모리 캐시) ┴ rag/fusion(RRF/가중합) → ModelManager.rerank(CrossEncoder) → 결과
+```
+
+- 청크 id 를 벡터 DB 의 포인트 id 로 쓰고, 문서 id 를 함께 저장해 문서 필터에 씁니다. 벡터 DB 쪽 이름은 `el_vi_{인덱스 id}` 입니다.
+- BM25 는 문서 쪽 가중치를 미리 계산한 희소 행렬(scipy)로 메모리에 두고, 청크 수·최대 id 가 바뀌면 다시 만듭니다.
+- 청크 세트 생성·인덱스 구축은 백그라운드 작업(`jobs`)이고, 실패하면 상태가 `error` 로 남아 화면에서 다시 구축할 수 있습니다.
+
 ## 모델 상태
 
 | 상태 | 의미 | 판단 근거 |
@@ -54,6 +71,8 @@ FastAPI 라우터 ── models / playground / benchmarks / pages
 
 | 데이터 | 위치 |
 |---|---|
+| 벡터 (Qdrant 로컬 모드) | `data/qdrant` (서버/pgvector/MariaDB 는 각 DB) |
+| DB 마이그레이션 | `migrations/` (Alembic) |
 | 앱 DB | `data/app.db` (`DATA_DIR`) |
 | 사용자 데이터셋 | `data/datasets/*.json` |
 | 내장 데이터셋 | `app/data/datasets/*.json` |

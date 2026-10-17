@@ -2,7 +2,7 @@ from collections.abc import Iterator
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, Integer, String, Text, TypeDecorator, create_engine
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, TypeDecorator, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
 from app.config import get_settings
@@ -38,6 +38,7 @@ class EmbeddingModel(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     hf_id: Mapped[str] = mapped_column(String(200), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(200))
+    kind: Mapped[str] = mapped_column(String(20), default="embedding", server_default="embedding", index=True)  # embedding | reranker
     provider: Mapped[str] = mapped_column(String(100), default="")
     release_date: Mapped[str] = mapped_column(String(20), default="")
     params: Mapped[str] = mapped_column(String(50), default="")
@@ -98,13 +99,107 @@ class CatalogExclusion(Base):
     deleted_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
+# ── 문서 검색 (RAG) ──────────────────────────────────────────────────────────
+class Collection(Base):
+    """문서 묶음. 도메인(사내문서·법률·고객문의 등)별로 만들어 청킹·인덱스·검색 설정을 비교한다."""
+
+    __tablename__ = "collections"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(200), unique=True)
+    description: Mapped[str] = mapped_column(Text, default="")
+    domain: Mapped[str] = mapped_column(String(30), default="general")  # general | legal | support | ...
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class Document(Base):
+    __tablename__ = "documents"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    collection_id: Mapped[int] = mapped_column(ForeignKey("collections.id", ondelete="CASCADE"), index=True)
+    filename: Mapped[str] = mapped_column(String(500))
+    title: Mapped[str] = mapped_column(String(500), default="")
+    mime: Mapped[str] = mapped_column(String(100), default="")
+    size_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    sha256: Mapped[str] = mapped_column(String(64), index=True)
+    n_chars: Mapped[int] = mapped_column(Integer, default=0)
+    pages: Mapped[list[Any]] = mapped_column(default=list)  # 페이지(또는 절)별 추출 텍스트 — 청킹 재실행에 사용
+    meta: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class ChunkSet(Base):
+    """한 컬렉션을 특정 청킹 전략으로 나눈 결과. 전략별로 여러 개를 만들어 비교한다."""
+
+    __tablename__ = "chunk_sets"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    collection_id: Mapped[int] = mapped_column(ForeignKey("collections.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    strategy: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending | ready | error
+    n_chunks: Mapped[int] = mapped_column(Integer, default=0)
+    stats: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    doc_ids: Mapped[list[Any]] = mapped_column(default=list)  # 만들 당시 포함된 문서 (이후 추가된 문서 감지용)
+    error: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class Chunk(Base):
+    __tablename__ = "chunks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    chunk_set_id: Mapped[int] = mapped_column(ForeignKey("chunk_sets.id", ondelete="CASCADE"), index=True)
+    document_id: Mapped[int] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), index=True)
+    idx: Mapped[int] = mapped_column(Integer)  # 문서 안에서의 순번
+    text: Mapped[str] = mapped_column(Text)
+    page: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    start: Mapped[int] = mapped_column(Integer, default=0)
+    end: Mapped[int] = mapped_column(Integer, default=0)
+    meta: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    tokens: Mapped[list[Any]] = mapped_column(default=list)  # BM25 용 형태소 토큰
+
+
+class VectorIndex(Base):
+    """청크 세트를 특정 임베딩 모델로 인코딩해 벡터 DB(qdrant / pgvector / mariadb)에 넣은 인덱스."""
+
+    __tablename__ = "vector_indexes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    chunk_set_id: Mapped[int] = mapped_column(ForeignKey("chunk_sets.id", ondelete="CASCADE"), index=True)
+    model_id: Mapped[int | None] = mapped_column(ForeignKey("embedding_models.id", ondelete="SET NULL"), nullable=True)
+    model_hf_id: Mapped[str] = mapped_column(String(200))
+    store: Mapped[str] = mapped_column(String(20))
+    store_collection: Mapped[str] = mapped_column(String(100))  # 벡터 DB 안의 컬렉션/테이블 이름
+    dim: Mapped[int] = mapped_column(Integer, default=0)
+    truncate_dim: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending | building | ready | error
+    n_vectors: Mapped[int] = mapped_column(Integer, default=0)
+    build_seconds: Mapped[float] = mapped_column(Float, default=0.0)
+    error: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
 _settings = get_settings()
-engine = create_engine(_settings.db_url, connect_args={"check_same_thread": False})
+_is_sqlite = _settings.db_url.startswith("sqlite")
+engine = create_engine(_settings.db_url, connect_args={"check_same_thread": False} if _is_sqlite else {})
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
+
+if _is_sqlite:
+
+    @event.listens_for(engine, "connect")
+    def _sqlite_pragmas(dbapi_conn, _record) -> None:
+        cur = dbapi_conn.cursor()
+        cur.execute("PRAGMA foreign_keys=ON")  # ON DELETE CASCADE 동작
+        cur.execute("PRAGMA journal_mode=WAL")  # 백그라운드 작업과 동시 읽기
+        cur.close()
 
 
 def init_db() -> None:
-    Base.metadata.create_all(engine)
+    """Alembic 마이그레이션을 최신으로 적용한다 (migrations/)."""
+    from app.migrate import upgrade_to_head
+
+    upgrade_to_head(engine)
 
 
 def get_db() -> Iterator[Session]:

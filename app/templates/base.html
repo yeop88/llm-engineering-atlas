@@ -12,7 +12,7 @@
     <a class="brand" href="/">◆ {{ app_name }}</a>
     <nav>
       {% set items = [("dashboard", "/", "대시보드"), ("models", "/models", "모델"), ("hub", "/hub", "Hub 검색"),
-                      ("playground", "/playground", "플레이그라운드"), ("multimodal", "/multimodal", "멀티모달"),
+                      ("rag", "/collections", "문서 검색"), ("playground", "/playground", "플레이그라운드"), ("multimodal", "/multimodal", "멀티모달"),
                       ("benchmark", "/benchmark", "벤치마크"), ("history", "/history", "이력")] %}
       {% for key, href, label in items %}
         <a href="{{ href }}" class="{{ 'active' if nav == key }}">{{ label }}</a>

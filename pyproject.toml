@@ -20,6 +20,29 @@ dependencies = [
     "einops>=0.8.2",
     "peft>=0.21.2",
     "scikit-learn>=1.9.1",
+    "qdrant-client>=1.19.1",
+    "psycopg[binary]>=3.3.6",
+    "pgvector>=0.5.1",
+    "pymysql>=1.2.3",
+    "alembic>=1.20.0",
+    "kiwipiepy>=0.24.0",
+    "pypdf>=6.21.0",
+    "python-docx>=1.2.0",
+    "olefile>=0.47",
+]
+
+# ── 가속기별 PyTorch ─────────────────────────────────────────────────────────
+# 하나만 골라 설치합니다:  uv sync --extra cpu | cu126 | cu130 | rocm
+# extra 없이 uv sync 하면 PyPI 기본 torch(Windows=CPU, Linux=CUDA)가 설치됩니다.
+# ROCm(AMD GPU)용 PyTorch 는 Linux 전용으로만 배포됩니다.
+[project.optional-dependencies]
+cpu = ["torch>=2.14.1", "torchvision>=0.29.1"]
+cu126 = ["torch>=2.14.1", "torchvision>=0.29.1"]
+cu130 = ["torch>=2.14.1", "torchvision>=0.29.1"]
+rocm = [
+    "torch>=2.14.1 ; sys_platform == 'linux'",
+    "torchvision>=0.29.1 ; sys_platform == 'linux'",
+    "triton-rocm ; sys_platform == 'linux'",
 ]
 
 [dependency-groups]
@@ -30,6 +53,42 @@ dev = [
 
 [tool.uv]
 package = false
+conflicts = [[{ extra = "cpu" }, { extra = "cu126" }, { extra = "cu130" }, { extra = "rocm" }]]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu126", extra = "cu126" },
+    { index = "pytorch-cu130", extra = "cu130" },
+    { index = "pytorch-rocm", extra = "rocm" },
+]
+torchvision = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu126", extra = "cu126" },
+    { index = "pytorch-cu130", extra = "cu130" },
+    { index = "pytorch-rocm", extra = "rocm" },
+]
+triton-rocm = [{ index = "pytorch-rocm", extra = "rocm" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-rocm"
+url = "https://download.pytorch.org/whl/rocm7.2"
+explicit = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

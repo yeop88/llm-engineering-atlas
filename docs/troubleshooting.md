@@ -3,6 +3,18 @@
 ### `Python was not found`
 이 PC에는 시스템 Python이 없습니다. 모든 명령을 `uv run ...`으로 실행하세요. uv가 `.python-version`(3.14)에 맞는 Python을 자동으로 사용합니다.
 
+### `alembic` 명령이 "애플리케이션 제어 정책에서 차단" 오류로 실행되지 않음
+Windows 의 앱 제어 정책(Smart App Control 등)이 가상환경의 `alembic.exe` 를 막는 경우입니다. `uv run python -m alembic ...` 처럼 모듈로 실행하세요. 앱은 시작할 때 마이그레이션을 직접 적용하므로 평소에는 명령을 칠 필요가 없습니다.
+
+### Qdrant 로컬 모드 "already accessed by another instance"
+`QDRANT_URL` 없이 쓰는 로컬 파일 모드는 한 프로세스만 `data/qdrant` 를 열 수 있습니다. 서버를 두 개 띄웠거나 다른 스크립트가 같은 폴더를 열고 있으면 생깁니다. 여러 프로세스(예: `--workers 2`)로 운영하려면 Qdrant 서버(`docker compose up -d`)를 쓰고 `QDRANT_URL=http://localhost:6333` 을 설정하세요.
+
+### pgvector / MariaDB 가 "설정 안 됨" 또는 "연결 실패"
+`.env` 에 `PGVECTOR_URL` / `MARIADB_URL` 을 넣고 컨테이너를 띄웠는지 확인하세요(`docker compose --profile pgvector --profile mariadb up -d`). 기본 포트는 로컬 DB 와 겹치지 않도록 5433(PostgreSQL), 3307(MariaDB)입니다. MariaDB 는 VECTOR 를 지원하는 11.7 이상이어야 합니다.
+
+### HWP 문서가 "배포용(보호)" 또는 "HWP 5.x 만 지원" 오류
+배포용 문서는 본문이 암호화되어 있어 미리보기 텍스트만 읽습니다. HWP 3.x 이하 문서는 한글에서 HWP 또는 HWPX 로 다시 저장하세요.
+
 ### gated 모델 다운로드 실패 (401/403, `GatedRepoError`)
 예: `google/embeddinggemma-300m`. Hugging Face 모델 페이지에서 라이선스에 동의한 뒤 토큰을 `.env`에 `HF_TOKEN=hf_...`으로 넣고 서버를 재시작하세요. 대시보드의 "HF_TOKEN" 항목에서 설정 여부를 확인할 수 있습니다. (`google/embeddinggemma-2`는 gated가 아닙니다.)
 

@@ -130,6 +130,8 @@ const REC_GROUPS = [
     pick: ms => ms.filter(m => m.modalities.some(x => x !== "text")).sort(byDateDesc), more: "/models?modality=image" },
   { key: "top", label: "고성능 · GPU", desc: "리더보드 상위권 대형 모델입니다. CPU에서는 매우 느리고 RAM을 많이 씁니다.",
     pick: ms => ms.filter(m => m.tags.some(t => t.startsWith("top-")) && paramsB(m) >= 1).sort(byDateDesc), more: "/models?sort=downloads" },
+  { key: "reranker", label: "리랭커", desc: "검색 후보를 질의와 함께 다시 읽어 순위를 매기는 모델입니다. 문서 검색 화면에서 하이브리드 검색 뒤에 붙여 씁니다.",
+    pick: ms => ms.filter(m => m.kind === "reranker").sort((a, b) => ready(b) - ready(a) || paramsB(a) - paramsB(b)), more: "/models?kind=reranker" },
 ];
 let recKey = (() => { try { return localStorage.getItem("rec-tab"); } catch { return null; } })() || "ready";
 
@@ -145,8 +147,9 @@ async function recDo(id, action, btn) {
   refresh();
 }
 
-function renderRecommendations(models) {
-  const groups = REC_GROUPS.map(g => ({ ...g, items: g.pick(models) }));
+function renderRecommendations(all) {
+  const models = all.filter(m => m.kind !== "reranker");
+  const groups = REC_GROUPS.map(g => ({ ...g, items: g.key === "reranker" ? g.pick(all) : g.pick(models) }));
   if (!groups.find(g => g.key === recKey)?.items.length) recKey = groups.find(g => g.items.length)?.key || "light";
   $("#rec-tabs").innerHTML = groups.map(g =>
     `<button data-key="${g.key}" class="${g.key === recKey ? "active" : ""}">${g.label} <span class="muted small">${g.items.length}</span></button>`).join("");

@@ -29,7 +29,7 @@ def _load(spec: ModelSpec, multimodal: bool = False) -> LoadedModel:
 
 @router.post("/embed")
 def embed(body: EmbedRequest, db: DB) -> dict:
-    spec = ModelSpec.from_row(crud.get_model(db, body.model_id))
+    spec = crud.get_spec(db, body.model_id, "embedding")
     lm = _load(spec)
     r = get_manager().encode(lm, body.texts, body.role, truncate_dim=body.truncate_dim, normalize=body.normalize)
     norms = np.linalg.norm(r.embeddings, axis=1)
@@ -71,7 +71,7 @@ def embed(body: EmbedRequest, db: DB) -> dict:
 
 @router.post("/similarity")
 def similarity(body: SimilarityRequest, db: DB) -> dict:
-    spec = ModelSpec.from_row(crud.get_model(db, body.model_id))
+    spec = crud.get_spec(db, body.model_id, "embedding")
     lm = _load(spec)
     r = get_manager().encode(lm, body.texts, body.role, truncate_dim=body.truncate_dim)
     matrix = (r.embeddings @ r.embeddings.T).round(4).tolist()
@@ -100,7 +100,7 @@ def similarity(body: SimilarityRequest, db: DB) -> dict:
 def retrieve(body: RetrieveRequest, db: DB) -> dict:
     manager = get_manager()
     outputs: list[dict[str, Any]] = []
-    for spec in crud.get_specs(db, body.model_ids):
+    for spec in crud.get_specs(db, body.model_ids, "embedding"):
         try:
             lm = _load(spec)
             d = manager.encode(lm, body.documents, "document", truncate_dim=body.truncate_dim)
@@ -141,7 +141,7 @@ def project(body: ProjectionRequest, db: DB) -> dict:
     groups = [it.group or "기본" for it in body.items]
     manager = get_manager()
     outputs: list[dict[str, Any]] = []
-    for spec in crud.get_specs(db, body.model_ids):
+    for spec in crud.get_specs(db, body.model_ids, "embedding"):
         try:
             lm = _load(spec)
             r = manager.encode(lm, texts, body.role)
@@ -211,7 +211,7 @@ async def multimodal_retrieve(
     def work() -> list[dict[str, Any]]:
         manager = get_manager()
         out = []
-        for spec in crud.get_specs(db, ids):
+        for spec in crud.get_specs(db, ids, "embedding"):
             if not spec.is_multimodal:
                 out.append({"hf_id": spec.hf_id, "error": "텍스트 전용 모델입니다 (modalities 에 image 가 없음)."})
                 continue

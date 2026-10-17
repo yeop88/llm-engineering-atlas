@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}컬렉션{% endblock %}
+{% block content %}
+<a href="/collections" class="small">← 컬렉션 목록</a>
+<div class="row between">
+  <div><h1 id="c-title">…</h1><p class="lead" id="c-sub" style="margin-bottom:8px"></p></div>
+  <div class="row small muted" id="c-summary"></div>
+</div>
+
+<div class="tabs">
+  <button data-tab="t-docs">① 문서</button>
+  <button data-tab="t-chunks">② 청크 세트</button>
+  <button data-tab="t-index">③ 벡터 인덱스</button>
+  <button data-tab="t-search">④ 검색 비교</button>
+</div>
+
+<!-- ① 문서 -->
+<section class="tab-panel" id="t-docs">
+  <div class="card stack" id="dropzone" style="border-style:dashed">
+    <div class="row between">
+      <div><b>문서 올리기</b> <span class="small muted" id="file-types"></span></div>
+      <label class="btn primary" style="margin:0;color:#fff">파일 선택<input type="file" id="d-files" multiple hidden></label>
+    </div>
+    <div class="small muted">여기로 파일을 끌어다 놓아도 됩니다. 같은 내용의 파일은 자동으로 건너뜁니다. HWP 는 5.x(배포용 문서 제외)·HWPX 를 지원하며, 스캔 PDF 는 텍스트가 없어 OCR 이 필요합니다.</div>
+    <div id="d-upload-result"></div>
+  </div>
+  <div class="table-wrap" style="margin-top:14px"><table>
+    <thead><tr><th>파일</th><th>제목</th><th class="num">크기</th><th class="num">글자 수</th><th class="num">쪽/구역</th><th>올린 시각</th><th class="right"></th></tr></thead>
+    <tbody id="d-rows"></tbody>
+  </table></div>
+</section>
+
+<!-- ② 청크 세트 -->
+<section class="tab-panel" id="t-chunks">
+  <div class="grid cols-2">
+    <div class="card stack">
+      <h2>청킹 전략</h2>
+      <div class="row">
+        <div class="field grow"><label>방법</label><select id="s-method"></select></div>
+        <div class="field"><label>크기 (글자)</label><input id="s-size" type="number" min="100" max="8000" step="50"></div>
+        <div class="field"><label>겹침 (글자)</label><input id="s-overlap" type="number" min="0" max="4000" step="10"></div>
+      </div>
+      <div class="row">
+        <div class="field" id="s-osent-wrap"><label>겹칠 문장 수</label><input id="s-osent" type="number" min="0" max="5"></div>
+        <div class="field"><label>최소 길이</label><input id="s-min" type="number" min="0" max="1000"></div>
+        <label class="row" style="align-self:end"><input type="checkbox" id="s-title"> 임베딩할 때 문서 제목·조문 제목 붙이기</label>
+      </div>
+      <div class="small muted" id="s-hint"></div>
+      <div class="row"><div class="field grow"><label>이름 (선택)</label><input id="s-name" placeholder="비우면 자동"></div></div>
+      <div class="row"><span class="spacer"></span><button class="btn" id="s-preview">미리보기</button><button class="btn primary" id="s-create">청크 세트 만들기</button></div>
+    </div>
+    <div class="card" id="s-preview-out"><div class="empty">미리보기를 누르면 청크 수 · 길이 분포 · 예시가 나옵니다.</div></div>
+  </div>
+  <div class="table-wrap" style="margin-top:14px"><table>
+    <thead><tr><th>#</th><th>이름 · 전략</th><th>상태</th><th class="num">청크</th><th class="num">평균</th><th class="num">p95</th><th>만든 시각</th><th class="right"></th></tr></thead>
+    <tbody id="cs-rows"></tbody>
+  </table></div>
+</section>
+
+<!-- ③ 인덱스 -->
+<section class="tab-panel" id="t-index">
+  <div class="card stack">
+    <h2>새 벡터 인덱스</h2>
+    <div class="row">
+      <div class="field grow"><label>청크 세트</label><select id="i-cs"></select></div>
+      <div class="field grow"><label>임베딩 모델 (● 로드됨 · ○ 다운로드됨)</label><select id="i-model"></select></div>
+      <div class="field"><label>벡터 DB</label><select id="i-store"></select></div>
+      <div class="field"><label>차원 (Matryoshka)</label><select id="i-dim"></select></div>
+      <div style="align-self:end"><button class="btn primary" id="i-create">인덱스 만들기</button></div>
+    </div>
+    <div class="small muted">청크 수가 많고 모델이 크면 CPU 에서 오래 걸립니다(진행률·남은 시간 표시). 같은 청크 세트로 모델·벡터 DB·차원을 바꿔 여러 인덱스를 만들어 검색 탭에서 비교하세요.</div>
+  </div>
+  <div class="table-wrap" style="margin-top:14px"><table>
+    <thead><tr><th>#</th><th>모델</th><th>청크 세트</th><th>벡터 DB</th><th class="num">차원</th><th>상태</th><th class="num">벡터</th><th class="num">구축</th><th class="right"></th></tr></thead>
+    <tbody id="i-rows"></tbody>
+  </table></div>
+</section>
+
+<!-- ④ 검색 -->
+<section class="tab-panel" id="t-search">
+  <div class="card stack">
+    <div class="row">
+      <div class="field grow"><label>질문 / 검색어</label><input id="q" placeholder="예: 공문서는 어떤 문자로 작성해야 하나요?"></div>
+      <div style="align-self:end" class="row"><button class="btn" id="cfg-add">+ 설정 추가</button><button class="btn primary" id="q-run">검색</button></div>
+    </div>
+    <div id="cfgs" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))"></div>
+  </div>
+  <div id="q-out" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); margin-top:16px"></div>
+</section>
+
+<dialog id="dlg" style="width:min(980px,96vw)"><div class="row between"><h2 id="dlg-title"></h2><button class="btn sm" onclick="$('#dlg').close()">닫기</button></div><div id="dlg-body"></div></dialog>
+{% endblock %}
+{% block scripts %}
+<script>const COLLECTION_ID = {{ collection_id }};</script>
+<script src="{{ url_for('static', path='js/rag.js') }}"></script>
+{% endblock %}

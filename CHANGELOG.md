@@ -4,6 +4,23 @@
 
 ## [Unreleased]
 
+### 추가
+- **문서 검색(RAG) 파이프라인**
+  - 컬렉션 · 문서 업로드: PDF · DOCX · **HWP 5.x(자체 바이너리 파서) · HWPX** · TXT · MD · HTML · CSV · JSON, 중복(SHA-256) 자동 제외, 원문 페이지 보관
+  - 청킹 전략 5종: 재귀 · 고정 · 문장(Kiwi) · **법률 구조(조문·항·판결문 구획, 조문 제목 보존)** · 페이지, 미리보기(길이 분포·예시), 문서 제목·조문 제목을 붙여 임베딩
+  - 벡터 인덱스: **Qdrant(기본, 서버 없으면 로컬 파일 모드)** · PostgreSQL pgvector(차원별 vector/halfvec/정확 검색 자동 선택) · MariaDB VECTOR 어댑터, 진행률·남은 시간 표시
+  - 검색: 의미 · 한국어 형태소 BM25 · 하이브리드(RRF / 가중합), 리랭커 재정렬, 문서 필터, 단계별 소요 시간, 최대 4개 설정 나란히 비교
+  - 문서 삭제 시 모든 인덱스의 벡터 정리, 청크 세트 이후 문서 변경 감지
+- **리랭커** 카탈로그 11종(BGE Reranker v2 M3·한국어판, Qwen3-Reranker 0.6B/4B, mxbai-rerank-v2, Nemotron Rerank 등), 모델 종류(임베딩/리랭커) 구분·필터, Hub 가져오기 시 자동 판별
+- **가속기별 설치**: `uv sync --extra cpu | cu126 | cu130 | rocm`(ROCm 은 Linux), CUDA/ROCm 빌드·GPU 정보 표시, `DEVICE=rocm` 지원
+- `docker-compose.yml`: Qdrant 1.19.2, pgvector 0.8.7(PostgreSQL 18), MariaDB 13.0.2
+- **Alembic 마이그레이션**: 시작 시 자동 적용, 기존 v0.1.0 DB 는 기준 리비전으로 표시 후 업그레이드
+- 문서: `docs/rag.md`, `docs/gpu.md`
+
+### 변경
+- `MAX_LOADED_MODELS` 기본값 2 → 3 (임베딩 + 리랭커 동시 사용)
+- 실행 이력 데이터셋 필터를 SQLite 전용 함수에서 DB 공통 JSON 연산으로 변경 (PostgreSQL·MariaDB 앱 DB 대비)
+
 ## [0.1.0] - 2026-10-17
 
 첫 공개 릴리스입니다.

@@ -19,6 +19,7 @@ PAGES = {
     "/multimodal": ("multimodal.html", "multimodal"),
     "/benchmark": ("benchmark.html", "benchmark"),
     "/history": ("history.html", "history"),
+    "/collections": ("collections.html", "rag"),
 }
 
 
@@ -36,3 +37,8 @@ for path, (template, nav) in PAGES.items():
 @router.get("/models/{model_id}", response_class=HTMLResponse)
 def model_detail(request: Request, model_id: int) -> HTMLResponse:
     return templates.TemplateResponse(request, "model_detail.html", {"nav": "models", "model_id": model_id})
+
+
+@router.get("/collections/{collection_id}", response_class=HTMLResponse)
+def collection_detail(request: Request, collection_id: int) -> HTMLResponse:
+    return templates.TemplateResponse(request, "collection_detail.html", {"nav": "rag", "collection_id": collection_id})

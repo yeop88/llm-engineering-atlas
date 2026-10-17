@@ -13,9 +13,41 @@ import torch
 from app.config import get_settings
 
 
+def accelerator() -> dict:
+    """설치된 PyTorch 빌드와 사용 가능한 가속기.
+    ROCm(AMD) 빌드도 PyTorch 안에서는 장치 이름이 'cuda' 이므로 torch.version.hip 으로 구분한다."""
+    hip = getattr(torch.version, "hip", None)
+    build = "rocm" if hip else ("cuda" if torch.version.cuda else "cpu")
+    info = {
+        "build": build,
+        "torch": torch.__version__,
+        "cuda_version": torch.version.cuda,
+        "rocm_version": hip,
+        "available": False,
+        "devices": [],
+    }
+    if torch.cuda.is_available():
+        info["available"] = True
+        info["devices"] = [
+            {
+                "index": i,
+                "name": torch.cuda.get_device_name(i),
+                "total_gb": round(torch.cuda.get_device_properties(i).total_memory / 2**30, 1),
+            }
+            for i in range(torch.cuda.device_count())
+        ]
+    return info
+
+
 def resolve_device() -> str:
     wanted = get_settings().device.lower()
+    if wanted in ("rocm", "hip"):  # PyTorch ROCm 빌드는 'cuda' 장치 이름을 쓴다
+        wanted = "cuda"
     if wanted != "auto":
+        if wanted.startswith("cuda") and not torch.cuda.is_available():
+            raise RuntimeError(
+                f"DEVICE={get_settings().device} 이지만 GPU 를 쓸 수 없습니다. 설치된 PyTorch: {accelerator()['build']} 빌드. 'uv sync --extra cu126|cu130|rocm' 로 GPU 빌드를 설치하세요."
+            )
         return wanted
     if torch.cuda.is_available():
         return "cuda"
@@ -110,17 +142,19 @@ def system_info() -> dict:
             for p in ("fastapi", "uvicorn", "sentence-transformers", "transformers", "torch", "huggingface-hub", "sqlalchemy", "pydantic")
         },
         "cuda": None,
+        "accelerator": accelerator(),
         "hf_token_set": bool(get_settings().hf_token or os.environ.get("HF_TOKEN")),
     }
     if torch.cuda.is_available():
         props = torch.cuda.get_device_properties(0)
         info["cuda"] = {
             "name": props.name,
+            "backend": "ROCm " + torch.version.hip if getattr(torch.version, "hip", None) else f"CUDA {torch.version.cuda}",
             "total_gb": round(props.total_memory / 2**30, 2),
             "allocated_gb": round(torch.cuda.memory_allocated(0) / 2**30, 2),
         }
     try:
-        import psutil  # uvicorn[standard] 가 설치하지 않으면 생략
+        import psutil
 
         vm = psutil.virtual_memory()
         rss = psutil.Process().memory_info().rss

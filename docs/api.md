@@ -6,7 +6,7 @@
 
 | 메서드 | 경로 | 설명 |
 |---|---|---|
-| GET | `/api/models?q=&modality=&tag=&status=&sort=` | 목록. status: `cached`/`loaded`/`favorite`, sort: `release_date`/`downloads`/`name`/`dim` |
+| GET | `/api/models?q=&kind=&modality=&tag=&status=&sort=` | 목록. kind: `embedding`/`reranker`, status: `cached`/`loaded`/`favorite`, sort: `release_date`/`downloads`/`name`/`dim` |
 | POST | `/api/models` | 수동 등록 (`hf_id` 필수) |
 | GET / PATCH / DELETE | `/api/models/{id}` | 조회 / 수정 / 삭제(`?delete_cache=true`) |
 | POST | `/api/models/{id}/sync?overwrite=false` | Hub 통계 갱신, 빈 스펙 보완 |
@@ -19,6 +19,35 @@
 | POST | `/api/catalog/restore` | 삭제한 기본 카탈로그 모델 복원 |
 | GET | `/api/loaded` | 로드된 모델 |
 | POST | `/api/loaded/unload-all` | 전부 언로드 |
+
+## 문서 검색 (RAG)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/rag/options` | 청킹 방법·기본값, 지원 파일 형식, 벡터 DB 상태 |
+| GET | `/api/vector-stores` | 벡터 DB 연결 상태 (qdrant / pgvector / mariadb) |
+| GET / POST | `/api/collections` | 컬렉션 목록 / 생성 `{"name", "domain", "description"}` |
+| GET / PATCH / DELETE | `/api/collections/{id}` | 상세(문서·청크 세트·인덱스) / 수정 / 삭제(벡터 DB 데이터 포함) |
+| POST | `/api/collections/{id}/documents` | 파일 업로드 (multipart `files`, 여러 개) → `added`, `skipped` |
+| GET / DELETE | `/api/documents/{id}` | 본문 보기 / 삭제(청크·벡터 함께) |
+| POST | `/api/collections/{id}/chunk-preview` | 청킹 미리보기 `{"method", "size", "overlap", ...}` → 통계·예시 |
+| POST | `/api/collections/{id}/chunk-sets` | 청크 세트 생성 (백그라운드 작업) |
+| GET | `/api/chunk-sets/{id}/chunks?offset=&limit=&document_id=` | 청크 목록 (BM25 토큰 포함) |
+| DELETE | `/api/chunk-sets/{id}` | 청크 세트와 그 인덱스 삭제 |
+| POST | `/api/indexes` | `{"chunk_set_id", "model_id", "store": "qdrant", "truncate_dim": null}` → 인덱스 구축 작업 |
+| POST | `/api/indexes/{id}/rebuild` · DELETE `/api/indexes/{id}` | 다시 구축 / 삭제 |
+| POST | `/api/collections/{id}/search` | 검색 비교 (아래) |
+
+```http
+POST /api/collections/1/search
+{"query": "공문서는 어떤 문자로 작성하나요?",
+ "configs": [
+   {"label": "BM25", "chunk_set_id": 1, "mode": "bm25", "top_k": 5},
+   {"label": "하이브리드+리랭커", "index_id": 2, "mode": "hybrid", "fusion": "rrf",
+    "candidates": 50, "reranker_id": 40, "rerank_top": 30, "top_k": 5, "doc_ids": null}]}
+```
+
+응답의 각 결과에는 `results[]`(문서·쪽·조문 제목·본문·점수·순위), `timings_ms`, `query_tokens` 가 들어 있습니다.
 
 ## Hub
 

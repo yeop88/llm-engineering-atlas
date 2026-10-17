@@ -22,6 +22,7 @@ DB = Annotated[Session, Depends(get_db)]
 def list_models(
     db: DB,
     q: str = "",
+    kind: Annotated[str, Query(description="embedding | reranker (비우면 전체)")] = "",
     modality: str = "",
     tag: str = "",
     status: Annotated[str, Query(description="cached | loaded | favorite")] = "",
@@ -38,6 +39,8 @@ def list_models(
                 EmbeddingModel.languages.ilike(like),
             )
         )
+    if kind:
+        stmt = stmt.where(EmbeddingModel.kind == kind)
     rows = list(db.scalars(stmt))
     if modality:
         rows = [r for r in rows if modality in (r.modalities or [])]

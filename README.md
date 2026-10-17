@@ -1,13 +1,16 @@
 # Embedding Lab
 
 2026년 10월 기준으로 공개된 **오픈소스 임베딩 모델을 관리·다운로드·테스트·벤치마크**하는 FastAPI 웹 애플리케이션입니다.
-2026-10-06 공개된 Google **EmbeddingGemma 2**(텍스트·이미지·오디오·비디오 멀티모달)를 포함해 37개 모델이 기본 카탈로그로 등록되어 있고, Hugging Face Hub에서 원하는 모델을 검색해 추가할 수 있습니다.
+2026-10-06 공개된 Google **EmbeddingGemma 2**(텍스트·이미지·오디오·비디오 멀티모달)를 포함해 임베딩 모델 37개와 리랭커 11개가 기본 카탈로그로 등록되어 있고, Hugging Face Hub에서 원하는 모델을 검색해 추가할 수 있습니다.
+
+문서를 올려 **청킹 전략 × 임베딩 모델 × 벡터 DB(Qdrant · pgvector · MariaDB) × 하이브리드 검색 × 리랭커** 조합을 직접 만들어 비교하는 문서 검색(RAG) 기능도 들어 있습니다. HWP·HWPX 한글 문서와 법령·판결문 구조 청킹을 지원합니다.
 
 ## 주요 기능
 
 | 영역 | 기능 |
 |---|---|
-| 모델 카탈로그 | 제공사·공개일·파라미터·차원(Matryoshka)·컨텍스트·라이선스·언어·모달리티 관리, 필터/정렬, 즐겨찾기, 프롬프트·로드 옵션 편집 |
+| 문서 검색 (RAG) | PDF·DOCX·HWP·HWPX 등 업로드, 청킹 전략 5종(법령·판결문 구조 포함) 미리보기·비교, 벡터 인덱스(Qdrant 기본 / pgvector / MariaDB), 의미·한국어 형태소 BM25·하이브리드(RRF) 검색, 리랭커, 최대 4개 설정 나란히 비교 |
+| 모델 카탈로그 | 임베딩·리랭커 구분, 제공사·공개일·파라미터·차원(Matryoshka)·컨텍스트·라이선스·언어·모달리티 관리, 필터/정렬, 즐겨찾기, 프롬프트·로드 옵션 편집 |
 | Hub 연동 | 실시간 검색, 메타데이터 자동 추출(프롬프트, trust_remote_code, gated 등), 원클릭 등록, 통계 동기화 |
 | 다운로드 | 백그라운드 다운로드 + 바이트 진행률, ONNX/GGUF 등 불필요 파일 제외, 캐시 용량 표시/삭제 |
 | 로드 관리 | 로드/언로드, 최대 로드 수 초과 시 LRU 언로드, 텍스트/멀티모달 프로필 분리 |
@@ -19,7 +22,7 @@
 
 ## 기술 스택 (2026-10 최신 안정 버전)
 
-Python 3.14.6 · FastAPI 0.143.3 · Uvicorn 0.54.0 · Starlette 1.8 · Pydantic 2.14 · SQLAlchemy 2.1.5 · sentence-transformers 6.1.0 · transformers 5.20.1 · PyTorch 2.14.1 · huggingface-hub 1.33.0 · Jinja2 · Chart.js 4.5.1 (CDN) · pytest 9.1 · ruff 0.17 · uv 0.12
+Python 3.14.6 · FastAPI 0.143.3 · Uvicorn 0.54.0 · Starlette 1.8 · Pydantic 2.14 · SQLAlchemy 2.1.5 · Alembic 1.20 · sentence-transformers 6.1.0 · transformers 5.20.1 · PyTorch 2.14.1 (CPU / CUDA 12.6·13.0 / ROCm 7.2) · huggingface-hub 1.33.0 · Qdrant 1.19 (qdrant-client 1.19) · pgvector 0.8.7 (PostgreSQL 18) · MariaDB 13.0 · Kiwi 0.24 (한국어 형태소) · Jinja2 · Chart.js 4.5.1 (CDN) · pytest 9.1 · ruff 0.17 · uv 0.12
 
 > huggingface-hub 2.x가 나와 있지만 sentence-transformers 6.1이 `<2.0`을 요구하므로 1.x 최신을 사용합니다.
 
@@ -31,13 +34,20 @@ Python 3.14.6 · FastAPI 0.143.3 · Uvicorn 0.54.0 · Starlette 1.8 · Pydantic 
 # 1) uv 설치 (없다면)
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-# 2) 의존성 설치
-uv sync
+# 2) 의존성 설치 — 가속기에 맞춰 하나 선택 (docs/gpu.md)
+uv sync --extra cpu        # CPU 전용
+# uv sync --extra cu130    # NVIDIA GPU (CUDA 13.0, 최신 드라이버)
+# uv sync --extra cu126    # NVIDIA GPU (CUDA 12.6)
+# uv sync --extra rocm     # AMD GPU (Linux 전용)
 
 # 3) (선택) 설정
 copy .env.example .env      # gated 모델용 HF_TOKEN 등
 
-# 4) 실행
+# 4) (선택) 벡터 DB 서버 — 없어도 Qdrant 로컬 파일 모드로 동작
+docker compose up -d                                        # Qdrant
+docker compose --profile pgvector --profile mariadb up -d   # + pgvector, MariaDB
+
+# 5) 실행 (DB 마이그레이션은 시작할 때 자동 적용)
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
@@ -49,9 +59,12 @@ uv run uvicorn app.main:app --reload --port 8000
 2. `EmbeddingGemma 2`(1.5GB)를 받아 **플레이그라운드 → 검색 비교**에서 함께 선택해 결과를 비교합니다.
 3. **벤치마크**에서 `한/영 미니 검색 벤치마크`로 여러 모델을 한 번에 평가합니다.
 4. **멀티모달**에서 이미지 몇 장을 올리고 텍스트로 검색합니다.
+5. **문서 검색**에서 컬렉션을 만들고 HWP·PDF 문서를 올린 뒤, 청크 세트 → 벡터 인덱스 → 검색 비교 순서로 진행합니다.
 
 ## 문서
 
+- [docs/rag.md](docs/rag.md) — 문서 검색(RAG): 업로드·청킹·벡터 DB·하이브리드 검색·리랭커
+- [docs/gpu.md](docs/gpu.md) — CPU · CUDA · ROCm 설치
 - [docs/architecture.md](docs/architecture.md) — 구조와 동작 방식
 - [docs/models.md](docs/models.md) — 카탈로그 모델 목록과 선택 가이드
 - [docs/model-verification.md](docs/model-verification.md) — 대체 모델 정보 검증 결과와 실측 벤치마크
@@ -64,7 +77,10 @@ uv run uvicorn app.main:app --reload --port 8000
 ## 개발
 
 ```bash
-uv run pytest -q             # 테스트 (실제 모델 다운로드 없음)
+uv run pytest -q             # 테스트 (실제 모델 다운로드 없음, Qdrant 는 메모리 모드)
+# pgvector·MariaDB 어댑터까지 검사하려면 컨테이너를 띄우고:
+# TEST_PGVECTOR_URL=postgresql://embedding:embedding@localhost:5433/embedding_lab TEST_MARIADB_URL=mysql://embedding:embedding@localhost:3307/embedding_lab uv run pytest -q
+uv run python -m alembic revision --autogenerate -m "설명"   # DB 스키마 변경 시
 uv run ruff check app tests  # 린트
 uv run ruff format app tests # 포맷
 ```

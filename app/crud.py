@@ -64,8 +64,17 @@ def get_model(db: Session, model_id: int) -> EmbeddingModel:
     return row
 
 
-def get_specs(db: Session, model_ids: list[int]) -> list[ModelSpec]:
-    return [ModelSpec.from_row(get_model(db, i)) for i in model_ids]
+def get_spec(db: Session, model_id: int, kind: str | None = None) -> ModelSpec:
+    """kind 를 주면 종류가 맞는지 확인한다 (예: 임베딩 자리에 리랭커를 고른 경우 400)."""
+    row = get_model(db, model_id)
+    if kind and row.kind != kind:
+        label = {"embedding": "임베딩", "reranker": "리랭커"}.get(kind, kind)
+        raise HTTPException(400, f"{row.hf_id} 는 {label} 모델이 아닙니다.")
+    return ModelSpec.from_row(row)
+
+
+def get_specs(db: Session, model_ids: list[int], kind: str | None = None) -> list[ModelSpec]:
+    return [get_spec(db, i, kind) for i in model_ids]
 
 
 def apply_fields(row: EmbeddingModel, data: dict[str, Any]) -> None:

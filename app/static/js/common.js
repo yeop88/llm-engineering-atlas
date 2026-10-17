@@ -63,6 +63,7 @@ function isRecent(m, days = RECENT_DAYS) {
 
 function modelBadges(m) {
   const b = [];
+  if (m.kind === "reranker") b.push('<span class="badge" title="검색 결과 재정렬용 Cross-Encoder">리랭커</span>');
   if (isRecent(m)) b.push(`<span class="badge new" title="최근 ${RECENT_DAYS}일 이내 공개">최근</span>`);
   if (m.loaded_profiles?.length) b.push(`<span class="badge ok">로드됨${m.loaded_profiles.includes("multimodal") ? "(MM)" : ""}</span>`);
   else if (m.cached) b.push('<span class="badge">다운로드됨</span>');
@@ -80,8 +81,8 @@ async function getModels(force = false) {
 }
 
 // <select> 에 모델 목록 채우기. 로드/다운로드된 모델을 위로.
-async function fillModelSelect(sel, { multimodal = false, preferred = [] } = {}) {
-  const models = (await getModels()).filter(m => !multimodal || m.modalities.some(x => x !== "text"));
+async function fillModelSelect(sel, { multimodal = false, preferred = [], kind = "embedding" } = {}) {
+  const models = (await getModels()).filter(m => m.kind === kind && (!multimodal || m.modalities.some(x => x !== "text")));
   const score = m => (m.loaded_profiles.length ? 2 : 0) + (m.cached ? 1 : 0);
   models.sort((a, b) => score(b) - score(a) || (b.release_date || "").localeCompare(a.release_date || ""));
   const keep = new Set([...sel.selectedOptions].map(o => o.value));
@@ -144,3 +145,8 @@ function initTabs(root = document) {
     (initial || $("button[data-tab]", tabs))?.click();
   });
 }
+// 같은 페이지 안에서 #탭 링크로 이동해도 탭이 바뀌도록
+window.addEventListener("hashchange", () => {
+  const btn = location.hash && $(`.tabs button[data-tab="${location.hash.slice(1)}"]`);
+  if (btn && !btn.classList.contains("active")) btn.click();
+});

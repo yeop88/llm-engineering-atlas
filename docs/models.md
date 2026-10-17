@@ -1,6 +1,6 @@
 # 모델 카탈로그 (2026-10 기준)
 
-앱을 처음 실행하면 아래 37개 모델이 등록됩니다. 스펙은 각 모델의 Hugging Face 설정 파일(`config.json`, `config_sentence_transformers.json`)과 모델 카드를 기준으로 했습니다. 공개일은 공식 발표일 또는 Hub 저장소 생성일입니다. Hub 통계(다운로드·좋아요)는 모델 상세 화면의 **Hub 동기화**로 갱신됩니다.
+앱을 처음 실행하면 아래 임베딩 모델 37개와 리랭커 11개가 등록됩니다. 스펙은 각 모델의 Hugging Face 설정 파일(`config.json`, `config_sentence_transformers.json`)과 모델 카드를 기준으로 했습니다. 공개일은 공식 발표일 또는 Hub 저장소 생성일입니다. Hub 통계(다운로드·좋아요)는 모델 상세 화면의 **Hub 동기화**로 갱신됩니다.
 
 | 모델 | 제공사 | 공개일 | 파라미터 | 차원 (MRL) | 컨텍스트 | 라이선스 | 언어 | 모달리티 |
 |---|---|---|---|---|---|---|---|---|
@@ -41,6 +41,26 @@
 | [paraphrase-multilingual-MiniLM-L12-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2) | sentence-transformers | 2021-06-22 | 118M | 384 | 128 | Apache-2.0 | multilingual (50+) | text |
 | [CLIP ViT-B/32](https://huggingface.co/sentence-transformers/clip-ViT-B-32) | OpenAI (ST 포팅) | 2021-01-05 | 151M | 512 | 77 | MIT | en | text, image |
 | [CLIP ViT-L/14](https://huggingface.co/sentence-transformers/clip-ViT-L-14) | OpenAI (ST 포팅) | 2021-01-05 | 428M | 768 | 77 | MIT | en | text, image |
+
+## 리랭커 (Cross-Encoder)
+
+검색으로 뽑은 후보를 질의와 함께 다시 읽어 순위를 매기는 모델입니다. 문서 검색 화면에서 하이브리드 검색 뒤에 붙여 씁니다(입력 길이 기본 1024토큰, `RERANKER_MAX_LENGTH`).
+
+| 모델 | 제공사 | 공개일 | 파라미터 | 최대 길이 | 라이선스 | 언어 |
+|---|---|---|---|---|---|---|
+| [BGE Reranker v2 M3](https://huggingface.co/BAAI/bge-reranker-v2-m3) | BAAI | 2024-03-15 | 568M | 8,192 | Apache-2.0 | multilingual (100+) |
+| [BGE Reranker v2 M3 (한국어)](https://huggingface.co/dragonkue/bge-reranker-v2-m3-ko) | dragonkue | 2024-10-16 | 568M | 8,192 | Apache-2.0 | ko, en |
+| [Qwen3-Reranker 0.6B](https://huggingface.co/Qwen/Qwen3-Reranker-0.6B) | Alibaba Qwen | 2025-05-29 | 596M | 32,768 | Apache-2.0 | multilingual (100+) |
+| [Qwen3-Reranker 4B](https://huggingface.co/Qwen/Qwen3-Reranker-4B) | Alibaba Qwen | 2025-06-03 | 4.0B | 32,768 | Apache-2.0 | multilingual (100+) |
+| [mxbai-rerank-base-v2](https://huggingface.co/mixedbread-ai/mxbai-rerank-base-v2) | Mixedbread | 2025-03-03 | 494M | 32,768 | Apache-2.0 | multilingual (100+) |
+| [Llama-Nemotron Rerank 1B v2](https://huggingface.co/nvidia/llama-nemotron-rerank-1b-v2) | NVIDIA | 2025-10-16 | 1.2B | 8,192 | OpenMDW-1.1 | multilingual |
+| [GTE Multilingual Reranker Base](https://huggingface.co/Alibaba-NLP/gte-multilingual-reranker-base) | Alibaba NLP | 2024-07-20 | 306M | 8,192 | Apache-2.0 | multilingual (70+) |
+| [Jina Reranker v2 Base Multilingual](https://huggingface.co/jinaai/jina-reranker-v2-base-multilingual) | Jina AI | 2024-06-19 | 278M | 1,024 | CC-BY-NC-4.0 | multilingual |
+| [zerank-2](https://huggingface.co/zeroentropy/zerank-2-reranker) | ZeroEntropy | 2025-11-19 | 4.0B | 32,768 | Apache-2.0 | en (다국어 일부) |
+| [mMiniLMv2 mMARCO (다국어 소형)](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | sentence-transformers | 2022-06-01 | 118M | 512 | Apache-2.0 | multilingual (14, ko 미포함) |
+| [MS MARCO MiniLM-L6 (영어 소형)](https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2) | sentence-transformers | 2022-03-02 | 22.7M | 512 | Apache-2.0 | en |
+
+`jinaai/jina-reranker-v3` · `v3.5` 는 전용 구조(JinaForRanking)라 sentence-transformers `CrossEncoder` 로 불러올 수 없어 넣지 않았습니다.
 
 ## 선택 가이드
 

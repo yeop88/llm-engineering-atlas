@@ -21,7 +21,7 @@ IGNORE_PATTERNS = [
     "onnx/*", "openvino/*", "coreml/*", "gguf/*", "*.onnx", "*.onnx_data", "*.gguf", "*.h5",
     "*.msgpack", "*.ot", "*.tflite", "*.mlmodel", "*.mlpackage/*", "tf_model*", "flax_model*", "rust_model*",
 ]  # fmt: skip
-EMBEDDING_PIPELINES = ("sentence-similarity", "feature-extraction")
+EMBEDDING_PIPELINES = ("sentence-similarity", "feature-extraction", "text-ranking")
 
 
 def _api() -> HfApi:
@@ -119,16 +119,20 @@ def model_metadata(repo_id: str) -> dict[str, Any]:
     if "audio_config" in cfg:
         modalities.append("audio")
 
+    archs = cfg.get("architectures") or []
+    is_reranker = info.pipeline_tag == "text-ranking" or any(a.endswith("ForSequenceClassification") for a in archs)
+
     def pick(*names: str) -> str:
         return next((n for n in names if n in prompts), "")
 
     return {
         "hf_id": info.id,
         "name": info.id.split("/")[-1],
+        "kind": "reranker" if is_reranker else "embedding",
         "provider": info.id.split("/")[0],
         "release_date": info.created_at.date().isoformat() if info.created_at else "",
         "params": _format_params(info.safetensors.total if info.safetensors else None),
-        "dim": text_cfg.get("hidden_size"),
+        "dim": None if is_reranker else text_cfg.get("hidden_size"),
         "max_seq_len": sb_cfg.get("max_seq_length") or text_cfg.get("max_position_embeddings"),
         "license": str(license_),
         "languages": languages,

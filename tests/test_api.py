@@ -89,9 +89,12 @@ def test_dataset_upload_roundtrip(client):
 
 
 def test_lru_eviction(client):
-    ids = [_model_id(client, h) for h in ("BAAI/bge-m3", "nlpai-lab/KURE-v1", "intfloat/multilingual-e5-large")]
-    for i in ids:
+    limit = client.get("/api/system").json()["max_loaded_models"]
+    hf_ids = ["BAAI/bge-m3", "nlpai-lab/KURE-v1", "intfloat/multilingual-e5-large", "Qwen/Qwen3-Embedding-0.6B", "google/embeddinggemma-2"][
+        : limit + 1
+    ]
+    for i in [_model_id(client, h) for h in hf_ids]:
         assert client.post(f"/api/models/{i}/load").status_code == 200
     loaded = client.get("/api/loaded").json()
-    assert len(loaded) == 2  # MAX_LOADED_MODELS=2
+    assert len(loaded) == limit  # 가장 오래 쓰지 않은 모델이 빠진다
     assert "BAAI/bge-m3" not in {m["hf_id"] for m in loaded}

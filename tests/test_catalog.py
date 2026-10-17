@@ -5,15 +5,16 @@ from app.catalog import CATALOG
 from app.config import get_settings
 from app.services.benchmark import list_datasets, validate_dataset
 
-REQUIRED = ("hf_id", "name", "provider", "release_date", "params", "dim", "license", "languages")
+REQUIRED = ("hf_id", "name", "provider", "release_date", "params", "license", "languages")
 
 
 def test_catalog_unique_and_complete():
     ids = [m["hf_id"] for m in CATALOG]
     assert len(ids) == len(set(ids)), "중복 hf_id"
     for m in CATALOG:
-        for k in REQUIRED:
+        for k in REQUIRED + (("dim",) if m.get("kind", "embedding") == "embedding" else ()):
             assert m.get(k), f"{m['hf_id']}: {k} 누락"
+        assert m.get("kind", "embedding") in ("embedding", "reranker")
         assert re.fullmatch(r"[\w.\-]+/[\w.\-]+", m["hf_id"])
         assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", m["release_date"])
         assert m["release_date"] <= "2026-10-17"
@@ -24,6 +25,8 @@ def test_catalog_mrl_dims_valid():
         dims = m.get("mrl_dims", [])
         assert dims == sorted(set(dims), reverse=True), m["hf_id"]
         assert all(d <= m["dim"] for d in dims), m["hf_id"]
+    rerankers = [m for m in CATALOG if m.get("kind") == "reranker"]
+    assert len(rerankers) >= 5 and all(not m.get("mrl_dims") for m in rerankers)
 
 
 def test_embeddinggemma2_entry():

@@ -55,7 +55,7 @@ def remove_dataset(name: str) -> dict:
 # ── 벤치마크 ────────────────────────────────────────────────────────────────
 @router.post("/benchmarks")
 def start_benchmark(body: BenchmarkRequest, db: DB) -> dict:
-    specs = crud.get_specs(db, body.model_ids)
+    specs = crud.get_specs(db, body.model_ids, "embedding")
     try:
         ds = benchmark.validate_dataset(benchmark.load_dataset(body.dataset))
     except benchmark.DatasetError as exc:
@@ -107,8 +107,9 @@ def _runs_query(kind: str | None, dataset: str | None):
     stmt = select(TestRun)
     if kind:
         stmt = stmt.where(TestRun.kind == kind)
-    if dataset:  # 벤치마크 데이터셋 이름은 params JSON 안에 있다
-        stmt = stmt.where(TestRun.kind == "benchmark", func.json_extract(TestRun.params, "$.dataset") == dataset)
+    if dataset:
+        # 데이터셋 이름은 params JSON 안에 있다 (SQLite·PostgreSQL·MariaDB 공통 JSON 연산)
+        stmt = stmt.where(TestRun.kind == "benchmark", TestRun.params["dataset"].as_string() == dataset)
     return stmt
 
 

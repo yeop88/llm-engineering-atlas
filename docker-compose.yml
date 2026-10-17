@@ -1,0 +1,48 @@
+# 벡터 DB 실행용 compose 파일.
+#   기본(Qdrant):     docker compose up -d
+#   pgvector 추가:    docker compose --profile pgvector up -d
+#   MariaDB 추가:     docker compose --profile mariadb up -d
+#   모두:             docker compose --profile pgvector --profile mariadb up -d
+# 앱 설정(.env)의 VECTOR_STORE / *_URL 과 포트를 맞춰 사용합니다.
+
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.19.2
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"   # REST / 대시보드 (http://localhost:6333/dashboard)
+      - "${QDRANT_GRPC_PORT:-6334}:6334"   # gRPC
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  pgvector:
+    image: pgvector/pgvector:0.8.7-pg18
+    profiles: ["pgvector"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: embedding
+      POSTGRES_PASSWORD: embedding
+      POSTGRES_DB: embedding_lab
+    ports:
+      - "${PGVECTOR_PORT:-5433}:5432"   # 로컬 PostgreSQL(5432)과 겹치지 않게 5433
+    volumes:
+      - pg_data:/var/lib/postgresql
+
+  mariadb:
+    image: mariadb:13.0.2
+    profiles: ["mariadb"]
+    restart: unless-stopped
+    environment:
+      MARIADB_USER: embedding
+      MARIADB_PASSWORD: embedding
+      MARIADB_DATABASE: embedding_lab
+      MARIADB_ROOT_PASSWORD: embedding-root
+    ports:
+      - "${MARIADB_PORT:-3307}:3306"   # 로컬 MySQL/MariaDB(3306)와 겹치지 않게 3307
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+volumes:
+  qdrant_data:
+  pg_data:
+  mariadb_data:

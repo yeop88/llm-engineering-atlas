@@ -1,5 +1,5 @@
 const params = new URLSearchParams(location.search);
-["q", "modality", "tag", "status", "sort"].forEach(k => { if (params.get(k)) $(`#f-${k}`).value = params.get(k); });
+["q", "kind", "modality", "tag", "status", "sort"].forEach(k => { if (params.get(k)) $(`#f-${k}`).value = params.get(k); });
 
 let timer = null;
 let current = [];          // 현재 목록 (필터 적용 후)
@@ -7,7 +7,7 @@ const selected = new Set(); // 선택한 모델 id (다운로드 진행 중 자�
 
 async function load() {
   const qs = new URLSearchParams();
-  ["q", "modality", "tag", "status", "sort"].forEach(k => { const v = $(`#f-${k}`).value; if (v) qs.set(k, v); });
+  ["q", "kind", "modality", "tag", "status", "sort"].forEach(k => { const v = $(`#f-${k}`).value; if (v) qs.set(k, v); });
   history.replaceState(null, "", `?${qs}`);
   current = await api(`/api/models?${qs}`);
   [...selected].forEach(id => { if (!current.some(m => m.id === id)) selected.delete(id); });
@@ -77,7 +77,7 @@ function row(m) {
       ${loaded ? `<button class="btn sm" onclick="act(${m.id}, 'unload', this)">언로드</button>`
                : `<button class="btn sm" onclick="act(${m.id}, 'load', this)">로드</button>`}
       ${m.cached ? `<button class="btn sm danger" onclick="removeCache(${m.id}, '${esc(m.hf_id)}', this)">캐시 삭제</button>` : ""}
-      <a class="btn sm" href="/playground?model=${m.id}">테스트</a>
+      ${m.kind === "reranker" ? "" : `<a class="btn sm" href="/playground?model=${m.id}">테스트</a>`}
       <button class="btn sm danger" title="카탈로그에서 삭제" onclick="openDelete([${m.id}])">삭제</button>
     </td>
   </tr>`;
@@ -133,6 +133,6 @@ $("#btn-restore").onclick = async e => {
   load();
 };
 
-["f-modality", "f-tag", "f-status", "f-sort"].forEach(id => $(`#${id}`).addEventListener("change", load));
+["f-kind", "f-modality", "f-tag", "f-status", "f-sort"].forEach(id => $(`#${id}`).addEventListener("change", load));
 let qTimer; $("#f-q").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(load, 250); });
 load();
