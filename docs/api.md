@@ -105,6 +105,8 @@ model_ids=1,34  query=...  files=@a.png files=@b.jpg
 | GET | `/api/datasets/{name}` | 데이터셋 내용 |
 | POST | `/api/datasets` | JSON 파일 업로드 (multipart `file`) |
 | DELETE | `/api/datasets/{name}` | 사용자 데이터셋 삭제 |
+| GET | `/api/public-benchmarks` | 공개 한국어 벤치마크 목록과 가져온 상태 |
+| POST | `/api/public-benchmarks/{key}/import` | 내려받아 데이터셋 `pub_{key}` 로 추가 (작업) `{"max_queries", "max_corpus", "seed"}` |
 | POST | `/api/benchmarks` | `{"model_ids": [...], "dataset": "...", "truncate_dim": null, "batch_size": null, "unload_after": false, "sweep_dims": [768, 256, 64]}` → 작업. `sweep_dims`가 있으면 결과의 모델별 `dim_sweep`에 차원별 지표 포함 |
 | GET | `/api/jobs?kind=` · `/api/jobs/{id}` | 작업 상태 (progress 0~1, message, result) |
 | POST | `/api/jobs/{id}/cancel` | 취소 요청 |

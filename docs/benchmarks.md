@@ -48,6 +48,23 @@
 - **배치 크기**: 기본값 `DEFAULT_BATCH_SIZE`(16). 메모리가 부족하면 줄이세요.
 - **평가 후 언로드**: 큰 모델 여러 개를 비교할 때 메모리를 아낍니다.
 
+## 공개 한국어 벤치마크
+
+벤치마크 화면의 **공개 한국어 벤치마크 가져오기**에서 Hugging Face Hub 의 MTEB 형식(parquet) 데이터를 내려받아 데이터셋(`pub_*`)으로 추가합니다(`app/services/public_benchmarks.py`, 파일은 HF 캐시에 저장).
+
+| 키 | 유형 | 원본 규모 | 내용 | 라이선스 |
+|---|---|---|---|---|
+| `autorag_ko` | retrieval | 질문 114 · 문서 720 | 금융·공공·의료·법률·커머스 PDF 문단과 업무형 질문 (RAG 에 가장 가까움) | MIT |
+| `ko_strategyqa` | retrieval | 질문 592 · 문서 9,251 | 여러 문단을 이어 추론하는 상식 질문 (번역) | 원본 StrategyQA MIT |
+| `publichealth_ko` | retrieval | 질문 77 · 문서 77 | 공중보건 FAQ | CC BY-NC-SA 3.0 |
+| `xpqa_ko` | retrieval | 질문 654 · 문서 889 | 쇼핑몰 상품 질문 → 상품 정보·리뷰 | CDLA-Sharing 1.0 |
+| `korsts` | sts | 문장쌍 1,376 | STS-B 한국어 번역 (test) | CC BY-SA 4.0 |
+| `klue_sts` | sts | 문장쌍 519 | 처음부터 한국어로 만든 STS (validation) | CC BY-SA 4.0 |
+
+- **표본**: 최대 질문 수·최대 문서 수를 넘으면 질문을 무작위(seed 고정)로 뽑고, 그 질문들의 정답 문서는 모두 넣은 뒤 나머지를 무작위 방해 문서로 채웁니다. 원본 전체로 잰 MTEB 점수와 절대값은 다르지만 모델 간 비교에는 쓸 수 있습니다. 데이터셋 설명에 출처·라이선스·표본 조건이 기록됩니다.
+- 문서 본문은 4,000자에서 자릅니다. 0점 qrels 는 정답으로 보지 않습니다.
+- API: `GET /api/public-benchmarks`, `POST /api/public-benchmarks/{key}/import {"max_queries": 300, "max_corpus": 3000, "seed": 0}` → 작업.
+
 ## 사용자 데이터셋 형식
 
 ```json

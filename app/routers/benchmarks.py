@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 
 from app import crud
 from app.db import SessionLocal, TestRun, get_db
-from app.schemas import BenchmarkRequest, BulkDelete
-from app.services import benchmark
+from app.schemas import BenchmarkRequest, BulkDelete, PublicBenchmarkImport
+from app.services import benchmark, public_benchmarks
 from app.services.jobs import Job, jobs
 from app.services.model_manager import get_manager
 from app.services.runtime import sampler, system_info
@@ -50,6 +50,25 @@ def remove_dataset(name: str) -> dict:
     if not benchmark.delete_user_dataset(name):
         raise HTTPException(400, "내장 데이터셋이거나 존재하지 않습니다.")
     return {"deleted": name}
+
+
+# ── 공개 벤치마크 ───────────────────────────────────────────────────────────
+@router.get("/public-benchmarks")
+def public_benchmarks_list() -> list[dict]:
+    have = {d["name"]: d for d in benchmark.list_datasets()}
+    return [c | {"dataset": f"pub_{c['key']}", "imported": have.get(f"pub_{c['key']}")} for c in public_benchmarks.CATALOG]
+
+
+@router.post("/public-benchmarks/{key}/import", status_code=202)
+def public_benchmark_import(key: str, body: PublicBenchmarkImport) -> dict:
+    c = public_benchmarks.BY_KEY.get(key)
+    if c is None:
+        raise HTTPException(404, "알 수 없는 공개 벤치마크입니다.")
+
+    def work(job: Job) -> dict:
+        return public_benchmarks.import_benchmark(job, key, body.max_queries, body.max_corpus, body.seed)
+
+    return jobs.submit("dataset_import", f"공개 벤치마크 가져오기 · {c['title']}", work, key=key).to_dict()
 
 
 # ── 벤치마크 ────────────────────────────────────────────────────────────────

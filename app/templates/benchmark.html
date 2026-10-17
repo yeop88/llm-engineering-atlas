@@ -30,6 +30,17 @@
         <div class="row"><input type="file" id="b-upload" accept=".json,application/json"><button class="btn sm danger" id="b-del-ds">선택 데이터셋 삭제</button></div>
       </div>
     </details>
+    <details id="pub-box">
+      <summary>공개 한국어 벤치마크 가져오기</summary>
+      <div class="stack" style="margin-top:8px">
+        <div class="small muted">Hugging Face Hub 의 MTEB 형식 공개 데이터를 내려받아 데이터셋으로 추가합니다(HF 캐시에 저장). 코퍼스가 크면 질문을 표본으로 뽑고, 그 정답 문서 + 무작위 방해 문서로 줄여 CPU 에서도 돌릴 수 있게 합니다. 라이선스를 확인하고 쓰세요.</div>
+        <div class="row">
+          <div class="field"><label>최대 질문(문장쌍) 수</label><input id="pub-q" type="number" value="300" min="10" style="width:100px"></div>
+          <div class="field"><label>최대 문서 수</label><input id="pub-c" type="number" value="3000" min="100" style="width:100px"></div>
+        </div>
+        <div id="pub-list"></div>
+      </div>
+    </details>
   </div>
   <div class="card stack">
     <div><label>모델 (여러 개 선택)</label><select id="b-models" multiple style="min-height:240px"></select></div>

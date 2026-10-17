@@ -350,3 +350,8 @@ class EvalRunRequest(BaseModel):
     max_queries: int | None = Field(default=None, ge=1, le=5000)  # 질문이 많을 때 무작위로 일부만
     seed: int = 0
 
+
+class PublicBenchmarkImport(BaseModel):
+    max_queries: int | None = Field(default=300, ge=10, le=20000)  # 검색: 질문 수, STS: 문장쌍 수 (비우면 전부)
+    max_corpus: int | None = Field(default=3000, ge=100, le=200000)  # 정답 문서 + 무작위 방해 문서
+    seed: int = 0

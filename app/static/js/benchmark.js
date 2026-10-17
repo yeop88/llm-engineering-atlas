@@ -290,7 +290,28 @@ $("#b-del-ds").onclick = async () => {
   try { await api(`/api/datasets/${name}`, { method: "DELETE" }); toast("삭제됨", "ok"); loadDatasets(); } catch (err) { toast(err.message, "err"); }
 };
 
+// ── 공개 벤치마크 ──
+async function loadPublic() {
+  const rows = await api("/api/public-benchmarks");
+  $("#pub-list").innerHTML = `<table>${rows.map(c => `<tr>
+    <td><b>${esc(c.title)}</b> <span class="badge">${c.type}</span><div class="small muted">${esc(c.description)}</div><div class="small muted">${esc(c.repo)} · ${esc(c.license)}</div></td>
+    <td class="small nowrap">${c.imported ? `<span class="badge ok">가져옴</span> ${c.type === "sts" ? "문장쌍" : "질문"} ${c.imported.size}${c.imported.corpus_size ? ` / 문서 ${c.imported.corpus_size}` : ""}` : ""}</td>
+    <td class="right nowrap">${c.imported ? `<button class="btn sm" onclick="loadDatasets('${c.dataset}')">선택</button>` : ""}<button class="btn sm" onclick="importPublic(this, '${c.key}')">${c.imported ? "다시 가져오기" : "가져오기"}</button></td></tr>`).join("")}</table>`;
+}
+async function importPublic(btn, key) {
+  const body = { max_queries: +$("#pub-q").value || null, max_corpus: +$("#pub-c").value || null };
+  const job = await busy(btn, () => api(`/api/public-benchmarks/${key}/import`, { method: "POST", body }));
+  btn.disabled = true;
+  try {
+    const done = await pollJob(job.id, j => { btn.textContent = `${pct(j.progress)}%`; }, 700);
+    if (done.status !== "done") return toast(done.error || done.status, "err");
+    toast(`${done.result.title} — ${done.result.size}`, "ok");
+    await loadDatasets(done.result.name); loadPublic();
+  } finally { btn.disabled = false; }
+}
+
 (async () => {
+  $("#pub-box").addEventListener("toggle", e => { if (e.target.open) loadPublic(); });
   await loadDatasets();
   await fillModelSelect($("#b-models"));
   fillDimSelect($("#b-models"), $("#b-dim"));
