@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     pgvector_url: str | None = None  # 예: postgresql://embedding:embedding@localhost:5433/embedding_lab
     # MariaDB 11.7+ VECTOR (docker compose --profile mariadb up -d)
     mariadb_url: str | None = None  # 예: mysql://embedding:embedding@localhost:3307/embedding_lab
+    # 벡터 수가 이 이하인 인덱스는 근사(HNSW) 대신 정확 검색 — 평가 결과가 근사 오차에 흔들리지 않게
+    vector_exact_max: int = 20000
+    # 근사 검색 탐색 폭 (클수록 정확, 느림). 실제로는 max(이 값, top_k × 4)
+    vector_ef_search: int = 200
 
     # ── 문서 검색 ────────────────────────────────────────────────────────────
     max_upload_mb: int = 100

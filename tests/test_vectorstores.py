@@ -90,3 +90,56 @@ def test_unconfigured_store_raises(monkeypatch):
         vectorstores.get_store("pgvector")
     status = {s["kind"]: s for s in vectorstores.stores_status()}
     assert status["pgvector"]["configured"] is False
+
+
+def _anisotropic(dim: int = 1024, n: int = 600):
+    """실제 임베딩처럼 모든 벡터가 한 방향으로 쏠린 데이터(관계없는 벡터끼리 코사인 ≈ 0.5) + 먼저 넣은 뭉친 묶음 6개."""
+    rng = np.random.default_rng(1)
+    common = rng.standard_normal(dim)
+    common = common / np.linalg.norm(common) * np.sqrt(dim)
+    center = common + rng.standard_normal(dim)
+    vec = np.vstack([center + 0.4 * rng.standard_normal((6, dim)), common + rng.standard_normal((n, dim))]).astype(np.float32)
+    vec /= np.linalg.norm(vec, axis=1, keepdims=True)
+    queries = [center + rng.standard_normal(dim) for _ in range(10)]
+    return vec, [(q / np.linalg.norm(q)).astype(np.float32) for q in queries]
+
+
+def test_small_index_search_is_exact(store):
+    """작은 인덱스는 정확 검색이어야 한다 — 평가 결과가 근사 오차에 흔들리지 않게.
+    회귀: MariaDB HNSW 기본 탐색 폭(20)에서 이 데이터의 상위 10개 재현율이 0.94(최소 0.8), 실제 문서에서는 0.79 였다."""
+    vec, queries = _anisotropic()
+    ids = list(range(1, len(vec) + 1))
+    name = f"t_{uuid.uuid4().hex[:10]}"
+    try:
+        store.ensure(name, vec.shape[1])
+        for b in range(0, len(ids), 32):  # 인덱스 구축과 같은 방식으로 나눠 넣기
+            store.upsert(name, ids[b : b + 32], vec[b : b + 32], [0] * len(ids[b : b + 32]))
+        assert store.use_exact(name)
+        for q in queries:
+            exact = [ids[i] for i in np.argsort(-(vec @ q))[:10]]
+            assert [h[0] for h in store.search(name, q, top_k=10)] == exact
+        store.delete_ids(name, [1])  # 쓰기 후에도 크기 캐시가 갱신되어야 한다
+        assert store.count(name) == len(ids) - 1 and store.use_exact(name)
+    finally:
+        store.drop(name)
+
+
+def test_large_index_uses_wide_ann(store, monkeypatch):
+    """정확 검색 기준을 넘으면 근사 검색(넓힌 탐색 폭)으로도 동작해야 한다."""
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "vector_exact_max", 100)
+    vec, queries = _anisotropic(dim=64, n=300)
+    ids = list(range(1, len(vec) + 1))
+    name = f"t_{uuid.uuid4().hex[:10]}"
+    try:
+        store.ensure(name, 64)
+        store.upsert(name, ids, vec, [0] * len(ids))
+        assert not store.use_exact(name)
+        rec = []
+        for q in queries:
+            exact = set(ids[i] for i in np.argsort(-(vec @ q))[:10])
+            rec.append(len(exact & {h[0] for h in store.search(name, q, top_k=10)}) / 10)
+        assert np.mean(rec) >= 0.9
+    finally:
+        store.drop(name)

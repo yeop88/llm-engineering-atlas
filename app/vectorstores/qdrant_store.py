@@ -49,12 +49,17 @@ class QdrantStore(VectorStore):
                     ),
                     wait=True,
                 )
+        self.forget_size(name)
 
     def search(self, name: str, vector: np.ndarray, top_k: int, doc_ids: list[int] | None = None) -> list[tuple[int, float]]:
         name = check_name(name)
         flt = models.Filter(must=[models.FieldCondition(key="doc_id", match=models.MatchAny(any=doc_ids))]) if doc_ids else None
+        # 작은 컬렉션은 정확 검색, 크면 탐색 폭을 넓힌 HNSW (base.py 정책). 로컬 파일 모드는 원래 전체 비교다
+        params = models.SearchParams(exact=True) if self.use_exact(name) else models.SearchParams(hnsw_ef=self.ef_search(top_k))
         with self._lock:
-            pts = self.client.query_points(name, query=vector.tolist(), limit=top_k, query_filter=flt, with_payload=False).points
+            pts = self.client.query_points(
+                name, query=vector.tolist(), limit=top_k, query_filter=flt, search_params=params, with_payload=False
+            ).points
         return [(int(p.id), float(p.score)) for p in pts]
 
     def delete_ids(self, name: str, ids: list[int]) -> None:
@@ -62,12 +67,14 @@ class QdrantStore(VectorStore):
         with self._lock:
             if ids and self.client.collection_exists(name):
                 self.client.delete(name, points_selector=models.PointIdsList(points=ids), wait=True)
+        self.forget_size(name)
 
     def drop(self, name: str) -> None:
         name = check_name(name)
         with self._lock:
             if self.client.collection_exists(name):
                 self.client.delete_collection(name)
+        self.forget_size(name)
 
     def count(self, name: str) -> int:
         name = check_name(name)

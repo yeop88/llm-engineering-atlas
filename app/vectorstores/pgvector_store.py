@@ -80,19 +80,25 @@ class PgVectorStore(VectorStore):
                         f"INSERT INTO {name} (id, doc_id, emb) VALUES (%s, %s, %s{cast}) ON CONFLICT (id) DO UPDATE SET doc_id = EXCLUDED.doc_id, emb = EXCLUDED.emb",
                         rows,
                     )
+        self.forget_size(name)
 
     def search(self, name: str, vector: np.ndarray, top_k: int, doc_ids: list[int] | None = None) -> list[tuple[int, float]]:
         name = check_name(name)
+        exact = self.use_exact(name)  # count() 가 같은 잠금을 쓰므로 잠금 밖에서
         with self._lock:
             c = self._c()
             typ = self._type_of(name)
             cast = "::halfvec" if typ == "halfvec" else ""
             q = vector.astype(np.float32)
             with c.transaction():
-                c.execute(f"SET LOCAL hnsw.ef_search = {max(40, int(top_k) * 2)}")
+                if exact:  # 작은 표: 인덱스를 끄고 전체 비교 (base.py 정책)
+                    c.execute("SET LOCAL enable_indexscan = off")
+                else:
+                    c.execute(f"SET LOCAL hnsw.ef_search = {self.ef_search(top_k)}")
                 if doc_ids:
                     # 필터가 있으면 HNSW 결과가 모자랄 수 있어 반복 스캔(pgvector 0.8+)을 켠다
-                    c.execute("SET LOCAL hnsw.iterative_scan = relaxed_order")
+                    if not exact:
+                        c.execute("SET LOCAL hnsw.iterative_scan = relaxed_order")
                     rows = c.execute(
                         f"SELECT id, 1 - (emb <=> %s{cast}) FROM {name} WHERE doc_id = ANY(%s) ORDER BY emb <=> %s{cast} LIMIT %s",
                         (q, doc_ids, q, top_k),
@@ -110,6 +116,7 @@ class PgVectorStore(VectorStore):
         with self._lock:
             if self._exists(name):
                 self._c().execute(f"DELETE FROM {name} WHERE id = ANY(%s)", (ids,))
+        self.forget_size(name)
 
     def _exists(self, name: str) -> bool:
         return self._c().execute("SELECT to_regclass(%s)", (name,)).fetchone()[0] is not None
@@ -119,6 +126,7 @@ class PgVectorStore(VectorStore):
         with self._lock:
             self._c().execute(f"DROP TABLE IF EXISTS {name}")
             self._types.pop(name, None)
+        self.forget_size(name)
 
     def count(self, name: str) -> int:
         name = check_name(name)
