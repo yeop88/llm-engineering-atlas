@@ -28,7 +28,7 @@
   <div class="card stack">
     <h2>앞으로 할 일</h2>
     {% if stage.plans %}<ul>{% for p in stage.plans %}<li>{{ p }}</li>{% endfor %}</ul>{% else %}<div class="small muted">계획된 추가 작업이 없습니다.</div>{% endif %}
-    {% if stage.docs %}<h3>문서</h3><div class="small">{% for title, path in stage.docs %}<a href="{{ doc_url(path) }}" target="_blank" rel="noopener">{{ title }}</a>{{ " · " if not loop.last }}{% endfor %}</div>{% endif %}
+    <h3>문서</h3><div class="small"><a href="{{ doc_url(stage.readme) }}" target="_blank" rel="noopener">단계 문서</a>{{ " · " if stage.docs }}{% for title, path in stage.docs %}<a href="{{ doc_url(path) }}" target="_blank" rel="noopener">{{ title }}</a>{{ " · " if not loop.last }}{% endfor %}</div>
   </div>
 </div>
 

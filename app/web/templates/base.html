@@ -42,7 +42,7 @@
         <div><h4>왜 하는가</h4><p>{{ st.why }}</p></div>
         <div><h4>어떻게 (이 앱에서)</h4><ul>{% for h in st.how %}<li>{{ h }}</li>{% endfor %}</ul></div>
       </div>
-      <div class="small"><a href="/stages/{{ st.key }}">단계 소개</a> · <a href="/roadmap">맵에서 보기</a>{% for title, path in st.docs %} · <a href="{{ doc_url(path) }}" target="_blank" rel="noopener">{{ title }}</a>{% endfor %}</div>
+      <div class="small"><a href="/stages/{{ st.key }}">단계 소개</a> · <a href="/roadmap">맵에서 보기</a> · <a href="{{ doc_url(st.readme) }}" target="_blank" rel="noopener">단계 문서</a>{% for title, path in st.docs %} · <a href="{{ doc_url(path) }}" target="_blank" rel="noopener">{{ title }}</a>{% endfor %}</div>
     </details>
     {% endif %}
     {% block content %}{% endblock %}

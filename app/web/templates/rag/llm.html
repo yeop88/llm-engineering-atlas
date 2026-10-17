@@ -28,7 +28,7 @@
 
 <div class="card stack" style="margin-top:16px">
   <h2>로컬 LLM 서버 실행</h2>
-  <div class="small">가장 가벼운 방법은 <a href="https://github.com/ggml-org/llama.cpp/releases" target="_blank" rel="noopener">llama.cpp</a> 의 <code>llama-server</code> 입니다. 설치 없이 압축만 풀면 되고 OpenAI 호환 API 를 제공합니다. 내장 GPU(AMD·Intel)는 Vulkan 빌드, NVIDIA 는 CUDA 빌드를 받으세요. 자세한 내용과 모델 비교는 <code>docs/llm.md</code> 에 있습니다.</div>
+  <div class="small">가장 가벼운 방법은 <a href="https://github.com/ggml-org/llama.cpp/releases" target="_blank" rel="noopener">llama.cpp</a> 의 <code>llama-server</code> 입니다. 설치 없이 압축만 풀면 되고 OpenAI 호환 API 를 제공합니다. 내장 GPU(AMD·Intel)는 Vulkan 빌드, NVIDIA 는 CUDA 빌드를 받으세요. 자세한 내용과 모델 비교는 <code>docs/guides/llm.md</code> 에 있습니다.</div>
   <pre class="small">llama-server.exe -m 모델경로\gemma-4-E4B_q4_0-it.gguf --host 127.0.0.1 --port 8081 -c 16384 -ngl 99 -np 2 --alias gemma-4-e4b</pre>
   <pre class="small"># .env
 OPENAI_BASE_URL=http://127.0.0.1:8081/v1

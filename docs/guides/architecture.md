@@ -29,7 +29,7 @@ app/
     static/            css · js
 ```
 
-의존 방향: `web → stages → core`, 단계끼리는 흐름도 앞 단계만 가져다 씁니다(예: `rag` 는 `embedding.model_manager`, `finetune` 은 `rag.evaluation` 을 씀). 새 단계(리랭킹 고도화 · 라우팅 · 증류 · 양자화 · 에이전트 · 강화학습)는 `app/stages/<단계>/` 로 추가합니다([roadmap.md](roadmap.md)).
+의존 방향: `web → stages → core`, 단계끼리는 흐름도 앞 단계만 가져다 씁니다(예: `rag` 는 `embedding.model_manager`, `finetune` 은 `rag.evaluation` 을 씀). 새 단계(리랭킹 고도화 · 라우팅 · 증류 · 양자화 · 에이전트 · 강화학습)는 `app/stages/<단계>/` 로 추가합니다([roadmap.md](../map.md)).
 
 ## 요청 흐름
 

@@ -8,6 +8,7 @@
 - 프로젝트 이름을 **LLM Engineering Atlas**(`llm-engineering-atlas`, 이전 Embedding Lab)로 변경하고 목표를 임베딩 → RAG → 리랭킹 → 라우팅 → 소형/대형 모델의 전체 흐름으로 넓힘. 저장소 주소도 바뀜(옛 주소는 자동 연결)
 - **코드 구조를 흐름도 단계별로 재편**: `app/core`(공통 기반) · `app/stages/<단계>`(embedding · rag · finetune · apps — 서비스 · API · 데이터를 한 폴더에) · `app/web`(페이지 · 단계별 템플릿 하위 폴더 · 정적 파일). 작업 · 실행 이력 · 시스템 API 를 `core/system_api.py` 로 분리. API 주소와 동작은 그대로 — `docs/architecture.md`
 - **단계 레지스트리**(`app/stages/registry.py`): 흐름도의 모든 단계(1 임베딩 ~ 8 에이전트·강화학습, 곁가지 멀티모달·의미 응용)의 원리 · 왜 · 어떻게 · 상태 · 화면 · 할 일을 한곳에 정의. 메뉴를 흐름도 순서로 다시 만들고, 각 화면 위에 그 단계의 원리 · 왜 · 어떻게 패널, 단계 소개 페이지(`/stages/<단계>`), 맵 페이지(상태 · 부분/전체 연결 계획)를 모두 여기서 생성
+- **문서를 흐름도 단계별로 재구성**: `docs/stages/<번호-단계>/`(단계별 README + 상세 문서) · `docs/guides/` · `docs/records/` · `docs/map.md`, 색인 `docs/README.md`. 단계 README 와 색인은 `scripts/gen_docs.py` 가 단계 레지스트리로 생성. 생성 문서 최신 여부와 모든 상대 링크(파일 · 제목 앵커)를 검사하는 테스트 추가
 
 ## [0.2.0] - 2026-10-18
 

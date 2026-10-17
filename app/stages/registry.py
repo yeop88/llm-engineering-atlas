@@ -39,6 +39,16 @@ class Stage:
         return STATUS_LABEL[self.status]
 
     @property
+    def doc_dir(self) -> str:
+        """이 단계 문서 폴더 (docs/stages/<번호-단계>/). README.md 는 scripts/gen_docs.py 가 이 레지스트리로 만든다."""
+        name = self.key.replace("_", "-")
+        return f"docs/stages/{self.no}-{name}" if self.flow == "main" else f"docs/stages/{name}"
+
+    @property
+    def readme(self) -> str:
+        return f"{self.doc_dir}/README.md"
+
+    @property
     def menu(self) -> str:
         return self.short or self.title
 
@@ -70,7 +80,11 @@ STAGES: list[Stage] = [
             Page("playground", "/playground", "플레이그라운드", "임베딩 · 유사도 · 검색 · 지도"),
             Page("benchmark", "/benchmark", "벤치마크", "데이터셋 · 공개 벤치마크 · 신뢰구간"),
         ],
-        docs=[("모델 카탈로그", "docs/models.md"), ("벤치마크", "docs/benchmarks.md"), ("시각화", "docs/visualization.md")],
+        docs=[
+            ("모델 카탈로그", "docs/stages/1-embedding/models.md"),
+            ("벤치마크", "docs/stages/1-embedding/benchmarks.md"),
+            ("시각화", "docs/stages/1-embedding/visualization.md"),
+        ],
     ),
     Stage(
         key="rag",
@@ -93,7 +107,7 @@ STAGES: list[Stage] = [
             Page("rag_answer", "/rag/answer", "답변 생성", "근거 인용 답변 · 환각 검증"),
             Page("llm", "/llm", "LLM 연결", "로컬 · OpenAI 호환 · Claude"),
         ],
-        docs=[("문서 검색(RAG)", "docs/rag.md"), ("LLM 연결", "docs/llm.md")],
+        docs=[("문서 검색(RAG)", "docs/stages/2-rag/rag.md"), ("LLM 연결", "docs/guides/llm.md")],
     ),
     Stage(
         key="rerank",
@@ -114,7 +128,7 @@ STAGES: list[Stage] = [
             "LLM 리랭커(목록형 재정렬)와 크로스 인코더 비교",
             "양자화 · ONNX 로 속도 개선 후 재측정",
         ],
-        docs=[("로드맵 · 리랭킹", "docs/roadmap.md"), ("RAG 조합 평가 실측", "docs/rag.md")],
+        docs=[("전체 맵 · 리랭킹", "docs/map.md"), ("RAG 조합 평가 실측", "docs/stages/2-rag/rag.md")],
     ),
     Stage(
         key="search_lab",
@@ -127,7 +141,7 @@ STAGES: list[Stage] = [
         why="사용자 질문은 짧고 구어체 · 상황 설명형이라 문서 표현과 어긋납니다. 모델 교체나 학습 없이도 검색 품질을 올릴 수 있는 가장 싼 방법입니다.",
         how=["기법별로 켜고 끄며 같은 평가 세트 · 조합 평가로 비교", "LLM 호출 수 · 지연 · 비용을 함께 기록"],
         plans=["질의 재작성 · HyDE · 다중 질의", "문맥 청크(contextual chunk) 색인", "기법 × 검색 방식 조합 평가"],
-        docs=[("로드맵", "docs/roadmap.md")],
+        docs=[("전체 맵", "docs/map.md")],
     ),
     Stage(
         key="finetune",
@@ -145,7 +159,7 @@ STAGES: list[Stage] = [
         ],
         pages=[Page("finetune", "/finetune", "파인튜닝 테스트", "학습 쌍 · 학습 · 전후 비교 · 기록")],
         plans=["거짓 오답을 거르는 GISTEmbed 손실, 같은 문서 지문을 한 배치에 넣지 않는 샘플링", "학습 쌍 수천 개 규모 · 낮은 학습률 실험"],
-        docs=[("파인튜닝: 왜 · 어떻게 · 실행 기록", "docs/finetune.md")],
+        docs=[("파인튜닝: 왜 · 어떻게 · 실행 기록", "docs/stages/5-finetune/finetune.md")],
     ),
     Stage(
         key="routing",
@@ -158,7 +172,7 @@ STAGES: list[Stage] = [
         why="모든 질문을 가장 큰 모델로 처리하면 비싸고 느립니다. 대부분의 쉬운 질문은 작은 모델로 충분하므로, 나눠 처리하면 비용과 지연을 크게 줄이면서 품질을 지킬 수 있습니다.",
         how=["규칙 · 임베딩 분류기(의미 응용의 분류기 재사용) · LLM 판단 라우터 비교", "모델별 비용 · 지연 · 정답률을 함께 보고 배분"],
         plans=["질문 난이도 · 의도 분류기", "라우팅 전후 평균 비용과 품질 비교"],
-        docs=[("로드맵 · 라우팅", "docs/roadmap.md")],
+        docs=[("전체 맵 · 라우팅", "docs/map.md")],
     ),
     Stage(
         key="distill",
@@ -175,7 +189,7 @@ STAGES: list[Stage] = [
             "LLM: 큰 LLM 답변 → 소형 LLM 학습 데이터",
         ],
         plans=["크기 · 속도 · 정확도 3축 비교표"],
-        docs=[("로드맵 · 지식 증류", "docs/roadmap.md")],
+        docs=[("전체 맵 · 지식 증류", "docs/map.md")],
     ),
     Stage(
         key="quant",
@@ -192,7 +206,7 @@ STAGES: list[Stage] = [
             "LLM GGUF 비트 수(4 · 5 · 8bit)별 답변 품질 · 속도",
         ],
         plans=["벡터 DB 용량 · 검색 지연 비교"],
-        docs=[("로드맵 · 양자화", "docs/roadmap.md")],
+        docs=[("전체 맵 · 양자화", "docs/map.md")],
     ),
     Stage(
         key="agent",
@@ -208,7 +222,7 @@ STAGES: list[Stage] = [
             "도구 호출: 문서 필터 · 조문 조회 · 계산기",
             "단계별 기록과 비용 · 시간 측정, 단일 RAG 와 정답률 비교",
         ],
-        docs=[("로드맵 · 에이전틱 AI", "docs/roadmap.md")],
+        docs=[("전체 맵 · 에이전틱 AI", "docs/map.md")],
     ),
     Stage(
         key="rl",
@@ -224,7 +238,7 @@ STAGES: list[Stage] = [
             "선호 데이터(좋은 답 / 나쁜 답) 수집",
             "DPO 등으로 소형 LLM 조정 후 답변 평가 비교",
         ],
-        docs=[("로드맵 · 강화학습", "docs/roadmap.md")],
+        docs=[("전체 맵 · 강화학습", "docs/map.md")],
     ),
     Stage(
         key="multimodal",
@@ -239,7 +253,7 @@ STAGES: list[Stage] = [
         how=["멀티모달 모델로 이미지 임베딩, 텍스트 → 이미지 교차 검색"],
         pages=[Page("multimodal", "/multimodal", "이미지 · 텍스트", "이미지 임베딩 · 교차 검색")],
         plans=["이미지 컬렉션 색인 · 검색", "영상 프레임 추출 · 장면 검색"],
-        docs=[("멀티모달", "docs/multimodal.md")],
+        docs=[("멀티모달", "docs/stages/multimodal/multimodal.md")],
     ),
     Stage(
         key="apps",
@@ -256,7 +270,7 @@ STAGES: list[Stage] = [
             "학습한 분류기 · 탐지기를 저장해 API 로 사용",
         ],
         pages=[Page("apps", "/apps", "의미 응용", "추천 · 분류 · 군집 · 중복 · 이상 · 키워드")],
-        docs=[("의미 응용", "docs/apps.md")],
+        docs=[("의미 응용", "docs/stages/apps/apps.md")],
     ),
 ]
 BY_KEY = {s.key: s for s in STAGES}

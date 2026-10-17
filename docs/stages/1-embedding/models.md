@@ -73,7 +73,7 @@
 | 긴 문서 (8K 토큰 이상) | Qwen3-Embedding, Nemotron-3, Harrier, Granite R2 (32K) | 롱 컨텍스트 |
 | 상업 서비스 | Apache-2.0 / MIT 모델 | CC-BY-NC(Jina), NVIDIA Custom, LFM 라이선스는 조건 확인 |
 
-실측 결과와 대체 모델 정보 검증은 [model-verification.md](model-verification.md)를 참고하세요.
+실측 결과와 대체 모델 정보 검증은 [model-verification.md](../../records/model-verification.md)를 참고하세요.
 
 ## 카탈로그에 없는 모델 추가
 

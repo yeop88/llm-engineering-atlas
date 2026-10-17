@@ -48,7 +48,7 @@ Python 3.14.6 · FastAPI 0.143.3 · Uvicorn 0.54.0 · Starlette 1.8 · Pydantic 
 # 1) uv 설치 (없다면)
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-# 2) 의존성 설치 — 가속기에 맞춰 하나 선택 (docs/gpu.md)
+# 2) 의존성 설치 — 가속기에 맞춰 하나 선택 (docs/guides/gpu.md)
 uv sync --extra cpu        # CPU 전용
 # uv sync --extra cu130    # NVIDIA GPU (CUDA 13.0, 최신 드라이버)
 # uv sync --extra cu126    # NVIDIA GPU (CUDA 12.6)
@@ -77,20 +77,12 @@ uv run uvicorn app.main:app --reload --port 8000
 
 ## 문서
 
-- [docs/rag.md](docs/rag.md) — 문서 검색(RAG): 업로드·청킹·벡터 DB·하이브리드 검색·리랭커
-- [docs/llm.md](docs/llm.md) — LLM 연동 (OpenAI 호환 · Claude)
-- [docs/finetune.md](docs/finetune.md) — 파인튜닝: 왜 · 어떻게 · 실행 기록
-- [docs/roadmap.md](docs/roadmap.md) — AI 엔지니어링 로드맵 (리랭킹 · 에이전트 · 강화학습 · 증류 · 양자화 · 라우팅)
-- [docs/apps.md](docs/apps.md) — 의미 기반 응용 (추천·분류·클러스터링·중복/표절·이상 탐지·키워드/요약)
-- [docs/gpu.md](docs/gpu.md) — CPU · CUDA · ROCm 설치
-- [docs/architecture.md](docs/architecture.md) — 구조와 동작 방식
-- [docs/models.md](docs/models.md) — 카탈로그 모델 목록과 선택 가이드
-- [docs/model-verification.md](docs/model-verification.md) — 대체 모델 정보 검증 결과와 실측 벤치마크
-- [docs/benchmarks.md](docs/benchmarks.md) — 벤치마크 지표와 데이터셋 형식
-- [docs/visualization.md](docs/visualization.md) — 벤치마크 차트 읽는 법
-- [docs/multimodal.md](docs/multimodal.md) — 이미지/오디오/비디오 임베딩
-- [docs/api.md](docs/api.md) — REST API
-- [docs/troubleshooting.md](docs/troubleshooting.md) — 문제 해결
+전체 색인은 **[docs/README.md](docs/README.md)** 입니다. 문서는 흐름도의 단계 순서로 정리되어 있고, 단계마다 원리 · 왜 하는가 · 어떻게가 있습니다.
+
+- [docs/map.md](docs/map.md) — 전체 흐름도와 각 단계의 목적 · 계획
+- 단계: [1 임베딩](docs/stages/1-embedding/README.md) · [2 RAG](docs/stages/2-rag/README.md) · [3 리랭킹](docs/stages/3-rerank/README.md) · [4 검색 향상](docs/stages/4-search-lab/README.md) · [5 파인튜닝](docs/stages/5-finetune/README.md) · [6 라우팅](docs/stages/6-routing/README.md) · [7a 지식 증류](docs/stages/7a-distill/README.md) · [7b 양자화](docs/stages/7b-quant/README.md) · [8a 에이전트](docs/stages/8a-agent/README.md) · [8b 강화학습](docs/stages/8b-rl/README.md) · [멀티모달](docs/stages/multimodal/README.md) · [의미 응용](docs/stages/apps/README.md)
+- 가이드: [아키텍처](docs/guides/architecture.md) · [API](docs/guides/api.md) · [LLM 연결](docs/guides/llm.md) · [GPU 설치](docs/guides/gpu.md) · [문제 해결](docs/guides/troubleshooting.md)
+- 기록: [모델 검증과 실측](docs/records/model-verification.md) · [파인튜닝 실행 기록](docs/stages/5-finetune/finetune.md#실행-기록)
 
 ## 개발
 
@@ -111,7 +103,7 @@ uv run ruff format app tests # 포맷
 
 **임베딩 모델의 라이선스는 이와 별도입니다.**
 - 이 저장소에는 모델 가중치나 모델 코드가 포함되어 있지 않습니다. 앱은 사용자가 요청할 때 Hugging Face Hub에서 모델을 내려받아 로컬에서 실행할 뿐 재배포하지 않습니다.
-- 각 모델은 제공자가 정한 고유 라이선스를 따르며, MIT 라이선스가 모델에 적용되지 않습니다. 모델을 사용하기 전에 해당 모델 카드의 라이선스를 직접 확인하세요. 카탈로그의 라이선스 표기([docs/models.md](docs/models.md), 앱의 모델 화면)는 참고용이며 변경될 수 있습니다.
+- 각 모델은 제공자가 정한 고유 라이선스를 따르며, MIT 라이선스가 모델에 적용되지 않습니다. 모델을 사용하기 전에 해당 모델 카드의 라이선스를 직접 확인하세요. 카탈로그의 라이선스 표기([docs/stages/1-embedding/models.md](docs/stages/1-embedding/models.md), 앱의 모델 화면)는 참고용이며 변경될 수 있습니다.
 - 특히 다음 모델은 상업적 사용이 제한되거나 별도 조건이 있습니다.
 
 | 라이선스 | 해당 모델 (카탈로그 기준) |

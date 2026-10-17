@@ -43,7 +43,9 @@ def resolve(provider: str | None = None, model: str | None = None) -> LLMConfig:
     s = get_settings()
     p = provider or s.llm_provider or ("openai" if s.openai_api_key or s.openai_model else "anthropic" if s.anthropic_api_key else None)
     if p not in PROVIDERS:
-        raise LLMError("LLM 이 설정되지 않았습니다. .env 에 OPENAI_API_KEY·OPENAI_MODEL 또는 ANTHROPIC_API_KEY 를 넣으세요 (docs/llm.md).")
+        raise LLMError(
+            "LLM 이 설정되지 않았습니다. .env 에 OPENAI_API_KEY·OPENAI_MODEL 또는 ANTHROPIC_API_KEY 를 넣으세요 (docs/guides/llm.md)."
+        )
     if p == "openai":
         m = model or s.openai_model
         if not m:
