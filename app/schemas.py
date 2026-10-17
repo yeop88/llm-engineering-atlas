@@ -355,3 +355,22 @@ class PublicBenchmarkImport(BaseModel):
     max_queries: int | None = Field(default=300, ge=10, le=20000)  # 검색: 질문 수, STS: 문장쌍 수 (비우면 전부)
     max_corpus: int | None = Field(default=3000, ge=100, le=200000)  # 정답 문서 + 무작위 방해 문서
     seed: int = 0
+
+
+class AnswerRequest(LLMRef):
+    question: str = Field(min_length=1, max_length=2000)
+    config: SearchConfig  # 검색 설정 (문서 검색 비교와 같은 형식)
+    context_top: int = Field(default=5, ge=1, le=20)  # LLM 에 넘길 검색 결과 수
+    max_context_chars: int = Field(default=6000, ge=500, le=60000)
+    max_tokens: int = Field(default=700, ge=50, le=8000)
+    temperature: float = Field(default=0.1, ge=0, le=2)
+    judge: bool = False  # LLM 으로 문장별 근거 판정도 할지
+
+
+class AnswerEvalRequest(LLMRef):
+    config: SearchConfig
+    max_queries: int | None = Field(default=10, ge=1, le=1000)  # 로컬 LLM 은 질문당 수십 초가 걸릴 수 있다
+    context_top: int = Field(default=5, ge=1, le=20)
+    max_context_chars: int = Field(default=6000, ge=500, le=60000)
+    max_tokens: int = Field(default=500, ge=50, le=8000)
+    seed: int = 0

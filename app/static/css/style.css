@@ -192,4 +192,21 @@ td.rank-bad { background: color-mix(in srgb, var(--status-critical) 14%, transpa
 mark { background: color-mix(in srgb, #fab219 45%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
 .kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; }
 .kv > div:nth-child(odd) { color: var(--muted); font-size: 12px; }
-
+
+/* RAG 답변 생성 */
+.ans-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
+.ans-layout aside { position: sticky; top: 72px; }
+@media (max-width: 900px) { .ans-layout { grid-template-columns: 1fr; } .ans-layout aside { position: static; } }
+.q-bubble { align-self: flex-end; max-width: 80%; padding: 8px 12px; border-radius: 12px; background: var(--accent-weak); color: var(--text); }
+.answer { line-height: 1.8; }
+.cite { display: inline-block; min-width: 18px; padding: 0 5px; margin: 0 1px; border-radius: 9px; font-size: 11px; line-height: 18px; text-align: center;
+  background: var(--accent-weak); color: var(--accent); vertical-align: 2px; text-decoration: none; }
+.cite.bad { background: color-mix(in srgb, var(--status-critical) 18%, transparent); color: var(--status-critical); }
+.sent { border-radius: 4px; padding: 1px 0; }
+.sent-weak, .sent-uncited { background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.sent-unsupported { background: color-mix(in srgb, var(--status-critical) 16%, transparent); text-decoration: underline wavy color-mix(in srgb, var(--status-critical) 60%, transparent); }
+.src { padding: 8px; border: 1px solid var(--border); border-radius: 8px; }
+.src.cited { border-color: var(--accent); }
+.src.flash { box-shadow: 0 0 0 3px var(--accent-weak); }
+.caret { animation: blink 1s steps(2) infinite; color: var(--muted); }
+@keyframes blink { 50% { opacity: 0; } }

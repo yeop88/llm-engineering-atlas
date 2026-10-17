@@ -144,3 +144,10 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | GET | `/api/eval-sets/{id}/export` | JSON 내려받기 |
 | POST | `/api/eval-sets/{id}/evaluate` | 조합 평가 (작업) `{"configs": [SearchConfig, ...], "max_queries"?}` |
 | GET | `/api/eval-sets/{id}/runs` | 이 평가 세트의 조합 평가 이력 |
+
+## RAG 답변 생성
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/api/collections/{id}/answer` | NDJSON 스트림: `search` → `delta`(여러 번) → `verify` → `judge`(선택) → `done`, 오류는 `error`. 본문 `{"question", "config": SearchConfig, "context_top", "max_context_chars", "max_tokens", "temperature", "judge", "provider"?, "model"?}` |
+| POST | `/api/eval-sets/{id}/answer-eval` | 평가 세트로 답변 일괄 평가 (작업) `{"config", "max_queries", "context_top", ...}` |
