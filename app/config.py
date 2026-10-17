@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", env_file_encoding="utf-8", extra="ignore")
 
-    app_name: str = "Embedding Lab"
+    app_name: str = "LLM Engineering Atlas"
     data_dir: Path = BASE_DIR / "data"
     database_url: str | None = None
 

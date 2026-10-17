@@ -203,7 +203,7 @@ async function exportReport(btn) {
 <p class="lead">${current.runId ? `run #${current.runId} · ` : ""}생성 ${esc(new Date().toLocaleString("ko-KR"))} · ${r.results.length}개 모델 · 총 ${r.total_seconds}s${r.truncate_dim ? ` · truncate_dim=${r.truncate_dim}` : ""}<br>
 환경: Python ${esc(sys.python)} · ${esc(sys.device)}/${esc(sys.dtype)} · sentence-transformers ${esc(sys.packages["sentence-transformers"])} · transformers ${esc(sys.packages.transformers)} · torch ${esc(sys.packages.torch)}</p>
 ${clone.innerHTML}
-<p class="small muted" style="margin-top:24px">Embedding Lab에서 생성한 리포트입니다. 차트는 생성 시점의 이미지입니다.</p>
+<p class="small muted" style="margin-top:24px">LLM Engineering Atlas 에서 생성한 리포트입니다. 차트는 생성 시점의 이미지입니다.</p>
 </main></body></html>`;
     download(reportName("html"), html, "text/html");
   });

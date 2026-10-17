@@ -1,7 +1,7 @@
 [project]
-name = "embedding-lab"
+name = "llm-engineering-atlas"
 version = "0.2.0"
-description = "오픈소스 임베딩 모델을 관리하고 테스트하는 FastAPI 웹 애플리케이션"
+description = "Global LLM system engineering lab, Korean-first: 임베딩 → RAG → 리랭킹 → 라우팅 → 소형/대형 모델을 단계별로 실험·검증하고 연결하는 웹 앱"
 readme = "README.md"
 requires-python = ">=3.14"
 license = "MIT"

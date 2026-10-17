@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### 변경
+- 프로젝트 이름을 **LLM Engineering Atlas**(`llm-engineering-atlas`, 이전 Embedding Lab)로 변경하고 목표를 임베딩 → RAG → 리랭킹 → 라우팅 → 소형/대형 모델의 전체 흐름으로 넓힘. 저장소 주소도 바뀜(옛 주소는 자동 연결)
+
 ## [0.2.0] - 2026-10-18
 
 ### 추가
@@ -88,5 +91,6 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/embedding-lab/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/yeop88/embedding-lab/releases/tag/v0.1.0
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/yeop88/llm-engineering-atlas/releases/tag/v0.1.0

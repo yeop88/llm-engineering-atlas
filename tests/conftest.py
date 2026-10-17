@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 # app 모듈 import 전에 임시 데이터 디렉터리를 지정해야 DB 엔진이 그 경로로 만들어진다.
-_TMP = tempfile.mkdtemp(prefix="embedding_lab_test_")
+_TMP = tempfile.mkdtemp(prefix="llm_atlas_test_")
 os.environ["DATA_DIR"] = _TMP
 os.environ["MAX_LOADED_MODELS"] = "3"
 os.environ["QDRANT_URL"] = ":memory:"  # 테스트는 서버 없이 메모리 Qdrant

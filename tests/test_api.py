@@ -11,7 +11,7 @@ def test_pages_render(client):
     for path in ("/", "/models", "/hub", "/playground", "/multimodal", "/benchmark", "/history"):
         r = client.get(path)
         assert r.status_code == 200, path
-        assert "Embedding Lab" in r.text
+        assert "LLM Engineering Atlas" in r.text
 
 
 def test_catalog_seeded_and_filters(client):
