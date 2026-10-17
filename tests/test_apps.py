@@ -191,3 +191,62 @@ def test_cluster_all_noise_has_no_agreement():
     x = common.normalize(rng.standard_normal((8, 16)).astype(np.float32))  # 흩어진 점 → HDBSCAN 이 모두 노이즈
     res = clus.cluster(_items_from(["가", "나"] * 4), x, "hdbscan", min_cluster_size=6)
     assert res["k"] == 0 and "agreement" not in res and "노이즈" in res["warning"]
+
+
+# ── 중복·표절 ───────────────────────────────────────────────────────────────
+from app.apps import dedup  # noqa: E402
+
+
+def test_near_duplicates_groups_and_kinds():
+    texts = ["비밀번호를 잊었어요", "비밀번호를 잊었어요", "암호를 잊었을 때 재설정하는 방법", "환불 언제 되나요", "배송지 변경"]
+    v = common.normalize(np.array([[1, 0, 0], [1, 0, 0], [0.97, 0.24, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32))
+    res = dedup.near_duplicates([common.Item(key=str(i), text=t) for i, t in enumerate(texts)], v, threshold=0.95)
+    assert res["n_groups"] == 1 and res["n_remove"] == 2 and res["keep_keys"] == ["0", "3", "4"]
+    kinds = {m["key"]: m["kind"] for m in res["groups"][0]["members"]}
+    assert kinds == {"0": None, "1": "copy", "2": "paraphrase"}
+    longest = dedup.near_duplicates([common.Item(key=str(i), text=t) for i, t in enumerate(texts)], v, 0.95, keep="longest")
+    assert longest["groups"][0]["representative"] == "2"  # 가장 긴 텍스트를 남김
+
+
+def test_plagiarism_kinds():
+    ref = [common.Item(key="r1", text="원문")]
+    ref_sents = [(ref[0], "공문서는 어문규범에 맞추어 한글로 작성하여야 한다"), (ref[0], "미세먼지가 심한 날에는 마스크를 쓴다")]
+    suspect = ["공문서는 어문규범에 맞추어 한글로 작성하여야 한다", "공공 문서는 맞춤법에 따라 한국어로 써야 한다", "우리 팀은 실험을 했다"]
+    rv = np.array([[1, 0, 0], [0, 1, 0]], dtype=np.float32)
+    sv = np.array([[1, 0, 0], [0.95, 0.1, 0.1], [0, 0, 1]], dtype=np.float32)
+    res = dedup.plagiarism(suspect, sv, ref_sents, rv, threshold=0.85, copy_lex=0.6)
+    assert [s["kind"] for s in res["sentences"]] == ["copy", "paraphrase", "original"]
+    assert 0 < res["ratio"]["copy"] < res["ratio"]["total"] < 1 and res["sources"][0]["key"] == "r1"
+
+
+def test_dedup_and_plagiarism_api(client):
+    mid = _model(client)
+    items = client.get("/api/apps/presets/dedup_questions").json()["items"]
+    job = _wait(
+        client,
+        client.post("/api/apps/dedup", json={"model_id": mid, "source": {"type": "texts", "items": items}, "threshold": 0.99}).json(),
+    )
+    assert job["status"] == "done", job
+    assert job["result"]["n_groups"] >= 1 and job["result"]["kinds"].get("copy", 0) >= 1  # 글자까지 같은 첫 두 줄
+    p = client.get("/api/apps/presets/plagiarism_essay").json()
+    job = _wait(
+        client,
+        client.post(
+            "/api/apps/plagiarism", json={"model_id": mid, "suspect": p["suspect"], "reference": {"type": "texts", "items": p["items"]}}
+        ).json(),
+    )
+    assert job["status"] == "done", job
+    r = job["result"]
+    assert r["sentences"][0]["text"] == "인공지능 검색 기술 동향 보고서"  # 줄바꿈은 문장 경계
+    assert r["sentences"][1]["kind"] == "copy" and r["ratio"]["copy"] > 0  # 첫 본문 문장은 원문 그대로
+    assert r["n_reference"] >= 8
+
+
+def test_near_duplicates_no_chaining():
+    # A~B, B~C 는 임계값 이상이지만 A~C 는 아님 → 연쇄로 A, C 가 묶이면 안 된다
+    a, b, c = np.array([1.0, 0, 0]), np.array([0.9, 0.436, 0]), np.array([0.62, 0.785, 0])
+    v = common.normalize(np.vstack([a, b, c]).astype(np.float32))
+    assert v[0] @ v[1] > 0.88 and v[1] @ v[2] > 0.88 and v[0] @ v[2] < 0.88
+    res = dedup.near_duplicates([common.Item(key=k, text=k) for k in "abc"], v, threshold=0.88)
+    assert res["n_groups"] == 1 and [m["key"] for m in res["groups"][0]["members"]] == ["a", "b"]
+    assert res["nn_similarity"]["median"] > 0.88 and sum(h["n"] for h in res["nn_similarity"]["hist"]) == 3

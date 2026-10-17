@@ -10,10 +10,20 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import crud
-from app.apps import classify, cluster, common, recommend
+from app.apps import classify, cluster, common, dedup, recommend
 from app.config import BASE_DIR, get_settings
 from app.db import AppModel, EmbeddingModel, SessionLocal, get_db
-from app.schemas import AppItemsRequest, ClusterRequest, PredictRequest, RecommendRequest, TrainClassifierRequest, ZeroShotRequest
+from app.rag.korean import split_sentences
+from app.schemas import (
+    AppItemsRequest,
+    ClusterRequest,
+    DedupRequest,
+    PlagiarismRequest,
+    PredictRequest,
+    RecommendRequest,
+    TrainClassifierRequest,
+    ZeroShotRequest,
+)
 from app.services.jobs import Job, jobs
 from app.services.model_manager import ModelSpec
 
@@ -267,4 +277,44 @@ def run_cluster(body: ClusterRequest, db: DB) -> dict:
         [spec.hf_id],
         body.model_dump(exclude={"source"}),
         fn,
+    )
+
+
+# ── 중복·표절 ───────────────────────────────────────────────────────────────
+MAX_REF_SENTENCES = 20_000
+
+
+@router.post("/dedup")
+def run_dedup(body: DedupRequest, db: DB) -> dict:
+    spec = crud.get_spec(db, body.model_id, "embedding")
+    src = body.source.model_dump()
+
+    def fn(job: Job, s: Session) -> dict[str, Any]:
+        its = common.resolve_source(s, src)
+        x = common.embed(spec, [it.text for it in its], "plain", body.truncate_dim, job, (0.0, 0.85), task="similarity")
+        job.update(0.9, "유사 쌍 찾는 중")
+        return dedup.near_duplicates(its, x, body.threshold, body.keep)
+
+    return submit(
+        "dedup", f"중복 검사 · 임계값 {body.threshold} ({spec.hf_id.split('/')[-1]})", [spec.hf_id], body.model_dump(exclude={"source"}), fn
+    )
+
+
+@router.post("/plagiarism")
+def run_plagiarism(body: PlagiarismRequest, db: DB) -> dict:
+    spec = crud.get_spec(db, body.model_id, "embedding")
+    ref_src = body.reference.model_dump()
+
+    def fn(job: Job, s: Session) -> dict[str, Any]:
+        refs = common.resolve_source(s, ref_src)
+        job.update(0.02, "문장 나누는 중")
+        ref_sents = [(it, sent) for it in refs for sent in split_sentences(it.text) if len(sent) >= 8][:MAX_REF_SENTENCES]
+        suspect = [sent for sent in split_sentences(body.suspect) if len(sent) >= 8]
+        rv = common.embed(spec, [t for _, t in ref_sents], "plain", body.truncate_dim, job, (0.05, 0.8), task="similarity")
+        sv = common.embed(spec, suspect, "plain", body.truncate_dim, job, (0.8, 0.95), task="similarity")
+        res = dedup.plagiarism(suspect, sv, ref_sents, rv, body.threshold, body.copy_lex)
+        return res | {"n_items": len(refs)}
+
+    return submit(
+        "plagiarism", f"표절 검사 ({spec.hf_id.split('/')[-1]})", [spec.hf_id], body.model_dump(exclude={"suspect", "reference"}), fn
     )

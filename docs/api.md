@@ -59,6 +59,7 @@ POST /api/collections/1/search
 | POST | `/api/apps/recommend` | 콘텐츠 추천 (작업) |
 | POST | `/api/apps/classify/zero-shot` · `/api/apps/classify/train` | 제로샷 분류 / 분류기 학습·평가·저장 (작업) |
 | POST | `/api/apps/cluster` | 클러스터링 (작업) |
+| POST | `/api/apps/dedup` · `/api/apps/plagiarism` | 중복 제거 / 문장 단위 표절 검사 (작업) |
 | POST | `/api/apps/classifiers/{id}/predict` | 저장된 분류기로 예측 `{"texts": [...]}` |
 | GET / DELETE | `/api/apps/models?kind=` · `/api/apps/models/{id}` | 저장된 분류기·탐지기 목록 / 삭제 |
 

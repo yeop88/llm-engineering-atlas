@@ -262,3 +262,16 @@ class ClusterRequest(AppModelRef):
     k: int | None = Field(default=None, ge=2, le=200)  # 비우면 실루엣으로 자동 선택
     k_max: int = Field(default=10, ge=2, le=50)
     min_cluster_size: int = Field(default=5, ge=2, le=500)  # HDBSCAN
+
+
+class DedupRequest(AppModelRef):
+    source: AppSource
+    threshold: float = Field(default=0.92, ge=0.5, le=1.0)
+    keep: Literal["first", "longest"] = "first"
+
+
+class PlagiarismRequest(AppModelRef):
+    suspect: str = Field(min_length=1, max_length=200_000)
+    reference: AppSource
+    threshold: float = Field(default=0.85, ge=0.5, le=1.0)  # 이 이상이면 의역(재사용)
+    copy_lex: float = Field(default=0.6, ge=0.1, le=1.0)  # 글자 3-gram 자카드가 이 이상이면 복사

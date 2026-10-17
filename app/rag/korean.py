@@ -45,12 +45,15 @@ def tokenize_many(texts: list[str]) -> list[list[str]]:
 
 
 def split_sentences(text: str) -> list[str]:
-    if not text.strip():
+    """줄바꿈은 항상 경계로 보고(제목·목록 항목), 각 줄 안에서 Kiwi 로 문장을 나눈다."""
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    if not lines:
         return []
     try:
-        return [s.text.strip() for s in kiwi().split_into_sents(text) if s.text.strip()]
+        k = kiwi()
+        return [s.text.strip() for ln in lines for s in k.split_into_sents(ln) if s.text.strip()]
     except Exception:
-        return [s.strip() for s in re.split(r"(?<=[.!?。])\s+|\n+", text) if s.strip()]
+        return [s.strip() for ln in lines for s in re.split(r"(?<=[.!?。])\s+", ln) if s.strip()]
 
 
 # 키워드·주제어용: 명사·고유명사·어근·외국어·한자만 (동사 어간·숫자 제외)
