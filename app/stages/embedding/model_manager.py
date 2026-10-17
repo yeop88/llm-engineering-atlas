@@ -339,6 +339,43 @@ class ModelManager:
         }
         return EncodeResult(embeddings=emb, seconds=seconds, applied=applied, warnings=warnings)
 
+    def encode_images(
+        self, lm: LoadedModel, images: list[Any], *, truncate_dim: int | None = None, batch_size: int | None = None
+    ) -> EncodeResult:
+        """이미지(PIL) 임베딩. 플레이그라운드와 RAG 이미지 · 영상 프레임 색인이 같은 경로를 쓰도록 여기 둔다.
+
+        - 입력 형식이 모델마다 달라 두 가지를 차례로 시도한다: EmbeddingGemma 2 · Qwen3-VL 계열은 {"image": ...}
+          딕셔너리, CLIP 계열은 PIL 이미지를 그대로 받는다. 어느 쪽인지 설정에 없으므로 실패하면 다음 형식으로.
+        - 이미지에는 질의/문서 프롬프트를 붙이지 않는다. 프롬프트는 텍스트용이라, 이미지 입력에 붙이면 모델이 무시하거나 오류를 낸다.
+        - truncate_dim 은 텍스트 청크와 같은 인덱스에 들어가므로 텍스트 인코딩과 똑같이 적용해야 한다.
+        """
+        if not lm.spec.is_multimodal:
+            raise ValueError(f"{lm.spec.hf_id} 는 텍스트 전용 모델이라 이미지를 인코딩할 수 없습니다.")
+        dim = lm.dim
+        if truncate_dim and dim and truncate_dim >= dim:
+            truncate_dim = None
+        lm.last_used = time.time()
+        started = time.perf_counter()
+        errors = []
+        for build in (lambda im: {"image": im}, lambda im: im):
+            try:
+                with lm.lock, torch.inference_mode():
+                    emb = lm.model.encode(
+                        [build(im) for im in images],
+                        batch_size=batch_size or get_settings().default_batch_size,
+                        normalize_embeddings=True,
+                        truncate_dim=truncate_dim or None,
+                        convert_to_numpy=True,
+                        show_progress_bar=False,
+                    )
+                emb = np.asarray(emb, dtype=np.float32)
+                warnings = [] if np.isfinite(emb).all() else ["임베딩에 NaN/Inf 가 포함되어 있습니다. dtype 설정을 확인하세요."]
+                applied = {"role": "image", "truncate_dim": truncate_dim, "normalize": True}
+                return EncodeResult(embeddings=emb, seconds=time.perf_counter() - started, applied=applied, warnings=warnings)
+            except Exception as exc:
+                errors.append(f"{type(exc).__name__}: {exc}")
+        raise ValueError(f"{lm.spec.hf_id} 이미지 인코딩 실패: {' / '.join(errors)}")
+
 
 _manager: ModelManager | None = None
 

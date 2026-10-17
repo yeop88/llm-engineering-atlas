@@ -44,6 +44,9 @@ class Settings(BaseSettings):
 
     # ── 문서 검색 ────────────────────────────────────────────────────────────
     max_upload_mb: int = 100
+    # 영상 프레임 추출: 몇 초마다 한 장, 최대 몇 장. 장면이 바뀌지 않은 프레임은 거른다(app/stages/multimodal/media.py).
+    video_frame_interval: float = 2.0
+    video_max_frames: int = 240
     index_batch_size: int = 32  # 인덱스 구축 시 한 번에 인코딩·저장할 청크 수
     reranker_max_length: int = 1024  # 리랭커 입력(질의+문서) 최대 토큰. 길수록 정확하지만 느림
 
@@ -74,6 +77,11 @@ class Settings(BaseSettings):
     @property
     def upload_dir(self) -> Path:
         return self.data_dir / "uploads"
+
+    @property
+    def media_dir(self) -> Path:
+        """이미지 · 영상 원본과 추출한 프레임. 문서마다 doc-<id>/ 폴더 — 문서를 지울 때 폴더째 지우면 되게."""
+        return self.data_dir / "media"
 
     @property
     def qdrant_path(self) -> Path:

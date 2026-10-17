@@ -6,9 +6,11 @@ import time
 from collections import defaultdict
 from typing import Any
 
+import numpy as np
 from sqlalchemy import func, insert, select
 from sqlalchemy.orm import Session
 
+from app.core import media
 from app.core.config import get_settings
 from app.core.db import Chunk, ChunkSet, Collection, Document, EmbeddingModel, SessionLocal, VectorIndex
 from app.core.jobs import Job
@@ -74,8 +76,10 @@ def delete_document(db: Session, doc: Document) -> None:
                 log.warning("벡터 DB(%s) 에 연결할 수 없어 인덱스 #%d 의 벡터를 지우지 못했습니다", idx.store, idx.id)
             idx.n_vectors = max(0, idx.n_vectors - len(ids))
         bm25_cache.invalidate(sid)
+    doc_id = doc.id
     db.delete(doc)
     db.commit()
+    media.remove_document_media(doc_id)  # 이미지 · 영상 문서의 원본과 프레임 파일 (없으면 아무 일도 안 함)
     for sid in by_set:  # 청크 수 갱신
         cs = db.get(ChunkSet, sid)
         if cs:
@@ -84,6 +88,19 @@ def delete_document(db: Session, doc: Document) -> None:
 
 
 # ── 청크 세트 ───────────────────────────────────────────────────────────────
+def _doc_chunks(d: Document, s: dict[str, Any]) -> list[chunking.ChunkSpec]:
+    if items := (d.meta or {}).get("media_items"):
+        return chunking.media_chunks(items)
+    return chunking.chunk_pages(d.pages, s, paged=d.meta.get("page_kind") == "page")
+
+
+def has_media(cs: ChunkSet) -> bool:
+    """이 청크 세트에 이미지 · 프레임 청크가 있는가. 있으면 색인과 검색 모두 모델을 멀티모달 프로필로 불러야
+    텍스트와 이미지가 같은 벡터 공간에 놓인다(텍스트 전용 프로필은 이미지 타워를 싣지 않는 모델이 있다).
+    색인과 검색이 같은 판단을 하도록 청크 세트 통계 하나로 정한다."""
+    return bool((cs.stats or {}).get("n_media"))
+
+
 def preview_chunks(db: Session, collection_id: int, strategy: dict[str, Any], limit: int = 20) -> dict[str, Any]:
     docs = db.scalars(select(Document).where(Document.collection_id == collection_id).order_by(Document.id)).all()
     if not docs:
@@ -91,11 +108,18 @@ def preview_chunks(db: Session, collection_id: int, strategy: dict[str, Any], li
     s = chunking.normalize(strategy)
     samples, lengths = [], []
     for d in docs:
-        for c in chunking.chunk_pages(d.pages, s, paged=d.meta.get("page_kind") == "page"):
+        for c in _doc_chunks(d, s):
             lengths.append(len(c.text))
             if len(samples) < limit:
                 samples.append(
-                    {"document": d.filename, "page": c.page, "heading": c.meta.get("heading", ""), "text": c.text, "chars": len(c.text)}
+                    {
+                        "document": d.filename,
+                        "page": c.page,
+                        "heading": c.meta.get("heading", ""),
+                        "text": c.text,
+                        "chars": len(c.text),
+                        "media": bool(c.meta.get("media")),
+                    }  # fmt: skip
                 )
     return {"strategy": s, "stats": chunking.stats(lengths), "samples": samples}
 
@@ -109,7 +133,7 @@ def build_chunk_set(job: Job, chunk_set_id: int) -> dict[str, Any]:
             specs: list[tuple[int, int, chunking.ChunkSpec]] = []
             for i, d in enumerate(docs):
                 job.update(0.4 * i / max(1, len(docs)), f"청킹 {i + 1}/{len(docs)}: {d.filename}")
-                for n, c in enumerate(chunking.chunk_pages(d.pages, s, paged=d.meta.get("page_kind") == "page")):
+                for n, c in enumerate(_doc_chunks(d, s)):
                     specs.append((d.id, n, c))
             job.update(0.4, f"형태소 분석 중 ({len(specs)}개 청크)")
             tokens: list[list[str]] = []
@@ -133,7 +157,8 @@ def build_chunk_set(job: Job, chunk_set_id: int) -> dict[str, Any]:
             for i in range(0, len(rows), 1000):
                 db.execute(insert(Chunk), rows[i : i + 1000])
             cs.n_chunks = len(rows)
-            cs.stats = chunking.stats([len(r["text"]) for r in rows])
+            n_media = sum(1 for r in rows if (r["meta"] or {}).get("media"))
+            cs.stats = chunking.stats([len(r["text"]) for r in rows]) | {"n_media": n_media}
             cs.doc_ids = [d.id for d in docs]
             cs.status = "ready"
             db.commit()
@@ -163,6 +188,32 @@ def drop_index_vectors(idx: VectorIndex) -> None:
         log.warning("벡터 DB(%s) 에 연결할 수 없어 %s 를 지우지 못했습니다", idx.store, idx.store_collection)
 
 
+def _encode_part(manager, lm, part, titles, strategy, truncate_dim, batch, use_images) -> tuple[np.ndarray, int]:
+    """청크 묶음 인코딩. 이미지 청크는 그림으로, 나머지는 글로 인코딩해 원래 순서대로 합친다.
+
+    텍스트 전용 모델이면 이미지 청크도 라벨(파일 이름 · 시각) 글로 색인한다 — 그림 내용으로는 못 찾지만
+    이름으로는 찾히게 하고, 그 사실은 색인 결과의 warning 으로 알린다."""
+    img_pos = [k for k, c in enumerate(part) if use_images and (c.meta or {}).get("media")]
+    img_set = set(img_pos)
+    txt_pos = [k for k in range(len(part)) if k not in img_set]
+    emb = None
+    if txt_pos:
+        texts = [
+            chunking.embed_text(part[k].text, titles.get(part[k].document_id, ""), (part[k].meta or {}).get("heading", ""), strategy)
+            for k in txt_pos
+        ]
+        r = manager.encode(lm, texts, "document", truncate_dim=truncate_dim, batch_size=batch)
+        emb = np.zeros((len(part), r.embeddings.shape[1]), dtype=np.float32)
+        emb[txt_pos] = r.embeddings
+    if img_pos:
+        images = [media.open_image(part[k].meta["media"]) for k in img_pos]
+        ri = manager.encode_images(lm, images, truncate_dim=truncate_dim, batch_size=batch)
+        if emb is None:
+            emb = np.zeros((len(part), ri.embeddings.shape[1]), dtype=np.float32)
+        emb[img_pos] = ri.embeddings
+    return emb, len(img_pos)
+
+
 def build_index(job: Job, index_id: int) -> dict[str, Any]:
     settings = get_settings()
     manager = get_manager()
@@ -183,22 +234,21 @@ def build_index(job: Job, index_id: int) -> dict[str, Any]:
             ).all()
             if not chunks:
                 raise RagError("청크가 없습니다.")
+            use_images = has_media(cs) and spec.is_multimodal
             job.update(0.02, f"{spec.hf_id} 로드 중")
-            lm = manager.get(spec)
+            lm = manager.get(spec, multimodal=use_images)
             store = get_store(idx.store)
             store.drop(idx.store_collection)  # 다시 만들 때 이전 벡터 정리
             batch = settings.index_batch_size
-            done = 0
+            done = n_images = 0
             for i in range(0, len(chunks), batch):
                 part = chunks[i : i + batch]
-                texts = [
-                    chunking.embed_text(c.text, titles.get(c.document_id, ""), (c.meta or {}).get("heading", ""), cs.strategy) for c in part
-                ]
-                r = manager.encode(lm, texts, "document", truncate_dim=idx.truncate_dim, batch_size=batch)
+                emb, n_img = _encode_part(manager, lm, part, titles, cs.strategy, idx.truncate_dim, batch, use_images)
+                n_images += n_img
                 if i == 0:
-                    idx.dim = int(r.embeddings.shape[1])
+                    idx.dim = int(emb.shape[1])
                     store.ensure(idx.store_collection, idx.dim)
-                store.upsert(idx.store_collection, [c.id for c in part], r.embeddings, [c.document_id for c in part])
+                store.upsert(idx.store_collection, [c.id for c in part], emb, [c.document_id for c in part])
                 done += len(part)
                 elapsed = time.perf_counter() - started
                 eta = elapsed / done * (len(chunks) - done)
@@ -207,7 +257,12 @@ def build_index(job: Job, index_id: int) -> dict[str, Any]:
             idx.build_seconds = round(time.perf_counter() - started, 2)
             idx.status = "ready"
             db.commit()
-            return {"index_id": idx.id, "n_vectors": idx.n_vectors, "dim": idx.dim, "seconds": idx.build_seconds}
+            out = {"index_id": idx.id, "n_vectors": idx.n_vectors, "dim": idx.dim, "seconds": idx.build_seconds, "n_images": n_images}
+            if has_media(cs) and not spec.is_multimodal:
+                out["warning"] = (
+                    "텍스트 전용 모델이라 이미지 · 영상 프레임은 파일 이름으로만 색인했습니다. 그림 내용으로 찾으려면 멀티모달 모델을 쓰세요."
+                )
+            return out
         except Exception as exc:
             db.rollback()
             idx = db.get(VectorIndex, index_id)
@@ -225,6 +280,12 @@ def _bm25_index(db: Session, chunk_set_id: int):
         return [r[0] for r in rows], [r[1] or [] for r in rows]
 
     return bm25_cache.get(chunk_set_id, version, loader)
+
+
+def _media_out(c: Chunk) -> dict[str, Any] | None:
+    if not (c.meta or {}).get("media"):
+        return None
+    return {"url": f"/api/chunks/{c.id}/media", "source_url": f"/api/documents/{c.document_id}/media", "t": c.meta.get("t")}
 
 
 def rerank_scores(db: Session, query: str, texts: list[str], reranker_id: int, timings: dict[str, float]) -> list[float]:
@@ -266,7 +327,9 @@ def search(db: Session, query: str, cfg: dict[str, Any]) -> dict[str, Any]:
         if row is None:
             raise RagError("인덱스의 임베딩 모델이 카탈로그에 없습니다.")
         t = time.perf_counter()
-        lm = manager.get(ModelSpec.from_row(row))
+        spec = ModelSpec.from_row(row)
+        # 색인할 때와 같은 프로필로 불러야 같은 벡터 공간이다 (has_media 주석 참고)
+        lm = manager.get(spec, multimodal=has_media(db.get(ChunkSet, idx.chunk_set_id)) and spec.is_multimodal)
         timings["load"] = time.perf_counter() - t
         # HyDE 는 LLM 이 쓴 '가상 문서'로 검색한다. E5 · EmbeddingGemma 처럼 질의/문서 프롬프트가 다른
         # 비대칭 모델에서 가상 문서를 질의 프롬프트로 인코딩하면 HyDE 의 전제(문서-문서 유사도)가 깨지므로
@@ -330,6 +393,8 @@ def search(db: Session, query: str, cfg: dict[str, Any]) -> dict[str, Any]:
                 "score": round(float(e["scores"].get("rerank", e["score"])), 5),
                 "scores": {k: round(float(v), 5) for k, v in e["scores"].items()},
                 "ranks": e["ranks"] | ({"before_rerank": e["pre_rank"]} if "pre_rank" in e else {}),
+                # 이미지 · 프레임 청크면 화면이 썸네일과 원본(영상은 그 시각)을 보여 줄 수 있게 주소를 준다. 파일 경로는 숨긴다.
+                "media": _media_out(c),
             }
         )
     return {

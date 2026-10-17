@@ -220,6 +220,17 @@ def chunk_pages(pages: list[str], strategy: dict[str, Any], paged: bool = True) 
     return out
 
 
+def media_chunks(items: list[dict[str, Any]]) -> list[ChunkSpec]:
+    """미디어 문서(이미지 · 영상 프레임)는 텍스트 청킹 전략과 상관없이 항목 하나가 청크 하나다.
+
+    그림은 잘라 붙일 수 없으므로 크기 · 겹침 설정이 의미가 없다. 청크 글은 라벨(파일 이름 · 시각)이고,
+    meta["media"] 의 경로로 인덱스가 실제 이미지를 인코딩한다(멀티모달 모델일 때).
+    """
+    return [
+        ChunkSpec(text=it["label"], page=None, start=0, end=len(it["label"]), meta={"media": it["path"], "t": it.get("t")}) for it in items
+    ]
+
+
 def embed_text(chunk_text: str, title: str, heading: str, strategy: dict[str, Any]) -> str:
     """인덱싱할 때 실제로 임베딩하는 텍스트 (문서 제목·조문 제목으로 맥락 보강)."""
     prefix = []

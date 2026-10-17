@@ -1,14 +1,16 @@
 """문서 검색(RAG): 컬렉션 · 문서 업로드 · 청크 세트 · 벡터 인덱스 · 검색."""
 
+import mimetypes
 import time
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from app.core import crud
+from app.core import crud, media
 from app.core.config import get_settings
 from app.core.db import Chunk, ChunkSet, Collection, Document, EmbeddingModel, VectorIndex, get_db
 from app.core.jobs import jobs
@@ -16,6 +18,7 @@ from app.core.schemas import ChunkSetCreate, ChunkStrategy, CollectionCreate, Co
 from app.core.vectorstores import STORE_KINDS, StoreUnavailable, get_store, stores_status
 from app.pipeline.search import run_search  # 검색 향상(enhance) 등 다음 단계를 끼워 넣는 연결점
 from app.stages.embedding.model_manager import get_manager
+from app.stages.multimodal import media as mm_media
 from app.stages.rag import chunking, parsers, service
 
 router = APIRouter(prefix="/api", tags=["rag"])
@@ -63,6 +66,7 @@ def rag_options() -> dict:
         "chunk_methods": chunking.STRATEGIES,
         "chunk_defaults": chunking.DEFAULTS,
         "file_types": sorted(parsers.SUPPORTED),
+        "media_types": sorted(mm_media.IMAGE_EXT | mm_media.VIDEO_EXT),
         "max_upload_mb": get_settings().max_upload_mb,
         "stores": stores_status(),
         "default_store": get_settings().vector_store,
@@ -139,26 +143,63 @@ def delete_collection(collection_id: int, db: DB) -> dict:
     c = _get(db, Collection, collection_id, "컬렉션")
     for cs in db.scalars(select(ChunkSet).where(ChunkSet.collection_id == c.id)).all():
         service.delete_chunk_set(db, cs)
+    doc_ids = list(db.scalars(select(Document.id).where(Document.collection_id == c.id)))
     db.delete(c)
     db.commit()
+    for did in doc_ids:  # DB 는 연쇄 삭제되지만 디스크의 이미지 · 프레임 파일은 직접 지워야 한다
+        media.remove_document_media(did)
     return {"deleted": collection_id}
 
 
 # ── 문서 ────────────────────────────────────────────────────────────────────
 @router.post("/collections/{collection_id}/documents")
 async def upload_documents(
-    collection_id: int, db: DB, files: Annotated[list[UploadFile], File(description="PDF·DOCX·HWP·HWPX·TXT·MD·HTML·CSV·JSON")]
+    collection_id: int,
+    db: DB,
+    files: Annotated[
+        list[UploadFile], File(description="PDF·DOCX·HWP·HWPX·TXT·MD·HTML·CSV·JSON, 이미지(JPG·PNG·WEBP…), 영상(MP4·MOV·WEBM…)")
+    ],
 ) -> dict:
     c = _get(db, Collection, collection_id, "컬렉션")
     added, skipped = [], []
     for f in files:
         data = await f.read()
-        doc, msg = await run_in_threadpool(service.ingest, db, c, f.filename or "unnamed", data)
+        name = f.filename or "unnamed"
+        # 이미지 · 영상은 멀티모달 단계가 프레임 추출 · 저장을 맡고, 결과는 같은 컬렉션의 문서가 된다.
+        # 업로드 창구를 하나로 두어 글과 그림을 한 컬렉션에 섞어 넣고 함께 검색할 수 있게 했다.
+        ingest = mm_media.ingest if mm_media.kind_of(name) else service.ingest
+        doc, msg = await run_in_threadpool(ingest, db, c, name, data)
         if doc:
             added.append(_doc_out(doc) | ({"warning": msg} if msg else {}))
         else:
             skipped.append({"filename": f.filename, "reason": msg})
     return {"added": added, "skipped": skipped}
+
+
+@router.get("/documents/{document_id}/media")
+def document_media(document_id: int, db: DB) -> FileResponse:
+    """이미지 · 영상 원본. 영상은 화면에서 #t=초 를 붙여 그 장면부터 재생한다."""
+    d = _get(db, Document, document_id, "문서")
+    rel = ((d.meta or {}).get("media") or {}).get("path")
+    try:
+        return FileResponse(media.resolve(rel or ""), media_type=_mime(rel or ""))
+    except media.MediaError as exc:
+        raise HTTPException(404, str(exc)) from exc
+
+
+@router.get("/chunks/{chunk_id}/media")
+def chunk_media(chunk_id: int, db: DB) -> FileResponse:
+    """검색 결과 썸네일: 이미지 청크는 원본, 영상 프레임 청크는 추출한 프레임(JPEG)."""
+    c = _get(db, Chunk, chunk_id, "청크")
+    rel = (c.meta or {}).get("media")
+    try:
+        return FileResponse(media.resolve(rel or ""), media_type=_mime(rel or ""))
+    except media.MediaError as exc:
+        raise HTTPException(404, str(exc)) from exc
+
+
+def _mime(rel: str) -> str:
+    return mimetypes.guess_type(rel)[0] or "application/octet-stream"
 
 
 @router.get("/documents/{document_id}")

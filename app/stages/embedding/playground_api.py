@@ -1,7 +1,6 @@
 """실시간 테스트: 임베딩 생성, 유사도 행렬, 다중 모델 검색 비교, 이미지-텍스트 검색."""
 
 import io
-import time
 from typing import Annotated, Any
 
 import numpy as np
@@ -174,19 +173,12 @@ def project(body: ProjectionRequest, db: DB) -> dict:
 
 
 def _encode_images(lm: LoadedModel, images: list[Image.Image]) -> tuple[np.ndarray, float]:
-    """EmbeddingGemma 2 등은 {'image': ...} 딕셔너리 입력, CLIP 계열은 PIL 이미지를 그대로 받는다."""
-    started = time.perf_counter()
-    errors = []
-    for build in (lambda im: {"image": im}, lambda im: im):
-        try:
-            with lm.lock:
-                emb = lm.model.encode(
-                    [build(im) for im in images], normalize_embeddings=True, convert_to_numpy=True, show_progress_bar=False
-                )
-            return np.asarray(emb, dtype=np.float32), time.perf_counter() - started
-        except Exception as exc:
-            errors.append(f"{type(exc).__name__}: {exc}")
-    raise HTTPException(400, f"{lm.spec.hf_id} 이미지 인코딩 실패: {' / '.join(errors)}")
+    # 인코딩 자체는 RAG 이미지 색인과 같은 ModelManager.encode_images 를 쓴다(입력 형식 판별 로직을 한 곳에만 두려고).
+    try:
+        r = get_manager().encode_images(lm, images)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return r.embeddings, r.seconds
 
 
 @router.post("/multimodal/retrieve")

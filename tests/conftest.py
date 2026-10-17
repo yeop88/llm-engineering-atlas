@@ -30,6 +30,19 @@ def _bigram_vector(text: str, dim: int) -> np.ndarray:
     return v
 
 
+COLOR_WORDS = ["빨간색 사진", "초록색 사진", "파란색 사진"]
+
+
+def _image_words(x) -> str | None:
+    """가짜 멀티모달: 이미지 입력({"image": PIL} 또는 PIL)을 가장 강한 색 채널의 이름 글로 바꿔 '본다'.
+    그래서 '빨간색' 질의가 빨간 그림 · 프레임과 가까워져, 실제 모델 없이 교차 검색 경로를 검증할 수 있다."""
+    im = x.get("image") if isinstance(x, dict) else x
+    if not hasattr(im, "getpixel"):
+        return None
+    mean = np.asarray(im.convert("RGB"), dtype=np.float32).reshape(-1, 3).mean(axis=0)
+    return COLOR_WORDS[int(mean.argmax())]
+
+
 class FakeSentenceTransformer:
     """모델 다운로드 없이 인코딩 경로를 검증하기 위한 가짜 임베딩 모델."""
 
@@ -45,7 +58,7 @@ class FakeSentenceTransformer:
     def encode(self, inputs, prompt_name=None, normalize_embeddings=False, truncate_dim=None, **kwargs):
         self.calls.append({"inputs": list(inputs), "prompt_name": prompt_name, "truncate_dim": truncate_dim, **kwargs})
         prefix = self.prompts.get(prompt_name, "") if prompt_name else ""
-        out = np.array([_bigram_vector(prefix + str(t), self.dim) for t in inputs], dtype=np.float32)
+        out = np.array([_bigram_vector(_image_words(t) or (prefix + str(t)), self.dim) for t in inputs], dtype=np.float32)
         if truncate_dim:
             out = out[:, :truncate_dim]
         if normalize_embeddings:
