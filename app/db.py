@@ -218,6 +218,27 @@ class EvalSet(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
+class FinetuneRun(Base):
+    """임베딩 모델 파인튜닝 실행 기록. 학습한 모델은 data/finetuned/ft-{id} 에 저장하고 카탈로그에 등록한다."""
+
+    __tablename__ = "finetune_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending | running | done | error | cancelled
+    base_model_id: Mapped[int | None] = mapped_column(ForeignKey("embedding_models.id", ondelete="SET NULL"), nullable=True)
+    base_hf_id: Mapped[str] = mapped_column(String(200))
+    collection_id: Mapped[int | None] = mapped_column(ForeignKey("collections.id", ondelete="SET NULL"), nullable=True)
+    output_model_id: Mapped[int | None] = mapped_column(ForeignKey("embedding_models.id", ondelete="SET NULL"), nullable=True)
+    config: Mapped[dict[str, Any]] = mapped_column(default=dict)  # 데이터 · 학습 설정
+    data_stats: Mapped[dict[str, Any]] = mapped_column(default=dict)  # 학습 쌍 수 · 제외한 지문 · 예시
+    log: Mapped[list[Any]] = mapped_column(default=list)  # 단계별 손실
+    metrics: Mapped[dict[str, Any]] = mapped_column(default=dict)  # 학습 전후 비교
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
 _settings = get_settings()
 _is_sqlite = _settings.db_url.startswith("sqlite")
 engine = create_engine(_settings.db_url, connect_args={"check_same_thread": False} if _is_sqlite else {})

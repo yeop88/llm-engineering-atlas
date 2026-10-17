@@ -1,6 +1,8 @@
 """모델 카탈로그 DB 조작과 응답 변환."""
 
+import shutil
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from fastapi import HTTPException
@@ -42,7 +44,13 @@ def delete_model(db: Session, row: EmbeddingModel, delete_cache: bool = False) -
     테스트 이력(test_runs)은 그대로 남긴다."""
     hf_id = row.hf_id
     get_manager().unload(hf_id)
-    freed = hub.delete_cache(hf_id) if delete_cache else 0
+    if row.source == "finetuned":
+        d = Path(hf_id)
+        freed = sum(f.stat().st_size for f in d.rglob("*") if f.is_file()) if delete_cache and d.is_dir() else 0
+        if delete_cache and d.is_dir():
+            shutil.rmtree(d, ignore_errors=True)
+    else:
+        freed = hub.delete_cache(hf_id) if delete_cache else 0
     if hf_id in CATALOG_IDS and db.get(CatalogExclusion, hf_id) is None:
         db.add(CatalogExclusion(hf_id=hf_id))
     db.delete(row)
@@ -90,8 +98,13 @@ def to_out(row: EmbeddingModel, cache: dict[str, dict[str, Any]] | None = None) 
     job = jobs.active_for("download", hf_id=row.hf_id)
     errors = [v for k, v in manager.errors.items() if k.startswith(row.hf_id + "::")]
     out = ModelOut.model_validate(row)
-    out.cached = c is not None
-    out.cache_size_bytes = c["size_bytes"] if c else 0
+    if row.source == "finetuned":  # 직접 학습한 모델: Hub 캐시가 아니라 로컬 디렉터리
+        d = Path(row.hf_id)
+        out.cached = d.is_dir()
+        out.cache_size_bytes = sum(f.stat().st_size for f in d.rglob("*") if f.is_file()) if out.cached else 0
+    else:
+        out.cached = c is not None
+        out.cache_size_bytes = c["size_bytes"] if c else 0
     out.loaded_profiles = manager.is_loaded(row.hf_id)
     out.download_job = job.to_dict() if job else None
     out.last_error = errors[0] if errors else None
@@ -117,3 +130,18 @@ def record_run(db: Session, kind: str, hf_ids: list[str], title: str, params: di
     db.add(run)
     db.commit()
     return run
+
+
+def mark_interrupted(db: Session) -> int:
+    """서버가 꺼지면서 끊긴 백그라운드 작업의 상태 정리 (작업 큐는 메모리에만 있으므로 재시작하면 사라진다)."""
+    from app.db import EvalSet, FinetuneRun
+
+    n = 0
+    for r in db.scalars(select(FinetuneRun).where(FinetuneRun.status.in_(("pending", "running")))):
+        r.status, r.error, r.finished_at = "error", "서버 재시작으로 중단되었습니다. 다시 실행하세요.", datetime.now(UTC)
+        n += 1
+    for e in db.scalars(select(EvalSet).where(EvalSet.status == "building")):
+        e.status, e.error = "error", "서버 재시작으로 중단되었습니다. 다시 만드세요."
+        n += 1
+    db.commit()
+    return n

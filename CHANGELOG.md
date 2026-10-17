@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### 추가
+- **파인튜닝 테스트**: 컬렉션 지문으로 (질문, 정답 지문) 쌍 생성(LLM 질문 · ICT), 평가 세트 근거가 든 지문은 학습에서 제외(누수 방지), MultipleNegativesRankingLoss(Cached · Matryoshka 선택) 학습, 카탈로그 자동 등록, 학습 전후 짝지은 비교·다시 비교, 실행 기록(모델 카드 README.md), 손실 곡선 — `docs/finetune.md` (마이그레이션 0005, `sentence-transformers[train]`)
 - **RAG 답변 생성**: 검색 근거에 번호를 붙여 LLM 이 인용하며 답변(스트리밍), 문장별 근거 포함률·잘못된 인용·LLM 판정으로 환각 검증, 평가 세트로 답변 일괄 평가(답변률·근거 검색률·정답 근거 인용률·지나친 거절), RAG 테스트 → 답변 생성 화면 — `docs/rag.md`
 - **메뉴를 기능 묶음으로 개편**: 임베딩 테스트 · RAG 테스트 · 멀티모달 테스트 드롭다운, 좁은 화면 대응
 - **로컬 LLM 연결**: llama.cpp `llama-server`(Vulkan) + Gemma 4 E4B 를 기본 구성으로 문서화, 소형 모델 3종 실측 비교, LLM 연결 화면(설정 상태·서버 모델 목록·연결 시험), `/api/llm/models`, 생각(thinking) 모드 끄기·`<think>` 제거, 스트리밍 호출(첫 글자까지 시간·생성 속도 분리) — `docs/llm.md`

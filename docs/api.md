@@ -151,3 +151,13 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 |---|---|---|
 | POST | `/api/collections/{id}/answer` | NDJSON 스트림: `search` → `delta`(여러 번) → `verify` → `judge`(선택) → `done`, 오류는 `error`. 본문 `{"question", "config": SearchConfig, "context_top", "max_context_chars", "max_tokens", "temperature", "judge", "provider"?, "model"?}` |
 | POST | `/api/eval-sets/{id}/answer-eval` | 평가 세트로 답변 일괄 평가 (작업) `{"config", "max_queries", "context_top", ...}` |
+
+## 파인튜닝
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET / POST | `/api/finetune` | 실행 목록 / 학습 시작(작업) |
+| GET / DELETE | `/api/finetune/{id}` | 상세(손실 기록 포함) / 삭제 (`?delete_model=true` 면 학습한 모델과 파일도) |
+| POST | `/api/finetune/{id}/compare` | 학습 전후 비교만 다시 계산 (`?eval_set_id=` 로 다른 평가 세트, 학습에서 제외한 세트만) |
+| GET | `/api/finetune/{id}/card` | 실행 기록(모델 카드, Markdown) |
+

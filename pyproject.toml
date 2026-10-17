@@ -8,7 +8,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 dependencies = [
     "fastapi[standard]>=0.143.3",
-    "sentence-transformers[image]>=6.1.0",
+    "sentence-transformers[image,train]>=6.1.0",
     "transformers>=5.20.1",
     "torch>=2.14.1",
     # sentence-transformers 6.1 이 huggingface-hub<2.0 을 요구하므로 1.x 최신을 사용
