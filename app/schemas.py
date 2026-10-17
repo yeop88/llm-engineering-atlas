@@ -301,3 +301,13 @@ class SummaryRequest(AppModelRef):
     n: int = Field(default=3, ge=1, le=30)  # 고를 문장 수
     diversity: float = Field(default=0.3, ge=0, le=1)
     lead_bonus: float = Field(default=0.0, ge=0, le=1)  # 앞 문장 가산 (기사·보도자료)
+
+
+# ── LLM ─────────────────────────────────────────────────────────────────────
+class LLMRef(BaseModel):
+    provider: Literal["openai", "anthropic"] | None = None  # 비우면 .env 설정
+    model: str | None = Field(default=None, max_length=200)
+
+
+class LLMTestRequest(LLMRef):
+    prompt: str = Field(default="임베딩 모델이 무엇인지 한 문장으로 설명해 주세요.", min_length=1, max_length=2000)

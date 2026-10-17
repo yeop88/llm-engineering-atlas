@@ -65,6 +65,7 @@ uv run uvicorn app.main:app --reload --port 8000
 ## 문서
 
 - [docs/rag.md](docs/rag.md) — 문서 검색(RAG): 업로드·청킹·벡터 DB·하이브리드 검색·리랭커
+- [docs/llm.md](docs/llm.md) — LLM 연동 (OpenAI 호환 · Claude)
 - [docs/apps.md](docs/apps.md) — 의미 기반 응용 (추천·분류·클러스터링·중복/표절·이상 탐지·키워드/요약)
 - [docs/gpu.md](docs/gpu.md) — CPU · CUDA · ROCm 설치
 - [docs/architecture.md](docs/architecture.md) — 구조와 동작 방식

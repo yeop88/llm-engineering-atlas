@@ -124,3 +124,10 @@ $m = (Invoke-RestMethod "http://127.0.0.1:8000/api/models?q=embeddinggemma-2")[0
 Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "application/json" `
   -Body (@{ model_id = $m.id; texts = @("안녕하세요"); role = "query"; truncate_dim = 256 } | ConvertTo-Json)
 ```
+
+## LLM
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/llm/status` | LLM 설정 상태 (키 값 제외) |
+| POST | `/api/llm/test` | 연결 시험 |

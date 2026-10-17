@@ -40,6 +40,16 @@ class Settings(BaseSettings):
     index_batch_size: int = 32  # 인덱스 구축 시 한 번에 인코딩·저장할 청크 수
     reranker_max_length: int = 1024  # 리랭커 입력(질의+문서) 최대 토큰. 길수록 정확하지만 느림
 
+    # ── LLM (평가 질문 생성 등) ──────────────────────────────────────────────
+    # openai = OpenAI 호환 API(OpenAI, vLLM, Ollama, LM Studio 등) | anthropic = Claude API. 비우면 키가 있는 쪽을 쓴다
+    llm_provider: str | None = None
+    openai_base_url: str = "https://api.openai.com/v1"
+    openai_api_key: str | None = None
+    openai_model: str | None = None  # 예: Ollama 는 qwen3:8b 처럼 서버에 받아 둔 모델 이름
+    anthropic_api_key: str | None = None
+    anthropic_model: str = "claude-sonnet-5-5"
+    llm_timeout: float = 120.0
+
     @property
     def db_url(self) -> str:
         return self.database_url or f"sqlite:///{(self.data_dir / 'app.db').as_posix()}"

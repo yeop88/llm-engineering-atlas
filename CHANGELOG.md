@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### 추가
+- **LLM 연동**: OpenAI 호환 API(OpenAI·vLLM·Ollama·LM Studio)와 Claude API 를 httpx 로 직접 호출, 재시도·JSON 추출·토큰 사용량, 설정 상태·연결 시험 API — `docs/llm.md`
 - **벤치마크 신뢰구간**: 질문·문장쌍 부트스트랩 95% 구간, 1위와의 짝지은 부트스트랩 비교(차이·p값·유의 여부), 결과 표에 표시 — `docs/benchmarks.md`
 - **의미 기반 응용** 메뉴와 공통 기반: 입력 소스(직접 입력·예시 데이터 / 컬렉션 문서·청크), 임베딩 캐시, 학습 모델 저장 테이블(`app_models`, 마이그레이션 0003)
 - **콘텐츠 추천**: 👍/👎·관심사로 취향 벡터, MMR 다양성, 추천 이유, 예시 기사 30건 — `docs/apps.md`
