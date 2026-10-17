@@ -41,12 +41,38 @@
   </table></div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
-  <h2>연결 실행 <span class="badge">예정</span></h2>
-  <div class="small">각 단계를 따로 검증한 뒤 마지막에 이어 붙입니다. 아직 만들지 않은 단계는 '건너뜀'(기본 동작)으로 표시해 흐름 전체를 먼저 돌려 볼 수 있게 할 예정입니다.</div>
-  <div class="grid cols-2">
-    <div><b>부분 연결</b><ul class="small"><li>{{ S.embedding.no }} 임베딩 → {{ S.rag.no }} RAG 검색 → {{ S.rerank.no }} 리랭킹 → 답변 (지금도 답변 생성 화면에서 가능)</li><li>{{ S.search_lab.no }} 검색 향상을 끼워 넣은 검색 → 조합 평가</li><li>{{ S.finetune.no }} 파인튜닝한 모델로 바꿔 끼운 RAG</li></ul></div>
-    <div><b>전체 연결</b><ul class="small"><li>질문 → {{ S.routing.no }} 라우팅 → 검색 · 리랭킹 → 쉬운 질문은 소형 모델, 어려운 질문은 에이전트 → 답변 · 근거 검증</li><li>단계별 지연 · 비용 · 정답률을 한 화면에서 비교</li></ul></div>
+<div class="card stack" style="margin-top:16px" id="flow">
+  <h2>연결 실행</h2>
+  <div class="small muted">따로 검증한 단계들을 서비스 순서대로 이어 한 질문을 처리합니다. 단계를 켜고 끄며 <b>부분 연결</b>과 <b>전체 연결</b>을 비교하세요.
+    아직 만들지 않은 단계(라우팅 · 증류 · 양자화 · 에이전트 · 강화학습)는 <span class="flow-box plan sm">기본 동작</span>으로 지나갑니다 — 모든 질문을 기본 LLM 으로 보냅니다.</div>
+  <div class="row">
+    <div class="field"><label>컬렉션</label><select id="f-col"></select></div>
+    <div class="field"><label>검색 방식</label><select id="f-mode"><option value="hybrid">하이브리드</option><option value="dense">의미</option><option value="bm25">BM25</option></select></div>
+    <div class="field" id="f-idx-wrap"><label>벡터 인덱스 ({{ S.embedding.no }} 임베딩)</label><select id="f-idx"></select></div>
+    <div class="field" id="f-cs-wrap" hidden><label>청크 세트</label><select id="f-cs"></select></div>
   </div>
+  <div class="row">
+    <div class="field"><label>{{ S.search_lab.no }} 검색 향상</label><select id="f-enh"><option value="none">끔</option><option value="rewrite">질의 재작성</option><option value="hyde">HyDE</option><option value="multi">다중 질의</option></select></div>
+    <div class="field"><label>{{ S.rerank.no }} 리랭커</label><select id="f-rr"><option value="">끔</option></select></div>
+    <div class="field"><label>답변 · 근거 검증</label><select id="f-ans"><option value="1">켬 (LLM)</option><option value="0">끔 (검색까지)</option></select></div>
+    <div class="field"><label>근거 수</label><input id="f-top" type="number" value="5" min="1" max="20" style="width:70px"></div>
+  </div>
+  <div class="row small" id="f-presets"><span class="muted">빠른 선택:</span></div>
+  <div class="row" style="flex-wrap:nowrap"><input id="f-q" placeholder="질문 (Enter 로 실행)" style="flex:1"><button class="btn primary" id="f-run">실행</button></div>
+  <div id="f-out"></div>
+
+  <h3>평가 세트로 연결 방식 비교</h3>
+  <div class="small muted">빠른 선택의 연결 방식 중 고른 것들을 같은 질문들로 돌려 검색 품질 · 답변 품질 · 단계별 지연을 나란히 봅니다. 첫 번째가 비교 기준입니다. 위의 컬렉션 · 검색 방식 · 인덱스 · 리랭커 · 향상 기법을 그대로 씁니다.</div>
+  <div class="row">
+    <div class="field grow"><label>평가 세트</label><select id="f-set"></select></div>
+    <div class="field"><label>질문 수</label><input id="f-n" type="number" value="10" min="1" style="width:80px"></div>
+    <div style="align-self:end"><button class="btn primary" id="f-eval">비교 실행</button></div>
+  </div>
+  <div class="row small" id="f-pick"></div>
+  <div id="f-progress" hidden></div>
+  <div id="f-eval-out"></div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/flow.js') }}"></script>
 {% endblock %}

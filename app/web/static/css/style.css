@@ -237,3 +237,16 @@ a.flow-box:hover { border-color: var(--accent); text-decoration: none; }
 .stage-grid p, .stage-grid ul { margin: 0; font-size: 14px; line-height: 1.6; }
 .stage-grid ul { padding-left: 18px; }
 @media (max-width: 900px) { .stage-grid { grid-template-columns: 1fr; } }
+
+/* 연결 실행: 단계 흐름 · 단계별 지연 막대 */
+.trace { display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch; }
+.trace-step { flex: 1 1 130px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-size: 12px; min-width: 0; }
+.trace-step.run { background: color-mix(in srgb, var(--ok) 12%, transparent); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.trace-step.off { opacity: .6; }
+.trace-step.default { border-style: dashed; }
+.trace-step .ms { font-family: ui-monospace, Consolas, monospace; font-weight: 600; }
+.trace-step .swatch, .legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+.stackbar { display: flex; gap: 2px; height: 14px; background: var(--code); border-radius: 4px; overflow: hidden; }  /* 최소 폭을 두지 않음: 길이가 시간에 비례해야 함 */
+.stackbar > span { display: block; height: 100%; min-width: 2px; }
+.stackbar > span:last-child { border-radius: 0 4px 4px 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }

@@ -171,3 +171,13 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/finetune/{id}/compare` | 학습 전후 비교만 다시 계산 (`?eval_set_id=` 로 다른 평가 세트, 학습에서 제외한 세트만) |
 | GET | `/api/finetune/{id}/card` | 실행 기록(모델 카드, Markdown) |
 
+
+## 연결 실행 (맵)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/flow/steps` | 흐름 단계 목록(서비스 순서) |
+| POST | `/api/flow/run` | 한 질문을 연결 실행. 본문 `{"question", "flow": FlowConfig, "provider"?, "model"?}` → `steps[]`(key · 단계 번호 · 상태 run/off/default · ms · 설명), `results`, `answer`(답변 단계를 켰을 때), `total_ms` |
+| POST | `/api/flow/evaluate` | 평가 세트로 연결 방식(최대 4개, 첫 번째가 기준) 비교 작업. `{"eval_set_id", "flows": [FlowConfig], "max_queries"}` |
+
+`FlowConfig`: `{"label", "config": SearchConfig(enhance · reranker_id 포함), "answer": true, "context_top": 5, "max_context_chars", "max_tokens"}`

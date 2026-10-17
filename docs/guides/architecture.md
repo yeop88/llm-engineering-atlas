@@ -28,6 +28,7 @@ app/
     (각 단계의 *_api.py · api.py 가 그 단계의 HTTP API)
   pipeline/          단계 연결 계층 — 단계들을 이어 붙이는 진입점
     search.py          run_search: 2 RAG 검색(+3 리랭킹)에 4 검색 향상을 끼움. 모든 검색 API 가 여기를 거침
+    flow.py · api.py   연결 실행기: 4 → 1 → 2 → 3 → 6 → 7·8 → 답변을 이어 단계별 상태 · 시간 기록, 평가 세트로 연결 방식 비교(/api/flow/*)
   web/               화면
     pages.py           페이지 라우터
     templates/         base · dashboard · history · roadmap + 단계별 하위 폴더(embedding · rag · finetune · multimodal · apps)
