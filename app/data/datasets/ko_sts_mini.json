@@ -1,0 +1,32 @@
+{
+  "name": "ko_sts_mini",
+  "type": "sts",
+  "title": "한/영 미니 STS (의미 유사도)",
+  "description": "문장 쌍 24개에 0~5점 유사도 정답을 매긴 소형 STS 셋. 모델의 코사인 유사도와 정답 점수의 Spearman/Pearson 상관계수를 측정합니다.",
+  "pairs": [
+    {"s1": "고양이가 소파 위에서 자고 있다.", "s2": "소파에서 고양이 한 마리가 잠들어 있다.", "score": 5.0},
+    {"s1": "오늘 서울은 하루 종일 비가 내린다.", "s2": "서울에 종일 비 소식이 있다.", "score": 4.6},
+    {"s1": "그는 매일 아침 공원에서 조깅을 한다.", "s2": "그 남자는 아침마다 공원을 달린다.", "score": 4.7},
+    {"s1": "이 식당의 김치찌개는 정말 맛있다.", "s2": "이 가게 김치찌개 맛이 훌륭하다.", "score": 4.5},
+    {"s1": "회의가 다음 주 화요일로 연기되었다.", "s2": "회의 일정이 다음 주 화요일로 미뤄졌다.", "score": 4.9},
+    {"s1": "아이들이 운동장에서 축구를 하고 있다.", "s2": "아이들이 운동장에서 농구를 하고 있다.", "score": 3.0},
+    {"s1": "나는 커피보다 차를 더 좋아한다.", "s2": "나는 차보다 커피를 더 좋아한다.", "score": 2.2},
+    {"s1": "주식 시장이 오늘 크게 하락했다.", "s2": "코스피가 오늘 급락했다.", "score": 4.0},
+    {"s1": "새 스마트폰의 배터리 수명이 길다.", "s2": "신형 휴대폰은 배터리가 오래 간다.", "score": 4.6},
+    {"s1": "여름 휴가로 제주도에 갈 예정이다.", "s2": "겨울에 강원도로 스키 여행을 간다.", "score": 1.4},
+    {"s1": "은행 대출 금리가 올랐다.", "s2": "강아지가 마당에서 뼈다귀를 물고 논다.", "score": 0.0},
+    {"s1": "그녀는 피아노를 10년 넘게 쳤다.", "s2": "그녀의 피아노 경력은 10년 이상이다.", "score": 4.8},
+    {"s1": "기차가 역에 막 도착했다.", "s2": "버스가 정류장을 막 떠났다.", "score": 1.6},
+    {"s1": "의사는 환자에게 충분한 휴식을 권했다.", "s2": "환자는 의사에게 약 처방을 요청했다.", "score": 2.0},
+    {"s1": "A man is playing a guitar on stage.", "s2": "A musician performs with a guitar on stage.", "score": 4.6},
+    {"s1": "The cat is chasing a mouse.", "s2": "A mouse is being chased by a cat.", "score": 4.9},
+    {"s1": "The stock price rose sharply today.", "s2": "The weather is sunny and warm today.", "score": 0.4},
+    {"s1": "She is cooking pasta in the kitchen.", "s2": "She is cooking rice in the kitchen.", "score": 3.2},
+    {"s1": "The flight was cancelled due to heavy snow.", "s2": "Heavy snowfall led to the cancellation of the flight.", "score": 5.0},
+    {"s1": "I forgot my umbrella at the office.", "s2": "I left my umbrella at work.", "score": 4.5},
+    {"s1": "고양이가 소파 위에서 자고 있다.", "s2": "A cat is sleeping on the sofa.", "score": 5.0},
+    {"s1": "회의가 다음 주 화요일로 연기되었다.", "s2": "The meeting was postponed to next Tuesday.", "score": 4.9},
+    {"s1": "아이들이 운동장에서 축구를 하고 있다.", "s2": "The children are reading books in the library.", "score": 1.0},
+    {"s1": "은행 대출 금리가 올랐다.", "s2": "Bank loan interest rates have gone up.", "score": 4.9}
+  ]
+}
