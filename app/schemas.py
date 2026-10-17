@@ -311,3 +311,35 @@ class LLMRef(BaseModel):
 
 class LLMTestRequest(LLMRef):
     prompt: str = Field(default="임베딩 모델이 무엇인지 한 문장으로 설명해 주세요.", min_length=1, max_length=2000)
+
+
+# ── 문서 검색 평가 ──────────────────────────────────────────────────────────
+class EvalItemIn(BaseModel):
+    query: str = Field(min_length=1, max_length=2000)
+    doc_ids: list[int] = Field(min_length=1, max_length=50)
+    evidence: str = Field(default="", max_length=4000)  # 답이 들어 있는 원문 문장 (있으면 근거 단위 평가)
+    type: str = Field(default="manual", max_length=30)
+
+
+class EvalSetCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    method: Literal["manual", "import"] = "manual"
+    items: list[EvalItemIn] = Field(min_length=1, max_length=5000)
+
+
+class EvalSetUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    items: list[EvalItemIn] | None = Field(default=None, min_length=1, max_length=5000)
+
+
+class EvalSetGenerate(LLMRef):
+    name: str = Field(default="", max_length=200)
+    method: Literal["llm", "sentence"] = "llm"
+    chunk_set_id: int  # 지문을 뽑을 청크 세트 (평가는 다른 청크 세트로도 할 수 있다)
+    n_passages: int = Field(default=30, ge=1, le=500)
+    styles: list[Literal["fact", "paraphrase", "situation"]] = Field(
+        default=["fact", "paraphrase", "situation"], min_length=1, max_length=3
+    )
+    min_chars: int = Field(default=200, ge=20, le=4000)
+    seed: int = 0
+    concurrency: int = Field(default=4, ge=1, le=16)

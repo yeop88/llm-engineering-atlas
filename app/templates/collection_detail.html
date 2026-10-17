@@ -12,6 +12,7 @@
   <button data-tab="t-chunks">② 청크 세트</button>
   <button data-tab="t-index">③ 벡터 인덱스</button>
   <button data-tab="t-search">④ 검색 비교</button>
+  <button data-tab="t-eval">⑤ 평가</button>
 </div>
 
 <!-- ① 문서 -->
@@ -88,9 +89,63 @@
   <div id="q-out" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); margin-top:16px"></div>
 </section>
 
+<!-- ⑤ 평가 -->
+<section class="tab-panel" id="t-eval">
+  <div class="grid cols-2">
+    <div class="card stack">
+      <h2>평가 세트 만들기</h2>
+      <div class="row">
+        <div class="field grow"><label>방법</label><select id="e-method">
+          <option value="llm">LLM 으로 질문 생성 (권장)</option>
+          <option value="sentence">문장 추출 (LLM 없음 · 점검용)</option>
+          <option value="manual">직접 입력</option>
+          <option value="import">파일 가져오기 (JSON)</option></select></div>
+        <div class="field grow"><label>이름 (선택)</label><input id="e-name" placeholder="비우면 자동"></div>
+      </div>
+      <div id="e-gen" class="stack">
+        <div class="row">
+          <div class="field grow"><label>지문을 뽑을 청크 세트</label><select id="e-cs"></select></div>
+          <div class="field"><label>지문 수</label><input id="e-n" type="number" value="30" min="1" max="500" style="width:80px"></div>
+          <div class="field"><label>최소 길이</label><input id="e-min" type="number" value="200" min="20" max="4000" style="width:80px"></div>
+        </div>
+        <div id="e-llm" class="stack">
+          <div class="row">
+            <label class="row" style="margin:0"><input type="checkbox" name="e-style" value="fact" checked> 사실 확인</label>
+            <label class="row" style="margin:0"><input type="checkbox" name="e-style" value="paraphrase" checked> 다른 표현</label>
+            <label class="row" style="margin:0"><input type="checkbox" name="e-style" value="situation" checked> 상황 설명형</label>
+          </div>
+          <div class="row">
+            <div class="field"><label>LLM</label><select id="e-provider"><option value="">.env 설정</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+            <div class="field grow"><label>모델 (비우면 설정값)</label><input id="e-model"></div>
+            <div class="field"><label>동시 호출</label><input id="e-conc" type="number" value="4" min="1" max="16" style="width:70px"></div>
+          </div>
+          <div class="small muted" id="e-llm-status"></div>
+        </div>
+      </div>
+      <div id="e-manual" class="stack" hidden>
+        <div><label>한 줄에 하나: <code>질문 | 정답 파일 이름(여러 개면 ,) | 근거 문장(선택)</code></label>
+          <textarea id="e-lines" rows="6" class="small" placeholder="공문서는 어떤 문자로 써야 하나요? | 국어기본법.hwp | 공문서는 어문규범에 맞추어 한글로 작성하여야 한다"></textarea></div>
+      </div>
+      <div id="e-import" hidden><input type="file" id="e-file" accept=".json"><div class="small muted">내보내기한 형식 <code>{"items": [{"query", "doc_ids", "evidence"}]}</code></div></div>
+      <div class="small muted" id="e-hint"></div>
+      <div class="row"><span class="spacer"></span><button class="btn primary" id="e-create">만들기</button></div>
+    </div>
+    <div class="card stack">
+      <h2>평가 세트</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>이름</th><th>방법</th><th class="num">질문</th><th class="num">어휘 겹침</th><th>상태</th><th class="right"></th></tr></thead>
+        <tbody id="e-rows"></tbody>
+      </table></div>
+      <div class="small muted">어휘 겹침 = 질문과 근거 문장의 글자 3-gram 자카드 평균. 높을수록 키워드 검색(BM25)에 쉬운 세트입니다.</div>
+    </div>
+  </div>
+  <div id="ev-area" style="margin-top:16px"></div>
+</section>
+
 <dialog id="dlg" style="width:min(980px,96vw)"><div class="row between"><h2 id="dlg-title"></h2><button class="btn sm" onclick="$('#dlg').close()">닫기</button></div><div id="dlg-body"></div></dialog>
 {% endblock %}
 {% block scripts %}
 <script>const COLLECTION_ID = {{ collection_id }};</script>
 <script src="{{ url_for('static', path='js/rag.js') }}"></script>
+<script src="{{ url_for('static', path='js/rag_eval.js') }}"></script>
 {% endblock %}

@@ -131,3 +131,12 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 |---|---|---|
 | GET | `/api/llm/status` | LLM 설정 상태 (키 값 제외) |
 | POST | `/api/llm/test` | 연결 시험 |
+
+## 문서 검색 평가
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET / POST | `/api/collections/{id}/eval-sets` | 평가 세트 목록 / 직접 입력·가져오기 `{"name", "method": "manual"\|"import", "items": [{"query", "doc_ids", "evidence"}]}` |
+| POST | `/api/collections/{id}/eval-sets/generate` | 생성 (작업) `{"method": "llm"\|"sentence", "chunk_set_id", "n_passages", "styles", "provider"?, "model"?}` |
+| GET / PATCH / DELETE | `/api/eval-sets/{id}` | 조회(질문 포함) / 이름·질문 수정 / 삭제 |
+| GET | `/api/eval-sets/{id}/export` | JSON 내려받기 |

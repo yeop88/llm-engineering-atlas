@@ -200,6 +200,24 @@ class AppModel(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
+class EvalSet(Base):
+    """컬렉션 검색 평가 세트. items = [{id, query, doc_ids, evidence, source_chunk_id?, type?}].
+    정답은 문서 단위(doc_ids)와 근거 문장(evidence)으로 기록한다 — 청크 id 는 청크 세트마다 달라서 쓰지 않는다."""
+
+    __tablename__ = "eval_sets"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    collection_id: Mapped[int] = mapped_column(ForeignKey("collections.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    method: Mapped[str] = mapped_column(String(20))  # llm | sentence | manual | import
+    status: Mapped[str] = mapped_column(String(20), default="ready")  # building | ready | error
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    config: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    items: Mapped[list[Any]] = mapped_column(default=list)
+    stats: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
 _settings = get_settings()
 _is_sqlite = _settings.db_url.startswith("sqlite")
 engine = create_engine(_settings.db_url, connect_args={"check_same_thread": False} if _is_sqlite else {})
