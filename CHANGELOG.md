@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-18
+
 ### 추가
 - **4 검색 향상**: 질의 재작성 · HyDE(가상 문서를 문서 역할로 인코딩) · 다중 질의, 변형 검색과 원 질의 검색을 RRF 로 합치고 리랭커는 합친 뒤 원 질의로 한 번, LLM 변형은 temperature 0 · 질문별 캐시. 검색 설정의 `enhance` 로 검색 비교 · 조합 평가 · 답변 생성 어디서든 켤 수 있음. 검색 향상 테스트 화면(`/search-lab`: 기법별 나란히 비교 · 평가 세트 비교) — `docs/stages/4-search-lab/search-lab.md`
 - **이미지 · 영상 컬렉션**: RAG 컬렉션에 이미지 · 영상 업로드(영상은 일정 간격 프레임 추출 · 같은 장면 제외, PyAV), 이미지 · 프레임 1장 = 청크 1개, 멀티모달 모델 인덱스는 그림으로 인코딩(텍스트 전용 모델은 파일 이름으로 색인 + 경고), 검색 결과 썸네일 · 영상 장면 시각으로 이동, 멀티모달 화면의 컬렉션 갤러리 검색, 미디어 파일 API(`/api/chunks/{id}/media` · `/api/documents/{id}/media`). 실측: 실제 사진 23장 + 영상 — EmbeddingGemma 2 nDCG 100, CLIP 67.4 — `docs/stages/multimodal/multimodal.md` (`av` 의존성 추가)
@@ -102,6 +104,7 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/yeop88/llm-engineering-atlas/releases/tag/v0.1.0
