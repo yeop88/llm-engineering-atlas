@@ -1,9 +1,9 @@
 import json
 import re
 
-from app.catalog import CATALOG
-from app.config import get_settings
-from app.services.benchmark import list_datasets, validate_dataset
+from app.core.config import get_settings
+from app.stages.embedding.benchmark import list_datasets, validate_dataset
+from app.stages.embedding.catalog import CATALOG
 
 REQUIRED = ("hf_id", "name", "provider", "release_date", "params", "license", "languages")
 

@@ -5,8 +5,8 @@ import time
 import numpy as np
 import pytest
 
-from app.services.benchmark import sweep_dims_for, truncate_normalize
-from app.services.projection import pair_alignment, pca_2d
+from app.stages.embedding.benchmark import sweep_dims_for, truncate_normalize
+from app.stages.embedding.projection import pair_alignment, pca_2d
 
 
 def test_truncate_normalize_matches_slice_then_normalize():

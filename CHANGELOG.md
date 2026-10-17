@@ -6,6 +6,7 @@
 
 ### 변경
 - 프로젝트 이름을 **LLM Engineering Atlas**(`llm-engineering-atlas`, 이전 Embedding Lab)로 변경하고 목표를 임베딩 → RAG → 리랭킹 → 라우팅 → 소형/대형 모델의 전체 흐름으로 넓힘. 저장소 주소도 바뀜(옛 주소는 자동 연결)
+- **코드 구조를 흐름도 단계별로 재편**: `app/core`(공통 기반) · `app/stages/<단계>`(embedding · rag · finetune · apps — 서비스 · API · 데이터를 한 폴더에) · `app/web`(페이지 · 단계별 템플릿 하위 폴더 · 정적 파일). 작업 · 실행 이력 · 시스템 API 를 `core/system_api.py` 로 분리. API 주소와 동작은 그대로 — `docs/architecture.md`
 
 ## [0.2.0] - 2026-10-18
 

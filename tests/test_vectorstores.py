@@ -12,18 +12,18 @@ import uuid
 import numpy as np
 import pytest
 
-from app.vectorstores.base import StoreUnavailable, check_name
-from app.vectorstores.qdrant_store import QdrantStore
+from app.core.vectorstores.base import StoreUnavailable, check_name
+from app.core.vectorstores.qdrant_store import QdrantStore
 
 
 def _stores():
     params = [pytest.param(lambda: QdrantStore(location=":memory:"), id="qdrant")]
     if url := os.environ.get("TEST_PGVECTOR_URL"):
-        from app.vectorstores.pgvector_store import PgVectorStore
+        from app.core.vectorstores.pgvector_store import PgVectorStore
 
         params.append(pytest.param(lambda url=url: PgVectorStore(url), id="pgvector"))
     if url := os.environ.get("TEST_MARIADB_URL"):
-        from app.vectorstores.mariadb_store import MariaDBStore
+        from app.core.vectorstores.mariadb_store import MariaDBStore
 
         params.append(pytest.param(lambda url=url: MariaDBStore(url), id="mariadb"))
     return params
@@ -81,8 +81,8 @@ def test_name_validation():
 
 
 def test_unconfigured_store_raises(monkeypatch):
-    from app import vectorstores
-    from app.config import get_settings
+    from app.core import vectorstores
+    from app.core.config import get_settings
 
     monkeypatch.setattr(get_settings(), "pgvector_url", None)
     vectorstores.reset_stores()
@@ -126,7 +126,7 @@ def test_small_index_search_is_exact(store):
 
 def test_large_index_uses_wide_ann(store, monkeypatch):
     """정확 검색 기준을 넘으면 근사 검색(넓힌 탐색 폭)으로도 동작해야 한다."""
-    from app.config import get_settings
+    from app.core.config import get_settings
 
     monkeypatch.setattr(get_settings(), "vector_exact_max", 100)
     vec, queries = _anisotropic(dim=64, n=300)

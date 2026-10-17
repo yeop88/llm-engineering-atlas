@@ -5,9 +5,9 @@ import json
 import httpx
 import pytest
 
-from app.config import get_settings
-from app.rag import answer
-from app.services import llm
+from app.core import llm
+from app.core.config import get_settings
+from app.stages.rag import answer
 from tests.test_rag import DOCS, _wait
 
 SOURCES = [

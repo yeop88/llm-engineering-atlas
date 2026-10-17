@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from app.finetune import data, service, trainer
-from app.services.model_manager import ModelSpec
+from app.stages.embedding.model_manager import ModelSpec
+from app.stages.finetune import data, service, trainer
 from tests.test_rag import DOCS, _wait
 
 PASSAGES = [
@@ -136,7 +136,7 @@ def test_finetune_flow(client, fake_train):
 
 
 def test_finetune_llm_requires_config(client, monkeypatch):
-    from app.config import get_settings
+    from app.core.config import get_settings
 
     st = get_settings()
     for k in ("llm_provider", "openai_api_key", "openai_model", "anthropic_api_key"):
@@ -154,7 +154,7 @@ def test_finetune_llm_requires_config(client, monkeypatch):
 
 
 def test_model_card_without_comparison():
-    from app.db import FinetuneRun
+    from app.core.db import FinetuneRun
 
     r = FinetuneRun(
         id=9, name="x", status="error", base_hf_id="b", config={"data_method": "ict", "epochs": 1}, data_stats={}, metrics={}, error="boom"
@@ -165,8 +165,8 @@ def test_model_card_without_comparison():
 
 
 def test_mark_interrupted_on_restart():
-    from app.crud import mark_interrupted
-    from app.db import EvalSet, FinetuneRun, SessionLocal
+    from app.core.crud import mark_interrupted
+    from app.core.db import EvalSet, FinetuneRun, SessionLocal
 
     with SessionLocal() as db:
         r = FinetuneRun(name="끊김", status="running", base_hf_id="x", config={}, data_stats={}, log=[], metrics={})

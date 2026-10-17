@@ -5,8 +5,8 @@ import time
 import numpy as np
 import pytest
 
-from app.apps import anomaly, common
-from app.apps.recommend import recommend
+from app.stages.apps import anomaly, common
+from app.stages.apps.recommend import recommend
 
 
 def _wait(client, job):
@@ -79,7 +79,7 @@ def test_recommend_api(client):
 
 
 # ── 분류 ────────────────────────────────────────────────────────────────────
-from app.apps import classify  # noqa: E402
+from app.stages.apps import classify  # noqa: E402
 
 
 def _blobs(n_per=8, dim=16, seed=0):
@@ -140,7 +140,7 @@ def test_classify_api(client):
 
 
 # ── 클러스터링 ──────────────────────────────────────────────────────────────
-from app.apps import cluster as clus  # noqa: E402
+from app.stages.apps import cluster as clus  # noqa: E402
 
 
 def _items_from(y, texts=None):
@@ -194,7 +194,7 @@ def test_cluster_all_noise_has_no_agreement():
 
 
 # ── 중복·표절 ───────────────────────────────────────────────────────────────
-from app.apps import dedup  # noqa: E402
+from app.stages.apps import dedup  # noqa: E402
 
 
 def test_near_duplicates_groups_and_kinds():
@@ -329,8 +329,8 @@ def test_anomaly_api_and_saved_detector(client):
 
 
 # ── 키워드·요약 ─────────────────────────────────────────────────────────────
-from app.apps import keywords as kw  # noqa: E402
-from app.rag.korean import noun_phrases_many  # noqa: E402
+from app.core.korean import noun_phrases_many  # noqa: E402
+from app.stages.apps import keywords as kw  # noqa: E402
 
 
 def test_noun_phrase_candidates():

@@ -1,6 +1,6 @@
 # LLM 연동
 
-문서 검색 평가 질문 자동 생성처럼 LLM 이 필요한 기능은 두 종류의 API 를 지원합니다. 둘 다 `httpx` 로 REST API 를 직접 호출하므로 추가 SDK 가 필요 없습니다(`app/services/llm.py`).
+문서 검색 평가 질문 자동 생성처럼 LLM 이 필요한 기능은 두 종류의 API 를 지원합니다. 둘 다 `httpx` 로 REST API 를 직접 호출하므로 추가 SDK 가 필요 없습니다(`app/core/llm.py`).
 
 | 제공자 | 값 | 대상 |
 |---|---|---|

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from app.services.benchmark import DatasetError, pearson, retrieval_metrics, spearman, validate_dataset
+from app.stages.embedding.benchmark import DatasetError, pearson, retrieval_metrics, spearman, validate_dataset
 
 
 def test_retrieval_metrics_perfect_and_miss():

@@ -4,8 +4,8 @@ import time
 
 import numpy as np
 
-from app.services import stats
-from app.services.benchmark import spearman
+from app.core import stats
+from app.stages.embedding.benchmark import spearman
 
 
 def test_mean_ci_contains_mean_and_narrows_with_n():

@@ -2,7 +2,7 @@
 
 import time
 
-from app.services import public_benchmarks as pb
+from app.stages.embedding import public_benchmarks as pb
 
 CORPUS = [{"_id": f"d{i}", "title": f"제목{i}" if i % 2 else "", "text": f"문서 {i} 본문"} for i in range(50)] + [
     {"_id": "empty", "text": "  "}

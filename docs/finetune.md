@@ -13,7 +13,7 @@
 
 ### 1. 학습 데이터 — (질문, 정답 지문) 쌍
 
-컬렉션의 청크 세트에서 문서마다 골고루 지문을 뽑아 쌍을 만듭니다(`app/finetune/data.py`).
+컬렉션의 청크 세트에서 문서마다 골고루 지문을 뽑아 쌍을 만듭니다(`app/stages/finetune/data.py`).
 
 | 방법 | 질문 | 정답 지문 | 장단점 |
 |---|---|---|---|
@@ -25,7 +25,7 @@
 
 ### 2. 학습 — 대조 학습 (MultipleNegativesRankingLoss)
 
-sentence-transformers 의 `SentenceTransformerTrainer` 로 학습합니다(`app/finetune/trainer.py`).
+sentence-transformers 의 `SentenceTransformerTrainer` 로 학습합니다(`app/stages/finetune/trainer.py`).
 
 - 한 배치에 쌍이 16개 있으면, 질문마다 자기 지문 1개는 정답, 나머지 15개 지문은 오답으로 보고 "정답과는 가깝게, 오답과는 멀게" 벡터를 조정합니다(in-batch negatives). 따로 오답을 만들 필요가 없어 데이터 만들기가 쉽습니다.
 - **배치가 클수록** 오답이 많아져 효과가 좋지만 메모리를 많이 씁니다. *Cached 묶음 크기*를 지정하면 CachedMultipleNegativesRankingLoss 로 큰 배치를 작은 묶음으로 나눠 계산합니다(GradCache).

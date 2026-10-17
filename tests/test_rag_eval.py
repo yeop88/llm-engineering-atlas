@@ -5,9 +5,9 @@ import json
 import httpx
 import pytest
 
-from app.config import get_settings
-from app.rag import evaluation
-from app.services import llm
+from app.core import llm
+from app.core.config import get_settings
+from app.stages.rag import evaluation
 from tests.test_rag import DOCS, _wait
 
 PASSAGE = "공공기관등의 공문서는 어문규범에 맞추어 한글로 작성하여야 한다. 다만 대통령령으로 정하는 경우에는 괄호 안에 한자를 쓸 수 있다."
@@ -201,7 +201,7 @@ def test_run_eval_ranks_configs_with_ci():
 
 
 def test_run_eval_stops_on_cancel():
-    from app.services.jobs import Job, JobCancelled
+    from app.core.jobs import Job, JobCancelled
 
     job = Job(id="x", kind="rag_eval", title="t")
     calls = []

@@ -5,8 +5,8 @@ import json
 import httpx
 import pytest
 
-from app.config import get_settings
-from app.services import llm
+from app.core import llm
+from app.core.config import get_settings
 
 
 @pytest.fixture

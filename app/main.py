@@ -9,13 +9,18 @@ os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 from fastapi import FastAPI  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from app.config import BASE_DIR, get_settings  # noqa: E402
-from app.crud import mark_interrupted, seed_catalog  # noqa: E402
-from app.db import SessionLocal, init_db  # noqa: E402
-from app.routers import apps, benchmarks, finetune, llm, models, pages, playground, rag, rag_answer, rag_eval  # noqa: E402
-from app.services.jobs import jobs  # noqa: E402
-from app.services.model_manager import get_manager  # noqa: E402
-from app.services.runtime import sampler  # noqa: E402
+from app.core import llm_api, system_api  # noqa: E402
+from app.core.config import APP_DIR, get_settings  # noqa: E402
+from app.core.crud import mark_interrupted, seed_catalog  # noqa: E402
+from app.core.db import SessionLocal, init_db  # noqa: E402
+from app.core.jobs import jobs  # noqa: E402
+from app.core.runtime import sampler  # noqa: E402
+from app.stages.apps import api as apps_api  # noqa: E402
+from app.stages.embedding import benchmarks_api, models_api, playground_api  # noqa: E402
+from app.stages.embedding.model_manager import get_manager  # noqa: E402
+from app.stages.finetune import api as finetune_api  # noqa: E402
+from app.stages.rag import answer_api, collections_api, eval_api  # noqa: E402
+from app.web import pages  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("app")
@@ -40,18 +45,23 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title=get_settings().app_name,
-    description="오픈소스 임베딩 모델 카탈로그 관리 · 다운로드 · 테스트 · 벤치마크",
+    description="Global LLM system engineering lab · Korean-first — 임베딩 → RAG → 리랭킹 → 라우팅 → 소형/대형 모델",
     version="0.2.0",
     lifespan=lifespan,
 )
-app.mount("/static", StaticFiles(directory=BASE_DIR / "app" / "static"), name="static")
-app.include_router(models.router)
-app.include_router(playground.router)
-app.include_router(benchmarks.router)
-app.include_router(rag.router)
-app.include_router(rag_eval.router)
-app.include_router(rag_answer.router)
-app.include_router(apps.router)
-app.include_router(llm.router)
-app.include_router(finetune.router)
-app.include_router(pages.router)
+app.mount("/static", StaticFiles(directory=APP_DIR / "web" / "static"), name="static")
+# 공통 → 단계 순서 (흐름도 순서) → 화면
+for module in (
+    system_api,
+    llm_api,
+    models_api,
+    playground_api,
+    benchmarks_api,
+    collections_api,
+    eval_api,
+    answer_api,
+    finetune_api,
+    apps_api,
+    pages,
+):
+    app.include_router(module.router)

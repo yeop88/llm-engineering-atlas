@@ -78,7 +78,7 @@ def client(monkeypatch):
     from fastapi.testclient import TestClient
 
     from app.main import app
-    from app.services import hub, model_manager
+    from app.stages.embedding import hub, model_manager
 
     monkeypatch.setattr(hub, "cache_status", lambda force=False: {})
     manager = model_manager.ModelManager(max_loaded=3)

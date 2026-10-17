@@ -7,10 +7,10 @@ import zipfile
 
 import pytest
 
-from app.rag import chunking, parsers
-from app.rag.bm25 import BM25Index
-from app.rag.fusion import rrf, weighted
-from app.rag.korean import tokenize
+from app.core.korean import tokenize
+from app.stages.rag import chunking, parsers
+from app.stages.rag.bm25 import BM25Index
+from app.stages.rag.fusion import rrf, weighted
 
 LAW = """국어기본법
 제1조(목적) 이 법은 국어 사용을 촉진하고 국어의 발전과 보전의 기반을 마련함을 목적으로 한다.

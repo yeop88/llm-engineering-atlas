@@ -32,5 +32,5 @@ GPU 를 지정했는데 쓸 수 없으면(예: CPU 빌드 설치) 시작할 때 
 ## 확인
 
 ```bash
-uv run python -c "from app.services.runtime import accelerator; print(accelerator())"
+uv run python -c "from app.core.runtime import accelerator; print(accelerator())"
 ```

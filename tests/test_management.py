@@ -2,8 +2,8 @@
 
 import time
 
-from app.crud import seed_catalog
-from app.db import SessionLocal
+from app.core.crud import seed_catalog
+from app.core.db import SessionLocal
 
 
 def _models(client):
@@ -80,7 +80,7 @@ def test_run_deletion_scopes_and_trend(client):
 
 
 def test_system_metrics(client):
-    from app.services.runtime import sampler
+    from app.core.runtime import sampler
 
     sampler._sample()
     body = client.get("/api/system/metrics").json()
