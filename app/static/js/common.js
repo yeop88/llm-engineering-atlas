@@ -150,3 +150,7 @@ window.addEventListener("hashchange", () => {
   const btn = location.hash && $(`.tabs button[data-tab="${location.hash.slice(1)}"]`);
   if (btn && !btn.classList.contains("active")) btn.click();
 });
+
+// 브라우저 저장소 (사생활 보호 모드 등에서 막혀도 동작하도록)
+function localGet(key) { try { return localStorage.getItem(key); } catch { return null; } }
+function localSet(key, value) { try { localStorage.setItem(key, value); } catch { /* 저장 안 해도 동작에 지장 없음 */ } }

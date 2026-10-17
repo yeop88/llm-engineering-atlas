@@ -100,3 +100,32 @@ def test_llm_api_endpoints(client, monkeypatch, fake):
     replies.append((200, {"choices": [{"message": {"content": "벡터입니다"}}]}))
     r = client.post("/api/llm/test", json={"prompt": "hi"}).json()
     assert r["text"] == "벡터입니다" and r["config"]["model"] == "m"
+
+
+def test_thinking_disabled_for_local_and_stripped(monkeypatch, fake):
+    calls, replies = fake
+    _settings(monkeypatch, openai_model="qwen", openai_base_url="http://localhost:8081/v1")
+    replies.append(
+        (
+            200,
+            {
+                "choices": [{"message": {"content": "<think>음...</think>\n답입니다"}, "finish_reason": "stop"}],
+                "usage": {"completion_tokens": 4},
+            },
+        )
+    )
+    res = llm.chat(llm.resolve(), "s", "u")
+    assert res["text"] == "답입니다" and json.loads(calls[0].content)["chat_template_kwargs"] == {"enable_thinking": False}
+    _settings(monkeypatch, openai_model="gpt-x", openai_api_key="k", openai_base_url="https://api.openai.com/v1")
+    replies.append((200, {"choices": [{"message": {"content": "ok"}, "finish_reason": "length"}]}))
+    res = llm.chat(llm.resolve(), "s", "u")
+    assert "chat_template_kwargs" not in json.loads(calls[1].content) and res["usage"]["truncated"]  # 공식 API 에는 보내지 않음
+
+
+def test_list_models_endpoint(client, monkeypatch, fake):
+    _, replies = fake
+    _settings(monkeypatch, openai_base_url="http://localhost:8081/v1")
+    replies.append((200, {"object": "list", "data": [{"id": "gemma-4-e4b"}, {"id": "qwen3.5-4b"}]}))
+    assert client.get("/api/llm/models").json()["models"] == ["gemma-4-e4b", "qwen3.5-4b"]
+    replies.append((500, {}))
+    assert client.get("/api/llm/models").status_code == 502

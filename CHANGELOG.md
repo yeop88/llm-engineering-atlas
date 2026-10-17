@@ -5,6 +5,8 @@
 ## [Unreleased]
 
 ### 추가
+- **메뉴를 기능 묶음으로 개편**: 임베딩 테스트 · RAG 테스트 · 멀티모달 테스트 드롭다운, 좁은 화면 대응
+- **로컬 LLM 연결**: llama.cpp `llama-server`(Vulkan) + Gemma 4 E4B 를 기본 구성으로 문서화, 소형 모델 3종 실측 비교, LLM 연결 화면(설정 상태·서버 모델 목록·연결 시험), `/api/llm/models`, 생각(thinking) 모드 끄기·`<think>` 제거, 스트리밍 호출(첫 글자까지 시간·생성 속도 분리) — `docs/llm.md`
 - **공개 한국어 벤치마크 가져오기**: AutoRAG·Ko-StrategyQA·PublicHealthQA·xPQA(검색), KorSTS·KLUE-STS(STS)를 Hugging Face Hub 에서 내려받아 데이터셋으로 변환, 큰 코퍼스는 정답 보존 표본 추출, 출처·라이선스 기록 (`pyarrow` 의존성 추가) — `docs/benchmarks.md`
 - **문서 검색 조합 평가**: 평가 세트로 청킹 × 임베딩 모델 × 검색 방식 × 리랭커 조합(최대 32개)을 한 번에 비교, 근거 청크 Hit@k·MRR·nDCG·문서 Recall@5·지연, 95% 부트스트랩 구간과 1위 대비 짝지은 비교, 질문 유형별 지표, 질문별 정답 순위표, 평가 이력 — `docs/rag.md`
 - **문서 검색 평가 세트**: LLM 질문 생성(사실 확인·다른 표현·상황 설명형, 근거 문장 보정, 토큰 집계)·문장 추출·직접 입력·JSON 가져오기/내보내기, 검토 후 저장, 청킹과 무관한 정답 기록(정답 문서 + 근거 문장), 컬렉션 ⑤ 평가 탭, 마이그레이션 0004 — `docs/rag.md`

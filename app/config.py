@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     anthropic_model: str = "claude-sonnet-5-5"
     llm_timeout: float = 120.0
+    # Qwen3 계열처럼 '생각' 모드가 있는 모델에 생각을 끄라고 요청 (OpenAI 호환 로컬 서버만, 공식 OpenAI API 에는 보내지 않음)
+    llm_disable_thinking: bool = True
 
     @property
     def db_url(self) -> str:

@@ -6,6 +6,7 @@
 import json
 import re
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any
 
@@ -94,11 +95,10 @@ def _post(cfg: LLMConfig, url: str, headers: dict[str, str], body: dict[str, Any
     raise LLMError(f"{PROVIDERS[cfg.provider]} 호출 실패 ({cfg.model}) — {last}")
 
 
-def chat(
-    cfg: LLMConfig, system: str, user: str, max_tokens: int = 2048, temperature: float | None = 0.3, json_mode: bool = False
-) -> dict[str, Any]:
-    """→ {"text", "usage": {"input_tokens", "output_tokens"}, "seconds"}"""
-    started = time.perf_counter()
+def _request(
+    cfg: LLMConfig, system: str, user: str, max_tokens: int, temperature: float | None, json_mode: bool = False, stream: bool = False
+) -> tuple[str, dict[str, str], dict[str, Any]]:
+    """제공자별 (URL, 헤더, 본문)."""
     if cfg.provider == "openai":
         body: dict[str, Any] = {"model": cfg.model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
         # 공식 API 의 최신 모델은 max_completion_tokens, 호환 서버는 대부분 max_tokens 를 받는다
@@ -107,26 +107,173 @@ def chat(
             body["temperature"] = temperature
         if json_mode:
             body["response_format"] = {"type": "json_object"}
+        if get_settings().llm_disable_thinking and "api.openai.com" not in cfg.base_url:
+            body["chat_template_kwargs"] = {"enable_thinking": False}  # llama.cpp·vLLM 이 템플릿에 전달
+        if stream:
+            body |= {"stream": True, "stream_options": {"include_usage": True}}
         headers = {"Authorization": f"Bearer {cfg.api_key}"} if cfg.api_key else {}
-        data = _post(cfg, f"{cfg.base_url}/chat/completions", headers, body)
+        return f"{cfg.base_url}/chat/completions", headers, body
+    body = {"model": cfg.model, "max_tokens": max_tokens, "system": system, "messages": [{"role": "user", "content": user}]}
+    if temperature is not None:
+        body["temperature"] = temperature
+    if stream:
+        body["stream"] = True
+    return cfg.base_url, {"x-api-key": cfg.api_key or "", "anthropic-version": ANTHROPIC_VERSION}, body
+
+
+def chat(
+    cfg: LLMConfig, system: str, user: str, max_tokens: int = 2048, temperature: float | None = 0.3, json_mode: bool = False
+) -> dict[str, Any]:
+    """→ {"text", "usage": {"input_tokens", "output_tokens"}, "seconds"}"""
+    started = time.perf_counter()
+    url, headers, body = _request(cfg, system, user, max_tokens, temperature, json_mode)
+    if cfg.provider == "openai":
+        data = _post(cfg, url, headers, body)
         try:
-            text = data["choices"][0]["message"]["content"] or ""
+            msg = data["choices"][0]["message"]
+            text = msg.get("content") or ""
         except (KeyError, IndexError, TypeError) as exc:
             raise LLMError(f"응답 형식을 해석할 수 없습니다: {str(data)[:200]}") from exc
         u = data.get("usage") or {}
         usage = {"input_tokens": u.get("prompt_tokens"), "output_tokens": u.get("completion_tokens")}
+        if not text.strip() and msg.get("reasoning_content"):
+            usage["reasoning_only"] = True  # 생각만 하다 토큰 한도에 걸림
+        if data["choices"][0].get("finish_reason") == "length":
+            usage["truncated"] = True
     else:
-        body = {"model": cfg.model, "max_tokens": max_tokens, "system": system, "messages": [{"role": "user", "content": user}]}
-        if temperature is not None:
-            body["temperature"] = temperature
-        headers = {"x-api-key": cfg.api_key or "", "anthropic-version": ANTHROPIC_VERSION}
-        data = _post(cfg, cfg.base_url, headers, body)
+        data = _post(cfg, url, headers, body)
         text = "".join(b.get("text", "") for b in data.get("content") or [] if b.get("type") == "text")
         u = data.get("usage") or {}
         usage = {"input_tokens": u.get("input_tokens"), "output_tokens": u.get("output_tokens")}
         if data.get("stop_reason") == "max_tokens":
             usage["truncated"] = True
-    return {"text": text, "usage": usage, "seconds": round(time.perf_counter() - started, 2)}
+    seconds = time.perf_counter() - started
+    text = _THINK.sub("", text).strip()
+    out_tok = usage.get("output_tokens")
+    return {
+        "text": text,
+        "usage": usage,
+        "seconds": round(seconds, 2),
+        "tokens_per_second": round(out_tok / seconds, 1) if out_tok and seconds else None,
+    }
+
+
+_THINK = re.compile(r"<think>.*?</think>\s*", re.DOTALL)
+
+
+class _ThinkFilter:
+    """스트림 조각에서 <think>…</think> 구간을 걸러낸다 (태그가 조각 경계에서 잘려도 동작)."""
+
+    def __init__(self) -> None:
+        self.buf = ""
+        self.inside = False
+
+    def feed(self, piece: str) -> str:
+        self.buf += piece
+        out = ""
+        while self.buf:
+            tag = "</think>" if self.inside else "<think>"
+            i = self.buf.find(tag)
+            if i >= 0:
+                if not self.inside:
+                    out += self.buf[:i]
+                self.buf = self.buf[i + len(tag) :].lstrip() if self.inside else self.buf[i + len(tag) :]
+                self.inside = not self.inside
+                continue
+            keep = next((k for k in range(len(tag) - 1, 0, -1) if self.buf.endswith(tag[:k])), 0)  # 태그 앞부분일 수 있는 끝
+            if not self.inside:
+                out += self.buf[: len(self.buf) - keep]
+            self.buf = self.buf[len(self.buf) - keep :] if keep else ""
+            break
+        return out
+
+    def flush(self) -> str:
+        rest, self.buf = ("" if self.inside else self.buf), ""
+        return rest
+
+
+def chat_stream(
+    cfg: LLMConfig, system: str, user: str, max_tokens: int = 2048, temperature: float | None = 0.3
+) -> Iterator[dict[str, Any]]:
+    """{"delta": 글자 조각} 을 차례로, 마지막에 {"done": True, "text", "usage", "seconds", "tokens_per_second"} 를 낸다."""
+    started = time.perf_counter()
+    url, headers, body = _request(cfg, system, user, max_tokens, temperature, stream=True)
+    usage: dict[str, Any] = {}
+    parts: list[str] = []
+    flt = _ThinkFilter()
+    first: float | None = None  # 첫 글자가 나온 시각 (그 전까지는 근거 읽기 = 프롬프트 처리)
+    try:
+        with httpx.Client(timeout=cfg.timeout, transport=_transport) as client, client.stream("POST", url, headers=headers, json=body) as r:
+            if r.status_code >= 400:
+                r.read()
+                raise LLMError(f"{PROVIDERS[cfg.provider]} 호출 실패 ({cfg.model}) — HTTP {r.status_code}: {r.text[:300]}")
+            for line in r.iter_lines():
+                if not line.startswith("data:"):
+                    continue
+                payload = line[5:].strip()
+                if payload == "[DONE]":
+                    break
+                try:
+                    ev = json.loads(payload)
+                except json.JSONDecodeError:
+                    continue
+                piece = ""
+                if cfg.provider == "openai":
+                    for ch in ev.get("choices") or []:
+                        piece += (ch.get("delta") or {}).get("content") or ""
+                        if ch.get("finish_reason") == "length":
+                            usage["truncated"] = True
+                    if ev.get("usage"):
+                        usage |= {"input_tokens": ev["usage"].get("prompt_tokens"), "output_tokens": ev["usage"].get("completion_tokens")}
+                else:
+                    t = ev.get("type")
+                    if t == "content_block_delta":
+                        piece = (ev.get("delta") or {}).get("text") or ""
+                    elif t == "message_start":
+                        usage["input_tokens"] = ((ev.get("message") or {}).get("usage") or {}).get("input_tokens")
+                    elif t == "message_delta":
+                        usage["output_tokens"] = (ev.get("usage") or {}).get("output_tokens")
+                        if (ev.get("delta") or {}).get("stop_reason") == "max_tokens":
+                            usage["truncated"] = True
+                    elif t == "error":
+                        raise LLMError(f"{PROVIDERS[cfg.provider]} 스트림 오류: {ev.get('error')}")
+                text = flt.feed(piece) if piece else ""
+                if text:
+                    if first is None:
+                        first = time.perf_counter()
+                    parts.append(text)
+                    yield {"delta": text}
+    except httpx.HTTPError as exc:
+        raise LLMError(f"{PROVIDERS[cfg.provider]} 연결 실패 ({cfg.model}) — {type(exc).__name__}: {exc}") from exc
+    tail = flt.flush()
+    if tail:
+        parts.append(tail)
+        yield {"delta": tail}
+    end = time.perf_counter()
+    out_tok = usage.get("output_tokens")
+    gen = end - first if first else 0.0
+    yield {
+        "done": True,
+        "text": "".join(parts).strip(),
+        "usage": usage,
+        "seconds": round(end - started, 2),
+        "ttft_s": round(first - started, 2) if first else None,  # 첫 글자까지 (긴 근거일수록 길다)
+        "tokens_per_second": round(out_tok / gen, 1) if out_tok and gen > 0 else None,  # 생성 속도
+    }
+
+
+def list_models(cfg: LLMConfig) -> list[str]:
+    """OpenAI 호환 서버에 올라와 있는 모델 이름 (/models)."""
+    if cfg.provider != "openai":
+        return [cfg.model]
+    headers = {"Authorization": f"Bearer {cfg.api_key}"} if cfg.api_key else {}
+    try:
+        with httpx.Client(timeout=10, transport=_transport) as client:
+            r = client.get(f"{cfg.base_url}/models", headers=headers)
+            r.raise_for_status()
+            return [m["id"] for m in r.json().get("data", [])]
+    except (httpx.HTTPError, ValueError, KeyError) as exc:
+        raise LLMError(f"모델 목록을 가져오지 못했습니다 ({cfg.base_url}): {exc}") from exc
 
 
 _FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)

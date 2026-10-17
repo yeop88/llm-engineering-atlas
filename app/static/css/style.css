@@ -65,6 +65,25 @@ p.lead { color: var(--muted); margin: 0 0 18px; }
 .topbar nav { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
 .topbar nav a { padding: 6px 10px; border-radius: 8px; color: var(--muted); }
 .topbar nav a.active, .topbar nav a:hover { background: var(--accent-weak); color: var(--accent); text-decoration: none; }
+/* 기능 묶음 드롭다운: 마우스를 올리거나 키보드로 포커스하면 펼침 */
+.nav-group { position: relative; }
+.nav-group > button { font: inherit; padding: 6px 10px; border-radius: 8px; color: var(--muted); background: none; border: 0; cursor: pointer; }
+.nav-group > button.active, .nav-group:hover > button, .nav-group:focus-within > button { background: var(--accent-weak); color: var(--accent); }
+.nav-menu { display: none; position: absolute; top: 100%; left: 0; z-index: 50; min-width: 260px; padding: 6px; margin-top: 2px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, .12); }
+.nav-group:hover .nav-menu, .nav-group:focus-within .nav-menu { display: block; }
+.topbar nav .nav-menu a { display: block; padding: 8px 10px; color: var(--text); }
+.topbar nav .nav-menu a b { display: block; font-weight: 600; }
+.topbar nav .nav-menu a span { display: block; font-size: 12px; color: var(--muted); }
+.topbar nav .nav-menu a.active b, .topbar nav .nav-menu a:hover b { color: var(--accent); }
+.topbar nav > a, .nav-group > button { white-space: nowrap; }
+/* 좁은 화면: 로고·배지 한 줄, 메뉴는 그 아래 전체 폭 */
+@media (max-width: 900px) {
+  .topbar { padding: 8px 16px; gap: 6px 12px; }
+  .topbar .brand { flex: 1; }
+  .topbar nav { order: 3; flex-basis: 100%; gap: 2px; }
+  .nav-menu { position: fixed; left: 16px; right: 16px; top: auto; min-width: 0; }
+}
 
 .container { max-width: 1320px; margin: 0 auto; padding: 22px 24px 60px; }
 .grid { display: grid; gap: 16px; }
@@ -173,3 +192,4 @@ td.rank-bad { background: color-mix(in srgb, var(--status-critical) 14%, transpa
 mark { background: color-mix(in srgb, #fab219 45%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
 .kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; }
 .kv > div:nth-child(odd) { color: var(--muted); font-size: 12px; }
+

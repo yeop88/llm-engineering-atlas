@@ -20,6 +20,7 @@ PAGES = {
     "/benchmark": ("benchmark.html", "benchmark"),
     "/history": ("history.html", "history"),
     "/collections": ("collections.html", "rag"),
+    "/llm": ("llm.html", "llm"),
 }
 
 
