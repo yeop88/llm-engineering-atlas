@@ -326,3 +326,60 @@ def test_anomaly_api_and_saved_detector(client):
     assert job["status"] == "done" and job["result"]["mode"] == "explore" and "auc" in job["result"]["metrics"]
     assert client.delete(f"/api/apps/models/{sid}").status_code == 200
     assert any(x["name"] == "security_events" for x in client.get("/api/apps/presets?app=anomaly").json())
+
+
+# ── 키워드·요약 ─────────────────────────────────────────────────────────────
+from app.apps import keywords as kw  # noqa: E402
+from app.rag.korean import noun_phrases_many  # noqa: E402
+
+
+def test_noun_phrase_candidates():
+    (c,) = noun_phrases_many(["사내 문서 검색 시스템은 임베딩 모델을 쓴다."])
+    assert {"사내 문서 검색", "문서 검색", "임베딩 모델", "검색"} <= set(c)
+    assert not any(p.endswith("쓴다") or p in ("은", "을") for p in c)  # 동사·조사 제외
+    (c,) = noun_phrases_many(["벡터 데이터베이스는 Qdrant 를 쓰며 형태소 기반 BM25 와 팀장 승인 후 환불한다. 80퍼센트 이상 출근"])
+    assert {"qdrant", "bm25", "기반 bm25", "팀장 승인", "환불", "퍼센트"} <= set(c)
+    assert not ({"qdrant 를", "bm", "기반 bm", "후 환불", "승인 후", "퍼센트 이상", "80퍼센트", "이상"} & set(c))
+
+
+def test_keywords_mmr_diversity():
+    doc = np.array([1.0, 0, 0])
+    cands = [("검색", 3), ("검색 엔진", 1), ("임베딩", 2), ("주차장", 1)]
+    v = np.array([[0.95, 0.3, 0], [0.94, 0.33, 0], [0.8, 0, 0.6], [0, 0, 1]], dtype=np.float32)
+    plain = [k["keyword"] for k in kw.keywords(doc, cands, v, top_n=2, diversity=0.0)]
+    diverse = [k["keyword"] for k in kw.keywords(doc, cands, v, top_n=2, diversity=0.5)]
+    assert plain == ["검색", "임베딩"] and diverse == ["검색", "임베딩"]  # "검색 엔진" 은 "검색" 을 포함하므로 제외
+    v2 = v.copy()
+    assert [
+        k["keyword"] for k in kw.keywords(doc, [("검색", 3), ("엔진", 1), ("임베딩", 2), ("주차장", 1)], v2, top_n=2, diversity=0.0)
+    ] == ["검색", "엔진"]
+    assert kw.candidates(["a", "b", "a"], min_freq=2) == [("a", 2)]
+
+
+def test_summarize_picks_central_sentences():
+    sents = ["주제 A 첫째", "주제 A 둘째", "주제 A 셋째", "주제 B", "잡담"]
+    v = np.array([[1, 0.1, 0], [0.95, 0.15, 0], [0.97, 0.05, 0.05], [0.3, 1, 0], [0, 0, 1]], dtype=np.float32)
+    r = kw.summarize(sents, v, n=1)
+    assert r["picked"][0].startswith("주제 A") and r["sentences"][4]["centrality"] < r["sentences"][0]["centrality"]
+    r2 = kw.summarize(sents, v, n=2, diversity=0.8)
+    assert r2["picked"][1] in ("주제 B", "잡담") and r2["selected"] == sorted(r2["selected"])  # 다양성 + 원래 순서
+    assert 0 < r2["compression"] < 1
+    with pytest.raises(common.AppError):
+        kw.summarize(["하나"], v[:1])
+
+
+def test_keywords_and_summary_api(client):
+    mid = _model(client)
+    items = client.get("/api/apps/presets/keyword_docs").json()["items"]
+    job = _wait(
+        client, client.post("/api/apps/keywords", json={"model_id": mid, "source": {"type": "texts", "items": items}, "top_n": 5}).json()
+    )
+    assert job["status"] == "done", job
+    r = job["result"]
+    assert len(r["items"]) == 6 and all(1 <= len(it["keywords"]) <= 5 for it in r["items"])
+    assert all(k["keyword"] in it["text"].lower() for it in r["items"] for k in it["keywords"])  # 원문에 있는 말만
+    text = client.get("/api/apps/presets/summary_article").json()["text"]
+    job = _wait(client, client.post("/api/apps/summary", json={"model_id": mid, "text": text, "n": 3}).json())
+    assert job["status"] == "done", job
+    s = job["result"]
+    assert len(s["picked"]) == 3 and s["n_items"] == 18 and all(p in text for p in s["picked"])

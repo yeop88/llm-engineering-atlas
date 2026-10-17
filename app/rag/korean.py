@@ -67,3 +67,47 @@ def nouns_many(texts: list[str]) -> list[list[str]]:
         return [[t.form.lower() for t in toks if t.tag.startswith(KEYWORD_TAGS) and len(t.form) > 1] for toks in kiwi().tokenize(texts)]
     except Exception:
         return [[t.lower() for t in _FALLBACK.findall(x) if not t.isdigit()] for x in texts]
+
+
+# 명사구의 처음·끝에 오면 뜻이 흐려지는 의존적인 명사
+EDGE_STOP = {"이상", "이하", "이내", "이후", "이전", "최근", "경우", "정도", "관련", "가지", "때문"}
+
+
+def noun_phrases_many(texts: list[str], max_words: int = 3) -> list[list[str]]:
+    """키워드 후보: 명사류 1개 또는 이어진 명사류 2~max_words 개 ("임베딩 모델", "사내 문서 검색", "bm25").
+    띄어 쓴 한 글자 명사(형태소 분석 오류·"후" 같은 의존 명사)는 구를 끊고, 숫자는 바로 앞에 붙어 있을 때만 잇는다."""
+    if not texts:
+        return []
+    try:
+        out = []
+        for text, toks in zip(texts, kiwi().tokenize(texts), strict=True):
+            runs: list[list] = [[]]
+            for t in toks:
+                prev = runs[-1][-1] if runs[-1] else None
+                gap = t.start - (prev.start + prev.len) if prev else 99
+                if t.tag == "SN":
+                    ok = prev is not None and gap == 0
+                else:
+                    ok = t.tag.startswith(KEYWORD_TAGS) and not (t.len == 1 and t.tag == "NNG" and gap != 0)
+                if ok and prev is not None and gap <= 1:
+                    runs[-1].append(t)
+                elif ok:
+                    runs.append([t])
+                else:
+                    runs.append([])
+            cands = []
+            for run in runs:
+                for i in range(len(run)):
+                    for j in range(i + 1, min(len(run), i + max_words) + 1):
+                        span = run[i:j]
+                        if span[0].form in EDGE_STOP or span[-1].form in EDGE_STOP or span[0].tag == "SN":
+                            continue
+                        if j < len(run) and run[j].tag == "SN":  # "BM25" 를 "bm" 에서 자르지 않는다
+                            continue
+                        phrase = text[span[0].start : span[-1].start + span[-1].len].lower()
+                        if len(phrase.replace(" ", "")) > 1:
+                            cands.append(phrase)
+            out.append(cands)
+        return out
+    except Exception:
+        return nouns_many(texts)

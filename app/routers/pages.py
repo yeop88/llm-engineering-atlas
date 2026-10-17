@@ -50,6 +50,7 @@ APP_PAGES = {
     "cluster": "클러스터링",
     "dedup": "중복·표절 검사",
     "anomaly": "이상·신종 탐지",
+    "keywords": "키워드·요약",
 }
 
 

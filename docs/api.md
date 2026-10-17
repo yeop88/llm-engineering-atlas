@@ -61,6 +61,7 @@ POST /api/collections/1/search
 | POST | `/api/apps/cluster` | 클러스터링 (작업) |
 | POST | `/api/apps/dedup` · `/api/apps/plagiarism` | 중복 제거 / 문장 단위 표절 검사 (작업) |
 | POST | `/api/apps/anomaly` | 이상·신종 탐지, `test` 가 없으면 학습 데이터 안 이상치 찾기 (작업) |
+| POST | `/api/apps/keywords` · `/api/apps/summary` | 문서별 키워드 추출 / 추출 요약 (작업) |
 | POST | `/api/apps/detectors/{id}/score` | 저장된 탐지기로 판정 `{"texts": [...]}` |
 | POST | `/api/apps/classifiers/{id}/predict` | 저장된 분류기로 예측 `{"texts": [...]}` |
 | GET / DELETE | `/api/apps/models?kind=` · `/api/apps/models/{id}` | 저장된 분류기·탐지기 목록 / 삭제 |

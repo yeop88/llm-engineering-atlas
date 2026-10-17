@@ -286,3 +286,18 @@ class AnomalyRequest(AppModelRef):
     normal_label: str = Field(default="정상", min_length=1, max_length=60)
     save: bool = False
     name: str = Field(default="", max_length=200)
+
+
+class KeywordsRequest(AppModelRef):
+    source: AppSource  # 문서마다 키워드
+    top_n: int = Field(default=8, ge=1, le=50)
+    diversity: float = Field(default=0.3, ge=0, le=1)  # MMR: 0 = 문서와 가까운 순, 높을수록 서로 다른 키워드
+    max_words: int = Field(default=3, ge=1, le=4)  # 명사구 최대 단어 수
+    min_freq: int = Field(default=1, ge=1, le=20)
+
+
+class SummaryRequest(AppModelRef):
+    text: str = Field(min_length=1, max_length=200_000)
+    n: int = Field(default=3, ge=1, le=30)  # 고를 문장 수
+    diversity: float = Field(default=0.3, ge=0, le=1)
+    lead_bonus: float = Field(default=0.0, ge=0, le=1)  # 앞 문장 가산 (기사·보도자료)

@@ -2,6 +2,7 @@
 
 import json
 import time
+from collections import Counter
 from collections.abc import Callable
 from typing import Annotated, Any
 
@@ -10,18 +11,20 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import crud
-from app.apps import anomaly, classify, cluster, common, dedup, recommend
+from app.apps import anomaly, classify, cluster, common, dedup, keywords, recommend
 from app.config import BASE_DIR, get_settings
 from app.db import AppModel, EmbeddingModel, SessionLocal, get_db
-from app.rag.korean import split_sentences
+from app.rag.korean import noun_phrases_many, split_sentences
 from app.schemas import (
     AnomalyRequest,
     AppItemsRequest,
     ClusterRequest,
     DedupRequest,
+    KeywordsRequest,
     PlagiarismRequest,
     PredictRequest,
     RecommendRequest,
+    SummaryRequest,
     TrainClassifierRequest,
     ZeroShotRequest,
 )
@@ -392,3 +395,68 @@ def score(app_model_id: int, body: PredictRequest, db: DB) -> dict:
     preds = det.predict(x)
     return {"detector": {"id": m.id, "name": m.name, "method": m.method, "groups": det.groups}, "seconds": round(time.perf_counter() - started, 3),
             "results": [{"text": t} | p for t, p in zip(body.texts, preds, strict=True)]}  # fmt: skip
+
+
+# ── 키워드·요약 ─────────────────────────────────────────────────────────────
+def _passages(text: str, size: int = 600) -> list[str]:
+    """긴 문서를 문장 경계에서 size 자 안팎으로 묶는다 (문서 벡터 = 조각 벡터 평균, 모델 입력 길이 한계 대비)."""
+    out, cur = [], ""
+    for sent in split_sentences(text) or [text]:
+        if cur and len(cur) + len(sent) > size:
+            out.append(cur)
+            cur = ""
+        cur = f"{cur} {sent}".strip()
+    if cur:
+        out.append(cur)
+    return out
+
+
+@router.post("/keywords")
+def run_keywords(body: KeywordsRequest, db: DB) -> dict:
+    spec = crud.get_spec(db, body.model_id, "embedding")
+    src = body.source.model_dump()
+
+    def fn(job: Job, s: Session) -> dict[str, Any]:
+        its = common.resolve_source(s, src)
+        job.update(0.02, "키워드 후보 추출 중 (형태소)")
+        cands = [keywords.candidates(ph, body.min_freq) for ph in noun_phrases_many([it.text for it in its], body.max_words)]
+        vocab = sorted({w for c in cands for w, _ in c})
+        passages = [_passages(it.text) for it in its]
+        flat = [p for ps in passages for p in ps]
+        pv = common.embed(spec, flat, "document", body.truncate_dim, job, (0.05, 0.5))
+        wv = common.embed(spec, vocab, "query", body.truncate_dim, job, (0.5, 0.95)) if vocab else None
+        widx = {w: i for i, w in enumerate(vocab)}
+        out_items, pos, tags = [], 0, Counter()
+        for it, ps, c in zip(its, passages, cands, strict=True):
+            doc = pv[pos : pos + len(ps)].mean(axis=0)
+            pos += len(ps)
+            kws = keywords.keywords(doc, c, wv[[widx[w] for w, _ in c]], body.top_n, body.diversity) if c else []
+            tags.update(k["keyword"] for k in kws)
+            out_items.append(common.item_out(it, keywords=kws, n_candidates=len(c)))
+        return {
+            "items": out_items,
+            "n_items": len(its),
+            "top_tags": [{"keyword": k, "docs": n} for k, n in tags.most_common(30)],
+            "summary": {"vocab": len(vocab)},
+        }
+
+    return submit("keywords", f"키워드 추출 ({spec.hf_id.split('/')[-1]})", [spec.hf_id], body.model_dump(exclude={"source"}), fn)
+
+
+@router.post("/summary")
+def run_summary(body: SummaryRequest, db: DB) -> dict:
+    spec = crud.get_spec(db, body.model_id, "embedding")
+
+    def fn(job: Job, s: Session) -> dict[str, Any]:
+        sents = [x for x in split_sentences(body.text) if len(x) >= 5]
+        v = common.embed(spec, sents, "plain", body.truncate_dim, job, (0.0, 0.9), task="similarity")
+        res = keywords.summarize(sents, v, body.n, body.diversity, body.lead_bonus)
+        return res | {"n_items": len(sents), "summary": {"coverage": res["coverage"], "compression": res["compression"]}}
+
+    return submit(
+        "summary",
+        f"추출 요약 {body.n}문장 ({spec.hf_id.split('/')[-1]})",
+        [spec.hf_id],
+        body.model_dump(exclude={"text"}) | {"chars": len(body.text)},
+        fn,
+    )
