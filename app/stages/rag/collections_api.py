@@ -14,6 +14,7 @@ from app.core.db import Chunk, ChunkSet, Collection, Document, EmbeddingModel, V
 from app.core.jobs import jobs
 from app.core.schemas import ChunkSetCreate, ChunkStrategy, CollectionCreate, CollectionUpdate, IndexCreate, SearchRequest
 from app.core.vectorstores import STORE_KINDS, StoreUnavailable, get_store, stores_status
+from app.pipeline.search import run_search  # 검색 향상(enhance) 등 다음 단계를 끼워 넣는 연결점
 from app.stages.embedding.model_manager import get_manager
 from app.stages.rag import chunking, parsers, service
 
@@ -292,7 +293,7 @@ def search(collection_id: int, body: SearchRequest, db: DB) -> dict:
                 used_models.append(idx.model_hf_id)
             if cfg.reranker_id and (rr := db.get(EmbeddingModel, cfg.reranker_id)):
                 used_models.append(rr.hf_id)
-            res = service.search(db, body.query, cfg.model_dump())
+            res = run_search(db, body.query, cfg.model_dump())
             outputs.append({"config": cfg.model_dump()} | res)
         except (service.RagError, StoreUnavailable, ValueError) as exc:
             outputs.append({"config": cfg.model_dump(), "error": str(exc)})

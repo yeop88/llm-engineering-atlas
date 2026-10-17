@@ -14,6 +14,7 @@ from app.core.db import ChunkSet, Collection, EmbeddingModel, EvalSet, SessionLo
 from app.core.jobs import Job, jobs
 from app.core.schemas import AnswerEvalRequest, AnswerRequest
 from app.core.vectorstores import StoreUnavailable
+from app.pipeline.search import run_search  # 검색 향상(enhance) 등 다음 단계를 끼워 넣는 연결점
 from app.stages.rag import answer, service
 
 router = APIRouter(prefix="/api", tags=["rag-answer"])
@@ -49,7 +50,7 @@ def generate_answer(collection_id: int, body: AnswerRequest) -> StreamingRespons
                 if search_cfg.get("reranker_id") and (rr := db.get(EmbeddingModel, search_cfg["reranker_id"])):
                     models.append(rr.hf_id)
                 t0 = time.perf_counter()
-                res = service.search(db, body.question, search_cfg)
+                res = run_search(db, body.question, search_cfg)
                 timings["search_ms"] = round((time.perf_counter() - t0) * 1000, 1)
             except (service.RagError, StoreUnavailable, ValueError) as exc:
                 yield _event("error", message=f"검색 실패: {exc}")
@@ -57,7 +58,11 @@ def generate_answer(collection_id: int, body: AnswerRequest) -> StreamingRespons
             context, sources = answer.build_context(res["results"], body.max_context_chars)
             keep = ("rank", "chunk_id", "document_id", "filename", "title", "page", "heading", "text", "score")
             yield _event(
-                "search", sources=[{k: s.get(k) for k in keep} for s in sources], timings_ms=res.get("timings_ms"), llm=cfg.public()
+                "search",
+                sources=[{k: s.get(k) for k in keep} for s in sources],
+                timings_ms=res.get("timings_ms"),
+                llm=cfg.public(),
+                enhance=res.get("enhance"),  # 검색 향상을 켰다면 LLM 이 만든 변형을 답변 화면에서도 확인할 수 있게
             )
             if not sources:
                 yield _event("error", message="검색 결과가 없습니다.")
@@ -133,7 +138,7 @@ def answer_eval(set_id: int, body: AnswerEvalRequest) -> dict:
         with SessionLocal() as db:
             for i, it in enumerate(items):
                 job.update(i / len(items), f"질문 {i + 1}/{len(items)}: {it['query'][:40]}")
-                res = service.search(db, it["query"], search_cfg)
+                res = run_search(db, it["query"], search_cfg)
                 row = answer.evaluate_one(cfg, it["query"], res["results"], it.get("evidence", ""), body.max_context_chars, body.max_tokens)
                 rows.append(row | {"id": it.get("id"), "type": it.get("type"), "evidence": it.get("evidence", "")})
             summary = answer.summarize_eval(rows)

@@ -89,6 +89,8 @@ def compare(job: Job, db, run: FinetuneRun, base_id: int, new_id: int) -> dict[s
         {"label": "원래 모델 · 하이브리드", "index_id": base_idx, "mode": "hybrid", "top_k": 10},
         {"label": "학습한 모델 · 하이브리드", "index_id": new_idx, "mode": "hybrid", "top_k": 10},
     ]
+    # 학습 전후 '모델'만 비교해야 하므로 연결 계층(run_search)을 거치지 않고 검색 엔진을 직접 부른다.
+    # 검색 향상이 끼면 LLM 변형의 영향이 모델 차이에 섞인다.
     res = evaluation.run_eval(lambda q, c: service.search(db, q, c), list(es.items), configs, SubJob(job, 0.88, 0.97, "비교 평가 · "))
     by = {e["label"]: e for e in res["results"] if e["status"] == "ok"}
 

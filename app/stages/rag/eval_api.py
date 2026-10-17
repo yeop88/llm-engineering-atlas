@@ -13,7 +13,8 @@ from app.core import crud, llm
 from app.core.db import ChunkSet, Collection, Document, EmbeddingModel, EvalSet, SessionLocal, TestRun, VectorIndex, get_db
 from app.core.jobs import Job, jobs
 from app.core.schemas import EvalItemIn, EvalRunRequest, EvalSetCreate, EvalSetGenerate, EvalSetUpdate
-from app.stages.rag import evaluation, service
+from app.pipeline.search import ENHANCE_LABEL, run_search  # 검색 향상(enhance) 등 다음 단계를 끼워 넣는 연결점
+from app.stages.rag import evaluation
 
 router = APIRouter(prefix="/api", tags=["rag-eval"])
 DB = Annotated[Session, Depends(get_db)]
@@ -187,6 +188,10 @@ def _describe(db: Session, collection_id: int, cfg: dict[str, Any]) -> tuple[str
             raise HTTPException(400, "리랭커 모델을 찾을 수 없습니다.")
         models.append(rr.hf_id)
         parts.append("+ " + rr.hf_id.split("/")[-1])
+    tech = (cfg.get("enhance") or {}).get("technique") or "none"
+    if tech != "none":  # 같은 검색 설정을 기법만 바꿔 비교하므로 라벨에서 기법이 구별돼야 한다
+        keep = "" if (cfg["enhance"].get("keep_original", True)) else " (변형만)"
+        parts.append("+ " + ENHANCE_LABEL[tech] + keep)
     return " · ".join(parts), models
 
 
@@ -210,7 +215,7 @@ def evaluate(set_id: int, body: EvalRunRequest, db: DB) -> dict:
     def work(job: Job) -> dict[str, Any]:
         started = time.perf_counter()
         with SessionLocal() as sdb:
-            res = evaluation.run_eval(lambda q, cfg: service.search(sdb, q, cfg), items, configs, job)
+            res = evaluation.run_eval(lambda q, cfg: run_search(sdb, q, cfg), items, configs, job)
             res["eval_set"] = {"id": s.id, "name": s.name, "method": s.method, "n_items": len(s.items)}
             seconds = time.perf_counter() - started
             res["seconds"] = round(seconds, 1)

@@ -175,6 +175,16 @@ class IndexCreate(BaseModel):
     truncate_dim: int | None = Field(default=None, ge=8)
 
 
+class EnhanceConfig(BaseModel):
+    """4 검색 향상. 검색 설정 안에 두어 검색 비교 · 조합 평가 · 답변 생성 어디서든 같은 형식으로 켤 수 있게 했다."""
+
+    technique: Literal["none", "rewrite", "hyde", "multi"] = "none"
+    keep_original: bool = True  # 원 질의 검색도 함께 합칠지 (끄면 변형만으로 검색)
+    n: int = Field(default=3, ge=1, le=5)  # 다중 질의 수 — 늘릴수록 검색 횟수(지연)가 비례해 는다
+    provider: Literal["openai", "anthropic"] | None = None  # 비우면 .env 설정
+    model: str | None = Field(default=None, max_length=200)
+
+
 class SearchConfig(BaseModel):
     label: str = ""
     index_id: int | None = None  # 의미 검색(dense/hybrid)에 필요
@@ -187,6 +197,7 @@ class SearchConfig(BaseModel):
     reranker_id: int | None = None
     rerank_top: int = Field(default=30, ge=1, le=200)
     doc_ids: list[int] | None = None
+    enhance: EnhanceConfig | None = None
 
 
 class SearchRequest(BaseModel):

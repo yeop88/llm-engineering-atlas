@@ -227,9 +227,23 @@ def _bm25_index(db: Session, chunk_set_id: int):
     return bm25_cache.get(chunk_set_id, version, loader)
 
 
+def rerank_scores(db: Session, query: str, texts: list[str], reranker_id: int, timings: dict[str, float]) -> list[float]:
+    """리랭커(크로스 인코더)로 질의-문서 점수. 검색 향상처럼 여러 검색을 합친 뒤 한 번만 재정렬할 때도 쓴다."""
+    rr_row = db.get(EmbeddingModel, reranker_id)
+    if rr_row is None or rr_row.kind != "reranker":
+        raise RagError("리랭커 모델을 찾을 수 없습니다.")
+    manager = get_manager()
+    t = time.perf_counter()
+    rr = manager.get(ModelSpec.from_row(rr_row))
+    timings["rerank_load"] = time.perf_counter() - t
+    scores, secs = manager.rerank(rr, query, texts)
+    timings["rerank"] = secs
+    return [float(x) for x in scores]
+
+
 def search(db: Session, query: str, cfg: dict[str, Any]) -> dict[str, Any]:
     """cfg: index_id | chunk_set_id, mode(dense|bm25|hybrid), fusion(rrf|weighted), alpha, top_k, candidates,
-    reranker_id, rerank_top, doc_ids."""
+    reranker_id, rerank_top, doc_ids, encode_role(query|document, 기본 query)."""
     manager = get_manager()
     timings: dict[str, float] = {}
     mode = cfg.get("mode", "hybrid")
@@ -254,7 +268,11 @@ def search(db: Session, query: str, cfg: dict[str, Any]) -> dict[str, Any]:
         t = time.perf_counter()
         lm = manager.get(ModelSpec.from_row(row))
         timings["load"] = time.perf_counter() - t
-        r = manager.encode(lm, [query], "query", truncate_dim=idx.truncate_dim)
+        # HyDE 는 LLM 이 쓴 '가상 문서'로 검색한다. E5 · EmbeddingGemma 처럼 질의/문서 프롬프트가 다른
+        # 비대칭 모델에서 가상 문서를 질의 프롬프트로 인코딩하면 HyDE 의 전제(문서-문서 유사도)가 깨지므로
+        # 호출하는 쪽이 인코딩 역할을 고를 수 있게 한다. 기본은 지금까지와 같은 "query".
+        role = cfg.get("encode_role") or "query"
+        r = manager.encode(lm, [query], role, truncate_dim=idx.truncate_dim)
         timings["embed"] = r.seconds
         t = time.perf_counter()
         rankings["dense"] = get_store(idx.store).search(idx.store_collection, r.embeddings[0], cand, doc_ids)
@@ -281,16 +299,9 @@ def search(db: Session, query: str, cfg: dict[str, Any]) -> dict[str, Any]:
 
     reranked = False
     if cfg.get("reranker_id") and fused:
-        rr_row = db.get(EmbeddingModel, cfg["reranker_id"])
-        if rr_row is None or rr_row.kind != "reranker":
-            raise RagError("리랭커 모델을 찾을 수 없습니다.")
         head = fused[: int(cfg.get("rerank_top", 30))]
         texts = dict(db.execute(select(Chunk.id, Chunk.text).where(Chunk.id.in_([e["id"] for e in head]))).all())
-        t = time.perf_counter()
-        rr = manager.get(ModelSpec.from_row(rr_row))
-        timings["rerank_load"] = time.perf_counter() - t
-        scores, secs = manager.rerank(rr, query, [texts.get(e["id"], "") for e in head])
-        timings["rerank"] = secs
+        scores = rerank_scores(db, query, [texts.get(e["id"], "") for e in head], cfg["reranker_id"], timings)
         for e, s in zip(head, scores, strict=True):
             e["scores"]["rerank"] = float(s)
             e["pre_rank"] = fused.index(e) + 1
