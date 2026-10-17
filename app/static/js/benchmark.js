@@ -25,6 +25,16 @@ function renderResult(res, runId) {
   const fastest = Math.max(...ok.map(r => r.texts_per_second || 0));
   const groups = [...new Set(ok.flatMap(r => Object.keys(r.by_group || {})))];
   const primary = res.primary_metric;
+  const fmt = v => (type === "retrieval" ? pct(v) : v.toFixed(4));
+  const hasCi = ok.some(r => r.ci);
+  // 대표 지표 칸 아래에 95% 구간, 1위가 아닌 모델은 1위와의 짝지은 비교
+  const ciCell = (r, c) => (c === primary && r.ci?.[c] ? `<div class="small muted nowrap">${fmt(r.ci[c][0])}–${fmt(r.ci[c][1])}</div>` : "");
+  const vsCell = r => {
+    const v = r.vs_best;
+    if (!v) return `<td class="small muted">${hasCi && ok.length > 1 ? "기준" : ""}</td>`;
+    const d = type === "retrieval" ? `${(v.diff * 100).toFixed(1)}%p` : v.diff.toFixed(4);
+    return `<td class="small nowrap" title="1위(${esc(v.against)}) 대비 ${primary} 차이의 95% 구간 ${v.ci.join(" ~ ")} · p=${v.p}">${d} ${v.significant ? '<span class="badge err">유의한 차이</span>' : '<span class="badge">차이 불확실</span>'}</td>`;
+  };
 
   current = { res, runId };
   let html = `<div class="card"><div class="row between"><h2>결과 · ${esc(res.dataset.title || res.dataset.name)}</h2>
@@ -32,15 +42,15 @@ function renderResult(res, runId) {
       <button class="btn sm" onclick="exportReport(this)" title="표와 차트를 한 파일로 저장 (브라우저로 열기)">HTML 리포트</button>
       <button class="btn sm" onclick="exportJson()" title="원본 결과 데이터">JSON</button>
       ${runId ? `<button class="btn sm danger" onclick="deleteRun(${runId}, true)">이 결과 삭제</button>` : ""}</div></div>
-    <div class="table-wrap"><table><tr><th>#</th><th>모델</th>${cols.map(c => `<th class="num">${c}</th>`).join("")}<th class="num">차원</th><th class="num">texts/s</th><th class="num">인코딩</th><th class="num">로드</th></tr>
+    <div class="table-wrap"><table><tr><th>#</th><th>모델</th>${cols.map(c => `<th class="num">${c}</th>`).join("")}${hasCi && ok.length > 1 ? "<th>1위 대비</th>" : ""}<th class="num">차원</th><th class="num">texts/s</th><th class="num">인코딩</th><th class="num">로드</th></tr>
     ${res.results.map((r, i) => r.status !== "ok"
-      ? `<tr><td>-</td><td class="mono">${esc(r.hf_id)}</td><td colspan="${cols.length + 4}"><div class="errbox">${esc(r.error)}</div></td></tr>`
+      ? `<tr><td>-</td><td class="mono">${esc(r.hf_id)}</td><td colspan="${cols.length + 4 + (hasCi && ok.length > 1 ? 1 : 0)}"><div class="errbox">${esc(r.error)}</div></td></tr>`
       : `<tr><td>${i + 1}</td><td class="mono">${esc(r.hf_id)}${r.warnings?.length ? ` <span class="badge warn" title="${esc(r.warnings.join("\n"))}">경고</span>` : ""}</td>
-        ${cols.map(c => `<td class="num ${r.metrics[c] === best[c] && ok.length > 1 ? "best" : ""}">${type === "retrieval" ? pct(r.metrics[c]) : r.metrics[c].toFixed(4)}</td>`).join("")}
-        <td class="num">${r.dim}</td><td class="num ${r.texts_per_second === fastest && ok.length > 1 ? "best" : ""}">${r.texts_per_second ?? "-"}</td>
+        ${cols.map(c => `<td class="num ${r.metrics[c] === best[c] && ok.length > 1 ? "best" : ""}">${fmt(r.metrics[c])}${ciCell(r, c)}</td>`).join("")}
+        ${hasCi && ok.length > 1 ? vsCell(r) : ""}<td class="num">${r.dim}</td><td class="num ${r.texts_per_second === fastest && ok.length > 1 ? "best" : ""}">${r.texts_per_second ?? "-"}</td>
         <td class="num">${r.encode_seconds}s</td><td class="num">${r.load_seconds ? r.load_seconds + "s" : "-"}</td></tr>`).join("")}
     </table></div>
-    ${type === "retrieval" ? '<p class="small muted">검색 지표는 % 단위. 굵은 초록색 = 최고값.</p>' : ""}</div>
+    <p class="small muted">${type === "retrieval" ? "검색 지표는 % 단위. " : ""}굵은 초록색 = 최고값.${hasCi ? ` ${primary} 아래 숫자는 95% 신뢰구간(${type === "retrieval" ? "질문" : "문장쌍"}을 ${res.bootstrap?.n || 1000}번 다시 뽑아 계산)입니다. '차이 불확실'은 같은 ${type === "retrieval" ? "질문" : "문장쌍"}에 대한 짝지은 비교에서 1위와의 차이가 우연일 수 있다는 뜻으로, 평가 데이터를 늘려야 순위를 믿을 수 있습니다.` : ""}</p></div>
     <div id="b-charts"></div>`;
 
   if (groups.length) {

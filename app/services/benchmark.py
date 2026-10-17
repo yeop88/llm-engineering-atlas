@@ -11,6 +11,7 @@ from typing import Any
 import numpy as np
 
 from app.config import get_settings
+from app.services import stats
 from app.services.jobs import Job
 from app.services.model_manager import ModelManager, ModelSpec
 
@@ -281,11 +282,52 @@ def run_benchmark(
             entry |= {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
         results.append(entry)
     primary = "ndcg@10" if data["type"] == "retrieval" else "spearman"
+    results = sorted(results, key=lambda r: r.get("metrics", {}).get(primary, -1), reverse=True)
+    job.update(0.98, "신뢰구간 계산 중")
+    add_uncertainty(results, data["type"], primary)
     return {
         "dataset": {k: data.get(k) for k in ("name", "type", "title")},
         "primary_metric": primary,
         "truncate_dim": truncate_dim,
         "sweep_dims": sorted(set(sweep_dims or []), reverse=True),
         "total_seconds": round(time.perf_counter() - started, 2),
-        "results": sorted(results, key=lambda r: r.get("metrics", {}).get(primary, -1), reverse=True),
+        "results": results,
+        "bootstrap": {"n": stats.N_BOOT, "level": stats.LEVEL},
     }
+
+
+# ── 불확실성 (부트스트랩) ───────────────────────────────────────────────────
+def add_uncertainty(results: list[dict[str, Any]], kind: str, primary: str) -> None:
+    """각 결과에 지표별 95% 구간(ci)을, 1위가 아닌 결과에는 1위와의 짝지은 비교(vs_best)를 붙인다. results 는 정렬된 상태."""
+    ok = [r for r in results if r.get("status") == "ok"]
+    if not ok:
+        return
+    if kind == "retrieval":
+        for r in ok:
+            pq = r.get("per_query") or []
+            r["ci"] = {m: stats.mean_ci([q[m] for q in pq]) for m in r["metrics"]}
+        best = [q[primary] for q in ok[0].get("per_query") or []]
+        for r in ok[1:]:
+            mine = [q[primary] for q in r.get("per_query") or []]
+            if len(mine) == len(best):
+                r["vs_best"] = {"metric": primary, "against": ok[0]["hf_id"], **stats.paired_mean(mine, best)}
+        return
+    gold_of = {}
+    for r in ok:
+        pp = r.get("per_pair") or []
+        gold = np.array([p["gold"] for p in pp], dtype=np.float64)
+        cos = np.array([p["cosine"] for p in pp], dtype=np.float64)
+        gold_of[r["hf_id"]] = (gold, cos)
+        r["ci"] = {
+            "spearman": stats.stat_ci(len(pp), lambda ix, g=gold, c=cos: spearman(c[ix], g[ix])),
+            "pearson": stats.stat_ci(len(pp), lambda ix, g=gold, c=cos: pearson(c[ix], g[ix])),
+        }
+    g0, c0 = gold_of[ok[0]["hf_id"]]
+    for r in ok[1:]:
+        g, c = gold_of[r["hf_id"]]
+        if len(g) == len(g0):
+            r["vs_best"] = {
+                "metric": primary,
+                "against": ok[0]["hf_id"],
+                **stats.paired_stat(len(g), lambda ix, g=g, c=c: spearman(c[ix], g[ix]), lambda ix: spearman(c0[ix], g0[ix])),
+            }
