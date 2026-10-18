@@ -1,13 +1,15 @@
 // 6 라우팅 테스트: 경로 설정 · 질문 하나 판단 · 평가 세트로 라우터 비교(표 + 비용-품질 그림)
 let rCol = null;
-const R_LABEL = { always_easy: "항상 빠른 경로", always_hard: "항상 전체 경로", rule: "규칙", confidence: "검색 확신도", llm: "LLM 판단", oracle: "오라클 (상한)" };
+const R_LABEL = { always_easy: "항상 빠른 경로", always_hard: "항상 전체 경로", rule: "규칙", confidence: "검색 확신도", llm: "LLM 판단", learned: "학습 라우터", oracle: "오라클 (상한)" };
 // 색은 실제 라우터 셋에만 쓴다(모든 쌍 색각이상 검증 통과 조합). 점끼리 어디서나 이웃할 수 있어 5색 이상은 구분이 안 됐다.
 // 기준선 두 개 · 오라클은 '참고점'이라 회색 모양으로 구분한다: ■ 항상 빠른, ◆ 항상 전체, ○ 오라클. 모든 점에 이름표를 붙인다.
 const R_COLOR = { rule: 1, confidence: 2, llm: 3 };
-const R_SHAPE = { always_easy: "square", always_hard: "diamond", oracle: "ring" };
+// 학습 라우터는 4번째 색이 검증을 통과하지 못해(파랑 · 보라, 주황 · 노랑이 겹침) 색 대신 진한 삼각형으로 구분한다
+const R_SHAPE = { always_easy: "square", always_hard: "diamond", oracle: "ring", learned: "triangle" };
 function rMark(k, x, y) {
   if (R_COLOR[k]) return `<circle cx="${x}" cy="${y}" r="6" fill="var(--series-${R_COLOR[k]})" stroke="var(--panel)" stroke-width="2"/>`;
   if (R_SHAPE[k] === "square") return `<rect x="${x - 5.5}" y="${y - 5.5}" width="11" height="11" rx="2" fill="var(--muted)"/>`;
+  if (R_SHAPE[k] === "triangle") return `<path d="M${x},${y - 7} L${x + 7},${y + 6} L${x - 7},${y + 6} Z" fill="var(--text)" stroke="var(--panel)" stroke-width="1.5"/>`;
   if (R_SHAPE[k] === "diamond") return `<path d="M${x},${y - 7} L${x + 7},${y} L${x},${y + 7} L${x - 7},${y} Z" fill="var(--muted)"/>`;
   return `<circle cx="${x}" cy="${y}" r="6" fill="none" stroke="var(--text)" stroke-width="2"/>`;
 }
@@ -120,11 +122,11 @@ function rChart(r) {
     <div class="legend">${Object.keys(R_LABEL).filter(k => pts.some(p => p.k === k)).map(k => `<span>${rKey(k)}${R_LABEL[k]}</span>`).join("")}<span><span class="swatch" style="background:none;border-top:2px dashed var(--series-${R_COLOR.confidence});height:0;border-radius:0"></span>확신도 기준을 바꿀 때</span></div>`;
 }
 
-function rRender(r) {
+function rRender(r, box = $("#e-out")) {
   const hard = r.results.find(x => x.router === "always_hard");
   const vs = d => (d ? `${d.diff >= 0 ? "+" : ""}${(d.diff * 100).toFixed(1)}%p ${d.significant ? '<span class="badge err">유의</span>' : '<span class="badge">불확실</span>'}` : "—");
   const save = x => (hard && x.router !== "always_hard" ? `${((1 - x.latency_ms.mean / hard.latency_ms.mean) * 100).toFixed(0)}%` : "—");
-  $("#e-out").innerHTML = `<div class="row between"><h3>결과 · ${esc(r.eval_set?.name || "")}</h3><span class="small muted">질문 ${r.n_queries}개 · 품질 = ${esc(r.quality_metric)}${r.seconds != null ? ` · ${r.seconds}s` : ""}${r.run_id ? ` · run #${r.run_id}` : ""}</span></div>
+  box.innerHTML = `<div class="row between"><h3>결과 · ${esc(r.eval_set?.name || "")}</h3><span class="small muted">질문 ${r.n_queries}개 · 품질 = ${esc(r.quality_metric)}${r.seconds != null ? ` · ${r.seconds}s` : ""}${r.run_id ? ` · run #${r.run_id}` : ""}</span></div>
     <div class="table-wrap"><table>
       <tr><th>라우터</th><th class="num">어려움 비율</th><th class="num">품질 (95% 구간)</th><th>전체 경로 대비 품질</th><th class="num">nDCG@10</th><th class="num">지연 평균 / p95</th><th class="num" title="항상 전체 경로 대비 평균 지연 감소">지연 절감</th></tr>
       ${r.results.map(x => `<tr><td><b>${esc(R_LABEL[x.router] || x.label)}</b></td><td class="num">${pct(x.hard_rate)}%</td>
@@ -141,4 +143,25 @@ function rRender(r) {
     <div class="small muted">빠른 · 전체 = 그 경로의 질문별 품질(%), 칸에 마우스를 올리면 규칙 · LLM 판단 이유가 보입니다.</div>`;
 }
 
+// ── 학습 라우터: 지난 라우팅 평가 기록으로 학습 → 교차검증으로 같은 기록의 다른 라우터와 비교 ──
+async function lLoad() {
+  const [runs, models, saved] = await Promise.all([api("/api/runs?kind=routing_eval&limit=30"), getModels(), api("/api/routing/learned")]);
+  const items = runs.items || runs;
+  $("#l-run").innerHTML = items.map(r => `<option value="${r.id}">#${r.id} · ${esc(r.title)}</option>`).join("") || '<option value="">라우팅 평가 기록 없음 (먼저 위에서 비교 실행)</option>';
+  $("#l-model").innerHTML = models.filter(m => m.kind === "embedding" && m.cached).map(m => `<option value="${m.id}">${esc(m.hf_id)}</option>`).join("");
+  $("#l-saved").innerHTML = saved.length ? `<div class="small muted">저장된 학습 라우터 — 연결 실행(맵)의 라우팅에서 고를 수 있습니다</div>` + saved.map(m => `<div class="small"><b>#${m.id}</b> ${esc(m.name)} · 기준 ${m.threshold} · 교차검증 품질 ${pct(m.metrics.quality)} · 어려움 ${pct(m.metrics.hard_rate)}% · 질문 ${m.n_train}</div>`).join("") : "";
+}
+$("#l-run-btn").onclick = e => {
+  if (!$("#l-run").value) return toast("라우팅 평가 기록이 필요합니다", "err");
+  runJobInto(e.target, "/api/routing/learned", { run_id: +$("#l-run").value, model_id: +$("#l-model").value, margin: +$("#l-margin").value || 0,
+    threshold: +$("#l-th").value || 0.5, save: $("#l-save").checked }, $("#l-progress"), r => {
+    rRender({ ...r, n_queries: r.cv.n, quality_metric: "기록의 품질 지표", eval_set: { name: `학습 라우터 · 기록 #${r.run_id_source}` }, sweep: [] }, $("#l-res"));
+    $("#l-out").innerHTML = `<div class="small muted">라벨: 어려움 ${r.cv.n_hard} / ${r.cv.n} · ${r.cv.folds}겹 교차검증 — ${esc(r.note)}${r.saved ? ` · 저장 #${r.saved.id}` : ""}</div>
+      <div class="table-wrap"><table><tr><th class="num">어려움 확률 기준</th><th class="num">어려움 비율</th><th class="num">품질</th><th class="num">지연 평균</th></tr>
+      ${r.sweep.map(s => `<tr><td class="num">${s.threshold}</td><td class="num">${pct(s.result.hard_rate)}%</td><td class="num">${pct(s.result.quality)}</td><td class="num">${sec(s.result.latency_ms.mean)}</td></tr>`).join("")}</table></div>`;
+    lLoad();
+  });
+};
+
 rLoad();
+lLoad();

@@ -200,4 +200,7 @@ async function runJobInto(btn, path, body, box, render) {
     box.hidden = true; render(done.result);
   } finally { btn.disabled = false; }
 }
+// 답변의 조문 · 판례 번호 검사 결과 (rag/legal.py) — 번호가 없으면 아무것도 그리지 않는다
+const CITE_ST = { in_sources: ["근거에 있음", "ok"], in_collection: ["근거 밖 · 자료에 있음", "warn"], not_found: ["자료에 없음 (지어낸 번호?)", "err"], unchecked: ["확인 안 함", ""] };
+const citeBox = c => (c && c.n ? `<div class="small">조문 · 판례 번호: ${c.refs.map(r => `<span class="badge ${CITE_ST[r.status][1]}" title="${esc(CITE_ST[r.status][0])}">${esc(r.ref)}${r.source ? ` [${r.source}]` : ""} · ${esc(CITE_ST[r.status][0])}</span>`).join(" ")}</div>` : "");
 const vsBadge = d => (d ? `${d.diff >= 0 ? "+" : ""}${(d.diff * 100).toFixed(1)}%p ${d.significant ? '<span class="badge err">유의</span>' : '<span class="badge">불확실</span>'}` : "기준");

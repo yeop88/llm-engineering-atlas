@@ -86,6 +86,19 @@ OPENAI_MODEL_URLS={"gemma-4-e4b-q8": "http://127.0.0.1:8082/v1", "gemma-4-e4b-q2
 
 메모리가 모자라면(모델 파일 크기 + KV 캐시만큼 RAM · 공유 GPU 메모리를 씀) `-c 8192 -np 1` 처럼 문맥 길이와 동시 처리 수를 줄이세요.
 
+### 그림 근거 답변 (비전)
+
+이미지 · 영상 장면 청크는 글이 파일 이름 · 시각 정도라, 글만 넘기면 LLM 은 그림을 보지 못한 채 답합니다. 답변 생성의 **그림 근거 첨부**(`images: true`, 연결 실행 경로의 `images`)를 켜면 근거 중 그림 청크를 JPEG(긴 변 768px)로 첨부하고 그 번호로 인용하게 합니다(최대 `max_images`, 기본 3장 — 그림 한 장이 근거 글 수백 자만큼 읽기 시간을 씀).
+
+```powershell
+# Gemma 4 E4B 는 비전 투영 파일(mmproj)을 함께 주면 그림을 읽는다 (google/gemma-4-E4B-it-qat-q4_0-gguf, 약 1GB)
+llama-server.exe -m C:\Users\<사용자>\llm-models\gemma-4-E4B_q4_0-it.gguf --mmproj C:\Users\<사용자>\llm-models\gemma-4-E4B-it-mmproj.gguf `
+  --host 127.0.0.1 --port 8081 -c 16384 -ngl 99 -np 2 --alias gemma-4-e4b
+```
+
+- OpenAI 호환은 `image_url`(data URI), Claude 는 `image`(base64) 블록으로 보냅니다. `--mmproj` 없이 띄운 서버는 그림을 거부하거나 무시합니다.
+- 한계: 문장별 근거 검증(글자 · 의미)은 그림 내용을 모르므로, 그림을 인용한 문장은 '근거 약함'으로 나올 수 있습니다 — LLM 판정을 함께 보세요.
+
 ## 동작
 
 - 429·5xx·과부하(529)·시간 초과는 지수 백오프로 최대 3번 다시 시도하고, 인증 오류 같은 4xx 는 바로 실패합니다.

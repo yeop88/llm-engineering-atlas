@@ -13,7 +13,7 @@ from typing import Any
 from app.core import llm
 
 EASY, HARD = "easy", "hard"
-ROUTERS = {"rule": "규칙 (질문 형태)", "confidence": "검색 확신도", "llm": "LLM 판단"}
+ROUTERS = {"rule": "규칙 (질문 형태)", "confidence": "검색 확신도", "llm": "LLM 판단", "learned": "학습 라우터 (평가 기록)"}
 
 # 이유 · 방법 · 비교 · 조건을 묻는 말 — 근거 하나를 그대로 옮기기보다 여러 근거를 엮어야 하는 질문의 신호.
 # '어떤'은 단순 사실 질문("어떤 문자로 쓰나요")에도 흔해 넣지 않았다.

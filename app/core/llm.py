@@ -3,6 +3,7 @@
 평가 질문 생성처럼 '프롬프트 → 텍스트/JSON' 만 필요하므로 공통 인터페이스는 chat() / chat_json() 하나다.
 """
 
+import base64
 import json
 import re
 import time
@@ -98,6 +99,19 @@ def _post(cfg: LLMConfig, url: str, headers: dict[str, str], body: dict[str, Any
     raise LLMError(f"{PROVIDERS[cfg.provider]} 호출 실패 ({cfg.model}) — {last}")
 
 
+def _user_content(provider: str, user: str, images: list[bytes] | None) -> Any:
+    """그림이 있으면 제공자 형식의 여러 부분 메시지로(JPEG base64). 없으면 글 그대로 — 그림을 모르는 서버에도 그대로 보내지게."""
+    if not images:
+        return user
+    b64 = [base64.b64encode(im).decode() for im in images]
+    if provider == "openai":  # OpenAI 호환(llama-server 는 --mmproj 로 띄운 경우만 그림을 읽는다)
+        return [{"type": "text", "text": user}, *[{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{x}"}} for x in b64]]
+    return [
+        *[{"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": x}} for x in b64],
+        {"type": "text", "text": user},
+    ]
+
+
 def _request(
     cfg: LLMConfig,
     system: str,
@@ -107,10 +121,15 @@ def _request(
     json_mode: bool = False,
     stream: bool = False,
     no_cache: bool = False,
+    images: list[bytes] | None = None,
 ) -> tuple[str, dict[str, str], dict[str, Any]]:
     """제공자별 (URL, 헤더, 본문)."""
+    content = _user_content(cfg.provider, user, images)
     if cfg.provider == "openai":
-        body: dict[str, Any] = {"model": cfg.model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
+        body: dict[str, Any] = {
+            "model": cfg.model,
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": content}],
+        }
         # 공식 API 의 최신 모델은 max_completion_tokens, 호환 서버는 대부분 max_tokens 를 받는다
         body["max_completion_tokens" if "api.openai.com" in cfg.base_url else "max_tokens"] = max_tokens
         if temperature is not None:
@@ -127,7 +146,7 @@ def _request(
             body |= {"stream": True, "stream_options": {"include_usage": True}}
         headers = {"Authorization": f"Bearer {cfg.api_key}"} if cfg.api_key else {}
         return f"{cfg.base_url}/chat/completions", headers, body
-    body = {"model": cfg.model, "max_tokens": max_tokens, "system": system, "messages": [{"role": "user", "content": user}]}
+    body = {"model": cfg.model, "max_tokens": max_tokens, "system": system, "messages": [{"role": "user", "content": content}]}
     if temperature is not None:
         body["temperature"] = temperature
     if stream:
@@ -143,10 +162,11 @@ def chat(
     temperature: float | None = 0.3,
     json_mode: bool = False,
     no_cache: bool = False,
+    images: list[bytes] | None = None,
 ) -> dict[str, Any]:
-    """→ {"text", "usage": {"input_tokens", "output_tokens"}, "seconds"}"""
+    """→ {"text", "usage": {"input_tokens", "output_tokens"}, "seconds"}. images = JPEG 바이트(비전 모델용)"""
     started = time.perf_counter()
-    url, headers, body = _request(cfg, system, user, max_tokens, temperature, json_mode, no_cache=no_cache)
+    url, headers, body = _request(cfg, system, user, max_tokens, temperature, json_mode, no_cache=no_cache, images=images)
     if cfg.provider == "openai":
         data = _post(cfg, url, headers, body)
         try:
@@ -218,11 +238,11 @@ class _ThinkFilter:
 
 
 def chat_stream(
-    cfg: LLMConfig, system: str, user: str, max_tokens: int = 2048, temperature: float | None = 0.3
+    cfg: LLMConfig, system: str, user: str, max_tokens: int = 2048, temperature: float | None = 0.3, images: list[bytes] | None = None
 ) -> Iterator[dict[str, Any]]:
     """{"delta": 글자 조각} 을 차례로, 마지막에 {"done": True, "text", "usage", "seconds", "tokens_per_second"} 를 낸다."""
     started = time.perf_counter()
-    url, headers, body = _request(cfg, system, user, max_tokens, temperature, stream=True)
+    url, headers, body = _request(cfg, system, user, max_tokens, temperature, stream=True, images=images)
     usage: dict[str, Any] = {}
     parts: list[str] = []
     flt = _ThinkFilter()

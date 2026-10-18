@@ -8,15 +8,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core import crud, llm
-from app.core.db import EvalSet, SessionLocal, get_db
+from app.core.db import AppModel, EvalSet, SessionLocal, TestRun, get_db
 from app.core.jobs import Job, jobs
-from app.core.schemas import RouteTestRequest, RoutingEvalRequest
+from app.core.schemas import LearnedRouterRequest, RouteTestRequest, RoutingEvalRequest
 from app.core.vectorstores import StoreUnavailable
 from app.pipeline import flow
 from app.pipeline.search import run_search
 from app.stages.rag import evaluation
 from app.stages.rag.service import RagError
-from app.stages.routing import routers, service
+from app.stages.routing import learned, routers, service
 
 router = APIRouter(prefix="/api/routing", tags=["routing"])
 DB = Annotated[Session, Depends(get_db)]
@@ -125,6 +125,7 @@ def evaluate(body: RoutingEvalRequest, db: DB) -> dict:
                     row["llm"] = {"path": p, "reason": why, "ms": round(secs * 1000, 1)}
                 rows.append(row)
             res = service.evaluate(rows, list(body.routers), body.threshold)
+            res["rows"] = rows  # 원기록도 남긴다 — 학습 라우터가 같은 기록으로 배우고 다른 라우터와 같은 잣대로 채점되게
             res |= {
                 "eval_set": {"id": s.id, "name": s.name}, "n_queries": len(items), "llm": lcfg.public() if lcfg else None,
                 "quality_metric": "정답 근거 인용" if easy["answer"] else "nDCG@10", "easy": easy, "hard": hard,
@@ -136,3 +137,58 @@ def evaluate(body: RoutingEvalRequest, db: DB) -> dict:
         return res
 
     return jobs.submit("routing_eval", title, work, eval_set_id=s.id).to_dict()
+
+
+# ── 학습 라우터 ─────────────────────────────────────────────────────────────
+@router.post("/learned")
+def train_learned(body: LearnedRouterRequest, db: DB) -> dict[str, Any]:
+    """평가 기록으로 학습 라우터를 만들고, 교차검증 예측으로 같은 기록의 다른 라우터들과 나란히 채점한다."""
+    run = db.get(TestRun, body.run_id)
+    if run is None or run.kind != "routing_eval":
+        raise HTTPException(404, "라우팅 평가 실행 이력이 아닙니다.")
+    rows = (run.result or {}).get("rows")
+    if not rows:
+        raise HTTPException(400, "이 평가에는 질문별 원기록이 없습니다(이전 버전). 라우팅 평가를 다시 실행하세요.")
+    spec = crud.get_spec(db, body.model_id, "embedding")
+    params = run.params or {}
+    title = f"학습 라우터 · run #{run.id} · {spec.hf_id.split('/')[-1]}"
+
+    def work(job: Job) -> dict[str, Any]:
+        job.update(0.1, "질문 임베딩 · 교차검증")
+        model, cv = learned.train(spec, rows, body.margin, body.c)
+        p = cv["proba"]
+        sweep = []
+        for th in learned.THRESHOLDS:
+            paths = [routers.HARD if v >= th else routers.EASY for v in p]
+            r = service.evaluate(rows, [k for k in params.get("routers", []) if k != "llm" or all(x.get("llm") for x in rows)],
+                                 params.get("threshold", 0.05), {"learned": paths})  # fmt: skip
+            sweep.append({"threshold": th, "result": next(x for x in r["results"] if x["router"] == "learned")})
+        paths = [routers.HARD if v >= body.threshold else routers.EASY for v in p]
+        res = service.evaluate(rows, params.get("routers", []), params.get("threshold", 0.05), {"learned": paths})
+        res.pop("rows", None)
+        out = {"run_id_source": run.id, "cv": {k: v for k, v in cv.items() if k != "proba"}, "proba": [round(v, 3) for v in p],
+               "threshold": body.threshold, "results": res["results"], "sweep": sweep, "per_query": res["per_query"],
+               "note": "교차검증 예측(그 질문을 빼고 학습)으로 채점 — 다른 라우터와 같은 기록 · 같은 잣대"}  # fmt: skip
+        if body.save:
+            with SessionLocal() as s:
+                learned_row = next(x for x in res["results"] if x["router"] == "learned")
+                m = AppModel(kind="router", name=body.name or title, model_id=spec.id, model_hf_id=spec.hf_id, method="logreg",
+                             labels=[routers.EASY, routers.HARD], n_train=len(rows),
+                             config={"threshold": body.threshold, "margin": body.margin, "c": body.c, "run_id": run.id, "easy": params.get("easy")},
+                             metrics={"quality": learned_row["quality"], "hard_rate": learned_row["hard_rate"], "folds": cv["folds"]})  # fmt: skip
+                s.add(m)
+                s.commit()
+                learned.save(model, m.id)
+                out["saved"] = {"id": m.id, "name": m.name}
+        return out
+
+    return jobs.submit("routing_learned", title, work).to_dict()
+
+
+@router.get("/learned")
+def list_learned(db: DB) -> list[dict[str, Any]]:
+    from sqlalchemy import select
+
+    rows = db.scalars(select(AppModel).where(AppModel.kind == "router").order_by(AppModel.id.desc())).all()
+    return [{"id": m.id, "name": m.name, "model_hf_id": m.model_hf_id, "threshold": m.config.get("threshold"), "metrics": m.metrics,
+             "n_train": m.n_train, "created_at": m.created_at.isoformat()} for m in rows]  # fmt: skip

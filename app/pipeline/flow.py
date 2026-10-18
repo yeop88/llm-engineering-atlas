@@ -11,19 +11,21 @@
   돌려주는 timings_ms 를 단계에 나눠 담는다. 단계마다 따로 부르면 검색 경로가 둘이 되어 결과가 어긋날 수 있다.
 """
 
+import functools
 import time
 from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.core import llm, stats
+from app.core import crud, llm, stats
+from app.core.db import AppModel
 from app.core.jobs import JobCancelled
 from app.pipeline.search import ENHANCE_LABEL, run_search
 from app.stages import registry
 from app.stages.agent import agent
-from app.stages.rag import answer, evaluation
+from app.stages.rag import answer, evaluation, legal
 from app.stages.rl import service as rl
-from app.stages.routing import routers
+from app.stages.routing import learned, routers
 
 RUN, OFF, DEFAULT = "run", "off", "default"  # 실행 · 꺼 둠 · 따로 지정하지 않아 기본 동작(예: 기본 LLM)
 
@@ -54,6 +56,12 @@ def _search_cfg(fc: dict[str, Any]) -> dict[str, Any]:
     return cfg
 
 
+@functools.lru_cache(maxsize=8)
+def _learned_model(router_id: int):
+    # 질문마다 파일을 다시 읽지 않게. 같은 id 로 다시 학습하는 일은 없다(새로 만들면 새 id)
+    return learned.load(router_id)
+
+
 def _route(db: Session, question: str, fc: dict[str, Any], lcfg: llm.LLMConfig | None) -> tuple[dict[str, Any], dict[str, Any] | None]:
     """6 라우팅. → (판단, 미리 한 검색 결과). 확신도 라우터는 쉬운 경로로 먼저 검색해야 판단할 수 있으므로,
     쉬움으로 판단되면 그 검색을 그대로 이어 쓴다(같은 검색을 두 번 하지 않게). 어려움이면 그 검색은 버려진 비용이다."""
@@ -66,6 +74,13 @@ def _route(db: Session, question: str, fc: dict[str, Any], lcfg: llm.LLMConfig |
         if lcfg is None:
             raise llm.LLMError("LLM 판단 라우터에는 LLM 이 필요합니다.")
         path, reason, _ = routers.route_llm(lcfg, question)
+    elif rc["router"] == "learned":
+        m = db.get(AppModel, rc.get("learned_id") or 0)
+        if m is None or m.kind != "router":
+            raise ValueError("학습 라우터를 찾을 수 없습니다(learned_id).")
+        pre = run_search(db, question, _search_cfg(fc))  # 확신도 신호용 — 쉬움이면 이 검색을 그대로 쓴다
+        th = rc.get("learned_threshold") or m.config.get("threshold", 0.5)
+        path, reason = learned.route(_learned_model(m.id), crud.get_spec(db, m.model_id, "embedding"), question, pre["results"], th)
     else:
         pre = run_search(db, question, _search_cfg(fc))
         path, reason = routers.route_confidence(pre["results"], rc.get("threshold", 0.05))
@@ -144,10 +159,11 @@ def run(
             # 첫 검색은 이미 했으므로 에이전트에 넘겨 같은 검색을 다시 하지 않게 한다. 에이전트의 추가 검색은 이 경로의 검색 설정을 쓴다.
             final = agent.run_to_end(lcfg, question, lambda q: run_search(db, q, cfg)["results"], db=db, first_results=res["results"],
                                      max_steps=ac.get("max_steps", 5), top_k=ac.get("top_k", 4), max_chars=ac.get("max_chars", 500),
-                                     max_tokens=int(fc.get("max_tokens") or 500), no_cache=no_cache)  # fmt: skip
+                                     max_tokens=int(fc.get("max_tokens") or 500), no_cache=no_cache,
+                                     lookup_fn=legal.lookup_fn_for(db, legal.chunk_set_of(db, cfg)) if ac.get("lookup") else None)  # fmt: skip
             text, sources, check = final["answer"], final["sources"], final["verify"]
             gen_seconds, out_tokens = final["seconds"], None
-            extra = {"agent_steps": final["steps"], "n_steps": final["n_steps"]}
+            extra = {"agent_steps": final["steps"], "n_steps": final["n_steps"], "citations": final.get("citations")}
         elif fc.get("best_of"):
             bo = rl.candidates(lcfg, question, top, int(fc["best_of"]), float(fc.get("best_of_temperature") or 0.8), item,
                                int(fc.get("max_context_chars") or 6000), int(fc.get("max_tokens") or 500), no_cache)  # fmt: skip
@@ -160,10 +176,12 @@ def run(
             if fc.get("compress"):  # 근거 압축: 청크마다 질문과 관련된 문장만 (읽는 시간 줄이기)
                 top = answer.compress(top, question, int(fc["compress"].get("keep") or 3))
             context, sources = answer.build_context(top, int(fc.get("max_context_chars") or 6000))
+            images, note = answer.attach_images(db, sources) if fc.get("images") else ([], "")
             gen = llm.chat(
                 lcfg,
                 answer.SYSTEM,
-                answer.user_prompt(question, context),
+                answer.user_prompt(question, context, note),
+                images=images,
                 max_tokens=int(fc.get("max_tokens") or 500),
                 temperature=0.1,
                 no_cache=no_cache,
@@ -171,12 +189,18 @@ def run(
             text = gen["text"]
             check = answer.verify(text, sources)
             gen_seconds, out_tokens = gen["seconds"], gen["usage"].get("output_tokens")
+        # 조문 · 판례 번호 검사: 답변에 번호가 나올 때만(정규식 + DB 조회라 싸다). 글자 · 의미 검증이 못 잡는 '번호만 바꾼' 환각용
+        cites = extra.get("citations") or legal.check_citations(text, sources, legal.lookup_fn_for(db, legal.chunk_set_of(db, cfg)))
+        if cites["n"]:
+            extra["citations"] = cites
         ratio = check["supported_ratio"]
         detail = (
             "근거 없음 · 거절" if check["refused"] else f"근거 있는 문장 {ratio * 100:.0f}%" if ratio is not None else "검증할 문장 없음"
         )
         if extra.get("n_steps") is not None:
             detail += f" · 에이전트 {extra['n_steps']}단계"
+        if extra.get("citations", {}).get("n_not_found"):
+            detail += f" · 자료에 없는 번호 {extra['citations']['n_not_found']}개"
         put("answer", RUN, detail, (time.perf_counter() - t0) * 1000)
         out["answer"] = {
             "text": text, "sources": sources, "verify": check, "output_tokens": out_tokens, "seconds": gen_seconds,

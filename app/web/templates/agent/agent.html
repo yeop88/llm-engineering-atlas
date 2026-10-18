@@ -12,6 +12,7 @@
     <div class="field"><label>최대 단계</label><input id="a-steps" type="number" value="5" min="1" max="12" style="width:60px"></div>
     <div class="field"><label>검색당 지문</label><input id="a-k" type="number" value="4" min="1" max="10" style="width:60px"></div>
     <div class="field"><label>LLM (비우면 기본)</label><input id="a-model" style="width:160px"></div>
+    <label class="row small" style="margin:0" title="법령 조문 · 판례를 번호로 바로 찾는 도구와, 답변에 나온 번호가 자료에 실제로 있는지 검사"><input type="checkbox" id="a-lookup"> 법률 번호 조회</label>
   </div>
   <div class="row" style="flex-wrap:nowrap"><textarea id="a-q" rows="2" style="flex:1" placeholder="예: 구매대행업체가 등록하지 않으면 어떤 처벌을 받고, 등록 기준 매출은 얼마인가요?"></textarea><button class="btn primary" id="a-run">실행</button></div>
 </div>
@@ -21,12 +22,12 @@
 {% block scripts %}
 <script>
 setupCollectionPickers({ col: $("#a-col"), idx: $("#a-idx"), key: "agent-col" });
-const ACT = { search: ["검색", ""], read: ["읽기", ""], calc: ["계산", ""], finish: ["답하기", "ok"], error: ["형식 오류", "err"], forced_finish: ["모은 근거로 답함", "warn"] };
+const ACT = { search: ["검색", ""], read: ["읽기", ""], calc: ["계산", ""], finish: ["답하기", "ok"], error: ["형식 오류", "err"], forced_finish: ["모은 근거로 답함", "warn"], lookup: ["번호 조회", ""] };
 
 $("#a-run").onclick = async e => {
   const q = $("#a-q").value.trim();
   if (!q) return toast("질문을 입력하세요", "err");
-  const body = { question: q, config: { mode: $("#a-mode").value, index_id: +$("#a-idx").value }, agent: { max_steps: +$("#a-steps").value || 5, top_k: +$("#a-k").value || 4 },
+  const body = { question: q, config: { mode: $("#a-mode").value, index_id: +$("#a-idx").value }, agent: { max_steps: +$("#a-steps").value || 5, top_k: +$("#a-k").value || 4, lookup: $("#a-lookup").checked },
     model: $("#a-model").value.trim() || null };
   $("#a-steps-out").innerHTML = ""; $("#a-final").innerHTML = "";
   e.target.disabled = true;
@@ -58,6 +59,7 @@ function show(ev) {
     $("#a-final").innerHTML = `<div class="card stack" style="margin-top:12px"><div class="row between"><h2>답변</h2><span class="small muted">${ev.n_steps}단계 · ${ev.seconds}s${ev.run_id ? ` · run #${ev.run_id}` : ""}</span></div>
       <div style="white-space:pre-wrap">${esc(ev.answer)}</div>
       <div class="small muted">근거 있는 문장 ${v.supported_ratio != null ? (v.supported_ratio * 100).toFixed(0) + "%" : "-"} · 인용 ${v.cited_sources.map(n => `[${n}]`).join("") || "없음"}${v.invalid_citations.length ? ` · <span class="badge err">없는 근거 ${v.invalid_citations.join(", ")}</span>` : ""}</div>
+      ${citeBox(ev.citations)}
       <h3>모은 근거 (${ev.sources.length})</h3>${ev.sources.map((s, i) => `<div class="small"><span class="badge">[${i + 1}]</span> <b>${esc(s.filename || "")}</b>${s.page ? ` p.${s.page}` : ""} <span class="muted">${esc((s.text || "").slice(0, 160))}</span></div>`).join("")}</div>`;
   } else if (ev.type === "error") {
     $("#a-final").innerHTML = `<div class="errbox">${esc(ev.message)}</div>`;

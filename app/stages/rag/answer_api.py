@@ -15,7 +15,7 @@ from app.core.jobs import Job, jobs
 from app.core.schemas import AnswerEvalRequest, AnswerRequest
 from app.core.vectorstores import StoreUnavailable
 from app.pipeline.search import run_search  # 검색 향상(enhance) 등 다음 단계를 끼워 넣는 연결점
-from app.stages.rag import answer, service
+from app.stages.rag import answer, legal, service
 
 router = APIRouter(prefix="/api", tags=["rag-answer"])
 
@@ -57,7 +57,7 @@ def generate_answer(collection_id: int, body: AnswerRequest) -> StreamingRespons
                 return
             results = answer.compress(res["results"], body.question, body.compress.keep) if body.compress else res["results"]
             context, sources = answer.build_context(results, body.max_context_chars)
-            keep = ("rank", "chunk_id", "document_id", "filename", "title", "page", "heading", "text", "score")
+            keep = ("rank", "chunk_id", "document_id", "filename", "title", "page", "heading", "text", "score", "media")
             yield _event(
                 "search",
                 sources=[{k: s.get(k) for k in keep} for s in sources],
@@ -69,9 +69,12 @@ def generate_answer(collection_id: int, body: AnswerRequest) -> StreamingRespons
                 yield _event("error", message="검색 결과가 없습니다.")
                 return
             final: dict[str, Any] = {}
+            images, note = answer.attach_images(db, sources, body.max_images) if body.images else ([], "")
+            if images:
+                timings["images"] = len(images)
             try:
                 for ev in llm.chat_stream(
-                    cfg, answer.SYSTEM, answer.user_prompt(body.question, context), body.max_tokens, body.temperature
+                    cfg, answer.SYSTEM, answer.user_prompt(body.question, context, note), body.max_tokens, body.temperature, images=images
                 ):
                     if ev.get("done"):
                         final = ev
@@ -84,6 +87,8 @@ def generate_answer(collection_id: int, body: AnswerRequest) -> StreamingRespons
             timings["llm_s"] = final.get("seconds", 0)
             timings["ttft_s"] = final.get("ttft_s")
             check = answer.verify(text, sources)
+            # 조문 · 판례 번호 검사(번호가 나온 답변만) — 번호만 바꾼 환각은 문장 검증으로 못 잡는다
+            check["citations"] = legal.check_citations(text, sources, legal.lookup_fn_for(db, legal.chunk_set_of(db, search_cfg)))
             yield _event("verify", **check)
             judged = None
             if body.judge and check["sentences"]:

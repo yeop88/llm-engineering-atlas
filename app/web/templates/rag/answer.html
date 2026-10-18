@@ -20,6 +20,7 @@
     <div class="field"><label>모델 (비우면 설정값)</label><input id="a-model" list="a-model-list"><datalist id="a-model-list"></datalist></div>
     <label class="row small" style="margin:0"><input type="checkbox" id="a-judge"> LLM 으로 문장별 근거 판정도 하기 (느림)</label>
     <label class="row small" style="margin:0" title="근거 청크마다 질문과 관련된 문장 3개만 넣어 읽는 시간을 줄임"><input type="checkbox" id="a-compress"> 근거 압축 (청크마다 관련 문장 3개)</label>
+    <label class="row small" style="margin:0" title="근거 중 이미지 · 영상 장면을 그림으로 LLM 에 첨부 — 비전 모델(llama-server --mmproj 등)이 필요"><input type="checkbox" id="a-images"> 그림 근거 첨부 (비전 LLM)</label>
     <div class="small muted" id="a-llm"></div>
   </aside>
   <section class="stack">
@@ -113,7 +114,7 @@ async function send() {
   if (!$("#a-col").value) return toast("컬렉션을 먼저 만드세요", "err");
   const bm25 = $("#a-mode").value === "bm25";
   const body = {
-    question: q, context_top: +$("#a-top").value, max_tokens: +$("#a-max").value, judge: $("#a-judge").checked, compress: $("#a-compress").checked ? { keep: 3 } : null,
+    question: q, context_top: +$("#a-top").value, max_tokens: +$("#a-max").value, judge: $("#a-judge").checked, compress: $("#a-compress").checked ? { keep: 3 } : null, images: $("#a-images").checked,
     provider: $("#a-provider").value || null, model: $("#a-model").value.trim() || null,
     config: { mode: $("#a-mode").value, index_id: bm25 ? null : +$("#a-idx").value || null, chunk_set_id: bm25 ? +$("#a-cs").value || null : null, reranker_id: +$("#a-rr").value || null },
   };
@@ -160,7 +161,7 @@ async function send() {
           $t("[data-answer]").innerHTML = ev.sentences.map(s => `<span class="sent sent-${s.status}" title="${STATUS[s.status][1]} · 인용 근거와 글자 겹침 ${Math.round(s.support * 100)}%${s.best_source ? ` (가장 비슷한 근거 [${s.best_source}] ${Math.round(s.best_support * 100)}%)` : ""}">${renderAnswer(s.text, turnId, sources.length)}</span>`).join(" ");
           $t("[data-verify]").innerHTML = `<div class="row small" style="gap:6px">${Object.entries(cnt).map(([k, v]) => `<span class="badge ${STATUS[k][0]}">${STATUS[k][1]} ${v}</span>`).join("")}
             ${ev.invalid_citations.length ? `<span class="badge err">없는 근거 번호 ${ev.invalid_citations.join(", ")}</span>` : ""}
-            <span class="muted">문장에 마우스를 올리면 근거와의 겹침이 보입니다.</span></div>`;
+            <span class="muted">문장에 마우스를 올리면 근거와의 겹침이 보입니다.</span></div>${citeBox(ev.citations)}`;
           ev.cited_sources.forEach(k => document.getElementById(`${turnId}-src-${k}`)?.classList.add("cited"));
         } else if (ev.type === "judge") {
           if (ev.error) { $t("[data-verify]").insertAdjacentHTML("beforeend", `<div class="warnbox small">LLM 판정 실패: ${esc(ev.error)}</div>`); continue; }

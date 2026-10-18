@@ -51,6 +51,23 @@
   <div id="e-progress" hidden></div>
   <div id="e-out"></div>
 </div>
+
+<div class="card stack" style="margin-top:16px">
+  <h2>학습 라우터</h2>
+  <div class="small muted">위 비교의 기록(질문마다 두 경로 결과)으로 '전체 경로가 실제로 나았던 질문'을 배웁니다. 입력 = 질문 임베딩 + 검색 확신도 + 질문 형태 신호, 모델 = 로지스틱 회귀. 채점은 교차검증(그 질문을 빼고 학습한 모델의 예측)이라 같은 기록의 다른 라우터와 공정하게 비교됩니다. 질문이 적으면(수십 개) 결과가 크게 흔들립니다.</div>
+  <div class="row">
+    <div class="field grow"><label>라우팅 평가 기록</label><select id="l-run"></select></div>
+    <div class="field"><label>질문 임베딩 모델</label><select id="l-model"></select></div>
+    <div class="field"><label>margin</label><input id="l-margin" type="number" value="0" step="0.05" min="0" max="1" style="width:70px" title="전체 경로가 이만큼 넘게 나아야 '어려움' 라벨"></div>
+    <div class="field"><label>어려움 확률 기준</label><input id="l-th" type="number" value="0.5" step="0.05" min="0.05" max="0.95" style="width:70px"></div>
+    <label class="row small" style="margin:0"><input type="checkbox" id="l-save" checked> 저장</label>
+    <div style="align-self:end"><button class="btn primary" id="l-run-btn">학습 · 비교</button></div>
+  </div>
+  <div id="l-progress" hidden></div>
+  <div id="l-out"></div>
+  <div id="l-res"></div>
+  <div id="l-saved"></div>
+</div>
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', path='js/routing.js') }}"></script>

@@ -237,3 +237,12 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/verify/sample` | 판정할 문장 만들기 작업 `{"eval_set_id", "config", "n_questions", "llm_judge"}` → 문장 · 인용 근거 · 자동 점수(lexical · semantic · llm) |
 | GET / POST / DELETE | `/api/verify/labels` · `/api/verify/labels/{id}` | 사람 판정 라벨 목록 / 저장 `{"collection_id", "items": [{"question", "sentence", "sources", "label", "scores"}]}` / 삭제 |
 | GET | `/api/verify/agreement` | 방식별 일치도(정확도 · 정밀도 · 재현율 · F1 · 카파), 의미 문턱 탐색 결과 |
+
+## 도메인 · 학습 라우터
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/api/agent/run` | `agent.lookup: true` 면 법령 조문 · 판례 번호 조회 도구 + 답변 번호 검사(`citations`) |
+| POST | `/api/collections/{id}/answer` | `images: true, max_images: 3` 근거 중 이미지 · 장면을 그림으로 첨부(비전 LLM). verify 이벤트에 `citations`(번호가 나온 답변만) |
+| POST | `/api/routing/learned` | `{"run_id", "model_id", "margin": 0, "c": 1.0, "threshold": 0.5, "save": true}` → 작업. 라우팅 평가 기록으로 학습 라우터 학습 · 교차검증 비교 |
+| GET | `/api/routing/learned` | 저장된 학습 라우터. 연결 실행 `routing: {"router": "learned", "learned_id"}` |

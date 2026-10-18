@@ -71,7 +71,9 @@ function fConfig(p) {
   const router = p ? p.route : $("#f-route").value !== "off" ? $("#f-route").value : null;
   if (!router) return { label: p?.label || "", ...full };
   // 라우팅을 켜면 위의 향상 · 리랭커 설정은 '어려운 질문용 전체 경로'가 되고, 기본 경로는 향상 · 리랭커 없이 간다
-  return { label: p?.label || "", config: search, answer, context_top: full.context_top, ...comp, routing: { router, threshold: +$("#f-th").value || 0.05, hard: full } };
+  // 학습 라우터는 'learned:<id>' 값으로 고른다(라우팅 화면에서 저장한 것)
+  const learned = router.startsWith("learned:") ? { router: "learned", learned_id: +router.split(":")[1] } : { router };
+  return { label: p?.label || "", config: search, answer, context_top: full.context_top, ...comp, routing: { ...learned, threshold: +$("#f-th").value || 0.05, hard: full } };
 }
 
 function fTrace(steps) {
@@ -91,7 +93,7 @@ $("#f-run").onclick = async e => {
     <div class="row between small"><b>처리 흐름</b><span class="muted">총 ${out.total_ms}ms${out.run_id ? ` · run #${out.run_id}` : ""}</span></div>
     ${fTrace(out.steps)}
     ${a ? `<div class="card stack"><b>답변</b><div style="white-space:pre-wrap">${esc(a.text)}</div>
-      <div class="small muted">근거 있는 문장 ${a.supported_ratio != null ? `${(a.supported_ratio * 100).toFixed(0)}%` : "-"} · 인용 ${a.cited.length ? a.cited.map(n => `[${n}]`).join("") : "없음"}${a.invalid_citations.length ? ` · <span class="badge err">없는 근거 번호 ${a.invalid_citations.join(", ")}</span>` : ""}${a.refused ? ' · <span class="badge warn">근거에서 찾을 수 없음</span>' : ""}</div></div>` : ""}
+      <div class="small muted">근거 있는 문장 ${a.supported_ratio != null ? `${(a.supported_ratio * 100).toFixed(0)}%` : "-"} · 인용 ${a.cited.length ? a.cited.map(n => `[${n}]`).join("") : "없음"}${a.invalid_citations.length ? ` · <span class="badge err">없는 근거 번호 ${a.invalid_citations.join(", ")}</span>` : ""}${a.refused ? ' · <span class="badge warn">근거에서 찾을 수 없음</span>' : ""}</div>${citeBox(a.citations)}</div>` : ""}
     <div class="card stack"><b>근거 (상위 ${out.results.length})</b>${out.results.map(x => `<div class="small"><span class="badge">[${x.rank}]</span> <b>${esc(x.filename)}</b>${x.page ? ` p.${x.page}` : ""} <span class="muted">${esc(x.text.slice(0, 140))}</span></div>`).join("") || '<div class="empty">결과 없음</div>'}</div>
   </div>`;
 };
@@ -133,3 +135,6 @@ function fRenderEval(r) {
 }
 
 fLoad();
+
+// 저장된 학습 라우터를 라우팅 선택지에 붙인다 (없으면 그대로)
+api("/api/routing/learned").then(ls => ls.forEach(m => $("#f-route")?.insertAdjacentHTML("beforeend", `<option value="learned:${m.id}">학습 라우터 #${m.id}</option>`))).catch(() => {});

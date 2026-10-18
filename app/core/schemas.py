@@ -407,6 +407,8 @@ class AnswerRequest(LLMRef):
     temperature: float = Field(default=0.1, ge=0, le=2)
     judge: bool = False  # LLM 으로 문장별 근거 판정도 할지
     compress: CompressConfig | None = None
+    images: bool = False  # 근거 중 이미지 · 영상 장면을 그림으로 첨부(비전 LLM 필요) — answer.attach_images
+    max_images: int = Field(default=3, ge=1, le=8)
 
 
 class AnswerEvalRequest(LLMRef):
@@ -431,6 +433,7 @@ class AgentConfig(BaseModel):
     max_steps: int = Field(default=5, ge=1, le=12)
     top_k: int = Field(default=4, ge=1, le=10)  # 검색 한 번에 볼 지문 수
     max_chars: int = Field(default=500, ge=100, le=3000)  # 지문당 보여 줄 글자 수
+    lookup: bool = False  # 법률 자료용 번호 조회 도구(조문 · 사건번호) + 답변 번호 검사 — rag/legal.py
 
 
 class FlowPath(BaseModel):
@@ -447,14 +450,17 @@ class FlowPath(BaseModel):
     agent: AgentConfig | None = None  # 8a: 답변을 에이전트로 (여러 번 검색 · 읽기)
     best_of: int | None = Field(default=None, ge=2, le=8)  # 8b: 답을 N 개 만들어 보상이 가장 높은 것
     compress: CompressConfig | None = None  # 근거 압축: 청크마다 질문 관련 문장만
+    images: bool = False  # 근거 중 이미지 · 장면을 그림으로 첨부(비전 LLM) — 일반 RAG 답변에만
     best_of_temperature: float = Field(default=0.8, ge=0, le=2)
 
 
 class RoutingConfig(BaseModel):
     """6 라우팅: 이 연결 방식(쉬운 경로)으로 처리하다가, 라우터가 어렵다고 판단한 질문만 hard 경로로 보낸다."""
 
-    router: Literal["rule", "confidence", "llm"] = "confidence"
+    router: Literal["rule", "confidence", "llm", "learned"] = "confidence"
     threshold: float = Field(default=0.05, ge=0, le=1)  # 검색 확신도(1·2위 상대 차이) 기준
+    learned_id: int | None = None  # 학습 라우터 (POST /api/routing/learned 로 만든 것)
+    learned_threshold: float | None = Field(default=None, ge=0, le=1)  # 어려움 확률 기준 (비우면 학습 때 고른 값)
     rule_max_chars: int = Field(default=45, ge=5, le=500)
     hard: FlowPath
 
@@ -495,6 +501,18 @@ class RouteTestRequest(LLMRef):
     routers: list[Literal["rule", "confidence", "llm"]] = Field(default_factory=lambda: ["rule", "confidence", "llm"], min_length=1)
     threshold: float = Field(default=0.05, ge=0, le=1)
     rule_max_chars: int = Field(default=45, ge=5, le=500)
+
+
+class LearnedRouterRequest(BaseModel):
+    """라우팅 평가 기록(run)으로 학습 라우터를 만든다 — 질문 임베딩 + 확신도 + 규칙 신호 → 어려운 경로가 나았나."""
+
+    run_id: int  # routing_eval 실행 이력
+    model_id: int  # 질문 임베딩 모델
+    margin: float = Field(default=0.0, ge=0, le=1)  # 어려운 경로가 이만큼 넘게 나아야 hard 라벨
+    c: float = Field(default=1.0, gt=0, le=100)  # 로지스틱 회귀 규제 (작을수록 강하게)
+    threshold: float = Field(default=0.5, ge=0.05, le=0.95)  # 어려움 확률 기준
+    save: bool = True
+    name: str = Field(default="", max_length=200)
 
 
 class RoutingEvalRequest(LLMRef):

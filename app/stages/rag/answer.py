@@ -73,8 +73,46 @@ def compress(results: list[dict[str, Any]], question: str, keep: int = 3, min_ch
     return out
 
 
-def user_prompt(question: str, context: str) -> str:
-    return f"근거:\n{context}\n\n질문: {question}"
+def user_prompt(question: str, context: str, image_note: str = "") -> str:
+    return f"근거:\n{context}\n\n{image_note}질문: {question}"
+
+
+IMAGE_MAX_SIDE = 768  # 긴 변 기준 축소 — 비전 모델은 그림을 수백 토큰으로 바꾸므로 원본 크기를 보내면 읽기 시간만 는다
+
+
+def attach_images(db: Any, sources: list[dict[str, Any]], max_images: int = 3) -> tuple[list[bytes], str]:
+    """근거 중 이미지 · 영상 장면 청크를 그림으로 첨부한다. → (JPEG 바이트들, 프롬프트에 붙일 안내).
+
+    왜: 이미지 청크의 글은 파일 이름 · 장면 시각 정도라, 글만 넘기면 LLM 은 그림 내용을 모른 채 답한다(=근거 없이 지어냄).
+    비전 모델(Gemma 4 + mmproj 등)에 그림 자체를 주고, 그림 근거도 [n] 으로 인용하게 해 같은 인용 표시를 쓴다.
+    그림 수는 상한을 둔다(그림 한 장이 근거 글 수백 자만큼 읽기 시간을 쓴다).
+    한계: 문장별 근거 검증(글자 · 의미)은 그림 내용을 모르므로 그림을 인용한 문장은 '근거 약함'으로 나올 수 있다 — LLM 판정을 함께 본다.
+    """
+    import io
+
+    from app.core import media
+    from app.core.db import Chunk
+
+    images, notes = [], []
+    for n, s in enumerate(sources, 1):
+        if len(images) >= max_images or not s.get("media") or not s.get("chunk_id"):
+            continue
+        c = db.get(Chunk, s["chunk_id"])
+        path = (c.meta or {}).get("media") if c else None
+        if not path:
+            continue
+        try:
+            im = media.open_image(path)
+        except OSError:
+            continue  # 파일이 지워졌으면 글 근거로만 쓴다
+        im.thumbnail((IMAGE_MAX_SIDE, IMAGE_MAX_SIDE))
+        buf = io.BytesIO()
+        im.save(buf, "JPEG", quality=85)
+        images.append(buf.getvalue())
+        notes.append(f"[{n}] = 첨부 그림 {len(images)}")
+    if not notes:
+        return images, ""
+    return images, "그림 근거: " + ", ".join(notes) + ". 그림에서 본 내용도 그 번호로 인용하고, 그림에 보이지 않는 것은 쓰지 마세요.\n\n"
 
 
 def citations(text: str) -> list[int]:

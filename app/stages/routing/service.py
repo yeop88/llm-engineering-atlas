@@ -22,7 +22,7 @@ def _latency(row: dict[str, Any], router: str, path: str) -> float:
     ms = row[path]["ms"]
     if router == "llm":
         ms += row["llm"]["ms"]  # 판단에 쓴 LLM 호출 시간
-    if router == "confidence" and path == HARD:
+    if router in ("confidence", "learned") and path == HARD:  # 학습 라우터도 확신도 신호를 쓰려고 먼저 검색한다
         ms += row[EASY]["search_ms"]  # 확신도를 보려고 먼저 한 싼 검색은 버려진 비용
     return ms
 
@@ -48,9 +48,9 @@ def _summary(rows: list[dict[str, Any]], router: str, paths: list[str], base_q: 
     return out
 
 
-def evaluate(rows: list[dict[str, Any]], routers: list[str], threshold: float) -> dict[str, Any]:
+def evaluate(rows: list[dict[str, Any]], routers: list[str], threshold: float, extra: dict[str, list[str]] | None = None) -> dict[str, Any]:
     """rows[i] = {"query", "easy": 경로 기록, "hard": 경로 기록, "rule": {"path", "reason"}, "llm": {...}|None, "confidence": float|None}
-    경로 기록 = {"quality", "ndcg", "ms", "search_ms", "answer"}."""
+    경로 기록 = {"quality", "ndcg", "ms", "search_ms", "answer"}. extra = 기록 밖에서 정한 라우터별 경로(학습 라우터의 교차검증 예측)."""
     decide: dict[str, list[str]] = {
         "always_easy": [EASY] * len(rows),
         "always_hard": [HARD] * len(rows),
@@ -63,8 +63,9 @@ def evaluate(rows: list[dict[str, Any]], routers: list[str], threshold: float) -
         decide["confidence"] = [HARD if r["confidence"] is None or r["confidence"] < threshold else EASY for r in rows]
     if "llm" in routers and all(r.get("llm") for r in rows):
         decide["llm"] = [r["llm"]["path"] for r in rows]
+    decide |= extra or {}
     base_q = {k: [r[p]["quality"] for r, p in zip(rows, decide[k], strict=True)] for k in ("always_easy", "always_hard")}
-    order = ["always_easy", "always_hard", *[k for k in ("rule", "confidence", "llm") if k in decide], "oracle"]
+    order = ["always_easy", "always_hard", *[k for k in ("rule", "confidence", "llm", "learned") if k in decide], "oracle"]
     results = [_summary(rows, k, decide[k], base_q) for k in order]
 
     sweep = []
