@@ -53,7 +53,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title=get_settings().app_name,
     description="Global LLM system engineering lab · Korean-first — 임베딩 → RAG → 리랭킹 → 라우팅 → 소형/대형 모델",
-    version="0.3.0",
+    version="0.4.0",
     lifespan=lifespan,
 )
 app.mount("/static", StaticFiles(directory=APP_DIR / "web" / "static"), name="static")

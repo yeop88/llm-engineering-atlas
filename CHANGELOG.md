@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-18
+
 ### 추가
 - **6 라우팅**: 규칙(질문 형태) · 검색 확신도(1·2위 점수 차) · LLM 판단 라우터로 쉬운 질문은 빠른 경로, 어려운 질문은 전체 경로(향상 · 리랭커)로 처리. 경로별 답변 모델 지정(7 소형 모델 자리). 평가: 질문마다 두 경로를 한 번씩 실행한 기록으로 라우터를 채점, 항상 빠른 · 항상 전체 · 오라클(상한)과 비교, 확신도 기준값 비용-품질 곡선. 라우팅 테스트 화면(`/routing`), `/api/routing/route` · `/api/routing/evaluate` — `docs/stages/6-routing/routing.md`
 - **7b 양자화**: 2026-10 기준 양자화 기술 카탈로그(벡터 · 차원 · 모델 가중치 · LLM, 원리 · 장단점 · 언제)에서 골라 실행. **여러 양자화를 동시에** — 모델 가중치(fp32 · bf16 · int8 동적) × Matryoshka 차원 × 벡터 정밀도(float16 · int8 · int4 · binary · binary+int8 재점수 · PQ)의 모든 조합을 공개 검색 벤치마크로 채점(기준과 짝지은 비교, 기준 상위 10 유지율, 벡터당 · 100만 개 메모리, 인코딩 속도, 파레토 최적 표시). LLM 은 GGUF 가중치 × KV 캐시 양자화를 함께 적용한 llama-server 명령을 만들고(`LLM_MODELS_DIR`), 같은 질문 · 같은 근거로 근거 인용 · 속도 비교. 양자화 테스트 화면(`/quant`), `/api/quant/vectors` · `/api/quant/llm` · `/api/quant/llm-command` — `docs/stages/7b-quant/quant.md`
@@ -122,7 +124,8 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/yeop88/llm-engineering-atlas/releases/tag/v0.1.0
