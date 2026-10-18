@@ -20,6 +20,7 @@ GENERATED = "<!-- 이 파일은 scripts/gen_docs.py 가 단계 레지스트리(a
 GUIDES = [
     ("guides/architecture.md", "아키텍처 — 코드 구조(core · stages · web)와 동작 방식"),
     ("guides/api.md", "REST API"),
+    ("guides/data-processing.md", "데이터 처리 — 수집 · 전처리 · 평가 자료 기록과 유효하게 처리하는 법"),
     ("guides/llm.md", "LLM 연결 — 로컬 llama.cpp · OpenAI 호환 · Claude, 소형 모델 비교"),
     ("guides/gpu.md", "CPU · CUDA · ROCm 설치"),
     ("guides/troubleshooting.md", "문제 해결"),
