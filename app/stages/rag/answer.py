@@ -126,12 +126,12 @@ def verify_llm(cfg: llm.LLMConfig, question: str, context: str, sentences: list[
 
 # ── 평가 세트로 답변 일괄 평가 ──────────────────────────────────────────────
 def evaluate_one(
-    cfg: llm.LLMConfig, question: str, results: list[dict[str, Any]], evidence: str, max_chars: int, max_tokens: int
+    cfg: llm.LLMConfig, question: str, results: list[dict[str, Any]], evidence: str, max_chars: int, max_tokens: int, no_cache: bool = False
 ) -> dict[str, Any]:
     from app.stages.rag.evaluation import contains_evidence
 
     context, sources = build_context(results, max_chars)
-    res = llm.chat(cfg, SYSTEM, user_prompt(question, context), max_tokens=max_tokens, temperature=0.1)
+    res = llm.chat(cfg, SYSTEM, user_prompt(question, context), max_tokens=max_tokens, temperature=0.1, no_cache=no_cache)
     check = verify_lexical(res["text"], sources)
     with_ev = [i + 1 for i, s in enumerate(sources) if evidence and contains_evidence(s["text"], evidence)]
     return {
@@ -146,6 +146,10 @@ def evaluate_one(
         "cited": check["cited_sources"],
         "seconds": res["seconds"],
         "output_tokens": res["usage"].get("output_tokens"),
+        "timings": {
+            k: res["usage"].get(k)
+            for k in ("prompt_tokens_evaluated", "prompt_ms", "prompt_per_second", "generation_ms", "generation_per_second")
+        },
     }
 
 

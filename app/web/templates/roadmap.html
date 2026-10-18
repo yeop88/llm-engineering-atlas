@@ -44,7 +44,7 @@
 <div class="card stack" style="margin-top:16px" id="flow">
   <h2>연결 실행</h2>
   <div class="small muted">따로 검증한 단계들을 서비스 순서대로 이어 한 질문을 처리합니다. 단계를 켜고 끄며 <b>부분 연결</b>과 <b>전체 연결</b>을 비교하세요.
-    아직 만들지 않은 단계(라우팅 · 증류 · 양자화 · 에이전트 · 강화학습)는 <span class="flow-box plan sm">기본 동작</span>으로 지나갑니다 — 모든 질문을 기본 LLM 으로 보냅니다.</div>
+    답변 모델을 따로 지정하지 않으면 7 단계는 <span class="flow-box plan sm">기본 동작</span>(기본 LLM)으로 지나갑니다. 7 소형 · 양자화 모델은 <code>OPENAI_MODEL_URLS</code> 로 띄운 모델 이름을 경로에 지정해 씁니다(라우팅 화면의 '빠른 경로 답변 모델').</div>
   <div class="row">
     <div class="field"><label>컬렉션</label><select id="f-col"></select></div>
     <div class="field"><label>검색 방식</label><select id="f-mode"><option value="hybrid">하이브리드</option><option value="dense">의미</option><option value="bm25">BM25</option></select></div>
@@ -56,6 +56,9 @@
     <div class="field"><label>{{ S.rerank.no }} 리랭커</label><select id="f-rr"><option value="">끔</option></select></div>
     <div class="field"><label>답변 · 근거 검증</label><select id="f-ans"><option value="1">켬 (LLM)</option><option value="0">끔 (검색까지)</option></select></div>
     <div class="field"><label>근거 수</label><input id="f-top" type="number" value="5" min="1" max="20" style="width:70px"></div>
+    <div class="field"><label>답변 방식 (7·8)</label><select id="f-ansmode" title="라우팅을 켜면 어려운 질문에만 적용"><option value="rag">일반 RAG 답변</option><option value="agent">8a 에이전트</option><option value="best">8b Best-of-4 (보상)</option></select></div>
+    <div class="field"><label>{{ S.routing.no }} 라우팅</label><select id="f-route" title="켜면 위 향상 · 리랭커는 어려운 질문에만 씁니다"><option value="off">끔</option><option value="confidence">검색 확신도</option><option value="rule">규칙</option><option value="llm">LLM 판단</option></select></div>
+    <div class="field"><label>확신도 기준</label><input id="f-th" type="number" value="0.05" step="0.01" min="0" max="1" style="width:70px"></div>
   </div>
   <div class="row small" id="f-presets"><span class="muted">빠른 선택:</span></div>
   <div class="row" style="flex-wrap:nowrap"><input id="f-q" placeholder="질문 (Enter 로 실행)" style="flex:1"><button class="btn primary" id="f-run">실행</button></div>

@@ -20,10 +20,14 @@
 | **맵** | ✅ | 전체 흐름도와 단계 상태, 단계 소개(`/stages/<단계>`), **연결 실행**: 단계를 켜고 끄며 한 질문을 서비스 순서대로 처리(단계별 상태 · 시간, 미구현 단계는 기본 동작), 평가 세트로 부분 · 전체 연결 비교 |
 | **1 데이터 임베딩** | ✅ | 2026-10 기준 임베딩 모델 37개 · 리랭커 11개 카탈로그(EmbeddingGemma 2 포함), Hub 검색 · 다운로드 · LRU 로드, 플레이그라운드(검색 비교 · 유사도 행렬 · 임베딩 지도 · Matryoshka), 벤치마크(내장 · 공개 한국어 6종 · 내 데이터셋, 95% 신뢰구간 · 1위 대비 유의성, 차트) |
 | **2 RAG 검색** | ✅ | HWP · HWPX · PDF · DOCX 등 업로드, 청킹 5종(법령 · 판결문 구조 포함), 벡터 인덱스(Qdrant 기본 · pgvector · MariaDB, 작은 인덱스는 정확 검색), 한국어 형태소 BM25 · 하이브리드(RRF), 평가 세트(LLM 질문 생성 · 직접 입력) · 조합 평가, 근거 번호를 인용하는 LLM 답변(스트리밍)과 문장별 환각 검증 · 답변 일괄 평가 |
-| **3 리랭킹** | 🟡 | 검색 · 평가 · 답변에서 리랭커 선택(고도화 예정) |
+| **3 리랭킹** | ✅ | 크로스 인코더 11종 · LLM 목록형 리랭커, 1단계 순위와의 융합, 리랭커 × 후보 수 × 융합 품질-지연 평가 |
 | **4 검색 향상** | ✅ | 질의 재작성 · HyDE · 다중 질의(원 질의와 RRF 융합, LLM 변형 캐시), 검색 설정 `enhance` 로 검색 · 평가 · 답변 어디서든 적용, 기법별 나란히 비교 · 평가 세트 비교 (문맥 청크는 예정) |
 | **5 파인튜닝** | ✅ | 컬렉션 지문으로 학습 쌍 생성(LLM 질문 · ICT, 평가 근거 누수 방지), 대조 학습, 카탈로그 자동 등록, 학습 전후 짝지은 비교 · 다시 비교, 실행 기록(모델 카드) |
-| **6~8 라우팅 · 증류 · 양자화 · 에이전트 · 강화학습** | ⬜ | 원리 · 왜 · 계획 (예정) |
+| **6 라우팅** | ✅ | 규칙 · 검색 확신도 · LLM 판단 라우터로 쉬운 질문은 빠른 경로, 어려운 질문은 전체 경로(향상 · 리랭커), 평가 세트로 항상 빠른 · 항상 전체 · 오라클과 비용-품질 비교(확신도 기준값 곡선), 연결 실행에서도 사용 |
+| **7b 양자화** | ✅ | 임베딩 벡터 int8 · binary(+재점수) 정확도 · 메모리 비교(공개 벤치마크), LLM GGUF 비트 수(Q8_0 · Q4_0 · Q2_K)별 답변 품질 · 속도, 모델별 LLM 서버 주소 |
+| **7a 지식 증류** | ✅ | 임베딩 증류(교사 = 큰 임베딩 · 리랭커, MarginMSE, 격차 회복률 · 속도), LLM 증류 데이터(검증 통과한 교사 답 JSONL) |
+| **8a 에이전트** | ✅ | 검색 · 읽기 · 계산 도구를 여러 번 쓰는 다단계 RAG(단계 기록 · 근거 검증), 연결 실행 · 라우팅의 어려운 경로 답변 방식 |
+| **8b 강화학습** | ✅ | 보상 함수, Best-of-N, 선호 쌍(자동 · 사람) 수집, DPO 데이터 내보내기 |
 | 멀티모달 | ✅ | 텍스트로 이미지 검색(EmbeddingGemma 2 · Qwen3-VL-Embedding · Jina v5 Omni · CLIP), 이미지 · 영상을 컬렉션에 올려 장면 검색(영상 프레임 추출 · 같은 장면 제외, 썸네일 · 장면 시각으로 이동) |
 | 의미 응용 | ✅ | 추천(MMR) · 분류(제로샷 · 학습, 분류기 저장/예측 API) · 군집 · 중복/표절 · 이상/신종 탐지 · 키워드/요약 |
 | 공통 | ✅ | LLM 연결(로컬 llama.cpp · OpenAI 호환 · Claude API, 기본 Gemma 4 E4B), 모든 실행 이력 · 추세 · 내보내기, 대시보드 |
@@ -79,7 +83,7 @@ uv run uvicorn app.main:app --reload --port 8000
 전체 색인은 **[docs/README.md](docs/README.md)** 입니다. 문서는 흐름도의 단계 순서로 정리되어 있고, 단계마다 원리 · 왜 하는가 · 어떻게가 있습니다.
 
 - [docs/map.md](docs/map.md) — 전체 흐름도와 각 단계의 목적 · 계획
-- 단계: [1 임베딩](docs/stages/1-embedding/README.md) · [2 RAG](docs/stages/2-rag/README.md) · [3 리랭킹](docs/stages/3-rerank/README.md) · [4 검색 향상](docs/stages/4-search-lab/README.md) · [5 파인튜닝](docs/stages/5-finetune/README.md) · [6 라우팅](docs/stages/6-routing/README.md) · [7a 지식 증류](docs/stages/7a-distill/README.md) · [7b 양자화](docs/stages/7b-quant/README.md) · [8a 에이전트](docs/stages/8a-agent/README.md) · [8b 강화학습](docs/stages/8b-rl/README.md) · [멀티모달](docs/stages/multimodal/README.md) · [의미 응용](docs/stages/apps/README.md)
+- 단계: [1 임베딩](docs/stages/1-embedding/README.md) · [2 RAG](docs/stages/2-rag/README.md) · [3 리랭킹](docs/stages/3-rerank/README.md) ([상세](docs/stages/3-rerank/rerank.md)) · [4 검색 향상](docs/stages/4-search-lab/README.md) · [5 파인튜닝](docs/stages/5-finetune/README.md) · [6 라우팅](docs/stages/6-routing/README.md) ([상세](docs/stages/6-routing/routing.md)) · [7a 지식 증류](docs/stages/7a-distill/README.md) ([상세](docs/stages/7a-distill/distill.md)) · [7b 양자화](docs/stages/7b-quant/README.md) ([상세](docs/stages/7b-quant/quant.md)) · [8a 에이전트](docs/stages/8a-agent/README.md) ([상세](docs/stages/8a-agent/agent.md)) · [8b 강화학습](docs/stages/8b-rl/README.md) ([상세](docs/stages/8b-rl/rl.md)) · [멀티모달](docs/stages/multimodal/README.md) · [의미 응용](docs/stages/apps/README.md)
 - 가이드: [아키텍처](docs/guides/architecture.md) · [API](docs/guides/api.md) · [LLM 연결](docs/guides/llm.md) · [GPU 설치](docs/guides/gpu.md) · [문제 해결](docs/guides/troubleshooting.md)
 - 기록: [모델 검증과 실측](docs/records/model-verification.md) · [파인튜닝 실행 기록](docs/stages/5-finetune/finetune.md#실행-기록)
 
@@ -94,7 +98,7 @@ uv run ruff check app tests  # 린트
 uv run ruff format app tests # 포맷
 ```
 
-변경 사항은 [CHANGELOG.md](CHANGELOG.md)에 기록합니다.
+변경 사항은 [CHANGELOG.md](CHANGELOG.md)에 기록합니다. 버전은 [Semantic Versioning](https://semver.org/lang/ko/)을 따릅니다 — 버그 수정 · 문서 · 작은 개선은 패치(`0.3.1`), 새 기능 · 새 단계 · 새 화면은 마이너(`0.4.0`), 호환이 깨지는 큰 변경(API · 설정 이름 · 데이터 구조)은 메이저(`1.0.0`). 작업 묶음이 끝날 때마다 태그와 릴리스를 만듭니다.
 
 ## 라이선스
 

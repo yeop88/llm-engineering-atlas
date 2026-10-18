@@ -1,5 +1,7 @@
 """단계 레지스트리: 내용 완결성 · 화면 연결 · 메뉴 · 단계 소개 · 상단 설명 패널."""
 
+from markupsafe import escape
+
 from app.stages import registry
 from app.web.pages import PAGES, nav_items
 
@@ -40,7 +42,8 @@ def test_nav_covers_every_stage():
 def test_stage_and_map_pages(client):
     for s in registry.STAGES:
         r = client.get(f"/stages/{s.key}")
-        assert r.status_code == 200 and s.principle[:20] in r.text and s.status_label in r.text, s.key
+        # 화면은 Jinja 가 HTML 이스케이프한 글(따옴표 → &#39;)이라 같은 함수(markupsafe)로 바꿔 비교
+        assert r.status_code == 200 and str(escape(s.principle[:20])) in r.text and s.status_label in r.text, s.key
     assert client.get("/stages/없음").status_code == 404
     m = client.get("/roadmap").text
     assert all(f"/stages/{s.key}" in m for s in registry.STAGES) and "부분 연결" in m and "전체 연결" in m

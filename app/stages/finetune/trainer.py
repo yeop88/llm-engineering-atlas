@@ -1,7 +1,10 @@
-"""sentence-transformers Trainer 로 임베딩 모델 대조 학습 (MultipleNegativesRankingLoss).
+"""sentence-transformers Trainer 로 임베딩 모델 학습.
 
-한 배치의 (질문, 정답 지문) 쌍에서 다른 질문의 정답 지문을 오답으로 삼아, 질문과 자기 지문은 가깝게·남의 지문은 멀게
-학습한다. 배치가 클수록 오답이 많아져 효과가 좋지만 메모리를 많이 쓴다(Cached 버전은 작은 묶음으로 나눠 계산).
+- 파인튜닝(기본): 대조 학습(MultipleNegativesRankingLoss). 한 배치의 (질문, 정답 지문) 쌍에서 다른 질문의 정답 지문을
+  오답으로 삼아, 질문과 자기 지문은 가깝게·남의 지문은 멀게 학습한다. 배치가 클수록 오답이 많아져 효과가 좋지만 메모리를
+  많이 쓴다(Cached 버전은 작은 묶음으로 나눠 계산).
+- 증류(loss="margin_mse", 7a): (질문, 정답, 오답, 교사의 점수 차) 묶음으로, 학생의 '정답 점수 − 오답 점수'가 교사의 점수 차를
+  따라가게 한다(MarginMSELoss). 점수 '차이'를 배우므로 교사와 학생의 벡터 차원이 달라도 되고, 교사가 리랭커여도 된다.
 """
 
 import json
@@ -33,6 +36,7 @@ def train(
     from sentence_transformers import SentenceTransformer, SentenceTransformerTrainer, SentenceTransformerTrainingArguments
     from sentence_transformers.sentence_transformer.losses import (
         CachedMultipleNegativesRankingLoss,
+        MarginMSELoss,
         MatryoshkaLoss,
         MultipleNegativesRankingLoss,
     )
@@ -52,14 +56,23 @@ def train(
         model.max_seq_length = min(model.max_seq_length or 10**6, params["max_seq_length"])
     prompts = resolve_prompts(model, spec)
 
-    data = Dataset.from_dict({"anchor": [p["anchor"] for p in pairs], "positive": [p["positive"] for p in pairs]})
+    distill = params.get("loss") == "margin_mse"
+    cols = {"anchor": [p["anchor"] for p in pairs], "positive": [p["positive"] for p in pairs]}
+    if distill:
+        cols |= {"negative": [p["negative"] for p in pairs], "label": [float(p["label"]) for p in pairs]}
+        if "positive" in prompts:  # 오답도 문서이므로 문서 프롬프트를 똑같이
+            prompts["negative"] = prompts["positive"]
+    data = Dataset.from_dict(cols)
     eval_ds = None
     if params.get("eval_ratio") and len(pairs) >= 20:
         split = data.train_test_split(test_size=params["eval_ratio"], seed=params.get("seed", 0))
         data, eval_ds = split["train"], split["test"]
 
     mini = params.get("mini_batch_size")
-    loss = CachedMultipleNegativesRankingLoss(model, mini_batch_size=mini) if mini else MultipleNegativesRankingLoss(model)
+    if distill:
+        loss = MarginMSELoss(model)
+    else:
+        loss = CachedMultipleNegativesRankingLoss(model, mini_batch_size=mini) if mini else MultipleNegativesRankingLoss(model)
     dims = [d for d in params.get("matryoshka_dims") or [] if d <= model.get_sentence_embedding_dimension()]
     if dims:
         loss = MatryoshkaLoss(model, loss, matryoshka_dims=sorted(set(dims), reverse=True))
@@ -81,7 +94,8 @@ def train(
         per_device_eval_batch_size=params.get("batch_size", 16),
         learning_rate=params.get("learning_rate", 2e-5),
         warmup_ratio=params.get("warmup_ratio", 0.1),
-        batch_sampler=BatchSamplers.NO_DUPLICATES,  # 같은 지문이 한 배치에 두 번 들어가면 '오답'이 정답이 되므로 막는다
+        # 같은 지문이 한 배치에 두 번 들어가면 '오답'이 정답이 되므로 막는다(대조 학습). 증류는 오답이 묶음에 명시돼 있어 필요 없다.
+        batch_sampler=BatchSamplers.BATCH_SAMPLER if distill else BatchSamplers.NO_DUPLICATES,
         prompts=prompts or None,
         logging_steps=params.get("logging_steps", 1),
         eval_strategy="epoch" if eval_ds is not None else "no",

@@ -181,3 +181,40 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/flow/evaluate` | 평가 세트로 연결 방식(최대 4개, 첫 번째가 기준) 비교 작업. `{"eval_set_id", "flows": [FlowConfig], "max_queries"}` |
 
 `FlowConfig`: `{"label", "config": SearchConfig(enhance · reranker_id 포함), "answer": true, "context_top": 5, "max_context_chars", "max_tokens"}`
+
+## 라우팅
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/api/routing/route` | 질문 하나를 라우터들에 넣어 판단만 봄. `{"question", "easy": FlowPath, "routers": ["rule","confidence","llm"], "threshold", "rule_max_chars"}` → `decisions[]`(path easy/hard · 이유 · ms) |
+| POST | `/api/routing/evaluate` | 평가 세트로 라우터 비교 작업. `{"eval_set_id", "easy": FlowPath, "hard": FlowPath, "routers", "threshold", "max_queries"}` → 라우터별 어려움 비율 · 품질(95% 구간) · 전체 경로 대비 짝지은 차이 · 지연, 확신도 기준값 곡선(`sweep`), 질문별 판단 |
+
+연결 실행의 `FlowConfig` 에 `"routing": {"router", "threshold", "rule_max_chars", "hard": FlowPath}` 를 넣으면 라우터가 어렵다고 판단한 질문만 `hard` 경로로 처리합니다. `FlowPath.model` 로 경로별 답변 모델을 지정할 수 있습니다.
+
+## 양자화
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/quant/options` | 기술 카탈로그(`techniques` · `groups`) · KV 캐시 종류 · 검색 벤치마크 데이터셋 · 로컬 GGUF 파일(`LLM_MODELS_DIR`) · 모델별 서버 주소 |
+| POST | `/api/quant/vectors` | 양자화 조합 비교 작업. `{"dataset", "model_ids": [..3], "weights": ["w_fp32","w_bf16","w_int8"], "dims": [512, 256], "precisions": ["float32","float16","int8","int4","binary","binary_rescore","pq"], "rescore_mult": 4, "pq_m": 32, "max_queries"?}` → 모델별 조합 행(지표 · 기준 대비 짝지은 차이 · 기준 상위 10 유지율 · 메모리 · 검색 시간 · 인코딩 속도 · 파레토 여부) |
+| POST | `/api/quant/llm-command` | 가중치(GGUF) × KV 캐시 양자화 llama-server 명령과 `.env` 줄 만들기. `{"model_path", "alias", "port", "kv_k", "kv_v", "ctx"}` |
+| POST | `/api/quant/llm` | LLM 비교 작업(같은 근거). `{"eval_set_id", "config": SearchConfig, "models": [..4], "max_queries"}` → 모델별 품질 · 답변 지표 · 질문당 시간 · 생성 속도, 첫 모델 대비 짝지은 차이 |
+
+모델별 서버 주소: `.env` 의 `OPENAI_MODEL_URLS={"모델 이름": "http://주소/v1"}` — 목록에 없는 모델은 `OPENAI_BASE_URL`.
+
+## 리랭킹 · 지식 증류 · 에이전트 · 강화학습
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/api/rerank/evaluate` | 리랭커 평가 작업. `{"eval_set_id", "config": SearchConfig, "reranker_ids": [..4], "ks": [5,10,20], "llm": {"top", "max_chars", "model"}?}` → 리랭커 · 후보 수 · 융합별 nDCG(95% 구간) · 리랭킹 없음 대비 · 지연 |
+| GET / POST | `/api/distill` | 증류 실행 목록 / 시작(`FinetuneCreate` + `teacher_model_id`, 학생 = `base_model_id`) |
+| POST | `/api/distill/llm-data` | LLM 증류 데이터 작업. `{"collection_id", "chunk_set_id", "config", "n_passages", "teacher_model"?, "min_support": 0.8}` |
+| GET | `/api/distill/llm-data` · `/api/distill/llm-data/{name}` | 만든 JSONL 목록 / 내려받기 |
+| POST | `/api/agent/run` | 에이전트 실행 NDJSON 스트림: `step`(n · thought · action · input · observation · ms) … `final`(answer · sources · verify · steps). `{"question", "config", "agent": {"max_steps", "top_k", "max_chars"}}` |
+| GET | `/api/rl/reward-weights` | 보상 가중치 |
+| POST | `/api/rl/sample` | 같은 근거로 답 후보 n 개와 보상 (사람이 고르기용) |
+| GET / POST / DELETE | `/api/rl/preferences` · `/api/rl/preferences/{id}` | 선호 쌍 목록(자동 · 사람 수) / 저장 / 삭제 |
+| GET | `/api/rl/preferences/export` | DPO 형식 JSONL (`?source=auto|human`) |
+| POST | `/api/rl/evaluate` | Best-of-N 평가 작업 — 평소 답 대비 품질 · 보상 짝지은 비교, 보상 차가 큰 쌍 자동 저장 |
+
+검색 설정(`SearchConfig`): `"rerank_fusion": true`(크로스 인코더 순위와 1단계 순위 RRF), `"llm_rerank": {"top": 10, "max_chars": 300, "fusion": false}`(LLM 목록형, 연결 계층에서 적용). 처리 경로(`FlowPath`): `"model"`(경로 답변 모델), `"agent": {"max_steps", "top_k"}`(8a), `"best_of": 4`(8b).

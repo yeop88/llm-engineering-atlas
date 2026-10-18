@@ -161,3 +161,38 @@ document.querySelectorAll("details.stage-info").forEach(d => {
   d.open = localGet(key) !== "closed";
   d.addEventListener("toggle", () => localSet(key, d.open ? "open" : "closed"));
 });
+
+// 컬렉션 → 인덱스 · 청크 세트 · 평가 세트 선택 묶음. 단계 화면마다 같은 선택이 반복돼 한 곳에 둔다.
+// o = { col, idx?, cs?, set?, key?, onDetail? } (select 요소들). 고른 컬렉션은 key 로 기억한다.
+async function setupCollectionPickers(o) {
+  const cols = await api("/api/collections");
+  o.col.innerHTML = cols.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("") || '<option value="">컬렉션 없음</option>';
+  const saved = o.key ? localGet(o.key) : null;
+  if (saved && cols.some(c => String(c.id) === saved)) o.col.value = saved;
+  async function detail() {
+    if (!o.col.value) return null;
+    const d = await api(`/api/collections/${o.col.value}`);
+    if (o.idx) o.idx.innerHTML = d.indexes.filter(i => i.status === "ready").map(i => `<option value="${i.id}">${esc(i.model_hf_id.split(/[\/]/).pop())} · #${i.id}</option>`).join("") || '<option value="">준비된 인덱스 없음</option>';
+    if (o.cs) o.cs.innerHTML = d.chunk_sets.filter(c => c.status === "ready").map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("") || '<option value="">청크 세트 없음</option>';
+    if (o.set) {
+      const sets = (await api(`/api/collections/${d.id}/eval-sets`)).filter(s => s.status === "ready");
+      o.set.innerHTML = sets.map(s => `<option value="${s.id}">#${s.id} ${esc(s.name)} (${s.n_items}문항)</option>`).join("") || '<option value="">평가 세트 없음</option>';
+    }
+    o.onDetail?.(d);
+    return d;
+  }
+  o.col.addEventListener("change", () => { if (o.key) localSet(o.key, o.col.value); detail(); });
+  return detail();
+}
+
+// 작업 실행 → 진행률 표시 → 끝나면 render(result). 여러 단계 화면이 같은 모양으로 쓴다.
+async function runJobInto(btn, path, body, box, render) {
+  const job = await busy(btn, () => api(path, { method: "POST", body }));
+  box.hidden = false; btn.disabled = true;
+  try {
+    const done = await pollJob(job.id, j => { box.innerHTML = `<div class="progress"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>`; }, 1500);
+    if (done.status !== "done") { box.innerHTML = `<div class="errbox">${esc(done.error || done.status)}</div>`; return; }
+    box.hidden = true; render(done.result);
+  } finally { btn.disabled = false; }
+}
+const vsBadge = d => (d ? `${d.diff >= 0 ? "+" : ""}${(d.diff * 100).toFixed(1)}%p ${d.significant ? '<span class="badge err">유의</span>' : '<span class="badge">불확실</span>'}` : "기준");

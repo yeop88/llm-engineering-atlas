@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     openai_base_url: str = "https://api.openai.com/v1"
     openai_api_key: str | None = None
     openai_model: str | None = None  # 예: Ollama 는 qwen3:8b 처럼 서버에 받아 둔 모델 이름
+    # 모델 이름 → 서버 주소. llama-server 는 서버 하나에 모델 하나라, 소형 · 양자화 모델을 다른 포트에 띄워 라우팅의 빠른 경로에
+    # 쓰려면 모델마다 주소가 필요하다. 예: {"gemma-4-e4b-q2": "http://127.0.0.1:8082/v1"} (없는 모델은 OPENAI_BASE_URL)
+    openai_model_urls: dict[str, str] = {}
+    # 로컬 GGUF 파일 폴더 — 양자화 화면이 파일 목록 · 크기를 보여 주고 llama-server 실행 명령을 만들 때 쓴다(선택)
+    llm_models_dir: Path | None = None
     anthropic_api_key: str | None = None
     anthropic_model: str = "claude-sonnet-5-5"
     llm_timeout: float = 120.0

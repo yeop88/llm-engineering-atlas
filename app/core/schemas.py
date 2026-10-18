@@ -185,6 +185,16 @@ class EnhanceConfig(BaseModel):
     model: str | None = Field(default=None, max_length=200)
 
 
+class LLMRerankConfig(BaseModel):
+    """LLM 목록형 리랭커. 후보를 한 번에 보여 주고 순서를 받는다 — 후보 수만큼 부르지 않아 로컬 LLM 으로도 쓸 수 있다."""
+
+    top: int = Field(default=10, ge=2, le=30)  # 재정렬할 후보 수 (문맥에 들어가야 해서 작게)
+    max_chars: int = Field(default=300, ge=50, le=2000)  # 후보당 보여 줄 글자 수
+    fusion: bool = False  # 1단계 순위와 RRF 로 합침
+    provider: Literal["openai", "anthropic"] | None = None
+    model: str | None = Field(default=None, max_length=200)
+
+
 class SearchConfig(BaseModel):
     label: str = ""
     index_id: int | None = None  # 의미 검색(dense/hybrid)에 필요
@@ -196,6 +206,8 @@ class SearchConfig(BaseModel):
     candidates: int = Field(default=50, ge=1, le=500)
     reranker_id: int | None = None
     rerank_top: int = Field(default=30, ge=1, le=200)
+    rerank_fusion: bool = False  # 리랭커 순위와 1단계 순위를 RRF 로 합침
+    llm_rerank: LLMRerankConfig | None = None  # 3 리랭킹: LLM 목록형 재정렬 (연결 계층에서 적용)
     doc_ids: list[int] | None = None
     enhance: EnhanceConfig | None = None
 
@@ -388,6 +400,14 @@ class AnswerEvalRequest(LLMRef):
 
 
 # ── 흐름 연결 실행 (맵) ─────────────────────────────────────────────────────
+class AgentConfig(BaseModel):
+    """8a 에이전트: 도구(검색 · 읽기 · 계산)를 여러 번 쓰는 다단계 RAG. 비용이 단계 수에 비례해 상한을 둔다."""
+
+    max_steps: int = Field(default=5, ge=1, le=12)
+    top_k: int = Field(default=4, ge=1, le=10)  # 검색 한 번에 볼 지문 수
+    max_chars: int = Field(default=500, ge=100, le=3000)  # 지문당 보여 줄 글자 수
+
+
 class FlowPath(BaseModel):
     """한 가지 처리 경로. 검색 설정(SearchConfig)에 향상 · 리랭커가 들어 있고, 답변 단계는 켜고 끌 수 있다."""
 
@@ -399,6 +419,9 @@ class FlowPath(BaseModel):
     max_tokens: int = Field(default=500, ge=50, le=8000)
     # 이 경로의 답변 모델(같은 제공자 안에서). 비우면 기본 LLM. 7 소형 모델이 생기면 쉬운 경로에만 지정한다.
     model: str | None = Field(default=None, max_length=200)
+    agent: AgentConfig | None = None  # 8a: 답변을 에이전트로 (여러 번 검색 · 읽기)
+    best_of: int | None = Field(default=None, ge=2, le=8)  # 8b: 답을 N 개 만들어 보상이 가장 높은 것
+    best_of_temperature: float = Field(default=0.8, ge=0, le=2)
 
 
 class RoutingConfig(BaseModel):
@@ -426,6 +449,18 @@ class FlowEvalRequest(LLMRef):
     seed: int = 0
 
 
+class RerankEvalRequest(BaseModel):
+    """3 리랭킹 평가: 같은 1단계 검색 결과를 리랭커 × 후보 수 × 융합 여부로 재정렬해 비교."""
+
+    eval_set_id: int
+    config: SearchConfig  # 1단계 검색 (향상 · LLM 리랭킹은 무시)
+    reranker_ids: list[int] = Field(default_factory=list, max_length=4)
+    ks: list[int] = Field(default_factory=lambda: [5, 10, 20], min_length=1, max_length=6)
+    llm: LLMRerankConfig | None = None
+    max_queries: int | None = Field(default=None, ge=1, le=2000)
+    seed: int = 0
+
+
 class RouteTestRequest(LLMRef):
     """질문 하나를 여러 라우터에 넣어 판단만 본다(답변은 하지 않음). 확신도 라우터는 easy 경로로 검색한다."""
 
@@ -445,6 +480,91 @@ class RoutingEvalRequest(LLMRef):
     routers: list[Literal["rule", "confidence", "llm"]] = Field(default_factory=lambda: ["rule", "confidence", "llm"], min_length=1)
     threshold: float = Field(default=0.05, ge=0, le=1)
     rule_max_chars: int = Field(default=45, ge=5, le=500)
+    max_queries: int | None = Field(default=10, ge=1, le=1000)
+    seed: int = 0
+
+
+# ── 7b 양자화 ───────────────────────────────────────────────────────────────
+class QuantVectorsRequest(BaseModel):
+    """고른 기술끼리 모든 조합(가중치 × 차원 × 벡터 정밀도)을 같은 질문으로 비교한다. 기준 조합은 항상 포함."""
+
+    dataset: str  # 검색(retrieval) 벤치마크 데이터셋 이름
+    model_ids: list[int] = Field(min_length=1, max_length=3)
+    weights: list[Literal["w_fp32", "w_bf16", "w_int8"]] = Field(default_factory=lambda: ["w_fp32"])
+    dims: list[int] = Field(default_factory=list, max_length=6)  # Matryoshka 로 잘라 볼 차원들 (비우면 전체 차원만)
+    precisions: list[Literal["float32", "float16", "int8", "int4", "binary", "binary_rescore", "pq"]] = Field(
+        default_factory=lambda: ["float32", "int8", "binary", "binary_rescore"], min_length=1
+    )
+    rescore_mult: int = Field(default=4, ge=1, le=50)  # binary 후보를 k × 배수만큼 뽑아 재점수
+    pq_m: int = Field(default=32, ge=1, le=512)  # PQ 조각 수 (= 벡터당 바이트)
+    max_queries: int | None = Field(default=None, ge=10, le=20000)
+    seed: int = 0
+
+
+class LlamaCommandRequest(BaseModel):
+    """가중치 양자화(GGUF 파일) × KV 캐시 양자화를 함께 적용한 llama-server 실행 명령 만들기."""
+
+    model_path: str = Field(min_length=1, max_length=1000)
+    alias: str = Field(min_length=1, max_length=100, pattern=r"^[A-Za-z0-9._-]+$")
+    port: int = Field(default=8082, ge=1024, le=65535)
+    kv_k: Literal["f16", "q8_0", "q4_0"] = "f16"
+    kv_v: Literal["f16", "q8_0", "q4_0"] = "f16"
+    ctx: int = Field(default=8192, ge=512, le=262144)
+
+
+class QuantLLMRequest(BaseModel):
+    """같은 근거로 여러 LLM(같은 모델의 다른 양자화 등)이 답하게 해 답변 품질 · 속도를 비교한다."""
+
+    eval_set_id: int
+    config: SearchConfig
+    models: list[str] = Field(min_length=1, max_length=4)  # 첫 번째가 비교 기준
+    provider: Literal["openai", "anthropic"] | None = None
+    max_queries: int | None = Field(default=10, ge=1, le=1000)
+    context_top: int = Field(default=5, ge=1, le=20)
+    max_context_chars: int = Field(default=6000, ge=500, le=60000)
+    max_tokens: int = Field(default=500, ge=50, le=8000)
+    seed: int = 0
+
+
+# ── 8a 에이전트 · 8b 강화학습 ───────────────────────────────────────────────
+class AgentRunRequest(LLMRef):
+    question: str = Field(min_length=1, max_length=2000)
+    config: SearchConfig
+    agent: AgentConfig = Field(default_factory=AgentConfig)
+
+
+class RLSampleRequest(LLMRef):
+    """사람이 고를 답 후보 만들기: 같은 질문 · 같은 근거로 n 개(후보 0 = 평소 답)와 각 보상."""
+
+    question: str = Field(min_length=1, max_length=2000)
+    collection_id: int | None = None
+    config: SearchConfig
+    n: int = Field(default=2, ge=2, le=8)
+    temperature: float = Field(default=0.9, ge=0, le=2)
+    context_top: int = Field(default=5, ge=1, le=20)
+
+
+class PreferenceIn(BaseModel):
+    collection_id: int | None = None
+    question: str = Field(min_length=1, max_length=4000)
+    context: str = Field(max_length=100000)
+    chosen: str = Field(min_length=1, max_length=20000)
+    rejected: str = Field(min_length=1, max_length=20000)
+    chosen_reward: float | None = None
+    rejected_reward: float | None = None
+    meta: dict[str, Any] = Field(default_factory=dict)
+
+
+class RLEvalRequest(LLMRef):
+    """평가 세트로 Best-of-N(보상으로 고르기) vs 평소 답 비교, 보상 차가 큰 쌍은 자동으로 선호 쌍에 저장."""
+
+    eval_set_id: int
+    config: SearchConfig
+    n: int = Field(default=4, ge=2, le=8)
+    temperature: float = Field(default=0.9, ge=0, le=2)
+    margin: float = Field(default=0.3, ge=0, le=3)  # 자동 선호 쌍으로 저장할 최소 보상 차
+    collect: bool = True
+    context_top: int = Field(default=5, ge=1, le=20)
     max_queries: int | None = Field(default=10, ge=1, le=1000)
     seed: int = 0
 
@@ -475,4 +595,28 @@ class FinetuneCreate(BaseModel):
     max_seq_length: int | None = Field(default=512, ge=32, le=8192)
     matryoshka_dims: list[int] = Field(default_factory=list, max_length=12)
     eval_ratio: float = Field(default=0.0, ge=0, le=0.3)  # 학습 쌍 일부를 검증 손실용으로 떼어 둠
+    seed: int = 0
+
+
+class DistillCreate(FinetuneCreate):
+    """7a 임베딩 증류. base_model_id = 학생(작은 모델), teacher_model_id = 교사(큰 임베딩 모델 또는 리랭커)."""
+
+    teacher_model_id: int
+
+
+class LLMDistillDataRequest(BaseModel):
+    """7a LLM 증류 데이터: 컬렉션 지문으로 질문을 만들고 교사 LLM 이 근거로 답한 것 중 검증을 통과한 것만 JSONL 로."""
+
+    name: str = Field(default="", max_length=100, pattern=r"^[A-Za-z0-9가-힣._-]*$")
+    collection_id: int
+    chunk_set_id: int  # 질문을 만들 지문
+    config: SearchConfig  # 답할 때 쓸 검색 설정 (서비스와 같게)
+    n_passages: int = Field(default=30, ge=1, le=2000)
+    exclude_eval_set_ids: list[int] = Field(default_factory=list)  # 이 평가 세트들의 근거가 든 지문은 질문 만들기에서 뺀다
+    provider: Literal["openai", "anthropic"] | None = None
+    teacher_model: str | None = Field(default=None, max_length=200)  # 비우면 기본 LLM
+    min_support: float = Field(default=0.8, ge=0, le=1)  # 문장 근거율이 이보다 낮은 답은 버림
+    context_top: int = Field(default=5, ge=1, le=20)
+    max_context_chars: int = Field(default=6000, ge=500, le=60000)
+    max_tokens: int = Field(default=500, ge=50, le=8000)
     seed: int = 0

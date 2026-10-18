@@ -59,6 +59,12 @@ PAGES = {
     "/rag/answer": ("rag/answer.html", "rag_answer"),
     "/finetune": ("finetune/finetune.html", "finetune"),
     "/search-lab": ("search_lab/search_lab.html", "search_lab"),
+    "/routing": ("routing/routing.html", "routing"),
+    "/quant": ("quant/quant.html", "quant"),
+    "/rerank": ("rerank/rerank.html", "rerank"),
+    "/distill": ("distill/distill.html", "distill"),
+    "/agent": ("agent/agent.html", "agent"),
+    "/rl": ("rl/rl.html", "rl"),
     "/roadmap": ("roadmap.html", "roadmap"),
 }
 

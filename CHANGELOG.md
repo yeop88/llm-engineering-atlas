@@ -4,6 +4,24 @@
 
 ## [Unreleased]
 
+### 추가
+- **6 라우팅**: 규칙(질문 형태) · 검색 확신도(1·2위 점수 차) · LLM 판단 라우터로 쉬운 질문은 빠른 경로, 어려운 질문은 전체 경로(향상 · 리랭커)로 처리. 경로별 답변 모델 지정(7 소형 모델 자리). 평가: 질문마다 두 경로를 한 번씩 실행한 기록으로 라우터를 채점, 항상 빠른 · 항상 전체 · 오라클(상한)과 비교, 확신도 기준값 비용-품질 곡선. 라우팅 테스트 화면(`/routing`), `/api/routing/route` · `/api/routing/evaluate` — `docs/stages/6-routing/routing.md`
+- **7b 양자화**: 2026-10 기준 양자화 기술 카탈로그(벡터 · 차원 · 모델 가중치 · LLM, 원리 · 장단점 · 언제)에서 골라 실행. **여러 양자화를 동시에** — 모델 가중치(fp32 · bf16 · int8 동적) × Matryoshka 차원 × 벡터 정밀도(float16 · int8 · int4 · binary · binary+int8 재점수 · PQ)의 모든 조합을 공개 검색 벤치마크로 채점(기준과 짝지은 비교, 기준 상위 10 유지율, 벡터당 · 100만 개 메모리, 인코딩 속도, 파레토 최적 표시). LLM 은 GGUF 가중치 × KV 캐시 양자화를 함께 적용한 llama-server 명령을 만들고(`LLM_MODELS_DIR`), 같은 질문 · 같은 근거로 근거 인용 · 속도 비교. 양자화 테스트 화면(`/quant`), `/api/quant/vectors` · `/api/quant/llm` · `/api/quant/llm-command` — `docs/stages/7b-quant/quant.md`
+- **3 리랭킹 고도화**: LLM 목록형 리랭커(후보를 한 번에 보여 주고 순서를 받음, 연결 계층에서 적용 — 검색 설정 `llm_rerank`), 리랭크 융합(리랭커 순위와 1단계 순위 RRF — `rerank_fusion`), 리랭커 × 후보 수 × 융합 품질-지연 평가(크로스 인코더 점수는 한 번만 매겨 잘라 계산). 리랭킹 테스트 화면(`/rerank`), `/api/rerank/evaluate` — `docs/stages/3-rerank/rerank.md`
+- **7a 지식 증류**: 임베딩 증류(교사 = 큰 임베딩 모델 또는 리랭커, 어려운 오답 · 점수 차를 학생이 배우는 MarginMSE, 카탈로그 등록, 교사 · 학생 전 · 후 비교 · 격차 회복률 · 인코딩 속도), LLM 증류 데이터(새 질문 → 교사 LLM 답 → 검증 통과한 답만 대화형 JSONL). 지식 증류 테스트 화면(`/distill`), `/api/distill` · `/api/distill/llm-data` — `docs/stages/7a-distill/distill.md`
+- **8a 에이전트**: 검색 · 읽기(앞뒤 청크) · 계산 도구를 여러 번 쓰는 다단계 RAG(JSON 행동, 단계 상한 · 형식 오류 시 모은 근거로 답함, 문장별 근거 검증), 단계 실시간 스트리밍. 에이전트 테스트 화면(`/agent`), `/api/agent/run`. 연결 실행 · 라우팅의 답변 방식으로 사용 — `docs/stages/8a-agent/agent.md`
+- **8b 강화학습**: 설명 가능한 보상 함수, Best-of-N(보상 최고 고르기 — 평소 답과 짝지은 비교), 선호 쌍 수집(자동 · 사람, 마이그레이션 0006 `preference_pairs`), DPO 형식 JSONL 내보내기. 강화학습 테스트 화면(`/rl`), `/api/rl/*` — `docs/stages/8b-rl/rl.md`
+- 연결 실행 · 라우팅에 **답변 방식**(일반 RAG · 8a 에이전트 · 8b Best-of-N)과 경로별 답변 모델 — 맵의 '어려운 질문 → 에이전트' 갈래가 실제로 이어짐
+- 학습기에 증류 손실(MarginMSE) 추가, 공용 화면 함수(`setupCollectionPickers` · `runJobInto`)
+- **모델별 LLM 서버 주소** `OPENAI_MODEL_URLS`: 모델 이름 → 서버 주소. 양자화 · 소형 모델을 다른 포트에 띄워 비교하거나 라우팅의 빠른 경로에 연결
+- 연결 실행(맵)에 6 라우팅 선택과 '라우팅' 빠른 선택, 연결 비교에 어려움으로 보낸 비율 · 단계 실행 비율
+
+### 수정
+- LLM 비교 측정이 서버의 프롬프트 캐시를 재사용해 한 모델만 빨라 보이던 문제: 비교 요청은 `cache_prompt: false`, llama-server 의 단계별 시간으로 읽기 · 생성 속도를 나눠 기록 (실측 run #229 → #230 정정)
+
+### 변경
+- 연결 실행에서 라우팅을 쓰지 않을 때 6 단계 상태가 '기본 동작'에서 '꺼짐'으로 바뀜
+
 ## [0.3.0] - 2026-10-18
 
 ### 추가

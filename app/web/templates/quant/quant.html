@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}양자화 테스트{% endblock %}
+{% block content %}
+<h1>양자화 테스트</h1>
+<p class="lead">숫자를 낮은 정밀도로 줄여 메모리 · 속도를 얻고, 그 대가로 정확도가 얼마나 떨어지는지 잽니다. 아래 카탈로그에서 기술을 고르면 <b>고른 기술끼리 모든 조합</b>(예: 모델 int8 + 256차원 + binary 재점수)을 같은 질문으로 비교합니다.</p>
+
+<div class="card stack">
+  <div class="row between"><h2>양자화 기술 (2026-10 기준)</h2><span class="small muted"><span class="badge ok">실행</span> 이 앱에서 바로 비교 · <span class="badge">설명</span> 원리만 (외부 의존성 · GPU · 벡터 DB 설정 필요)</span></div>
+  <div id="t-cat" class="stack"></div>
+</div>
+
+<div class="card stack" style="margin-top:16px">
+  <h2>임베딩 조합 실험</h2>
+  <div class="small muted">위에서 고른 <b>모델 가중치 × 차원 × 벡터 정밀도</b>의 모든 조합을 공개 검색 벤치마크로 채점합니다. 기준(float32 가중치 · 전체 차원 · float32 벡터)은 항상 포함되고, 다른 조합은 기준과 질문별로 짝지어 비교합니다. 양자화 손실은 보통 1~2%p 라 질문이 많은 데이터셋이 필요합니다.</div>
+  <div class="row">
+    <div class="field"><label>데이터셋 (검색)</label><select id="v-ds"></select></div>
+    <div class="field grow"><label>임베딩 모델 (최대 3개, Ctrl 로 여러 개)</label><select id="v-models" multiple size="4"></select></div>
+  </div>
+  <div class="row">
+    <div class="field"><label>MRL 차원 (쉼표, 비우면 전체만)</label><input id="v-dims" placeholder="예: 512, 256" style="width:150px"></div>
+    <div class="field"><label>재점수 후보 배수</label><input id="v-mult" type="number" value="4" min="1" max="50" style="width:70px"></div>
+    <div class="field"><label>PQ 조각 수 (바이트)</label><input id="v-pqm" type="number" value="32" min="1" max="512" style="width:70px"></div>
+    <div class="field"><label>질문 수 (비우면 전부)</label><input id="v-n" type="number" min="10" style="width:90px"></div>
+    <div style="align-self:end"><button class="btn primary" id="v-run">조합 비교 실행</button></div>
+  </div>
+  <div class="small muted" id="v-combo"></div>
+  <div id="v-progress" hidden></div>
+  <div id="v-out"></div>
+</div>
+
+<div class="card stack" style="margin-top:16px">
+  <h2>LLM 양자화</h2>
+  <div class="small muted">LLM 은 서버(llama-server)를 그 양자화로 띄워 비교합니다. 가중치 양자화(GGUF 파일)와 KV 캐시 양자화를 <b>함께</b> 적용한 실행 명령을 만들고, 띄운 서버들을 같은 질문 · 같은 근거로 비교하세요.</div>
+  <h3>1. 서버 실행 명령 만들기</h3>
+  <div class="row">
+    <div class="field grow"><label>가중치 (GGUF 파일 — <code>LLM_MODELS_DIR</code>)</label><select id="c-file"></select></div>
+    <div class="field"><label>KV 캐시 K</label><select id="c-k"></select></div>
+    <div class="field"><label>KV 캐시 V</label><select id="c-v"></select></div>
+    <div class="field"><label>이름(alias)</label><input id="c-alias" placeholder="gemma-4-e4b-q4kv8" style="width:170px"></div>
+    <div class="field"><label>포트</label><input id="c-port" type="number" value="8084" style="width:80px"></div>
+    <div style="align-self:end"><button class="btn" id="c-make">명령 만들기</button></div>
+  </div>
+  <div id="c-out"></div>
+  <h3>2. 같은 근거로 비교</h3>
+  <div class="row">
+    <div class="field"><label>컬렉션</label><select id="l-col"></select></div>
+    <div class="field"><label>벡터 인덱스 (의미 검색)</label><select id="l-idx"></select></div>
+    <div class="field grow"><label>평가 세트</label><select id="l-set"></select></div>
+  </div>
+  <div class="row">
+    <div class="field grow"><label>모델 이름 (쉼표로, 기준을 먼저 — 보통 가장 정밀한 것)</label><input id="l-models" list="l-model-list" placeholder="예: gemma-4-e4b-q8, gemma-4-e4b, gemma-4-e4b-q2"><datalist id="l-model-list"></datalist></div>
+    <div class="field"><label>질문 수</label><input id="l-n" type="number" value="10" min="1" style="width:80px"></div>
+    <div style="align-self:end"><button class="btn primary" id="l-run">비교 실행</button></div>
+  </div>
+  <div id="l-progress" hidden></div>
+  <div id="l-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/quant.js') }}"></script>
+{% endblock %}

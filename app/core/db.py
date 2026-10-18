@@ -239,6 +239,28 @@ class FinetuneRun(Base):
     finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
 
 
+class PreferencePair(Base):
+    """8b 강화학습의 선호 쌍: 같은 질문 · 같은 근거에 대한 좋은 답(chosen)과 나쁜 답(rejected).
+
+    보상 함수로 자동으로 고른 것(source=auto)과 사람이 고른 것(source=human)을 함께 모아 DPO 등 선호 학습 데이터로 내보낸다.
+    근거(context)를 함께 저장하는 이유: 선호는 '이 근거가 주어졌을 때' 어느 답이 나은가라서, 근거가 빠지면 학습 신호가 틀어진다.
+    """
+
+    __tablename__ = "preference_pairs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    collection_id: Mapped[int | None] = mapped_column(ForeignKey("collections.id", ondelete="SET NULL"), nullable=True, index=True)
+    question: Mapped[str] = mapped_column(Text)
+    context: Mapped[str] = mapped_column(Text)
+    chosen: Mapped[str] = mapped_column(Text)
+    rejected: Mapped[str] = mapped_column(Text)
+    chosen_reward: Mapped[float | None] = mapped_column(Float, nullable=True)
+    rejected_reward: Mapped[float | None] = mapped_column(Float, nullable=True)
+    source: Mapped[str] = mapped_column(String(20), default="auto")  # auto | human
+    meta: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
 _settings = get_settings()
 _is_sqlite = _settings.db_url.startswith("sqlite")
 engine = create_engine(_settings.db_url, connect_args={"check_same_thread": False} if _is_sqlite else {})

@@ -12,7 +12,10 @@ const F_PRESETS = [
   { key: "search", label: "1→2 검색만", enh: false, rr: false, ans: false },
   { key: "rag", label: "1→2→답변", enh: false, rr: false, ans: true },
   { key: "enh", label: "4→1→2→답변", enh: true, rr: false, ans: true },
-  { key: "full", label: "전체: 4→1→2→3→6→7·8→답변", enh: true, rr: true, ans: true },
+  { key: "full", label: "전체: 4→1→2→3→답변", enh: true, rr: true, ans: true },
+  { key: "agent", label: "1→2→8a 에이전트", enh: false, rr: false, ans: true, mode: "agent" },
+  // 6 라우팅: 쉬운 질문은 1→2→답변, 확신도가 낮은 질문만 전체 경로(+에이전트) — 맵의 '쉬운 질문 / 어려운 질문' 갈래 그대로
+  { key: "routed", label: "6 라우팅: 쉬우면 1→2→답변, 어려우면 4→3→8a 에이전트", enh: true, rr: true, ans: true, route: "confidence", mode: "agent" },
 ];
 let fLastEnh = "rewrite", fLastRr = "";
 
@@ -26,7 +29,7 @@ async function fLoad() {
   fLastRr = rr[0] ? String(rr[0].id) : "";
   $("#f-presets").innerHTML += F_PRESETS.map(p => `<button class="btn sm" data-p="${p.key}">${esc(p.label)}</button>`).join("");
   $$("[data-p]", $("#f-presets")).forEach(b => (b.onclick = () => fApply(F_PRESETS.find(p => p.key === b.dataset.p))));
-  $("#f-pick").innerHTML = '<span class="muted">비교할 연결:</span>' + F_PRESETS.map((p, i) => `<label class="row" style="margin:0;gap:4px"><input type="checkbox" value="${p.key}" ${i !== 2 ? "checked" : ""}> ${esc(p.label)}</label>`).join("");
+  $("#f-pick").innerHTML = '<span class="muted">비교할 연결:</span>' + F_PRESETS.map((p, i) => `<label class="row" style="margin:0;gap:4px"><input type="checkbox" value="${p.key}" ${["search", "rag", "full", "routed"].includes(p.key) ? "checked" : ""}> ${esc(p.label)}</label>`).join("");
   await fDetail();
 }
 async function fDetail() {
@@ -47,6 +50,8 @@ function fApply(p) {
   $("#f-enh").value = p.enh ? fLastEnh : "none";
   $("#f-rr").value = p.rr ? fLastRr : "";
   $("#f-ans").value = p.ans ? "1" : "0";
+  $("#f-route").value = p.route || "off";
+  $("#f-ansmode").value = p.mode || "rag";
   toast(`${p.label}${p.rr && !fLastRr ? " — 받아 둔 리랭커가 없어 리랭킹은 꺼집니다" : ""}`);
 }
 $("#f-col").addEventListener("change", () => { localSet("flow-col", $("#f-col").value); fDetail(); });
@@ -56,13 +61,16 @@ function fConfig(p) {
   const bm25 = $("#f-mode").value === "bm25";
   const enh = p ? (p.enh ? ($("#f-enh").value !== "none" ? $("#f-enh").value : fLastEnh) : "none") : $("#f-enh").value;
   const rr = p ? (p.rr ? ($("#f-rr").value || fLastRr) : "") : $("#f-rr").value;
-  return {
-    label: p?.label || "",
-    config: { mode: $("#f-mode").value, index_id: bm25 ? null : +$("#f-idx").value || null, chunk_set_id: bm25 ? +$("#f-cs").value || null : null,
-      reranker_id: +rr || null, enhance: enh === "none" ? null : { technique: enh } },
-    answer: p ? p.ans : $("#f-ans").value === "1",
-    context_top: +$("#f-top").value || 5,
-  };
+  const search = { mode: $("#f-mode").value, index_id: bm25 ? null : +$("#f-idx").value || null, chunk_set_id: bm25 ? +$("#f-cs").value || null : null };
+  const answer = p ? p.ans : $("#f-ans").value === "1";
+  // 답변 방식(8a 에이전트 · 8b Best-of-N)은 비싼 쪽 경로에만 붙인다 — 라우팅을 켜면 어려운 질문에만 쓰인다
+  const mode = p ? p.mode || "rag" : $("#f-ansmode").value;
+  const how = mode === "agent" ? { agent: { max_steps: 5, top_k: 4 } } : mode === "best" ? { best_of: 4 } : {};
+  const full = { config: { ...search, reranker_id: +rr || null, rerank_top: 10, enhance: enh === "none" ? null : { technique: enh } }, answer, context_top: +$("#f-top").value || 5, ...how };
+  const router = p ? p.route : $("#f-route").value !== "off" ? $("#f-route").value : null;
+  if (!router) return { label: p?.label || "", ...full };
+  // 라우팅을 켜면 위의 향상 · 리랭커 설정은 '어려운 질문용 전체 경로'가 되고, 기본 경로는 향상 · 리랭커 없이 간다
+  return { label: p?.label || "", config: search, answer, context_top: full.context_top, routing: { router, threshold: +$("#f-th").value || 0.05, hard: full } };
 }
 
 function fTrace(steps) {
@@ -112,7 +120,7 @@ function fRenderEval(r) {
   $("#f-eval-out").innerHTML = `<div class="row between"><h3>결과 · ${esc(r.eval_set?.name || "")}</h3><span class="small muted">질문 ${r.n_queries}개${r.seconds != null ? ` · ${r.seconds}s` : ""}${r.run_id ? ` · run #${r.run_id}` : ""}</span></div>
     <div class="table-wrap"><table>
       <tr><th>연결</th><th class="num">nDCG@10</th><th class="num">Hit@1</th><th class="num">Hit@5</th><th>기준 대비</th><th class="num" title="'근거에서 찾을 수 없다'고 하지 않은 비율">답변률</th><th class="num" title="근거 문장을 담은 청크를 답변이 인용한 비율">근거 인용</th><th class="num" title="답변 문장 중 인용한 근거에 내용이 있는 비율">문장 근거율</th><th class="num">지연 평균/p95</th><th>단계별 평균 지연</th></tr>
-      ${ok.map(x => `<tr><td class="small"><b>${esc(x.label)}</b></td><td class="num">${pct(x.metrics["ndcg@10"])}</td><td class="num">${pct(x.metrics["hit@1"])}</td><td class="num">${pct(x.metrics["hit@5"])}</td>
+      ${ok.map(x => `<tr><td class="small"><b>${esc(x.label)}</b>${x.hard_rate != null ? `<div class="muted">어려움으로 보냄 ${pct(x.hard_rate)}%</div>` : ""}</td><td class="num">${pct(x.metrics["ndcg@10"])}</td><td class="num">${pct(x.metrics["hit@1"])}</td><td class="num">${pct(x.metrics["hit@5"])}</td>
         <td class="small nowrap">${vs(x)}</td><td class="num">${ans(x, "answer_rate")}</td><td class="num">${ans(x, "evidence_cited")}</td><td class="num">${ans(x, "sentence_support")}</td>
         <td class="num small nowrap">${x.latency_ms.mean} / ${x.latency_ms.p95}ms</td>
         <td style="min-width:200px"><div class="stackbar" style="width:${Math.max(4, x.steps.reduce((s, t) => s + t.mean_ms, 0) / maxMs * 100)}%">${x.steps.filter(t => t.mean_ms > 0).map(t => `<span style="flex:${t.mean_ms};background:var(--series-${F_COLOR[t.key]})" title="${esc(title[t.key])}: ${t.mean_ms}ms"></span>`).join("")}</div>

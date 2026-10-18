@@ -17,14 +17,14 @@ LLM Engineering Atlas 의 문서는 [전체 맵](map.md)의 단계 순서로 정
 |---|---|---|---|---|
 | 1 | [데이터 임베딩](stages/1-embedding/README.md) | ✅ 구현됨 | 텍스트·이미지를 의미 벡터로 바꾸는 모델을 고르고 비교한다 | [모델 카탈로그](stages/1-embedding/models.md) · [벤치마크](stages/1-embedding/benchmarks.md) · [시각화](stages/1-embedding/visualization.md) |
 | 2 | [RAG 검색](stages/2-rag/README.md) | ✅ 구현됨 | 내 문서에서 근거를 찾아 LLM 이 그 근거로 답하게 한다 | [문서 검색(RAG)](stages/2-rag/rag.md) · [LLM 연결](guides/llm.md) |
-| 3 | [리랭킹](stages/3-rerank/README.md) | 🟡 기초 있음 | 1단계 검색이 고른 후보를 정밀하게 다시 줄 세운다 | [RAG 조합 평가 실측](stages/2-rag/rag.md) |
+| 3 | [리랭킹](stages/3-rerank/README.md) | ✅ 구현됨 | 1단계 검색이 고른 후보를 정밀하게 다시 줄 세운다 | [리랭킹: 방법 · 실측](stages/3-rerank/rerank.md) |
 | 4 | [검색 향상](stages/4-search-lab/README.md) | ✅ 구현됨 | 모델을 바꾸지 않고 질의를 LLM 으로 다듬어 검색을 좋게 한다 | [검색 향상: 기법 · 측정 기록](stages/4-search-lab/search-lab.md) |
 | 5 | [파인튜닝](stages/5-finetune/README.md) | ✅ 구현됨 | 임베딩 모델을 내 문서 분야에 맞게 추가 학습한다 | [파인튜닝: 왜 · 어떻게 · 실행 기록](stages/5-finetune/finetune.md) |
-| 6 | [라우팅](stages/6-routing/README.md) | ⬜ 예정 | 질문의 난이도 · 종류를 먼저 분류해 처리할 모델을 고른다 | — |
-| 7a | [지식 증류](stages/7a-distill/README.md) | ⬜ 예정 | 큰 모델의 판단을 작은 모델이 따라 하도록 학습한다 | — |
-| 7b | [양자화](stages/7b-quant/README.md) | ⬜ 예정 | 가중치 · 벡터를 낮은 비트로 바꿔 메모리와 지연을 줄인다 | — |
-| 8a | [에이전틱 AI](stages/8a-agent/README.md) | ⬜ 예정 | LLM 이 계획을 세우고 도구를 여러 번 써서 어려운 질문을 푼다 | — |
-| 8b | [강화학습](stages/8b-rl/README.md) | ⬜ 예정 | 보상 · 선호 신호로 모델의 행동을 최적화한다 | — |
+| 6 | [라우팅](stages/6-routing/README.md) | ✅ 구현됨 | 질문의 난이도를 먼저 판단해 쉬운 질문은 싼 경로, 어려운 질문은 비싼 경로로 보낸다 | [라우팅: 라우터 · 평가 방법 · 실측](stages/6-routing/routing.md) |
+| 7a | [지식 증류](stages/7a-distill/README.md) | ✅ 구현됨 | 큰 모델의 판단을 작은 모델이 따라 하도록 학습한다 | [지식 증류: 방법 · 실측](stages/7a-distill/distill.md) |
+| 7b | [양자화](stages/7b-quant/README.md) | ✅ 구현됨 | 가중치 · 벡터를 낮은 비트로 바꿔 메모리와 지연을 줄이고, 정확도 손실을 잰다 | [양자화: 방법 · 실측](stages/7b-quant/quant.md) |
+| 8a | [에이전틱 AI](stages/8a-agent/README.md) | ✅ 구현됨 | LLM 이 도구를 여러 번 써서 어려운 질문을 푼다 | [에이전트: 방법 · 실측](stages/8a-agent/agent.md) |
+| 8b | [강화학습](stages/8b-rl/README.md) | ✅ 구현됨 | 보상 · 선호 신호로 답변 행동을 좋게 만든다 | [강화학습: 보상 · 방법 · 실측](stages/8b-rl/rl.md) |
 | M | [멀티모달](stages/multimodal/README.md) | ✅ 구현됨 | 이미지 · 영상 장면을 텍스트와 같은 벡터 공간에서 찾는다 | [멀티모달: 모델 · 이미지 · 영상 컬렉션 · 실측](stages/multimodal/multimodal.md) |
 | A | [의미 응용](stages/apps/README.md) | ✅ 구현됨 | 임베딩으로 추천 · 분류 · 군집 · 중복 · 이상 탐지 · 키워드를 만든다 | [의미 응용](stages/apps/apps.md) |
 

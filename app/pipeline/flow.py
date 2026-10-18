@@ -4,8 +4,9 @@
 - 단계는 각자 화면에서 따로 검증했다. 마지막으로 '이어 붙였을 때' 품질 · 지연이 어떻게 되는지를 봐야
   어느 단계가 병목이고 어느 단계가 품질을 올리는지 알 수 있다. 그래서 같은 질문(평가 세트)을 여러 연결
   방식(부분 연결 · 전체 연결)으로 돌려 나란히 비교한다.
-- 아직 만들지 않은 단계(라우팅 · 증류 · 양자화 · 에이전트 · 강화학습)는 흐름에서 빼지 않고 '기본 동작'으로
-  지나가게 했다(모든 질문 → 기본 LLM). 흐름 전체를 지금 돌려 볼 수 있고, 단계를 구현하면 그 자리만 바꾸면 된다.
+- 처음에는 만들지 않은 단계(라우팅 · 증류 · 양자화 · 에이전트 · 강화학습)를 흐름에서 빼지 않고 '기본 동작'으로
+  지나가게 했다(모든 질문 → 기본 LLM). 흐름 전체를 먼저 돌려 보고, 단계를 구현할 때마다 그 자리만 바꿨다 —
+  지금은 6 라우팅이 경로를, 7 모델 지정 · 8a 에이전트 · 8b Best-of-N 이 답변 방식을 그 자리에서 정한다.
 - 검색 부분(4 향상 → 1 임베딩 → 2 검색 → 3 리랭킹)은 run_search 한 번으로 실행하고, 단계별 시간은 검색이
   돌려주는 timings_ms 를 단계에 나눠 담는다. 단계마다 따로 부르면 검색 경로가 둘이 되어 결과가 어긋날 수 있다.
 """
@@ -19,17 +20,19 @@ from app.core import llm, stats
 from app.core.jobs import JobCancelled
 from app.pipeline.search import ENHANCE_LABEL, run_search
 from app.stages import registry
+from app.stages.agent import agent
 from app.stages.rag import answer, evaluation
+from app.stages.rl import service as rl
 from app.stages.routing import routers
 
-RUN, OFF, DEFAULT = "run", "off", "default"  # 실행 · 꺼 둠 · 미구현이라 기본 동작
+RUN, OFF, DEFAULT = "run", "off", "default"  # 실행 · 꺼 둠 · 따로 지정하지 않아 기본 동작(예: 기본 LLM)
 
 # 서비스 순서. timing 은 검색 timings_ms 의 어느 항목이 이 단계의 시간인지.
 STEPS: list[dict[str, Any]] = [
     {"key": "search_lab", "title": "질의 다듬기", "timing": ("llm",)},
     {"key": "embedding", "title": "질의 임베딩", "timing": ("load", "embed")},
     {"key": "rag", "title": "검색", "timing": ("vector_search", "bm25")},
-    {"key": "rerank", "title": "재정렬", "timing": ("rerank_load", "rerank")},
+    {"key": "rerank", "title": "재정렬", "timing": ("rerank_load", "rerank", "llm_rerank")},
     {"key": "routing", "title": "난이도 분류", "timing": ()},
     {"key": "model", "title": "답변 모델 선택", "timing": ()},
     {"key": "answer", "title": "답변 · 근거 검증", "timing": ()},
@@ -102,7 +105,8 @@ def run(db: Session, question: str, fc: dict[str, Any], lcfg: llm.LLMConfig | No
         RUN,
         f"{({'dense': '의미', 'bm25': 'BM25', 'hybrid': '하이브리드'})[mode]} 검색 · 후보 {sum((res.get('candidates') or {}).values())}개",
     )
-    put("rerank", RUN if res.get("reranked") else OFF, "리랭커로 후보 재정렬" if res.get("reranked") else "끔")
+    put("rerank", RUN if res.get("reranked") else OFF,
+        ("LLM 목록형 재정렬" if res.get("llm_rerank") else "리랭커로 후보 재정렬") if res.get("reranked") else "끔")  # fmt: skip
     if route:
         # 확신도 라우터의 시간에는 판단용 검색이 들어 있다. 쉬움이면 그 검색을 이어 썼으므로 검색 단계와 겹치지 않게 0 으로 둔다.
         r_ms = 0.0 if (route["router"] == "confidence" and route["path"] == routers.EASY) else route["ms"]
@@ -110,17 +114,16 @@ def run(db: Session, question: str, fc: dict[str, Any], lcfg: llm.LLMConfig | No
         put("routing", RUN, f"{routers.ROUTERS[route['router']]}: {where} — {route['reason']}", r_ms)
     else:
         put("routing", OFF, "끔 — 모든 질문을 한 경로로 보냄", 0.0)
-    # 7 · 8 은 예정 단계: 경로에 모델을 지정하지 않으면 기본 LLM 으로 답한다. 7 소형 모델이 생기면 쉬운 경로에 지정한다.
+    # 7 · 8: 경로에 모델을 지정하면 그 모델(7 소형 · 양자화 모델), 에이전트(8a) · Best-of-N(8b)을 켜면 그 방식으로 답한다.
     if fc.get("answer") and lcfg is not None and fc.get("model"):
         lcfg = llm.resolve(lcfg.provider, fc["model"])
-        put("model", RUN, f"이 경로의 모델: {lcfg.model}", 0.0)
+    how = "8a 에이전트" if fc.get("agent") else f"8b Best-of-{fc['best_of']} (보상으로 고르기)" if fc.get("best_of") else ""
+    if not fc.get("answer"):
+        put("model", OFF, "답변 안 함", 0.0)
+    elif fc.get("model") or how:
+        put("model", RUN, " · ".join(x for x in [f"모델 {lcfg.model}" if lcfg else "", how] if x), 0.0)
     else:
-        put(
-            "model",
-            DEFAULT if fc.get("answer") else OFF,
-            f"예정 단계 — 기본 LLM({lcfg.model})" if (fc.get("answer") and lcfg) else "답변 안 함",
-            0.0,
-        )
+        put("model", DEFAULT, f"기본 LLM({lcfg.model})" if lcfg else "LLM 없음", 0.0)
 
     out: dict[str, Any] = {
         "question": question,
@@ -132,21 +135,47 @@ def run(db: Session, question: str, fc: dict[str, Any], lcfg: llm.LLMConfig | No
         if lcfg is None:
             raise llm.LLMError("답변 단계에는 LLM 이 필요합니다.")
         t0 = time.perf_counter()
-        context, sources = answer.build_context(res["results"][: int(fc.get("context_top") or 5)], int(fc.get("max_context_chars") or 6000))
-        gen = llm.chat(
-            lcfg, answer.SYSTEM, answer.user_prompt(question, context), max_tokens=int(fc.get("max_tokens") or 500), temperature=0.1
-        )
-        check = answer.verify_lexical(gen["text"], sources)
+        top = res["results"][: int(fc.get("context_top") or 5)]
+        extra: dict[str, Any] = {}
+        if fc.get("agent"):
+            ac = fc["agent"]
+            # 첫 검색은 이미 했으므로 에이전트에 넘겨 같은 검색을 다시 하지 않게 한다. 에이전트의 추가 검색은 이 경로의 검색 설정을 쓴다.
+            final = agent.run_to_end(lcfg, question, lambda q: run_search(db, q, cfg)["results"], db=db, first_results=res["results"],
+                                     max_steps=ac.get("max_steps", 5), top_k=ac.get("top_k", 4), max_chars=ac.get("max_chars", 500),
+                                     max_tokens=int(fc.get("max_tokens") or 500))  # fmt: skip
+            text, sources, check = final["answer"], final["sources"], final["verify"]
+            gen_seconds, out_tokens = final["seconds"], None
+            extra = {"agent_steps": final["steps"], "n_steps": final["n_steps"]}
+        elif fc.get("best_of"):
+            bo = rl.candidates(lcfg, question, top, int(fc["best_of"]), float(fc.get("best_of_temperature") or 0.8), evidence,
+                               int(fc.get("max_context_chars") or 6000), int(fc.get("max_tokens") or 500))  # fmt: skip
+            best = bo["candidates"][bo["best"]]
+            text, sources = best["text"], bo["sources"]
+            check = answer.verify_lexical(text, sources)
+            gen_seconds, out_tokens = sum(c["seconds"] for c in bo["candidates"]), None
+            extra = {"best_of": {"picked": bo["best"], "rewards": [c["reward"] for c in bo["candidates"]]}}
+        else:
+            context, sources = answer.build_context(top, int(fc.get("max_context_chars") or 6000))
+            gen = llm.chat(
+                lcfg, answer.SYSTEM, answer.user_prompt(question, context), max_tokens=int(fc.get("max_tokens") or 500), temperature=0.1
+            )
+            text = gen["text"]
+            check = answer.verify_lexical(text, sources)
+            gen_seconds, out_tokens = gen["seconds"], gen["usage"].get("output_tokens")
         with_ev = [i + 1 for i, s in enumerate(sources) if evidence and evaluation.contains_evidence(s["text"], evidence)]
         ratio = check["supported_ratio"]
-        put("answer", RUN, "근거 없음 · 거절" if check["refused"] else f"근거 있는 문장 {ratio * 100:.0f}%" if ratio is not None else "검증할 문장 없음",
-            (time.perf_counter() - t0) * 1000)  # fmt: skip
+        detail = (
+            "근거 없음 · 거절" if check["refused"] else f"근거 있는 문장 {ratio * 100:.0f}%" if ratio is not None else "검증할 문장 없음"
+        )
+        if extra.get("n_steps") is not None:
+            detail += f" · 에이전트 {extra['n_steps']}단계"
+        put("answer", RUN, detail, (time.perf_counter() - t0) * 1000)
         out["answer"] = {
-            "text": gen["text"], "sources": sources, "verify": check, "output_tokens": gen["usage"].get("output_tokens"), "seconds": gen["seconds"],
+            "text": text, "sources": sources, "verify": check, "output_tokens": out_tokens, "seconds": gen_seconds,
             "refused": check["refused"], "supported_ratio": ratio, "invalid_citations": check["invalid_citations"], "cited": check["cited_sources"],
             "evidence_retrieved": bool(with_ev) if evidence else None,
             "evidence_cited": bool(set(with_ev) & set(check["cited_sources"])) if evidence else None,
-        }  # fmt: skip
+        } | extra  # fmt: skip
     else:
         put("answer", OFF, "검색까지만", 0.0)
     out["steps"] = [steps[s["key"]] for s in STEPS]

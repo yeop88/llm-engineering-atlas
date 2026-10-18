@@ -369,6 +369,12 @@ def search(db: Session, query: str, cfg: dict[str, Any]) -> dict[str, Any]:
             e["scores"]["rerank"] = float(s)
             e["pre_rank"] = fused.index(e) + 1
         fused = sorted(head, key=lambda e: -e["scores"]["rerank"])
+        if cfg.get("rerank_fusion"):
+            # 리랭커 순위와 1단계 순위를 RRF 로 합친다. 실측에서 리랭커가 1단계의 1위 정답을 끌어내린 경우가 있어,
+            # 두 순위가 모두 높은 후보를 앞에 두면 한쪽의 실수를 다른 쪽이 메운다(점수 척도가 달라 순위로 합침).
+            for r, e in enumerate(fused, start=1):
+                e["scores"]["rerank_fused"] = 1 / (60 + e["pre_rank"]) + 1 / (60 + r)
+            fused = sorted(fused, key=lambda e: -e["scores"]["rerank_fused"])
         reranked = True
 
     top = fused[:top_k]

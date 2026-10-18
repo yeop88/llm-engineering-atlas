@@ -22,6 +22,12 @@ app/
     embedding/         1 · 데이터 임베딩: catalog · hub · model_manager · benchmark · public_benchmarks · projection, datasets/
     rag/               2 · RAG 검색: parsers · chunking · bm25 · fusion · service(검색·리랭킹) · evaluation · answer
     multimodal/        멀티모달: media(이미지 · 영상 수집, 프레임 추출 · 같은 장면 제외) — 결과는 RAG 컬렉션의 미디어 문서
+    rerank/            3 · 리랭킹: llm_rerank(목록형) · evaluate(리랭커 × 후보 수 × 융합) · api
+    distill/           7a · 지식 증류: service(교사 오답 · 점수 차 → MarginMSE 학습 → 비교) · llm_data(교사 답 JSONL) · api
+    agent/             8a · 에이전트: agent(ReAct 루프 · 도구 search/read/calc · 근거 검증) · api(스트리밍)
+    rl/                8b · 강화학습: reward(보상 함수) · service(Best-of-N · 선호 쌍 · DPO 내보내기) · api
+    quant/             7b · 양자화: vectors(float32 · int8 · binary · 재점수 점수와 메모리) · llm_bits(같은 근거로 LLM 비트 수 비교) · api
+    routing/           6 · 라우팅: routers(규칙 · 검색 확신도 · LLM 판단) · service(두 경로 기록으로 라우터 채점 · 오라클 · 기준값 곡선) · api
     search_lab/        4 · 검색 향상: enhance(질의 재작성 · HyDE · 다중 질의, LLM 변형 캐시)
     finetune/          파인튜닝: data(학습 쌍) · trainer · service(학습 → 등록 → 전후 비교 → 기록)
     apps/              의미 기반 응용: 추천 · 분류 · 군집 · 중복 · 이상 · 키워드, presets/

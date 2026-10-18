@@ -16,11 +16,16 @@ from app.core.db import SessionLocal, init_db  # noqa: E402
 from app.core.jobs import jobs  # noqa: E402
 from app.core.runtime import sampler  # noqa: E402
 from app.pipeline import api as flow_api  # noqa: E402
+from app.stages.agent import api as agent_api  # noqa: E402
 from app.stages.apps import api as apps_api  # noqa: E402
+from app.stages.distill import api as distill_api  # noqa: E402
 from app.stages.embedding import benchmarks_api, models_api, playground_api  # noqa: E402
 from app.stages.embedding.model_manager import get_manager  # noqa: E402
 from app.stages.finetune import api as finetune_api  # noqa: E402
+from app.stages.quant import api as quant_api  # noqa: E402
 from app.stages.rag import answer_api, collections_api, eval_api  # noqa: E402
+from app.stages.rerank import api as rerank_api  # noqa: E402
+from app.stages.rl import api as rl_api  # noqa: E402
 from app.stages.routing import api as routing_api  # noqa: E402
 from app.web import pages  # noqa: E402
 
@@ -63,7 +68,12 @@ for module in (
     eval_api,
     answer_api,
     finetune_api,
+    rerank_api,
     routing_api,
+    quant_api,
+    distill_api,
+    agent_api,
+    rl_api,
     apps_api,
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,

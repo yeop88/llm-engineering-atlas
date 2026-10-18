@@ -50,8 +50,9 @@ def resolve(provider: str | None = None, model: str | None = None) -> LLMConfig:
         m = model or s.openai_model
         if not m:
             raise LLMError("OPENAI_MODEL 을 설정하거나 요청에 모델 이름을 넣으세요.")
-        # 로컬 서버(Ollama·vLLM 등)는 키가 없어도 된다
-        return LLMConfig("openai", m, s.openai_base_url.rstrip("/"), s.openai_api_key, s.llm_timeout)
+        # 로컬 서버(Ollama·vLLM 등)는 키가 없어도 된다. 모델별 주소가 있으면 그 서버로 보낸다(OPENAI_MODEL_URLS).
+        url = (s.openai_model_urls or {}).get(m) or s.openai_base_url
+        return LLMConfig("openai", m, url.rstrip("/"), s.openai_api_key, s.llm_timeout)
     if not s.anthropic_api_key:
         raise LLMError("ANTHROPIC_API_KEY 가 설정되지 않았습니다.")
     return LLMConfig("anthropic", model or s.anthropic_model, ANTHROPIC_URL, s.anthropic_api_key, s.llm_timeout)
@@ -98,7 +99,14 @@ def _post(cfg: LLMConfig, url: str, headers: dict[str, str], body: dict[str, Any
 
 
 def _request(
-    cfg: LLMConfig, system: str, user: str, max_tokens: int, temperature: float | None, json_mode: bool = False, stream: bool = False
+    cfg: LLMConfig,
+    system: str,
+    user: str,
+    max_tokens: int,
+    temperature: float | None,
+    json_mode: bool = False,
+    stream: bool = False,
+    no_cache: bool = False,
 ) -> tuple[str, dict[str, str], dict[str, Any]]:
     """제공자별 (URL, 헤더, 본문)."""
     if cfg.provider == "openai":
@@ -111,6 +119,10 @@ def _request(
             body["response_format"] = {"type": "json_object"}
         if get_settings().llm_disable_thinking and "api.openai.com" not in cfg.base_url:
             body["chat_template_kwargs"] = {"enable_thinking": False}  # llama.cpp·vLLM 이 템플릿에 전달
+        if no_cache and "api.openai.com" not in cfg.base_url:
+            # llama-server 는 앞서 처리한 프롬프트를 재사용한다(cache_prompt). 속도를 비교할 때 한 모델만 이전 실행의 캐시를 쓰면
+            # 읽기 시간이 거의 0 이 되어 비교가 무너진다 — 실측에서 Q4 만 6초로 나온 원인. 공식 API 는 모르는 인자를 거부해 보내지 않는다.
+            body["cache_prompt"] = False
         if stream:
             body |= {"stream": True, "stream_options": {"include_usage": True}}
         headers = {"Authorization": f"Bearer {cfg.api_key}"} if cfg.api_key else {}
@@ -124,11 +136,17 @@ def _request(
 
 
 def chat(
-    cfg: LLMConfig, system: str, user: str, max_tokens: int = 2048, temperature: float | None = 0.3, json_mode: bool = False
+    cfg: LLMConfig,
+    system: str,
+    user: str,
+    max_tokens: int = 2048,
+    temperature: float | None = 0.3,
+    json_mode: bool = False,
+    no_cache: bool = False,
 ) -> dict[str, Any]:
     """→ {"text", "usage": {"input_tokens", "output_tokens"}, "seconds"}"""
     started = time.perf_counter()
-    url, headers, body = _request(cfg, system, user, max_tokens, temperature, json_mode)
+    url, headers, body = _request(cfg, system, user, max_tokens, temperature, json_mode, no_cache=no_cache)
     if cfg.provider == "openai":
         data = _post(cfg, url, headers, body)
         try:
@@ -138,6 +156,11 @@ def chat(
             raise LLMError(f"응답 형식을 해석할 수 없습니다: {str(data)[:200]}") from exc
         u = data.get("usage") or {}
         usage = {"input_tokens": u.get("prompt_tokens"), "output_tokens": u.get("completion_tokens")}
+        if tm := data.get("timings"):
+            # llama-server 가 주는 단계별 시간. 근거를 길게 넣는 RAG 는 '읽기'(프롬프트 처리)가 '쓰기'(생성)보다 오래 걸릴 수 있어
+            # 둘을 나눠 봐야 양자화 · 하드웨어의 속도 차이를 바르게 읽는다.
+            usage |= {"prompt_tokens_evaluated": tm.get("prompt_n"), "prompt_ms": tm.get("prompt_ms"), "prompt_per_second": tm.get("prompt_per_second"),
+                      "generation_ms": tm.get("predicted_ms"), "generation_per_second": tm.get("predicted_per_second")}  # fmt: skip
         if not text.strip() and msg.get("reasoning_content"):
             usage["reasoning_only"] = True  # 생각만 하다 토큰 한도에 걸림
         if data["choices"][0].get("finish_reason") == "length":

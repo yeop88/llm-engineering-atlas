@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}지식 증류 테스트{% endblock %}
+{% block content %}
+<h1>지식 증류 테스트</h1>
+<p class="lead">큰 모델(교사)의 판단을 작은 모델(학생)이 따라 하게 학습합니다. 임베딩은 교사가 매긴 '정답 − 오답' 점수 차를 학생이 배우고(MarginMSE, 교사는 큰 임베딩 모델 또는 리랭커), LLM 은 교사 답변 중 검증을 통과한 것만 모아 작은 LLM 학습 데이터로 내보냅니다.</p>
+
+<div class="card stack">
+  <h2>임베딩 증류</h2>
+  <div class="small muted">학습 질문은 파인튜닝과 같은 방법(LLM 질문 · ICT)으로 만들고, 평가 세트의 근거가 든 지문은 학습에서 뺍니다. 학습한 학생은 카탈로그에 등록되고, 교사 · 학생(전) · 학생(후)를 같은 평가 세트로 비교합니다. 학습 기록은 파인튜닝 화면에도 함께 보입니다.</div>
+  <div class="row">
+    <div class="field"><label>교사 (큰 임베딩 모델 또는 리랭커)</label><select id="d-teacher"></select></div>
+    <div class="field"><label>학생 (작은 임베딩 모델)</label><select id="d-student"></select></div>
+  </div>
+  <div class="row">
+    <div class="field"><label>컬렉션</label><select id="d-col"></select></div>
+    <div class="field"><label>학습 지문 청크 세트</label><select id="d-cs"></select></div>
+    <div class="field grow"><label>비교 평가 세트 (학습에서 자동 제외)</label><select id="d-set"></select></div>
+  </div>
+  <div class="row">
+    <div class="field"><label>질문 만들기</label><select id="d-method"><option value="llm">LLM 질문</option><option value="ict">ICT (문장 → 나머지)</option></select></div>
+    <div class="field"><label>지문 수</label><input id="d-n" type="number" value="100" min="8" style="width:80px"></div>
+    <div class="field"><label>에폭</label><input id="d-ep" type="number" value="1" min="1" max="20" style="width:60px"></div>
+    <div class="field"><label>배치</label><input id="d-bs" type="number" value="16" min="2" style="width:60px"></div>
+    <div class="field"><label>학습률</label><input id="d-lr" value="2e-5" style="width:80px"></div>
+    <span class="spacer"></span><button class="btn primary" id="d-run">증류 시작</button>
+  </div>
+  <div id="d-progress" hidden></div>
+  <div id="d-runs"></div>
+</div>
+
+<div class="card stack" style="margin-top:16px">
+  <h2>LLM 증류 데이터</h2>
+  <div class="small muted">컬렉션 지문으로 새 질문을 만들고(평가 세트는 쓰지 않음 — 나중에 그 세트로 학생을 재야 하므로), 교사 LLM 이 서비스와 똑같은 형식(근거 번호 + 질문)으로 답한 것 중 문장 근거율 · 인용 검증을 통과한 것만 대화 형식 JSONL 로 저장합니다. 작은 LLM 학습(SFT)은 GPU 환경의 TRL · Unsloth · LLaMA-Factory 등에서 이 파일로 합니다.</div>
+  <div class="row">
+    <div class="field"><label>컬렉션</label><select id="l-col"></select></div>
+    <div class="field"><label>질문 만들 청크 세트</label><select id="l-cs"></select></div>
+    <div class="field"><label>답변 검색 인덱스</label><select id="l-idx"></select></div>
+  </div>
+  <div class="row">
+    <div class="field"><label>교사 LLM (비우면 기본)</label><input id="l-teacher" style="width:180px"></div>
+    <div class="field"><label>지문 수</label><input id="l-n" type="number" value="20" min="1" style="width:70px"></div>
+    <div class="field"><label>최소 문장 근거율</label><input id="l-min" type="number" value="0.8" step="0.05" min="0" max="1" style="width:70px"></div>
+    <div class="field"><label>파일 이름 (비우면 자동)</label><input id="l-name" style="width:180px"></div>
+    <span class="spacer"></span><button class="btn primary" id="l-run">데이터 만들기</button>
+  </div>
+  <div id="l-progress" hidden></div>
+  <div id="l-out"></div>
+  <h3>만든 파일</h3>
+  <div id="l-files"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let dCol = null;
+(async () => {
+  const ms = await getModels();
+  const emb = ms.filter(m => m.kind === "embedding" && m.cached && !(m.modalities || []).some(x => x !== "text"));
+  const tch = ms.filter(m => m.cached && (m.kind === "reranker" || m.kind === "embedding"));
+  $("#d-teacher").innerHTML = tch.map(m => `<option value="${m.id}">${m.kind === "reranker" ? "[리랭커] " : ""}${esc(m.name)}</option>`).join("");
+  $("#d-student").innerHTML = emb.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join("");
+  const kure = tch.find(m => /KURE/.test(m.hf_id)), small = emb.find(m => /granite-embedding-97m/.test(m.hf_id));
+  if (kure) $("#d-teacher").value = kure.id;
+  if (small) $("#d-student").value = small.id;
+})();
+setupCollectionPickers({ col: $("#d-col"), cs: $("#d-cs"), set: $("#d-set"), key: "distill-col", onDetail: d => (dCol = d) });
+setupCollectionPickers({ col: $("#l-col"), cs: $("#l-cs"), idx: $("#l-idx"), key: "distill-col" });
+
+$("#d-run").onclick = async e => {
+  const body = {
+    teacher_model_id: +$("#d-teacher").value, base_model_id: +$("#d-student").value, collection_id: +$("#d-col").value, chunk_set_id: +$("#d-cs").value,
+    eval_set_id: +$("#d-set").value || null, data_method: $("#d-method").value, n_passages: +$("#d-n").value || 100,
+    epochs: +$("#d-ep").value || 1, batch_size: +$("#d-bs").value || 16, learning_rate: parseFloat($("#d-lr").value) || 2e-5,
+  };
+  const r = await busy(e.target, () => api("/api/distill", { method: "POST", body }));
+  const box = $("#d-progress"); box.hidden = false;
+  const done = await pollJob(r.job.id, j => { box.innerHTML = `<div class="progress"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>`; }, 2000);
+  box.innerHTML = done.status === "done" ? "" : `<div class="errbox">${esc(done.error || done.status)}</div>`;
+  box.hidden = done.status === "done";
+  loadRuns();
+};
+
+async function loadRuns() {
+  const runs = await api("/api/distill");
+  $("#d-runs").innerHTML = runs.length ? `<div class="table-wrap"><table><tr><th>#</th><th>교사 → 학생</th><th>상태</th><th class="num">nDCG@10 교사 / 학생 전 → 후</th><th>학습 후 vs 전</th><th>후 vs 교사</th><th class="num">격차 회복</th><th class="num">인코딩 (학생 / 교사)</th></tr>
+    ${runs.map(r => { const c = r.metrics?.comparison || {}, m = c.models || {}, sp = c.texts_per_second || {};
+      const v = k => (m[k] ? pct(m[k].metrics["ndcg@10"]) : "-");
+      return `<tr><td>${r.id}</td><td class="small">${esc(r.name)}</td><td><span class="badge ${r.status === "done" ? "ok" : r.status === "error" ? "err" : ""}">${esc(r.status)}</span>${r.error ? `<div class="small muted">${esc(r.error.slice(0, 120))}</div>` : ""}</td>
+        <td class="num">${v("교사")} / ${v("학생 · 학습 전")} → <b>${v("학생 · 학습 후")}</b></td><td class="small nowrap">${c.after_vs_before ? vsBadge(c.after_vs_before) : "-"}</td>
+        <td class="small nowrap">${c.after_vs_teacher ? vsBadge(c.after_vs_teacher) : "-"}</td><td class="num">${c.gap_closed != null ? pct(c.gap_closed) + "%" : "-"}</td>
+        <td class="num small">${sp["학생 · 학습 후"] ?? "-"} / ${sp["교사"] ?? "-"} 개/s</td></tr>`; }).join("")}</table></div>
+    <div class="small muted">격차 회복 = (학습 후 − 학습 전) ÷ (교사 − 학습 전). 교사와 학생 차이가 1%p 미만이면 계산하지 않습니다.</div>` : '<div class="empty">아직 증류 실행이 없습니다</div>';
+}
+loadRuns();
+
+$("#l-run").onclick = e => {
+  const body = { collection_id: +$("#l-col").value, chunk_set_id: +$("#l-cs").value, config: { mode: "dense", index_id: +$("#l-idx").value },
+    n_passages: +$("#l-n").value || 20, teacher_model: $("#l-teacher").value.trim() || null, min_support: parseFloat($("#l-min").value) || 0.8, name: $("#l-name").value.trim() };
+  runJobInto(e.target, "/api/distill/llm-data", body, $("#l-progress"), r => {
+    $("#l-out").innerHTML = `<div class="small"><b>${esc(r.file)}</b> — 질문 ${r.asked}개 중 <b>${r.kept}개</b> 저장 · 버림: 거절 ${r.dropped.refused}, 근거율 낮음 ${r.dropped.low_support}, 잘못된 인용 ${r.dropped.invalid_citation}, 오류 ${r.dropped.error} · ${r.seconds}s</div>`;
+    loadFiles();
+  });
+};
+async function loadFiles() {
+  const fs = await api("/api/distill/llm-data");
+  $("#l-files").innerHTML = fs.map(f => `<div class="small"><a href="/api/distill/llm-data/${encodeURIComponent(f.name)}">${esc(f.name)}</a> <span class="muted">${f.samples}개 · ${f.kb}KB</span></div>`).join("") || '<div class="empty">아직 없습니다</div>';
+}
+loadFiles();
+</script>
+{% endblock %}

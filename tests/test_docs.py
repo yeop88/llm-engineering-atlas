@@ -1,5 +1,6 @@
 """문서: 생성 문서가 레지스트리와 같은지, 상대 링크(파일 · 제목 앵커)가 깨지지 않았는지."""
 
+import os
 import re
 import subprocess
 import sys
@@ -25,7 +26,11 @@ def md_files() -> list[Path]:
 
 
 def test_generated_docs_are_up_to_date():
-    r = subprocess.run([sys.executable, str(ROOT / "scripts" / "gen_docs.py"), "--check"], capture_output=True, text=True, encoding="utf-8")
+    # 자식 프로세스의 출력 인코딩을 UTF-8 로 고정 — Windows 기본(cp949)으로 한국어를 출력하면 읽는 쪽에서 디코딩 오류가 난다
+    env = os.environ | {"PYTHONIOENCODING": "utf-8"}
+    r = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "gen_docs.py"), "--check"], capture_output=True, text=True, encoding="utf-8", env=env
+    )
     assert r.returncode == 0, r.stdout + r.stderr
 
 
