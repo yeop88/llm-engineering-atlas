@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-19
+
 ### 추가
 - **공개 자료 가져오기**: 분야별 공개 데이터셋 프리셋을 RAG 컬렉션으로 — '근로 · 주택임대차 법령과 판례'(국가법령 조문 6건 + 이를 인용한 대법원 판례, 공공누리 1유형 · openrail). 원본은 `data/public/` 에 한 번만 받고, 문서마다 출처 · 라이선스 기록. `/api/public-corpora` · `/api/collections/{id}/import-public` — `docs/stages/2-rag/rag.md`
 - 평가 질문 생성 `document_ids`: 특정 문서에서만 지문을 뽑아 적은 종류(법령 등)를 보충
@@ -169,7 +171,8 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.1.0...v0.2.0
