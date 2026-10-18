@@ -190,7 +190,8 @@ def run(
             check = answer.verify(text, sources)
             gen_seconds, out_tokens = gen["seconds"], gen["usage"].get("output_tokens")
         # 조문 · 판례 번호 검사: 답변에 번호가 나올 때만(정규식 + DB 조회라 싸다). 글자 · 의미 검증이 못 잡는 '번호만 바꾼' 환각용
-        cites = extra.get("citations") or legal.check_citations(text, sources, legal.lookup_fn_for(db, legal.chunk_set_of(db, cfg)))
+        # 에이전트(번호 조회 끔)는 citations=None 을 넘기므로 키를 먼저 빼고, 번호가 있을 때만 다시 넣는다
+        cites = extra.pop("citations", None) or legal.check_citations(text, sources, legal.lookup_fn_for(db, legal.chunk_set_of(db, cfg)))
         if cites["n"]:
             extra["citations"] = cites
         ratio = check["supported_ratio"]
@@ -199,7 +200,7 @@ def run(
         )
         if extra.get("n_steps") is not None:
             detail += f" · 에이전트 {extra['n_steps']}단계"
-        if extra.get("citations", {}).get("n_not_found"):
+        if (extra.get("citations") or {}).get("n_not_found"):
             detail += f" · 자료에 없는 번호 {extra['citations']['n_not_found']}개"
         put("answer", RUN, detail, (time.perf_counter() - t0) * 1000)
         out["answer"] = {
