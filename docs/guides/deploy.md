@@ -62,6 +62,7 @@ sentence-transformers · transformers · torch 를 올리면 `trust_remote_code`
 | 상식 | 관련 문서가 무관한 문서보다 가깝지 않음(한국어 · 영어 한 쌍씩), 리랭커는 관련 점수가 더 높지 않음 |
 
 - 기본은 **내려받아 둔 모델만** 점검합니다(점검 때문에 수 GB 를 내려받지 않게). 점검하려고 올린 모델은 끝나면 내립니다.
+- 실행 예(2026-10-19, run #255, sentence-transformers 6.1.0 · transformers 5.20.1 · torch 2.14.1, CPU): KURE-v1 · EmbeddingGemma 2 · Qwen3-Reranker-0.6B **3/3 통과, 22초**(로드 5~7초씩). 관련−무관 차이는 임베딩 0.27~0.41, 리랭커 16.5~16.8 로 모두 양수.
 - 결과는 실행 이력(`kind=compat`)에 라이브러리 버전과 함께 남습니다. 지난 점검 때와 버전이 다르면 모델 화면에 '점검 권장'이 뜨고, `COMPAT_CHECK_ON_UPGRADE=true` 면 시작할 때 자동으로 점검합니다(CPU 에서는 몇 분 — 기본은 꺼짐).
 
 ## 5. 새 모델 후보 (카탈로그 갱신)
