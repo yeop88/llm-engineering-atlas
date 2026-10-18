@@ -60,7 +60,7 @@ def test_search_only_flow_runs_without_llm(client, col, monkeypatch):
         "embedding": "off",
         "rag": "run",
         "rerank": "off",
-        "routing": "default",
+        "routing": "off",
         "model": "off",
         "answer": "off",
     }
@@ -75,7 +75,7 @@ def test_full_flow_with_enhance_and_answer(client, col, fake_llm):
     flow = {"config": {"mode": "bm25", "chunk_set_id": cs_id, "enhance": {"technique": "rewrite"}}, "answer": True, "context_top": 3}
     out = client.post("/api/flow/run", json={"question": "빨래 기계 물이 안 빠져요", "flow": flow}).json()
     st = _status(out)
-    assert st["search_lab"] == "run" and st["answer"] == "run" and st["routing"] == "default" and st["model"] == "default"
+    assert st["search_lab"] == "run" and st["answer"] == "run" and st["routing"] == "off" and st["model"] == "default"
     lab = next(s for s in out["steps"] if s["key"] == "search_lab")
     assert "세탁기 배수 필터 청소" in lab["detail"] and lab["no"] == "4"
     assert out["answer"]["text"].endswith("[1].") and out["answer"]["cited"] == [1] and out["results"][0]["filename"] == "AS안내.md"
@@ -105,5 +105,5 @@ def test_flow_evaluation_compares_against_first(client, col, fake_llm):
     assert first["answer"] is None and second["answer"]["n"] == 2  # 답변 단계를 켠 연결만 답변 지표가 있다
     assert second["vs_first"]["against"] == "검색만" and "vs_first" not in first
     st = {x["key"]: x["status"] for x in second["steps"]}
-    assert st["search_lab"] == "run" and st["routing"] == "default"
+    assert st["search_lab"] == "run" and st["routing"] == "off"
     assert res["run_id"] and [x["key"] for x in res["steps"]][0] == "search_lab"

@@ -388,8 +388,8 @@ class AnswerEvalRequest(LLMRef):
 
 
 # ── 흐름 연결 실행 (맵) ─────────────────────────────────────────────────────
-class FlowConfig(BaseModel):
-    """한 가지 연결 방식. 검색 설정(SearchConfig)에 향상 · 리랭커가 들어 있고, 답변 단계는 켜고 끌 수 있다."""
+class FlowPath(BaseModel):
+    """한 가지 처리 경로. 검색 설정(SearchConfig)에 향상 · 리랭커가 들어 있고, 답변 단계는 켜고 끌 수 있다."""
 
     label: str = Field(default="", max_length=200)
     config: SearchConfig
@@ -397,6 +397,21 @@ class FlowConfig(BaseModel):
     context_top: int = Field(default=5, ge=1, le=20)
     max_context_chars: int = Field(default=6000, ge=500, le=60000)
     max_tokens: int = Field(default=500, ge=50, le=8000)
+    # 이 경로의 답변 모델(같은 제공자 안에서). 비우면 기본 LLM. 7 소형 모델이 생기면 쉬운 경로에만 지정한다.
+    model: str | None = Field(default=None, max_length=200)
+
+
+class RoutingConfig(BaseModel):
+    """6 라우팅: 이 연결 방식(쉬운 경로)으로 처리하다가, 라우터가 어렵다고 판단한 질문만 hard 경로로 보낸다."""
+
+    router: Literal["rule", "confidence", "llm"] = "confidence"
+    threshold: float = Field(default=0.05, ge=0, le=1)  # 검색 확신도(1·2위 상대 차이) 기준
+    rule_max_chars: int = Field(default=45, ge=5, le=500)
+    hard: FlowPath
+
+
+class FlowConfig(FlowPath):
+    routing: RoutingConfig | None = None
 
 
 class FlowRunRequest(LLMRef):
@@ -408,6 +423,29 @@ class FlowEvalRequest(LLMRef):
     eval_set_id: int
     flows: list[FlowConfig] = Field(min_length=1, max_length=4)  # 첫 번째가 비교 기준
     max_queries: int | None = Field(default=10, ge=1, le=1000)  # 답변 단계는 로컬 LLM 으로 질문당 수십 초
+    seed: int = 0
+
+
+class RouteTestRequest(LLMRef):
+    """질문 하나를 여러 라우터에 넣어 판단만 본다(답변은 하지 않음). 확신도 라우터는 easy 경로로 검색한다."""
+
+    question: str = Field(min_length=1, max_length=2000)
+    easy: FlowPath
+    routers: list[Literal["rule", "confidence", "llm"]] = Field(default_factory=lambda: ["rule", "confidence", "llm"], min_length=1)
+    threshold: float = Field(default=0.05, ge=0, le=1)
+    rule_max_chars: int = Field(default=45, ge=5, le=500)
+
+
+class RoutingEvalRequest(LLMRef):
+    """평가 세트로 라우터 비교. 질문마다 easy · hard 경로를 한 번씩 실행하고 라우터별 결과는 그 기록으로 계산한다."""
+
+    eval_set_id: int
+    easy: FlowPath
+    hard: FlowPath
+    routers: list[Literal["rule", "confidence", "llm"]] = Field(default_factory=lambda: ["rule", "confidence", "llm"], min_length=1)
+    threshold: float = Field(default=0.05, ge=0, le=1)
+    rule_max_chars: int = Field(default=45, ge=5, le=500)
+    max_queries: int | None = Field(default=10, ge=1, le=1000)
     seed: int = 0
 
 

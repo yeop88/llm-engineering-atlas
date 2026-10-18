@@ -21,6 +21,7 @@ from app.stages.embedding import benchmarks_api, models_api, playground_api  # n
 from app.stages.embedding.model_manager import get_manager  # noqa: E402
 from app.stages.finetune import api as finetune_api  # noqa: E402
 from app.stages.rag import answer_api, collections_api, eval_api  # noqa: E402
+from app.stages.routing import api as routing_api  # noqa: E402
 from app.web import pages  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -62,6 +63,7 @@ for module in (
     eval_api,
     answer_api,
     finetune_api,
+    routing_api,
     apps_api,
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
