@@ -24,12 +24,12 @@ from app.stages.rl.reward import reward
 
 
 def candidates(cfg: llm.LLMConfig, question: str, results: list[dict[str, Any]], n: int, temperature: float, evidence: str = "",
-               max_chars: int = 6000, max_tokens: int = 500) -> dict[str, Any]:  # fmt: skip
+               max_chars: int = 6000, max_tokens: int = 500, no_cache: bool = False) -> dict[str, Any]:  # fmt: skip
     context, sources = answer.build_context(results, max_chars)
     cands = []
     for i in range(n):
         t = 0.1 if i == 0 else temperature  # 후보 0 = 평소 답
-        res = llm.chat(cfg, answer.SYSTEM, answer.user_prompt(question, context), max_tokens=max_tokens, temperature=t)
+        res = llm.chat(cfg, answer.SYSTEM, answer.user_prompt(question, context), max_tokens=max_tokens, temperature=t, no_cache=no_cache)
         r = reward(res["text"], sources, evidence)
         cands.append({"text": res["text"], "temperature": t, "reward": r["total"], "parts": r["parts"], "seconds": res["seconds"],
                       "refused": r["check"]["refused"], "supported_ratio": r["check"]["supported_ratio"],

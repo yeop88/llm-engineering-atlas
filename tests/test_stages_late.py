@@ -29,6 +29,7 @@ def fake_llm(monkeypatch):
         body = json.loads(request.content)
         system, user = body["messages"][0]["content"], body["messages"][-1]["content"]
         state["temps"].append(body.get("temperature"))
+        state.setdefault("cache", []).append(body.get("cache_prompt"))
         if "재정렬기" in system:  # LLM 목록형 리랭커: 마지막 후보를 1위로, 나머지는 빠뜨림
             n = user.count("\n[")
             text = json.dumps({"order": [n]})
@@ -221,3 +222,17 @@ def test_distill_triplets_and_validation(client, col):
     same = client.post("/api/distill", json={"base_model_id": _model(client, "nlpai-lab/KURE-v1"), "teacher_model_id": _model(client, "nlpai-lab/KURE-v1"),
                                              "collection_id": col["cid"], "chunk_set_id": col["cs"], "data_method": "ict"})  # fmt: skip
     assert same.status_code == 400  # 교사와 학생이 같으면 증류가 아니다
+
+
+def test_flow_comparison_disables_prompt_cache(client, col, fake_llm):
+    """연결 비교는 서버 프롬프트 캐시를 끄고 잰다 — 앞선 실행이 처리해 둔 경로만 빨라 보이지 않게(실측 #233)."""
+    fake_llm["cache"] = []
+    flows = [{"label": "RAG", "config": {"mode": "dense", "index_id": col["idx"]}, "answer": True},
+             {"label": "Best-of", "config": {"mode": "dense", "index_id": col["idx"]}, "answer": True, "best_of": 2}]  # fmt: skip
+    done = _wait(client, client.post("/api/flow/evaluate", json={"eval_set_id": col["set"], "flows": flows, "max_queries": None}).json())
+    assert done["status"] == "done", done.get("error")
+    assert fake_llm["cache"] and all(v is False for v in fake_llm["cache"])
+    # 사용자가 질문 하나를 실행할 때는 캐시를 그대로 쓴다(빠른 응답)
+    fake_llm["cache"] = []
+    client.post("/api/flow/run", json={"question": "세탁기", "flow": flows[0]})
+    assert fake_llm["cache"] == [None]

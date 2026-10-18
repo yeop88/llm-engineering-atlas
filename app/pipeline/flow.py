@@ -73,7 +73,9 @@ def _route(db: Session, question: str, fc: dict[str, Any], lcfg: llm.LLMConfig |
     return {"router": rc["router"], "path": path, "reason": reason, "ms": round(ms, 1)}, (pre if path == routers.EASY else None)
 
 
-def run(db: Session, question: str, fc: dict[str, Any], lcfg: llm.LLMConfig | None, evidence: str = "") -> dict[str, Any]:
+def run(
+    db: Session, question: str, fc: dict[str, Any], lcfg: llm.LLMConfig | None, evidence: str = "", no_cache: bool = False
+) -> dict[str, Any]:
     """fc: FlowConfig dict — {"config": SearchConfig, "answer", "context_top", "max_context_chars", "max_tokens", "model", "routing"}."""
     started = time.perf_counter()
     route, pre = (None, None)
@@ -142,13 +144,13 @@ def run(db: Session, question: str, fc: dict[str, Any], lcfg: llm.LLMConfig | No
             # 첫 검색은 이미 했으므로 에이전트에 넘겨 같은 검색을 다시 하지 않게 한다. 에이전트의 추가 검색은 이 경로의 검색 설정을 쓴다.
             final = agent.run_to_end(lcfg, question, lambda q: run_search(db, q, cfg)["results"], db=db, first_results=res["results"],
                                      max_steps=ac.get("max_steps", 5), top_k=ac.get("top_k", 4), max_chars=ac.get("max_chars", 500),
-                                     max_tokens=int(fc.get("max_tokens") or 500))  # fmt: skip
+                                     max_tokens=int(fc.get("max_tokens") or 500), no_cache=no_cache)  # fmt: skip
             text, sources, check = final["answer"], final["sources"], final["verify"]
             gen_seconds, out_tokens = final["seconds"], None
             extra = {"agent_steps": final["steps"], "n_steps": final["n_steps"]}
         elif fc.get("best_of"):
             bo = rl.candidates(lcfg, question, top, int(fc["best_of"]), float(fc.get("best_of_temperature") or 0.8), evidence,
-                               int(fc.get("max_context_chars") or 6000), int(fc.get("max_tokens") or 500))  # fmt: skip
+                               int(fc.get("max_context_chars") or 6000), int(fc.get("max_tokens") or 500), no_cache)  # fmt: skip
             best = bo["candidates"][bo["best"]]
             text, sources = best["text"], bo["sources"]
             check = answer.verify_lexical(text, sources)
@@ -157,7 +159,12 @@ def run(db: Session, question: str, fc: dict[str, Any], lcfg: llm.LLMConfig | No
         else:
             context, sources = answer.build_context(top, int(fc.get("max_context_chars") or 6000))
             gen = llm.chat(
-                lcfg, answer.SYSTEM, answer.user_prompt(question, context), max_tokens=int(fc.get("max_tokens") or 500), temperature=0.1
+                lcfg,
+                answer.SYSTEM,
+                answer.user_prompt(question, context),
+                max_tokens=int(fc.get("max_tokens") or 500),
+                temperature=0.1,
+                no_cache=no_cache,
             )
             text = gen["text"]
             check = answer.verify_lexical(text, sources)
@@ -205,7 +212,8 @@ def evaluate(db: Session, items: list[dict[str, Any]], flows: list[dict[str, Any
             for qi, it in enumerate(items):
                 if job:
                     job.update((fi * len(items) + qi) / total * 0.97, f"[{fi + 1}/{len(flows)}] {label} — 질문 {qi + 1}/{len(items)}")
-                r = run(db, it["query"], fc, lcfg, it.get("evidence", ""))
+                # 비교 측정이므로 프롬프트 캐시를 끈다 — 앞선 실행이 같은 질문 · 근거를 처리해 둔 경로만 빨라 보이지 않게(실측 #233 의 교훈)
+                r = run(db, it["query"], fc, lcfg, it.get("evidence", ""), no_cache=True)
                 j = evaluation.judge(r["search"]["results"], it, ev[qi])
                 per_q.append(j | evaluation.query_metrics(j))
                 lat.append(r["total_ms"])

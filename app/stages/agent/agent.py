@@ -97,7 +97,7 @@ def read_around(db: Session, chunk_id: int, width: int = 1) -> list[dict[str, An
 
 def run(cfg: llm.LLMConfig, question: str, search_fn: Callable[[str], list[dict[str, Any]]], db: Session | None = None,
         first_results: list[dict[str, Any]] | None = None, max_steps: int = 5, top_k: int = 4, max_chars: int = 500,
-        max_tokens: int = 600) -> Iterator[dict[str, Any]]:  # fmt: skip
+        max_tokens: int = 600, no_cache: bool = False) -> Iterator[dict[str, Any]]:  # fmt: skip
     """단계마다 {"type": "step", ...} 를 내보내고, 마지막에 {"type": "final", answer, sources, verify, steps, seconds}."""
     started = time.perf_counter()
     src = Sources()
@@ -116,7 +116,7 @@ def run(cfg: llm.LLMConfig, question: str, search_fn: Callable[[str], list[dict[
             + f"\n\n남은 단계: {max_steps - n + 1}. 다음 행동 JSON:"
         )
         try:
-            obj, _ = llm.chat_json(cfg, SYSTEM, user, max_tokens=max_tokens, temperature=0.1)
+            obj, _ = llm.chat_json(cfg, SYSTEM, user, max_tokens=max_tokens, temperature=0.1, no_cache=no_cache)
         except llm.LLMError as exc:
             bad_json += 1
             history.append(f"[오류] 형식이 잘못됐습니다({str(exc)[:80]}). JSON 하나만 출력하세요.")
@@ -157,7 +157,7 @@ def run(cfg: llm.LLMConfig, question: str, search_fn: Callable[[str], list[dict[
     if final_text is None:
         # 단계를 다 쓰거나 형식 오류가 반복되면, 모은 근거로 RAG 처럼 한 번에 답하게 한다(빈손으로 끝나지 않게)
         context, _ = answer.build_context(src.items, 8000)
-        res = llm.chat(cfg, answer.SYSTEM, answer.user_prompt(question, context), max_tokens=max_tokens, temperature=0.1)
+        res = llm.chat(cfg, answer.SYSTEM, answer.user_prompt(question, context), max_tokens=max_tokens, temperature=0.1, no_cache=no_cache)
         final_text = res["text"]
         steps.append(
             {

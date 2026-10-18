@@ -89,13 +89,14 @@ function vChart(rows) {
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px" role="img" aria-label="조합별 메모리-정확도">
     ${yTicks.map(v => `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--border)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${(v * 100).toFixed(1)}</text>`).join("")}
     ${ticks.filter((b, i) => i === 0 || X(b) - X(ticks[i - 1]) > 34).map(b => `<text x="${X(b)}" y="${H - B + 15}" text-anchor="middle" font-size="10" fill="var(--muted)">${tickTxt(b)}</text>`).join("")}
-    <text x="${L - 6}" y="11" text-anchor="end" font-size="11" fill="var(--muted)">nDCG@10 ↑</text>
+    <text x="4" y="11" font-size="11" fill="var(--muted)">nDCG@10 ↑</text>
     <text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="11" fill="var(--muted)">벡터당 메모리 (로그) →</text>
     <path d="${front.map((r, i) => `${i ? "L" : "M"}${X(r.bytes.ram).toFixed(1)},${Y(r.metrics["ndcg@10"]).toFixed(1)}`).join(" ")}" fill="none" stroke="var(--series-1)" stroke-width="2"/>
     ${ok.filter(r => !r.pareto).map(r => `<circle cx="${X(r.bytes.ram)}" cy="${Y(r.metrics["ndcg@10"])}" r="4" fill="var(--muted)" opacity=".55"><title>${esc(r.label)}: ${pct(r.metrics["ndcg@10"])} · ${r.bytes.ram}B</title></circle>`).join("")}
-    ${front.map((r, i) => `<circle cx="${X(r.bytes.ram)}" cy="${Y(r.metrics["ndcg@10"])}" r="5" fill="var(--series-1)" stroke="var(--panel)" stroke-width="2"><title>${esc(r.label)}: ${pct(r.metrics["ndcg@10"])} · ${r.bytes.ram}B</title></circle>
-      <text x="${X(r.bytes.ram) + 8}" y="${Y(r.metrics["ndcg@10"]) + (i % 2 ? 14 : -6)}" font-size="10" fill="var(--text)">${esc(r.label.length > 28 ? r.label.slice(0, 27) + "…" : r.label)}</text>`).join("")}
-  </svg><div class="legend"><span><span class="swatch" style="background:var(--series-1)"></span>파레토 최적 (메모리 대비 정확도에서 다른 조합에 지지 않음)</span><span><span class="swatch" style="background:var(--muted)"></span>그 밖의 조합</span></div>`;
+    ${front.map((r, i) => `<circle cx="${X(r.bytes.ram)}" cy="${Y(r.metrics["ndcg@10"])}" r="8" fill="var(--series-1)" stroke="var(--panel)" stroke-width="2"><title>${esc(r.label)}: ${pct(r.metrics["ndcg@10"])} · ${r.bytes.ram}B</title></circle>
+      <text x="${X(r.bytes.ram)}" y="${Y(r.metrics["ndcg@10"]) + 3.5}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" pointer-events="none">${i + 1}</text>`).join("")}
+  </svg><div class="legend"><span><span class="swatch" style="background:var(--series-1)"></span>파레토 최적 (메모리 대비 정확도에서 다른 조합에 지지 않음)</span><span><span class="swatch" style="background:var(--muted)"></span>그 밖의 조합</span></div>
+    <ol class="small" style="margin:4px 0 8px;padding-left:22px">${front.map(r => `<li>${esc(r.label)} — ${r.bytes.ram}B · nDCG ${pct(r.metrics["ndcg@10"])}</li>`).join("")}</ol>`;
 }
 
 function vRender(r) {

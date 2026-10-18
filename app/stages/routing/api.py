@@ -104,8 +104,9 @@ def evaluate(body: RoutingEvalRequest, db: DB) -> dict:
             for i, it in enumerate(items):
                 job.update(i / len(items) * 0.97, f"질문 {i + 1}/{len(items)}: {it['query'][:40]}")
                 ev = evaluation.grams(it["evidence"]) if it.get("evidence") else None
-                re_ = flow.run(sdb, it["query"], easy, lcfg, it.get("evidence", ""))
-                rh = flow.run(sdb, it["query"], hard, lcfg, it.get("evidence", ""))
+                # 두 경로의 지연을 비교하므로 프롬프트 캐시를 끈다(먼저 실행한 경로의 캐시로 뒤 경로가 빨라지지 않게)
+                re_ = flow.run(sdb, it["query"], easy, lcfg, it.get("evidence", ""), no_cache=True)
+                rh = flow.run(sdb, it["query"], hard, lcfg, it.get("evidence", ""), no_cache=True)
                 path, reason = routers.route_rule(it["query"], body.rule_max_chars)
                 row = {"query": it["query"], "easy": _record(re_, it, ev), "hard": _record(rh, it, ev),
                        "rule": {"path": path, "reason": reason}, "confidence": routers.confidence(re_["search"]["results"]), "llm": None}  # fmt: skip
