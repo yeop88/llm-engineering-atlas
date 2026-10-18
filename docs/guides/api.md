@@ -28,6 +28,8 @@
 | GET | `/api/vector-stores` | 벡터 DB 연결 상태 (qdrant / pgvector / mariadb) |
 | GET / POST | `/api/collections` | 컬렉션 목록 / 생성 `{"name", "domain", "description"}` |
 | GET / PATCH / DELETE | `/api/collections/{id}` | 상세(문서·청크 세트·인덱스) / 수정 / 삭제(벡터 DB 데이터 포함) |
+| GET | `/api/public-corpora` | 공개 자료 프리셋 목록(설명 · 라이선스) |
+| POST | `/api/collections/{id}/import-public` | 공개 자료 가져오기 작업 `{"preset": "labor_lease_law", "max_precedents"?}` |
 | POST | `/api/collections/{id}/documents` | 파일 업로드 (multipart `files`, 여러 개) → `added`, `skipped`. 이미지 · 영상도 받음(영상은 프레임 추출 결과가 `warning` 에) |
 | GET / DELETE | `/api/documents/{id}` | 본문 보기 / 삭제(청크·벡터 함께) |
 | POST | `/api/collections/{id}/chunk-preview` | 청킹 미리보기 `{"method", "size", "overlap", ...}` → 통계·예시 |
@@ -218,3 +220,5 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/rl/evaluate` | Best-of-N 평가 작업 — 평소 답 대비 품질 · 보상 짝지은 비교, 보상 차가 큰 쌍 자동 저장 |
 
 검색 설정(`SearchConfig`): `"rerank_fusion": true`(크로스 인코더 순위와 1단계 순위 RRF), `"llm_rerank": {"top": 10, "max_chars": 300, "fusion": false}`(LLM 목록형, 연결 계층에서 적용). 처리 경로(`FlowPath`): `"model"`(경로 답변 모델), `"agent": {"max_steps", "top_k"}`(8a), `"best_of": 4`(8b).
+
+평가 세트 항목: `{"query", "doc_ids": [...], "evidence", "evidences": [...]?, "answerable": true, "type"}` — 여러 문서 질문은 `evidences` 에 근거를 모두, 답 없는 질문은 `"answerable": false` 와 빈 `doc_ids`. LLM 생성(`/eval-sets/generate`)의 `styles` 에 `condition` · `long_situation` · `multi` · `unanswerable`, 수는 `n_multi` · `n_unanswerable`.

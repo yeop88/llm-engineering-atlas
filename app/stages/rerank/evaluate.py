@@ -34,7 +34,8 @@ def evaluate(db: Session, items: list[dict[str, Any]], base_cfg: dict[str, Any],
              llm_cfg: dict[str, Any] | None, job: Job | None = None) -> dict[str, Any]:  # fmt: skip
     ks = sorted({k for k in ks if k > 0})
     max_k = max(ks + [int((llm_cfg or {}).get("top") or 0)])
-    ev = [evaluation.grams(it["evidence"]) if it.get("evidence") else None for it in items]
+    items = [it for it in items if evaluation.answerable(it)]  # 답 없는 질문은 재정렬할 정답이 없다
+    ev = [evaluation.evidence_grams(it) for it in items]
     names = {i: db.get(EmbeddingModel, i).name for i in reranker_ids}
     per: dict[str, list[float]] = {}
     lat: dict[str, list[float]] = {}

@@ -126,31 +126,33 @@ def verify_llm(cfg: llm.LLMConfig, question: str, context: str, sentences: list[
 
 # ── 평가 세트로 답변 일괄 평가 ──────────────────────────────────────────────
 def evaluate_one(
-    cfg: llm.LLMConfig, question: str, results: list[dict[str, Any]], evidence: str, max_chars: int, max_tokens: int, no_cache: bool = False
+    cfg: llm.LLMConfig, item: dict[str, Any], results: list[dict[str, Any]], max_chars: int, max_tokens: int, no_cache: bool = False
 ) -> dict[str, Any]:
-    from app.stages.rag.evaluation import contains_evidence
+    """질문 항목 하나에 답하고 채점. item 전체를 받는 이유: 여러 근거(모두 인용해야 정답) · 답 없는 질문(거절해야 정답)을
+    다른 평가들과 같은 규칙(evaluation.evidence_in_sources · answer_quality)으로 채점하려고."""
+    from app.stages.rag import evaluation
 
     context, sources = build_context(results, max_chars)
-    res = llm.chat(cfg, SYSTEM, user_prompt(question, context), max_tokens=max_tokens, temperature=0.1, no_cache=no_cache)
+    res = llm.chat(cfg, SYSTEM, user_prompt(item["query"], context), max_tokens=max_tokens, temperature=0.1, no_cache=no_cache)
     check = verify_lexical(res["text"], sources)
-    with_ev = [i + 1 for i, s in enumerate(sources) if evidence and contains_evidence(s["text"], evidence)]
-    return {
-        "query": question,
+    row = {
+        "query": item["query"],
+        "type": item.get("type"),
         "answer": res["text"],
         "refused": check["refused"],
         "supported_ratio": check["supported_ratio"],
         "invalid_citations": check["invalid_citations"],
-        "evidence_sources": with_ev,  # 근거 문장을 담은 근거 번호
-        "evidence_retrieved": bool(with_ev) if evidence else None,
-        "evidence_cited": bool(set(with_ev) & set(check["cited_sources"])) if evidence else None,
         "cited": check["cited_sources"],
+        "answerable": evaluation.answerable(item),
         "seconds": res["seconds"],
         "output_tokens": res["usage"].get("output_tokens"),
         "timings": {
             k: res["usage"].get(k)
             for k in ("prompt_tokens_evaluated", "prompt_ms", "prompt_per_second", "generation_ms", "generation_per_second")
         },
-    }
+    } | evaluation.evidence_in_sources(sources, item, check["cited_sources"])
+    row["quality"] = evaluation.answer_quality(row, item)
+    return row
 
 
 def summarize_eval(rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -158,10 +160,22 @@ def summarize_eval(rows: list[dict[str, Any]]) -> dict[str, Any]:
         vals = [r[key] for r in rows if r.get(key) is not None]
         return round(sum(bool(v) for v in vals) / len(vals), 3) if vals else None
 
+    # 답 없는 질문(answerable=False)은 '거절했는가'로 따로 센다 — 답이 있는 질문과 섞으면 거절이 좋은지 나쁜지가 뒤섞인다
+    unans = [r for r in rows if r.get("answerable") is False]
+    rows = (
+        [r for r in rows if r.get("answerable") is not False] or rows
+        if not unans
+        else [r for r in rows if r.get("answerable") is not False]
+    )
     sup = [r["supported_ratio"] for r in rows if r["supported_ratio"] is not None]
     retrieved = [r for r in rows if r.get("evidence_retrieved")]
+    q = [r["quality"] for r in rows + unans if r.get("quality") is not None]
     return {
-        "n": len(rows),
+        "n": len(rows) + len(unans),
+        "n_unanswerable": len(unans),
+        # 답 없는 질문을 '찾을 수 없다'고 한 비율 — 낮으면 근거 밖에서 지어낸다(환각)
+        "correct_refusal": round(sum(bool(r["refused"]) for r in unans) / len(unans), 3) if unans else None,
+        "quality": round(sum(q) / len(q), 3) if q else None,
         "answer_rate": round(sum(not r["refused"] for r in rows) / len(rows), 3) if rows else None,
         "evidence_retrieved": rate("evidence_retrieved"),
         "evidence_cited": rate("evidence_cited"),

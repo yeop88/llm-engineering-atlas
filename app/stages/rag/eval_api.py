@@ -49,7 +49,9 @@ def _check_items(db: Session, collection_id: int, items: list[EvalItemIn]) -> li
     bad = sorted({d for it in items for d in it.doc_ids if d not in names})
     if bad:
         raise HTTPException(400, f"이 컬렉션에 없는 문서 id: {bad[:10]}")
-    return [it.model_dump() | {"filename": names[it.doc_ids[0]]} for it in items]
+    # 답 없는 질문은 정답 문서가 없다 — 파일 이름 칸은 비워 둔다(여러 문서 질문은 첫 문서 이름 + 나머지 수)
+    return [it.model_dump() | {"filename": (names[it.doc_ids[0]] + (f" 외 {len(it.doc_ids) - 1}" if len(it.doc_ids) > 1 else "")) if it.doc_ids else ""}
+            for it in items]  # fmt: skip
 
 
 @router.get("/collections/{collection_id}/eval-sets")
@@ -102,7 +104,14 @@ def generate_eval_set(collection_id: int, body: EvalSetGenerate, db: DB) -> dict
                 if not passages:
                     raise ValueError(f"{body.min_chars}자 이상인 청크가 없습니다. 최소 길이를 낮추세요.")
                 if cfg:
-                    raw, gen_stats = evaluation.from_llm(cfg, passages, list(body.styles), job, body.concurrency)
+                    single = [s for s in body.styles if s in evaluation.STYLES]
+                    raw, gen_stats = evaluation.from_llm(cfg, passages, single, job, body.concurrency) if single else ([], {})
+                    extra = [s for s in body.styles if s in evaluation.EXTRA_STYLES]
+                    if extra:
+                        more, more_stats = evaluation.from_llm_extra(
+                            cfg, passages, extra, body.n_multi, body.n_unanswerable, body.seed, job
+                        )
+                        raw, gen_stats = raw + more, gen_stats | {"extra": more_stats}
                 else:
                     raw, gen_stats = evaluation.from_sentences(passages, body.seed), {}
                 items, stats = evaluation.finalize(raw)

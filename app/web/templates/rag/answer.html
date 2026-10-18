@@ -205,7 +205,8 @@ function renderEval(r) {
   const yes = v => (v == null ? "-" : v ? '<span class="badge ok">예</span>' : '<span class="badge err">아니오</span>');
   $("#e-out").innerHTML = `<div class="small muted">${esc(r.llm.model)} · 질문 ${s.n}개 · ${r.seconds}s · run #${r.run_id}</div>
     <div class="grid cols-4">
-      ${stat("답변률", p(s.answer_rate), "'찾을 수 없음'이 아닌 답")}
+      ${stat("답변률", p(s.answer_rate), "'찾을 수 없음'이 아닌 답 (답 있는 질문)")}
+      ${s.n_unanswerable ? stat("답 없음 거절", p(s.correct_refusal), `답 없는 질문 ${s.n_unanswerable}개 중 '찾을 수 없다'고 한 비율 — 낮으면 지어냄`) : ""}
       ${stat("근거 검색률", p(s.evidence_retrieved), "근거 문장 청크가 LLM 에 전달됨")}
       ${stat("정답 근거 인용률", p(s.evidence_cited), `검색됐을 때 인용 ${p(s.cited_given_retrieved)}`)}
       ${stat("문장 근거율", p(s.sentence_support), `잘못된 인용 ${p(s.invalid_citation_rate)} · 지나친 거절 ${p(s.false_refusal)}`)}

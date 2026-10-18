@@ -19,21 +19,23 @@ from sqlalchemy.orm import Session
 from app.core import llm, stats
 from app.core.db import PreferencePair
 from app.core.jobs import Job
-from app.stages.rag import answer
+from app.stages.rag import answer, evaluation
 from app.stages.rl.reward import reward
 
 
-def candidates(cfg: llm.LLMConfig, question: str, results: list[dict[str, Any]], n: int, temperature: float, evidence: str = "",
+def candidates(cfg: llm.LLMConfig, question: str, results: list[dict[str, Any]], n: int, temperature: float, item: dict[str, Any] | None = None,
                max_chars: int = 6000, max_tokens: int = 500, no_cache: bool = False) -> dict[str, Any]:  # fmt: skip
     context, sources = answer.build_context(results, max_chars)
     cands = []
     for i in range(n):
         t = 0.1 if i == 0 else temperature  # 후보 0 = 평소 답
         res = llm.chat(cfg, answer.SYSTEM, answer.user_prompt(question, context), max_tokens=max_tokens, temperature=t, no_cache=no_cache)
-        r = reward(res["text"], sources, evidence)
+        r = reward(res["text"], sources, item=item)
         cands.append({"text": res["text"], "temperature": t, "reward": r["total"], "parts": r["parts"], "seconds": res["seconds"],
                       "refused": r["check"]["refused"], "supported_ratio": r["check"]["supported_ratio"],
-                      "cited": r["check"]["cited_sources"]})  # fmt: skip
+                      "cited": r["check"]["cited_sources"],
+                      "quality": evaluation.answer_quality({"refused": r["check"]["refused"], "supported_ratio": r["check"]["supported_ratio"]}
+                                                           | evaluation.evidence_in_sources(sources, item or {}, r["check"]["cited_sources"]), item or {"doc_ids": [0]})})  # fmt: skip
     best = max(range(n), key=lambda i: (cands[i]["reward"], -i))  # 동점이면 평소 답(앞 번호)
     worst = min(range(n), key=lambda i: cands[i]["reward"])
     return {"context": context, "sources": sources, "candidates": cands, "best": best, "worst": worst}
@@ -48,24 +50,17 @@ def save_pair(db: Session, collection_id: int | None, question: str, context: st
     return p
 
 
-def _metric(c: dict[str, Any], evidence: str, sources: list[dict[str, Any]]) -> float:
-    """비교용 품질: 정답 근거 인용(근거 문장을 알면) 아니면 문장 근거율 — 다른 단계 평가와 같은 기준."""
-    if evidence:
-        return float(c["parts"].get("evidence_cited", 0.0) > 0)
-    return float(c["supported_ratio"] or 0.0)
-
-
 def evaluate(db: Session, job: Job, items: list[dict[str, Any]], search_fn, cfg: llm.LLMConfig, n: int, temperature: float,
              margin: float, collection_id: int | None, collect: bool) -> dict[str, Any]:  # fmt: skip
     rows = []
     saved = 0
     for qi, it in enumerate(items):
         job.update(qi / len(items) * 0.97, f"질문 {qi + 1}/{len(items)} · 후보 {n}개")
-        res = candidates(cfg, it["query"], search_fn(it["query"]), n, temperature, it.get("evidence", ""))
+        res = candidates(cfg, it["query"], search_fn(it["query"]), n, temperature, it)
         c = res["candidates"]
         g, b, w = c[0], c[res["best"]], c[res["worst"]]
         rows.append({"query": it["query"], "greedy_reward": g["reward"], "best_reward": b["reward"], "worst_reward": w["reward"],
-                     "greedy_q": _metric(g, it.get("evidence", ""), res["sources"]), "best_q": _metric(b, it.get("evidence", ""), res["sources"]),
+                     "greedy_q": g["quality"], "best_q": b["quality"],
                      "picked": res["best"], "seconds": sum(x["seconds"] for x in c), "greedy_seconds": g["seconds"],
                      "best_text": b["text"][:400], "greedy_text": g["text"][:400]})  # fmt: skip
         if collect and b["reward"] - w["reward"] >= margin:

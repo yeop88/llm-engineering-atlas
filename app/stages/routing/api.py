@@ -65,18 +65,28 @@ def route(body: RouteTestRequest, db: DB) -> dict[str, Any]:
     return {"question": body.question, "decisions": out}
 
 
-def _record(r: dict[str, Any], item: dict[str, Any], ev: set[str] | None) -> dict[str, Any]:
-    """한 경로 실행 결과 → 라우팅 평가용 기록. 품질: 답변을 했으면 '정답 근거를 인용했는가'(근거 문장이 없으면 문장 근거율),
+def _record(r: dict[str, Any], item: dict[str, Any], ev) -> dict[str, Any]:
+    """한 경로 실행 결과 → 라우팅 평가용 기록. 품질: 답변을 했으면 질문 유형별 답변 품질(정답 근거 인용 · 답 없는 질문은 올바른 거절),
     검색까지만이면 nDCG@10 — 라우팅의 목적이 최종 결과 품질을 지키는 것이라, 답변이 있으면 답변 쪽 지표를 쓴다."""
-    m = evaluation.query_metrics(evaluation.judge(r["search"]["results"], item, ev))
+    ndcg = None
+    if evaluation.answerable(item):
+        ndcg = evaluation.query_metrics(evaluation.judge(r["search"]["results"], item, ev))["ndcg@10"]
     a = r.get("answer")
-    if a:
-        q = float(a["evidence_cited"]) if a["evidence_cited"] is not None else float(a["supported_ratio"] or 0.0)
-    else:
-        q = m["ndcg@10"]
-    keep = ("refused", "supported_ratio", "invalid_citations", "cited", "evidence_retrieved", "evidence_cited", "seconds", "output_tokens")
+    q = float(a["quality"]) if a else float(ndcg or 0.0)
+    keep = (
+        "refused",
+        "supported_ratio",
+        "invalid_citations",
+        "cited",
+        "evidence_retrieved",
+        "evidence_cited",
+        "answerable",
+        "quality",
+        "seconds",
+        "output_tokens",
+    )
     return {
-        "quality": q, "ndcg": m["ndcg@10"], "ms": r["total_ms"],
+        "quality": q, "ndcg": ndcg, "ms": r["total_ms"],
         "search_ms": sum(s["ms"] for s in r["steps"] if s["key"] in SEARCH_STEPS),
         "answer": {k: a.get(k) for k in keep} | {"query": item["query"]} if a else None,
     }  # fmt: skip
@@ -103,10 +113,10 @@ def evaluate(body: RoutingEvalRequest, db: DB) -> dict:
         with SessionLocal() as sdb:
             for i, it in enumerate(items):
                 job.update(i / len(items) * 0.97, f"질문 {i + 1}/{len(items)}: {it['query'][:40]}")
-                ev = evaluation.grams(it["evidence"]) if it.get("evidence") else None
+                ev = evaluation.evidence_grams(it)
                 # 두 경로의 지연을 비교하므로 프롬프트 캐시를 끈다(먼저 실행한 경로의 캐시로 뒤 경로가 빨라지지 않게)
-                re_ = flow.run(sdb, it["query"], easy, lcfg, it.get("evidence", ""), no_cache=True)
-                rh = flow.run(sdb, it["query"], hard, lcfg, it.get("evidence", ""), no_cache=True)
+                re_ = flow.run(sdb, it["query"], easy, lcfg, it, no_cache=True)
+                rh = flow.run(sdb, it["query"], hard, lcfg, it, no_cache=True)
                 path, reason = routers.route_rule(it["query"], body.rule_max_chars)
                 row = {"query": it["query"], "easy": _record(re_, it, ev), "hard": _record(rh, it, ev),
                        "rule": {"path": path, "reason": reason}, "confidence": routers.confidence(re_["search"]["results"]), "llm": None}  # fmt: skip

@@ -12,14 +12,22 @@ from starlette.concurrency import run_in_threadpool
 
 from app.core import crud, media
 from app.core.config import get_settings
-from app.core.db import Chunk, ChunkSet, Collection, Document, EmbeddingModel, VectorIndex, get_db
-from app.core.jobs import jobs
-from app.core.schemas import ChunkSetCreate, ChunkStrategy, CollectionCreate, CollectionUpdate, IndexCreate, SearchRequest
+from app.core.db import Chunk, ChunkSet, Collection, Document, EmbeddingModel, SessionLocal, VectorIndex, get_db
+from app.core.jobs import Job, jobs
+from app.core.schemas import (
+    ChunkSetCreate,
+    ChunkStrategy,
+    CollectionCreate,
+    CollectionUpdate,
+    IndexCreate,
+    PublicCorpusImport,
+    SearchRequest,
+)
 from app.core.vectorstores import STORE_KINDS, StoreUnavailable, get_store, stores_status
 from app.pipeline.search import run_search  # 검색 향상(enhance) 등 다음 단계를 끼워 넣는 연결점
 from app.stages.embedding.model_manager import get_manager
 from app.stages.multimodal import media as mm_media
-from app.stages.rag import chunking, parsers, service
+from app.stages.rag import chunking, parsers, public_corpus, service
 
 router = APIRouter(prefix="/api", tags=["rag"])
 DB = Annotated[Session, Depends(get_db)]
@@ -149,6 +157,49 @@ def delete_collection(collection_id: int, db: DB) -> dict:
     for did in doc_ids:  # DB 는 연쇄 삭제되지만 디스크의 이미지 · 프레임 파일은 직접 지워야 한다
         media.remove_document_media(did)
     return {"deleted": collection_id}
+
+
+# ── 공개 자료 ───────────────────────────────────────────────────────────────
+@router.get("/public-corpora")
+def public_corpora() -> list[dict[str, Any]]:
+    return [{"key": k, "title": v["title"], "description": v["description"],
+             "licenses": [v[x]["license"] for x in ("statutes", "precedents") if x in v]} for k, v in public_corpus.PRESETS.items()]  # fmt: skip
+
+
+@router.post("/collections/{collection_id}/import-public", status_code=202)
+def import_public(collection_id: int, body: PublicCorpusImport, db: DB) -> dict:
+    """원본 파일을 받아(처음 한 번) 거른 뒤 문서로 넣는다. 수백 MB 를 받고 거르므로 작업으로 돌린다."""
+    c = _get(db, Collection, collection_id, "컬렉션")
+    preset = public_corpus.PRESETS.get(body.preset)
+    if preset is None:
+        raise HTTPException(400, f"알 수 없는 프리셋: {body.preset}")
+    title = f"공개 자료 가져오기 · {preset['title']} → {c.name}"
+
+    def work(job: Job) -> dict[str, Any]:
+        docs = []
+        if "statutes" in preset:
+            docs += public_corpus.collect_statutes(job, preset["statutes"], 0.0, 0.3)
+        if "precedents" in preset:
+            spec = preset["precedents"] | ({"max": body.max_precedents} if body.max_precedents is not None else {})
+            docs += public_corpus.collect_precedents(job, spec, 0.3, 0.85) if spec["max"] else []
+        added, skipped = 0, []
+        with SessionLocal() as sdb:
+            col = sdb.get(Collection, collection_id)
+            for i, d in enumerate(docs):
+                job.update(0.85 + 0.15 * i / max(1, len(docs)), f"문서 넣기 {i + 1}/{len(docs)}")
+                doc, msg = service.ingest(sdb, col, d["filename"], d["text"].encode("utf-8"))
+                if doc is None:
+                    skipped.append({"filename": d["filename"], "reason": msg})
+                    continue
+                doc.meta = (doc.meta or {}) | {"source": d["source"]}  # 출처 · 라이선스를 문서마다 남긴다
+                sdb.commit()
+                added += 1
+        kinds: dict[str, int] = {}
+        for d in docs:
+            kinds[d["source"]["kind"]] = kinds.get(d["source"]["kind"], 0) + 1
+        return {"preset": body.preset, "added": added, "skipped": skipped[:20], "n_skipped": len(skipped), "by_kind": kinds}
+
+    return jobs.submit("public_corpus", title, work, collection_id=c.id).to_dict()
 
 
 # ── 문서 ────────────────────────────────────────────────────────────────────

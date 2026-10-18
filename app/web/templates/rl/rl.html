@@ -50,7 +50,7 @@ let colId = null, sampleRes = null;
 setupCollectionPickers({ col: $("#c-col"), idx: $("#c-idx"), set: $("#c-set"), key: "rl-col", onDetail: d => (colId = d.id) });
 const cfg = () => ({ mode: "dense", index_id: +$("#c-idx").value });
 const model = () => $("#c-model").value.trim() || null;
-const PART = { support: "근거 있는 문장", evidence_cited: "정답 근거 인용", invalid_citation: "없는 근거 인용", false_refusal: "근거 있는데 거절", honest_refusal: "정직한 거절", too_long: "너무 김" };
+const PART = { support: "근거 있는 문장", evidence_cited: "정답 근거 인용", invalid_citation: "없는 근거 인용", false_refusal: "근거 있는데 거절", honest_refusal: "정직한 거절", too_long: "너무 김", hallucination: "답 없는데 지어냄" };
 
 (async () => {
   const w = await api("/api/rl/reward-weights");

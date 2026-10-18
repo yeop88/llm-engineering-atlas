@@ -288,3 +288,16 @@ function mediaThumb(x) {
 $("#q").addEventListener("keydown", e => { if (e.key === "Enter") $("#q-run").click(); });
 
 load().then(initTabs);
+
+// 공개 자료 가져오기: 프리셋(분야별 공개 데이터셋 묶음)을 골라 이 컬렉션 문서로 넣는다. 출처 · 라이선스는 문서마다 기록된다.
+(async () => {
+  if (!$("#d-public")) return;
+  const ps = await api("/api/public-corpora");
+  $("#d-public").innerHTML = ps.map(p => `<option value="${p.key}">${esc(p.title)}</option>`).join("");
+  const info = () => { const p = ps.find(x => x.key === $("#d-public").value); $("#d-public-info").innerHTML = p ? `${esc(p.description)}<br>라이선스: ${p.licenses.map(esc).join(" · ")}` : ""; };
+  $("#d-public").addEventListener("change", info); info();
+  $("#d-public-run").onclick = e => runJobInto(e.target, `/api/collections/${COLLECTION_ID}/import-public`, { preset: $("#d-public").value }, $("#d-public-progress"), r => {
+    toast(`문서 ${r.added}개를 넣었습니다 (${Object.entries(r.by_kind).map(([k, v]) => `${k === "statute" ? "법령" : "판례"} ${v}`).join(" · ")}${r.n_skipped ? ` · 건너뜀 ${r.n_skipped}` : ""})`, "ok");
+    load();
+  });
+})();

@@ -16,6 +16,7 @@ from app.pipeline.search import run_search
 from app.stages.distill import llm_data, service
 from app.stages.finetune import data
 from app.stages.finetune.api import _out
+from app.stages.rag import evaluation
 
 router = APIRouter(prefix="/api/distill", tags=["distill"])
 DB = Annotated[Session, Depends(get_db)]
@@ -69,7 +70,7 @@ def llm_distill_data(body: LLMDistillDataRequest, db: DB) -> dict:
     for sid in body.exclude_eval_set_ids:
         es = db.get(EvalSet, sid)
         if es:
-            evidences += [it.get("evidence") or "" for it in es.items]
+            evidences += [e for it in es.items for e in evaluation.evidences_of(it)]  # 여러 문서 질문의 근거도 모두 누수 방지 대상
     name = body.name or f"distill-{teacher.model}-{time.strftime('%Y%m%d-%H%M%S')}"
     search_cfg = body.config.model_dump() | {"top_k": body.context_top}
     title = f"LLM 증류 데이터 · {col.name} · 교사 {teacher.model}"

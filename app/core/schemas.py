@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 Role = Literal["query", "document", "plain"]
 
@@ -212,6 +212,13 @@ class SearchConfig(BaseModel):
     enhance: EnhanceConfig | None = None
 
 
+class PublicCorpusImport(BaseModel):
+    """공개 자료 프리셋을 컬렉션으로 가져오기. 판례 수는 프리셋 기본값을 덮어쓸 수 있다(질문 생성 · 색인 비용 조절)."""
+
+    preset: str
+    max_precedents: int | None = Field(default=None, ge=0, le=5000)
+
+
 class SearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=2000)
     configs: list[SearchConfig] = Field(min_length=1, max_length=4)
@@ -339,9 +346,17 @@ class LLMTestRequest(LLMRef):
 # ── 문서 검색 평가 ──────────────────────────────────────────────────────────
 class EvalItemIn(BaseModel):
     query: str = Field(min_length=1, max_length=2000)
-    doc_ids: list[int] = Field(min_length=1, max_length=50)
+    doc_ids: list[int] = Field(default_factory=list, max_length=50)  # 답 없는 질문(answerable=false)만 비울 수 있다
     evidence: str = Field(default="", max_length=4000)  # 답이 들어 있는 원문 문장 (있으면 근거 단위 평가)
+    evidences: list[str] = Field(default_factory=list, max_length=10)  # 여러 문서 질문: 모두 필요한 근거들
+    answerable: bool = True  # False = 자료에 답이 없는 질문 (거절해야 정답)
     type: str = Field(default="manual", max_length=30)
+
+    @model_validator(mode="after")
+    def _docs_needed(self) -> EvalItemIn:
+        if self.answerable and not self.doc_ids:
+            raise ValueError("답이 있는 질문은 정답 문서(doc_ids)가 필요합니다.")
+        return self
 
 
 class EvalSetCreate(BaseModel):
@@ -360,9 +375,11 @@ class EvalSetGenerate(LLMRef):
     method: Literal["llm", "sentence"] = "llm"
     chunk_set_id: int  # 지문을 뽑을 청크 세트 (평가는 다른 청크 세트로도 할 수 있다)
     n_passages: int = Field(default=30, ge=1, le=500)
-    styles: list[Literal["fact", "paraphrase", "situation"]] = Field(
-        default=["fact", "paraphrase", "situation"], min_length=1, max_length=3
+    styles: list[Literal["fact", "paraphrase", "situation", "condition", "long_situation", "multi", "unanswerable"]] = Field(
+        default=["fact", "paraphrase", "situation"], min_length=1, max_length=7
     )
+    n_multi: int = Field(default=20, ge=0, le=500)  # 여러 문서 질문 수 (관련 지문 쌍이 모자라면 적게 나옴)
+    n_unanswerable: int = Field(default=15, ge=0, le=500)  # 답 없는 질문 수
     min_chars: int = Field(default=200, ge=20, le=4000)
     seed: int = 0
     concurrency: int = Field(default=4, ge=1, le=16)

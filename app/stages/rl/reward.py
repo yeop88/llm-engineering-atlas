@@ -14,14 +14,29 @@ from typing import Any
 
 from app.stages.rag import answer, evaluation
 
-WEIGHTS = {"support": 1.0, "evidence_cited": 1.0, "invalid_citation": -0.5, "false_refusal": -1.0, "honest_refusal": 0.5, "too_long": -0.2}
+WEIGHTS = {
+    "support": 1.0,
+    "evidence_cited": 1.0,
+    "invalid_citation": -0.5,
+    "false_refusal": -1.0,
+    "honest_refusal": 0.5,
+    "too_long": -0.2,
+    "hallucination": -1.0,  # 답 없는 질문에 답함(지어냄)
+}
 MAX_CHARS = 600  # 이보다 긴 답은 감점 (근거 5개 RAG 답변의 보통 길이 기준)
 
 
-def reward(text: str, sources: list[dict[str, Any]], evidence: str = "", weights: dict[str, float] | None = None) -> dict[str, Any]:
+def reward(text: str, sources: list[dict[str, Any]], evidence: str = "", weights: dict[str, float] | None = None,
+           item: dict[str, Any] | None = None) -> dict[str, Any]:  # fmt: skip
+    """item 을 주면(평가 세트) 그 질문의 근거들 · 답 없음 여부로 채점한다. 답 없는 질문에 답하면 지어낸 것이라 감점."""
     w = WEIGHTS | (weights or {})
     check = answer.verify_lexical(text, sources)
     parts: dict[str, float] = {}
+    if item is not None and not evaluation.answerable(item):
+        parts["honest_refusal" if check["refused"] else "hallucination"] = w["honest_refusal"] if check["refused"] else w["hallucination"]
+        return {"total": round(sum(parts.values()), 4), "parts": parts, "check": check}
+    if item is not None:
+        evidence = (evaluation.evidences_of(item) or [""])[0]
     has_ev = bool(evidence) and any(evaluation.contains_evidence(s["text"], evidence) for s in sources)
     if check["refused"]:
         # 근거에 답이 있는데 거절하면 감점, 답할 근거가 없을 때 거절하면 보상(정답 근거를 모르면 판단하지 않음)

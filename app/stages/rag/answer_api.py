@@ -139,7 +139,7 @@ def answer_eval(set_id: int, body: AnswerEvalRequest) -> dict:
             for i, it in enumerate(items):
                 job.update(i / len(items), f"질문 {i + 1}/{len(items)}: {it['query'][:40]}")
                 res = run_search(db, it["query"], search_cfg)
-                row = answer.evaluate_one(cfg, it["query"], res["results"], it.get("evidence", ""), body.max_context_chars, body.max_tokens)
+                row = answer.evaluate_one(cfg, it, res["results"], body.max_context_chars, body.max_tokens)
                 rows.append(row | {"id": it.get("id"), "type": it.get("type"), "evidence": it.get("evidence", "")})
             summary = answer.summarize_eval(rows)
             out = {"eval_set": {"id": set_id, "name": name}, "llm": cfg.public(), "config": search_cfg, "summary": summary, "rows": rows,

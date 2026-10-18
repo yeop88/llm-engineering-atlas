@@ -35,7 +35,8 @@ def _summary(rows: list[dict[str, Any]], router: str, paths: list[str], base_q: 
         "router": router, "label": LABELS[router], "n": len(rows),
         "hard_rate": round(sum(p == HARD for p in paths) / len(paths), 3),
         "quality": round(sum(q) / len(q), 4), "quality_ci": stats.mean_ci(q),
-        "ndcg": round(sum(r[p]["ndcg"] for r, p in zip(rows, paths, strict=True)) / len(rows), 4),
+        # 답 없는 질문은 nDCG 가 없어(None) 평균에서 뺀다
+        "ndcg": round(sum(v) / len(v), 4) if (v := [r[p]["ndcg"] for r, p in zip(rows, paths, strict=True) if r[p]["ndcg"] is not None]) else None,
         "latency_ms": {"mean": round(sum(lat) / len(lat), 1), "p95": round(lat[min(len(lat) - 1, int(0.95 * len(lat)))], 1)},
         "answer": rag_answer.summarize_eval(answers) if answers else None,
     }  # fmt: skip

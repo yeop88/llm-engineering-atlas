@@ -2,7 +2,7 @@
 let evSets = [];
 let evTimer = null;
 const EV_METHOD = { llm: "LLM 생성", sentence: "문장 추출", manual: "직접 입력", import: "가져오기" };
-const EV_TYPE = { fact: "사실 확인", paraphrase: "다른 표현", situation: "상황 설명형", sentence: "문장 그대로", manual: "직접 입력" };
+const EV_TYPE = { fact: "사실 확인", paraphrase: "다른 표현", situation: "상황 설명형", condition: "조건 · 계산", long_situation: "긴 상황 설명", multi: "여러 문서", unanswerable: "답 없음", sentence: "문장 그대로", manual: "직접 입력" };
 const EV_HINT = {
   llm: "청크 세트에서 문서마다 골고루 지문을 골라, 지문마다 고른 유형별로 질문 하나와 근거 문장을 만듭니다. 정답은 문서와 근거 문장으로 기록하므로 다른 청크 세트·인덱스 평가에도 그대로 씁니다. 만든 뒤 검토해서 이상한 질문은 지우세요.",
   sentence: "지문의 문장 하나를 그대로 질문으로 씁니다. 단어가 그대로 겹쳐 매우 쉬운 세트라서 파이프라인이 동작하는지 점검하는 용도입니다. 모델 비교에는 LLM 생성이나 실제 질문을 쓰세요.",
@@ -70,7 +70,7 @@ $("#e-create").onclick = async e => {
     if (m === "llm" && !styles.length) return toast("질문 유형을 하나 이상 고르세요", "err");
     await busy(e.target, () => api(`/api/collections/${COLLECTION_ID}/eval-sets/generate`, { method: "POST", body: {
       method: m, name, chunk_set_id: +$("#e-cs").value, n_passages: +$("#e-n").value, min_chars: +$("#e-min").value,
-      styles: m === "llm" ? styles : undefined, provider: $("#e-provider").value || null, model: $("#e-model").value.trim() || null, concurrency: +$("#e-conc").value,
+      styles: m === "llm" ? styles : undefined, n_multi: +$("#e-nmulti").value || 0, n_unanswerable: +$("#e-nuna").value || 0, provider: $("#e-provider").value || null, model: $("#e-model").value.trim() || null, concurrency: +$("#e-conc").value,
     } }));
     toast("생성을 시작했습니다", "ok");
   } else if (m === "manual") {
@@ -231,7 +231,7 @@ function evRender(r) {
   const types = [...new Set(ok.flatMap(e => Object.keys(e.by_type || {})))];
   const vs = e => (e.vs_best ? `${(e.vs_best.diff * 100).toFixed(1)}%p ${e.vs_best.significant ? '<span class="badge err">유의한 차이</span>' : '<span class="badge">차이 불확실</span>'}` : ok.length > 1 ? "기준" : "");
   $("#r-out").innerHTML = `<div class="card stack">
-    <div class="row between"><h2>평가 결과 · ${esc(r.eval_set?.name || "")}</h2><span class="small muted">질문 ${r.n_queries}개 · ${r.results.length}개 조합${r.seconds != null ? ` · ${r.seconds}s` : ""}${r.run_id ? ` · run #${r.run_id}` : ""}</span></div>
+    <div class="row between"><h2>평가 결과 · ${esc(r.eval_set?.name || "")}</h2><span class="small muted">질문 ${r.n_queries}개${r.n_unanswerable_skipped ? ` (답 없는 질문 ${r.n_unanswerable_skipped}개는 검색 평가에서 제외 — 답변 평가에서 채점)` : ""} · ${r.results.length}개 조합${r.seconds != null ? ` · ${r.seconds}s` : ""}${r.run_id ? ` · run #${r.run_id}` : ""}</span></div>
     <div class="table-wrap"><table>
       <tr><th>#</th><th>설정</th><th>nDCG@10 (95% 구간)</th><th class="num">Hit@1</th><th class="num">Hit@5</th><th class="num">Hit@10</th><th class="num">MRR@10</th><th class="num" title="정답 문서가 상위 5개 문서 안에 든 비율">문서 R@5</th><th class="num">지연 평균/p95</th><th>1위 대비</th></tr>
       ${ok.map((e, i) => `<tr><td>${i + 1}</td><td class="small"><b>${esc(e.label)}</b></td>

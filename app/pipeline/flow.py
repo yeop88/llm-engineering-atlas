@@ -74,7 +74,7 @@ def _route(db: Session, question: str, fc: dict[str, Any], lcfg: llm.LLMConfig |
 
 
 def run(
-    db: Session, question: str, fc: dict[str, Any], lcfg: llm.LLMConfig | None, evidence: str = "", no_cache: bool = False
+    db: Session, question: str, fc: dict[str, Any], lcfg: llm.LLMConfig | None, item: dict[str, Any] | None = None, no_cache: bool = False
 ) -> dict[str, Any]:
     """fc: FlowConfig dict — {"config": SearchConfig, "answer", "context_top", "max_context_chars", "max_tokens", "model", "routing"}."""
     started = time.perf_counter()
@@ -149,7 +149,7 @@ def run(
             gen_seconds, out_tokens = final["seconds"], None
             extra = {"agent_steps": final["steps"], "n_steps": final["n_steps"]}
         elif fc.get("best_of"):
-            bo = rl.candidates(lcfg, question, top, int(fc["best_of"]), float(fc.get("best_of_temperature") or 0.8), evidence,
+            bo = rl.candidates(lcfg, question, top, int(fc["best_of"]), float(fc.get("best_of_temperature") or 0.8), item,
                                int(fc.get("max_context_chars") or 6000), int(fc.get("max_tokens") or 500), no_cache)  # fmt: skip
             best = bo["candidates"][bo["best"]]
             text, sources = best["text"], bo["sources"]
@@ -169,7 +169,6 @@ def run(
             text = gen["text"]
             check = answer.verify_lexical(text, sources)
             gen_seconds, out_tokens = gen["seconds"], gen["usage"].get("output_tokens")
-        with_ev = [i + 1 for i, s in enumerate(sources) if evidence and evaluation.contains_evidence(s["text"], evidence)]
         ratio = check["supported_ratio"]
         detail = (
             "근거 없음 · 거절" if check["refused"] else f"근거 있는 문장 {ratio * 100:.0f}%" if ratio is not None else "검증할 문장 없음"
@@ -180,9 +179,12 @@ def run(
         out["answer"] = {
             "text": text, "sources": sources, "verify": check, "output_tokens": out_tokens, "seconds": gen_seconds,
             "refused": check["refused"], "supported_ratio": ratio, "invalid_citations": check["invalid_citations"], "cited": check["cited_sources"],
-            "evidence_retrieved": bool(with_ev) if evidence else None,
-            "evidence_cited": bool(set(with_ev) & set(check["cited_sources"])) if evidence else None,
         } | extra  # fmt: skip
+        if item is not None:  # 평가 중이면 질문 유형별 규칙으로 근거 · 품질 채점 (여러 근거 · 답 없는 질문 포함)
+            out["answer"] |= evaluation.evidence_in_sources(sources, item, check["cited_sources"]) | {
+                "answerable": evaluation.answerable(item)
+            }
+            out["answer"]["quality"] = evaluation.answer_quality(out["answer"], item)
     else:
         put("answer", OFF, "검색까지만", 0.0)
     out["steps"] = [steps[s["key"]] for s in STEPS]
@@ -199,7 +201,7 @@ def _agg(sts: list[str]) -> str | None:
 def evaluate(db: Session, items: list[dict[str, Any]], flows: list[dict[str, Any]], lcfg: llm.LLMConfig | None, job=None) -> dict[str, Any]:
     """같은 질문들을 여러 연결 방식으로 처리해 검색 품질 · 답변 품질 · 단계별 지연을 나란히 비교한다.
     첫 번째 연결 방식을 기준으로 짝지은 비교를 한다 — '부분 연결에 단계를 더하면 좋아지는가'를 보려는 것이라 기준이 고정돼야 한다."""
-    ev = [evaluation.grams(it["evidence"]) if it.get("evidence") else None for it in items]
+    ev = [evaluation.evidence_grams(it) for it in items]
     total = len(items) * len(flows)
     out = []
     for fi, fc in enumerate(flows):
@@ -213,9 +215,10 @@ def evaluate(db: Session, items: list[dict[str, Any]], flows: list[dict[str, Any
                 if job:
                     job.update((fi * len(items) + qi) / total * 0.97, f"[{fi + 1}/{len(flows)}] {label} — 질문 {qi + 1}/{len(items)}")
                 # 비교 측정이므로 프롬프트 캐시를 끈다 — 앞선 실행이 같은 질문 · 근거를 처리해 둔 경로만 빨라 보이지 않게(실측 #233 의 교훈)
-                r = run(db, it["query"], fc, lcfg, it.get("evidence", ""), no_cache=True)
-                j = evaluation.judge(r["search"]["results"], it, ev[qi])
-                per_q.append(j | evaluation.query_metrics(j))
+                r = run(db, it["query"], fc, lcfg, it, no_cache=True)
+                if evaluation.answerable(it):  # 답 없는 질문은 검색 순위가 없어 검색 지표에서 뺀다(답변 쪽에서 채점)
+                    j = evaluation.judge(r["search"]["results"], it, ev[qi])
+                    per_q.append(j | evaluation.query_metrics(j))
                 lat.append(r["total_ms"])
                 for s in r["steps"]:
                     step_ms[s["key"]].append(s["ms"])

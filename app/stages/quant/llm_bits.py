@@ -16,9 +16,7 @@ from app.stages.rag import answer
 
 
 def _q(row: dict[str, Any]) -> float:
-    if row.get("evidence_cited") is not None:
-        return float(row["evidence_cited"])
-    return float(row.get("supported_ratio") or 0.0)
+    return float(row.get("quality") or 0.0)  # evaluate_one 이 질문 유형별 규칙(evaluation.answer_quality)으로 채점해 둠
 
 
 def evaluate(items: list[dict[str, Any]], contexts: list[list[dict[str, Any]]], models: list[llm.LLMConfig], max_chars: int, max_tokens: int,
@@ -32,10 +30,7 @@ def evaluate(items: list[dict[str, Any]], contexts: list[list[dict[str, Any]]], 
                 if job:
                     job.update((mi * len(items) + qi) / total * 0.97, f"[{mi + 1}/{len(models)}] {cfg.model} — 질문 {qi + 1}/{len(items)}")
                 # 프롬프트 캐시를 끈다: 앞선 실행(다른 평가)이 같은 근거를 처리해 둔 서버만 빨라 보이는 것을 막으려고
-                rows.append(
-                    answer.evaluate_one(cfg, it["query"], ctx, it.get("evidence", ""), max_chars, max_tokens, no_cache=True)
-                    | {"id": it.get("id")}
-                )
+                rows.append(answer.evaluate_one(cfg, it, ctx, max_chars, max_tokens, no_cache=True) | {"id": it.get("id")})
         except JobCancelled:
             raise
         except Exception as exc:  # 서버가 꺼져 있는 모델 등은 그 모델만 실패로 두고 나머지를 비교한다

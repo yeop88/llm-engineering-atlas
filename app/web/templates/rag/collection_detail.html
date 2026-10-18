@@ -24,6 +24,9 @@
     </div>
     <div class="small muted">여기로 파일을 끌어다 놓아도 됩니다. 같은 내용의 파일은 자동으로 건너뜁니다. HWP 는 5.x(배포용 문서 제외)·HWPX 를 지원하며, 스캔 PDF 는 텍스트가 없어 OCR 이 필요합니다. 이미지 · 영상도 올릴 수 있습니다 — 영상은 일정 간격으로 프레임을 뽑아(같은 장면 제외) 프레임마다 청크가 되고, 멀티모달 모델로 인덱스를 만들면 글로 그림 · 장면을 찾습니다.</div>
     <div id="d-upload-result"></div>
+    <div class="row small" style="margin-top:6px"><span class="muted">또는 공개 자료:</span><select id="d-public"></select><button class="btn sm" id="d-public-run">가져오기</button></div>
+    <div id="d-public-info" class="small muted"></div>
+    <div id="d-public-progress" hidden></div>
   </div>
   <div class="table-wrap" style="margin-top:14px"><table>
     <thead><tr><th>파일</th><th>제목</th><th class="num">크기</th><th class="num">글자 수</th><th class="num">쪽/구역</th><th>올린 시각</th><th class="right"></th></tr></thead>
@@ -113,6 +116,10 @@
             <label class="row" style="margin:0"><input type="checkbox" name="e-style" value="fact" checked> 사실 확인</label>
             <label class="row" style="margin:0"><input type="checkbox" name="e-style" value="paraphrase" checked> 다른 표현</label>
             <label class="row" style="margin:0"><input type="checkbox" name="e-style" value="situation" checked> 상황 설명형</label>
+            <label class="row" style="margin:0" title="숫자 · 기간 · 조건을 주고 규정을 적용한 결과를 묻기"><input type="checkbox" name="e-style" value="condition"> 조건 · 계산</label>
+            <label class="row" style="margin:0" title="세 문장 이상 사정을 털어놓는 상담형"><input type="checkbox" name="e-style" value="long_situation"> 긴 상황 설명</label>
+            <label class="row" style="margin:0" title="내용이 이어지는 다른 문서 지문 두 개가 모두 필요한 질문 (근거를 모두 찾아야 적중)"><input type="checkbox" name="e-style" value="multi"> 여러 문서 <input id="e-nmulti" type="number" value="20" min="0" max="500" style="width:56px"></label>
+            <label class="row" style="margin:0" title="자료에 답이 없는 질문 — '찾을 수 없다'고 해야 정답, 검색 지표에서는 빠짐"><input type="checkbox" name="e-style" value="unanswerable"> 답 없음 <input id="e-nuna" type="number" value="15" min="0" max="500" style="width:56px"></label>
           </div>
           <div class="row">
             <div class="field"><label>LLM</label><select id="e-provider"><option value="">.env 설정</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>

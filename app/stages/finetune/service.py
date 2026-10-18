@@ -142,7 +142,7 @@ def run(job: Job, run_id: int) -> dict[str, Any]:
             for sid in cfg.get("exclude_eval_set_ids") or []:
                 es = db.get(EvalSet, sid)
                 if es:
-                    evidences += [it.get("evidence") or "" for it in es.items]
+                    evidences += [e for it in es.items for e in evaluation.evidences_of(it)]  # 여러 문서 질문의 근거도 모두 누수 방지 대상
             llm_cfg = llm.resolve(cfg.get("provider"), cfg.get("llm_model")) if cfg["data_method"] == "llm" else None
             job.update(0.01, "학습 데이터 만드는 중")
             pairs, dstats = data.build_pairs(

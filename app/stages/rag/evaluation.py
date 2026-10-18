@@ -107,7 +107,7 @@ def from_sentences(passages: list[dict[str, Any]], seed: int = 0) -> list[dict[s
 def _item(p: dict[str, Any], query: str, evidence: str, kind: str, **extra: Any) -> dict[str, Any]:
     return {
         "query": query.strip(),
-        "doc_ids": [p["document_id"]],
+        "doc_ids": [p["document_id"]],  # 여러 문서 · 답 없는 질문은 extra 로 덮어쓴다
         "evidence": evidence.strip(),
         "source_chunk_id": p["chunk_id"],
         "filename": p["filename"],
@@ -121,7 +121,15 @@ STYLES = {
     "fact": "지문의 사실을 묻는 질문. 지문의 핵심 단어를 써도 된다.",
     "paraphrase": "지문과 다른 단어·표현으로 같은 내용을 묻는 질문. 지문의 명사·동사를 그대로 쓰지 말 것.",
     "situation": "실제 사용자가 자기 상황을 설명하며 묻는 질문 (예: '입사 8개월인데 휴가가 며칠인가요?'). 지문 표현을 베끼지 말 것.",
+    "condition": "숫자 · 기간 · 금액 · 조건을 주고, 지문의 규정을 적용해야 답이 나오는 질문 (예: '하루 10시간씩 주 5일 일하면 연장근로는 주 몇 시간인가요?'). 답을 그대로 베낄 수 없고 계산 · 판단이 필요해야 한다.",
+    "long_situation": "세 문장 이상으로 자기 사정을 길게 털어놓은 뒤 묻는 상담형 질문. 핵심 쟁점이 이야기 속에 묻혀 있고, 지문의 용어를 쓰지 않는다.",
 }
+# 한 지문으로 만들지 않는 유형 — 따로 만든다(여러 문서 · 답 없음)
+EXTRA_STYLES = {
+    "multi": "서로 다른 두 문서의 지문을 함께 봐야 답할 수 있는 질문 (예: 조문의 요건 + 그 조문을 해석한 판례의 결론)",
+    "unanswerable": "같은 주제처럼 보이지만 지문(과 자료)에 답이 없는 질문 — 시스템이 지어내지 않고 '찾을 수 없다'고 해야 정답",
+}
+ALL_STYLES = {**STYLES, **EXTRA_STYLES}
 SYSTEM = (
     "당신은 한국어 문서 검색 시스템을 평가하기 위한 질문을 만듭니다. "
     "주어진 지문만으로 답할 수 있고, 지문을 보지 않은 사람이 검색창에 입력할 법한 자연스러운 질문을 만드세요. "
@@ -209,6 +217,123 @@ def from_llm(
     return items, stats
 
 
+# ── 생성: 여러 문서 · 답 없음 ───────────────────────────────────────────────
+def related_pairs(
+    passages: list[dict[str, Any]], n: int, seed: int = 0, min_overlap: float = 0.06
+) -> list[tuple[dict[str, Any], dict[str, Any]]]:
+    """서로 다른 문서에서 내용이 이어지는 지문 쌍. 글자 3-gram 자카드로 고른다 — 예: 조문과 그 조문을 인용한 판례.
+    아무 두 지문이나 붙이면 억지 질문(두 지문을 '그리고'로 이어 붙인 질문)이 나와, 실제로 이어지는 쌍만 쓴다."""
+    import random
+
+    g = [grams(p["text"], 3) for p in passages]
+    order = list(range(len(passages)))
+    random.Random(seed).shuffle(order)
+    used: set[int] = set()
+    out = []
+    for i in order:
+        if i in used:
+            continue
+        best, best_j = 0.0, None
+        for j in range(len(passages)):
+            if j == i or j in used or passages[j]["document_id"] == passages[i]["document_id"]:
+                continue
+            jac = len(g[i] & g[j]) / max(1, len(g[i] | g[j]))
+            if jac > best:
+                best, best_j = jac, j
+        if best_j is not None and best >= min_overlap:
+            used |= {i, best_j}
+            out.append((passages[i], passages[best_j]))
+            if len(out) >= n:
+                break
+    return out
+
+
+MULTI_PROMPT = """문서 A: {ta}
+지문 A:
+<<<
+{a}
+>>>
+
+문서 B: {tb}
+지문 B:
+<<<
+{b}
+>>>
+
+두 지문을 **모두** 봐야 답할 수 있는 질문을 하나 만드세요 (예: A 의 요건과 B 의 판단을 함께 물음). 한쪽만으로 답이 나오면 안 됩니다.
+규칙:
+- 지문을 보지 않은 사람이 검색창에 입력할 법한 자연스러운 질문. "문서 A", "위 지문" 같은 표현 금지.
+- evidence_a · evidence_b 에는 각 지문에서 답에 필요한 문장을 **그대로 복사**하세요.
+- 두 지문이 이어지지 않아 그런 질문을 만들 수 없으면 빈 배열을 돌려주세요.
+
+출력 형식: {{"questions": [{{"question": "...", "evidence_a": "...", "evidence_b": "..."}}]}}"""
+
+UNANSWERABLE_PROMPT = """문서: {t}
+지문:
+<<<
+{x}
+>>>
+
+이 지문과 같은 주제처럼 보이지만 **지문에 답이 없는** 질문을 하나 만드세요. 사용자가 실제로 물을 법해야 하고,
+지문에 없는 구체적인 사항(다른 숫자 · 기간 · 절차 · 대상 · 예외)을 물어야 합니다. 일반 상식으로도 답이 정해지지 않아야 합니다.
+missing 에는 지문에 무엇이 없어서 답할 수 없는지 한 문장으로 쓰세요.
+
+출력 형식: {{"questions": [{{"question": "...", "missing": "..."}}]}}"""
+
+
+def from_llm_extra(cfg: llm.LLMConfig, passages: list[dict[str, Any]], styles: list[str], n_multi: int, n_unanswerable: int, seed: int = 0,
+                   job: Job | None = None) -> tuple[list[dict[str, Any]], dict[str, Any]]:  # fmt: skip
+    """여러 문서 질문(관련 지문 쌍 → 두 근거 모두 필요)과 답 없는 질문(지문 주제의 빈칸)을 만든다."""
+    import random
+
+    items: list[dict[str, Any]] = []
+    stats: dict[str, Any] = {"multi_pairs": 0, "multi": 0, "unanswerable": 0, "failed": 0, "errors": []}
+    tasks: list[tuple[str, Any]] = []
+    if "multi" in styles:
+        pairs = related_pairs(passages, n_multi, seed)
+        stats["multi_pairs"] = len(pairs)
+        tasks += [("multi", pr) for pr in pairs]
+    if "unanswerable" in styles:
+        pool = passages[:]
+        random.Random(seed + 1).shuffle(pool)
+        tasks += [("unanswerable", p) for p in pool[:n_unanswerable]]
+    for k, (kind, x) in enumerate(tasks):
+        if job:
+            job.update(0.6 + 0.35 * k / max(1, len(tasks)), f"{'여러 문서' if kind == 'multi' else '답 없는'} 질문 {k + 1}/{len(tasks)}")
+        try:
+            if kind == "multi":
+                a, b = x
+                prompt = MULTI_PROMPT.format(
+                    ta=a["title"] or a["filename"], a=a["text"][:2500], tb=b["title"] or b["filename"], b=b["text"][:2500]
+                )
+                obj, _ = llm.chat_json(cfg, SYSTEM, prompt, max_tokens=800, temperature=0.5)
+                for q in (obj.get("questions", []) if isinstance(obj, dict) else [])[:1]:
+                    if not str(q.get("question", "")).strip():
+                        continue
+                    ea, _ = _fix_evidence(str(q.get("evidence_a", "")), a["text"])
+                    eb, _ = _fix_evidence(str(q.get("evidence_b", "")), b["text"])
+                    items.append(_item(a, str(q["question"]), ea, "multi", doc_ids=[a["document_id"], b["document_id"]], evidences=[ea, eb],
+                                       filename=f"{a['filename']} + {b['filename']}"))  # fmt: skip
+                    stats["multi"] += 1
+            else:
+                prompt = UNANSWERABLE_PROMPT.format(t=x["title"] or x["filename"], x=x["text"][:3000])
+                obj, _ = llm.chat_json(cfg, SYSTEM, prompt, max_tokens=500, temperature=0.7)
+                for q in (obj.get("questions", []) if isinstance(obj, dict) else [])[:1]:
+                    if not str(q.get("question", "")).strip():
+                        continue
+                    items.append(
+                        _item(
+                            x, str(q["question"]), "", "unanswerable", doc_ids=[], answerable=False, missing=str(q.get("missing", ""))[:300]
+                        )
+                    )
+                    stats["unanswerable"] += 1
+        except llm.LLMError as exc:
+            stats["failed"] += 1
+            if len(stats["errors"]) < 5:
+                stats["errors"].append(str(exc)[:200])
+    return items, stats
+
+
 # ── 마무리 ──────────────────────────────────────────────────────────────────
 def finalize(items: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """같은 질문 제거, id 부여, 통계."""
@@ -242,22 +367,74 @@ K_VALUES = (1, 3, 5, 10)
 PRIMARY = "ndcg@10"
 
 
-def judge(results: list[dict[str, Any]], item: dict[str, Any], ev_grams: set[str] | None) -> dict[str, Any]:
-    """검색 결과(순위순 청크) → 정답 순위. 근거 문장이 있으면 근거를 담은 첫 청크, 없으면 정답 문서의 첫 청크."""
+# ── 질문 유형별 공통 판정 (검색 평가 · 답변 평가 · 연결 비교 · 라우팅 · 리랭킹 · 보상이 모두 이 함수들을 쓴다) ──
+def answerable(item: dict[str, Any]) -> bool:
+    """답이 자료에 있는 질문인가. 답 없는 질문은 검색 지표에서 빼고 '올바르게 거절했는가'로만 채점한다
+    (정답 청크가 없으니 순위를 매길 수 없고, 넣으면 모든 설정의 점수를 똑같이 깎아 비교를 흐린다)."""
+    return bool(item.get("answerable", True)) and bool(item.get("doc_ids"))
+
+
+def evidences_of(item: dict[str, Any]) -> list[str]:
+    """근거 문장 목록. 여러 문서 질문은 근거가 둘 이상이고, 그 '모두'가 필요하다."""
+    evs = item.get("evidences") or ([item["evidence"]] if item.get("evidence") else [])
+    return [e for e in evs if e and e.strip()]
+
+
+def evidence_grams(item: dict[str, Any]) -> list[set[str]] | None:
+    evs = evidences_of(item)
+    return [grams(e) for e in evs] if evs else None
+
+
+def evidence_in_sources(sources: list[dict[str, Any]], item: dict[str, Any], cited: list[int]) -> dict[str, Any]:
+    """답변 근거(번호순)에 정답 근거가 들었는가 · 답변이 그것을 인용했는가. 근거가 여럿이면 각각 하나 이상씩 있어야 '모두'."""
+    evs = evidences_of(item)
+    if not evs or not answerable(item):
+        return {"evidence_retrieved": None, "evidence_cited": None, "evidence_sources": []}
+    per = [[i + 1 for i, s in enumerate(sources) if contains_evidence(s["text"], e)] for e in evs]
+    return {
+        "evidence_sources": sorted({n for p in per for n in p}),
+        "evidence_retrieved": all(per),
+        "evidence_cited": all(set(p) & set(cited) for p in per),
+        "evidence_cited_any": any(set(p) & set(cited) for p in per),
+    }
+
+
+def answer_quality(row: dict[str, Any], item: dict[str, Any]) -> float:
+    """답변 하나의 품질 점수(0~1): 답 없는 질문은 올바른 거절, 근거가 있으면 근거를 (모두) 인용, 아니면 문장 근거율."""
+    if not answerable(item):
+        return float(bool(row.get("refused")))
+    if row.get("evidence_cited") is not None:
+        return float(bool(row["evidence_cited"]))
+    return float(row.get("supported_ratio") or 0.0)
+
+
+def judge(results: list[dict[str, Any]], item: dict[str, Any], ev_grams: set[str] | list[set[str]] | None) -> dict[str, Any]:
+    """검색 결과(순위순 청크) → 정답 순위. 근거 문장이 있으면 근거를 담은 첫 청크, 없으면 정답 문서의 첫 청크.
+    근거가 여럿(여러 문서 질문)이면 '모든 근거가 나온 순위'(가장 늦게 나온 근거의 순위) — 하나만 찾으면 답할 수 없으므로."""
     docs = set(item["doc_ids"])
-    target_rank = doc_rank = None
+    evs = [ev_grams] if isinstance(ev_grams, set) else (ev_grams or [])
+    first: list[int | None] = [None] * len(evs)
+    doc_rank = None
+    doc_first: dict[int, int] = {}
     seen_docs: list[int] = []
     for i, r in enumerate(results, 1):
         if r["document_id"] not in seen_docs:
             seen_docs.append(r["document_id"])
         if doc_rank is None and r["document_id"] in docs:
             doc_rank = len(seen_docs)  # 문서 단위 순위 (같은 문서의 청크 여러 개는 한 번만 센다)
-        if target_rank is None:
-            hit = coverage(ev_grams, grams(r["text"])) >= EVIDENCE_HIT if ev_grams else r["document_id"] in docs
-            if hit:
-                target_rank = i
+        doc_first.setdefault(r["document_id"], i)
+        if evs:
+            g = grams(r["text"])
+            for k, e in enumerate(evs):
+                if first[k] is None and coverage(e, g) >= EVIDENCE_HIT:
+                    first[k] = i
+    if evs:
+        target_rank = max(first) if all(x is not None for x in first) else None  # type: ignore[type-var]
+    else:  # 근거 문장이 없으면 정답 문서들의 첫 청크가 모두 나온 순위
+        ranks = [doc_first.get(d) for d in docs]
+        target_rank = max(ranks) if ranks and all(x is not None for x in ranks) else None  # type: ignore[type-var]
     found_docs = len(docs & set(seen_docs[:5]))
-    return {"rank": target_rank, "doc_rank": doc_rank, "doc_recall@5": found_docs / len(docs)}
+    return {"rank": target_rank, "doc_rank": doc_rank, "doc_recall@5": found_docs / len(docs) if docs else 0.0}
 
 
 def query_metrics(j: dict[str, Any]) -> dict[str, float]:
@@ -273,7 +450,9 @@ def query_metrics(j: dict[str, Any]) -> dict[str, float]:
 def run_eval(search_fn: Any, items: list[dict[str, Any]], configs: list[dict[str, Any]], job: Job | None = None) -> dict[str, Any]:
     """configs 마다 모든 질문을 검색하고 지표 · 95% 구간 · 1위와의 짝지은 비교 · 질문 유형별 지표를 낸다.
     search_fn(query, cfg) → service.search 결과 (테스트에서 바꿔 끼울 수 있게 주입)."""
-    ev = [grams(it["evidence"]) if it.get("evidence") else None for it in items]
+    skipped = sum(1 for it in items if not answerable(it))
+    items = [it for it in items if answerable(it)]  # 답 없는 질문은 검색 순위를 매길 수 없어 뺀다(답변 평가에서 채점)
+    ev = [evidence_grams(it) for it in items]
     total = len(items) * len(configs)
     out = []
     step = 0
@@ -330,6 +509,7 @@ def run_eval(search_fn: Any, items: list[dict[str, Any]], configs: list[dict[str
     return {
         "primary_metric": PRIMARY,
         "n_queries": len(items),
+        "n_unanswerable_skipped": skipped,
         "results": results,
         "queries": queries,
         "bootstrap": {"n": stats.N_BOOT, "level": stats.LEVEL},
