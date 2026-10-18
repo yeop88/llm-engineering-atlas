@@ -21,8 +21,9 @@ from app.core.db import Chunk, Document
 
 # 제23조, 제23조의2, 제23조 제1항 — '23조'처럼 '제'를 빼고 써도 잡는다(답변에서 흔함)
 ARTICLE = re.compile(r"제?\s?(\d{1,4})\s?조(?:\s?의\s?(\d{1,2}))?(?:\s?제?\s?(\d{1,2})\s?항)?")
-# 법령명: 공백 없이 '…법' · '…법률' · '…령' · '…규칙' 으로 끝나는 말 + 조문
-STATUTE = re.compile(r"([가-힣·]{2,40}?(?:법률|법|시행령|시행규칙|령|규칙))\s?" + ARTICLE.pattern)
+# 법령명: '…법' · '…법률' 뒤에 ' 시행령' · ' 시행규칙'이 붙을 수 있다 + 조문. 시행령을 따로 두면 '주택임대차보호법 시행령 제28조'의
+# 법령명이 '시행령'만 남아 엉뚱한 시행령에서 찾았다(조문 번호 세트를 만들다 발견). 법령명만으로 된 대통령령(…령 · …규칙)도 잡는다.
+STATUTE = re.compile(r"([가-힣·]{2,40}?(?:법률|법)(?:\s?(?:시행령|시행규칙))?|[가-힣·]{2,40}?(?:령|규칙))\s?" + ARTICLE.pattern)
 # 사건번호: 2019다12345, 2020도1234, 2018두56789, 2017헌마123 …
 CASE_NO = re.compile(r"((?:19|20)\d{2})\s?(다|도|두|누|나|가합|가단|가소|므|스|마|카|후|허|헌마|헌바|헌가|추|재다|재두)\s?(\d{1,6})")
 
@@ -48,7 +49,9 @@ def parse_refs(text: str) -> list[dict[str, Any]]:
 
 def _law_docs(db: Session, collection_id: int, law: str) -> list[Document]:
     docs = db.scalars(select(Document).where(Document.collection_id == collection_id)).all()
-    stem = lambda d: d.filename.rsplit(".", 1)[0]  # noqa: E731
+    # 띄어쓰기는 빼고 비교한다('주택임대차보호법시행령' · '주택임대차보호법 시행령' 모두 같은 문서)
+    stem = lambda d: re.sub(r"\s+", "", d.filename.rsplit(".", 1)[0])  # noqa: E731
+    law = re.sub(r"\s+", "", law)
     exact = [d for d in docs if stem(d) == law]
     # '근로기준법' 질문에 '근로기준법 시행령'까지 섞이지 않게 정확히 같은 이름 우선, 없으면 포함 관계
     return exact or [d for d in docs if not d.filename.startswith("판례") and (law in stem(d) or stem(d) in law)]

@@ -27,6 +27,8 @@ def test_parse_refs():
     refs = legal.parse_refs("근로기준법 제23조 제1항과 주택임대차보호법 3조의2, 대법원 2019다 12345 판결. 예산은 3조 원")
     got = {r["ref"] for r in refs}
     assert got == {"근로기준법 제23조 제1항", "주택임대차보호법 제3조의2", "2019다12345"}  # '3조 원'(금액)은 잡지 않는다
+    # 시행령은 법령명에 붙어 있어야 한다 — '시행령'만 남으면 엉뚱한 시행령에서 찾는다
+    assert [r["law"] for r in legal.parse_refs("주택임대차보호법 시행령 제28조(조정부)")] == ["주택임대차보호법 시행령"]
 
 
 @pytest.fixture
