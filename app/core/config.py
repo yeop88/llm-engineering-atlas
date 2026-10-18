@@ -19,6 +19,15 @@ class Settings(BaseSettings):
     # Hugging Face 액세스 토큰 (gated 모델 다운로드용, 예: google/embeddinggemma-300m)
     hf_token: str | None = None
 
+    # 선택형 접근 토큰. 비우면 인증 없음(로컬 혼자 쓰기). 서버 · 사내망에 올릴 때는 꼭 설정 (app/core/auth.py)
+    api_token: str | None = None
+    auth_cookie_days: int = 14
+    auth_cookie_secure: bool = False  # HTTPS 뒤에서만 쿠키를 보내려면 true
+
+    # 라이브러리(sentence-transformers · transformers · torch) 버전이 지난 점검 때와 다르면 시작할 때 내려받은 모델을 자동 점검.
+    # 모델을 하나씩 올려 보므로 CPU 에서는 몇 분 걸린다 — 기본은 끄고 화면에서 '점검 권장'만 알린다.
+    compat_check_on_upgrade: bool = False
+
     # auto | cpu | cuda | mps
     device: str = "auto"
     # auto | float32 | bfloat16  (EmbeddingGemma 계열은 float16 미지원)

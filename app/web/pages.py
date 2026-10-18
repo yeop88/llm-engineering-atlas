@@ -44,6 +44,7 @@ def doc_url(path: str) -> str:
 templates.env.globals.update(
     app_name=get_settings().app_name, catalog_version=CATALOG_VERSION, nav_items=nav_items(), registry=registry,
     stage_for_nav=registry.stage_for_nav, doc_url=doc_url,
+    auth_enabled=lambda: bool(get_settings().api_token),  # 함수로 둬 테스트 · 설정 변경이 바로 반영되게
 )  # fmt: skip
 
 PAGES = {

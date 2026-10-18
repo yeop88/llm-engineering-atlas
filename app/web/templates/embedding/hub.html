@@ -21,6 +21,18 @@
   </table>
 </div>
 
+<details class="card stack" id="disc" style="margin-top:16px">
+  <summary class="row between"><b>카탈로그에 없는 새 모델 후보</b><span class="small muted">최근 인기 급상승 · 한국어 우선</span></summary>
+  <div class="small muted">Hub 에서 최근 공개되고 반응이 있는 임베딩 · 리랭커 중 아직 카탈로그에 없는 것을 찾습니다. 자동으로 추가하지 않습니다 — '상세'로 프롬프트 · 차원 · 라이선스를 확인하고 추가하세요. GGUF · ONNX 같은 변환본은 뺍니다.</div>
+  <div class="row">
+    <div class="field"><label>최근 며칠</label><input id="d-days" type="number" value="180" min="7" max="1095" style="width:80px"></div>
+    <div class="field"><label>좋아요 이상</label><input id="d-likes" type="number" value="10" min="0" style="width:80px"></div>
+    <div style="align-self:end"><button class="btn" id="d-go">후보 찾기</button></div>
+  </div>
+  <div class="table-wrap"><table><thead><tr><th>모델</th><th>찾은 곳</th><th class="num">좋아요</th><th class="num">공개 후(일)</th><th>라이선스</th><th class="num">점수</th><th class="right"></th></tr></thead>
+    <tbody id="d-rows"><tr><td colspan="7" class="empty">'후보 찾기'를 누르세요</td></tr></tbody></table></div>
+</details>
+
 <dialog id="dlg">
   <div class="row between"><h2 id="dlg-title"></h2><button class="btn sm" onclick="$('#dlg').close()">닫기</button></div>
   <div id="dlg-body"></div>
@@ -43,6 +55,17 @@ async function search(btn) {
       ${r.registered_id ? `<a class="btn sm" href="/models/${r.registered_id}">등록됨 →</a>` : `<button class="btn sm primary" onclick="importModel('${esc(r.hf_id)}', this)">추가</button>`}</td>
   </tr>`).join("") || '<tr><td colspan="7" class="empty">결과 없음</td></tr>';
 }
+$("#d-go").onclick = async e => {
+  const qs = new URLSearchParams({ days: $("#d-days").value, min_likes: $("#d-likes").value });
+  const r = await busy(e.target, () => api(`/api/hub/discover?${qs}`));
+  $("#d-rows").innerHTML = r.candidates.map(c => `<tr>
+    <td><a class="mono" href="https://huggingface.co/${esc(c.hf_id)}" target="_blank" rel="noopener">${esc(c.hf_id)}</a>
+      ${c.korean ? '<span class="badge ok">한국어</span>' : ""} ${c.gated ? '<span class="badge warn">gated</span>' : ""} ${c.sentence_transformers ? '<span class="badge">ST</span>' : ""}</td>
+    <td class="small">${esc(c.found_by)}</td><td class="num">${fmtNum(c.likes)}</td><td class="num">${c.age_days}</td><td class="small">${esc(c.license || "-")}</td>
+    <td class="num small">${c.score}</td>
+    <td class="right nowrap"><button class="btn sm" onclick="info('${esc(c.hf_id)}', this)">상세</button> <button class="btn sm primary" onclick="importModel('${esc(c.hf_id)}', this)">추가</button></td>
+  </tr>`).join("") || '<tr><td colspan="7" class="empty">조건에 맞는 새 후보가 없습니다</td></tr>';
+};
 async function info(id, btn) {
   const m = await busy(btn, () => api(`/api/hub/info?hf_id=${encodeURIComponent(id)}`));
   $("#dlg-title").textContent = id;

@@ -280,6 +280,25 @@ class VerifyLabel(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
+class JobRecord(Base):
+    """백그라운드 작업의 상태 · 결과 기록. 계산은 메모리(스레드 풀)에서 돌지만, 재시작하면 사라지던 진행 상황 · 결과를 남기려고 둔다.
+    재시작 때 끝나지 않은 작업은 'interrupted' 로 표시한다(돌던 계산은 이어 할 수 없으므로 다시 실행해야 한다)."""
+
+    __tablename__ = "job_records"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(50), index=True)
+    title: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20))
+    progress: Mapped[float] = mapped_column(Float, default=0.0)
+    message: Mapped[str] = mapped_column(Text, default="")
+    result: Mapped[Any | None] = mapped_column(JSON, nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    meta: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
 _settings = get_settings()
 _is_sqlite = _settings.db_url.startswith("sqlite")
 engine = create_engine(_settings.db_url, connect_args={"check_same_thread": False} if _is_sqlite else {})

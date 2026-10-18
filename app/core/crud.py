@@ -133,8 +133,8 @@ def record_run(db: Session, kind: str, hf_ids: list[str], title: str, params: di
 
 
 def mark_interrupted(db: Session) -> int:
-    """서버가 꺼지면서 끊긴 백그라운드 작업의 상태 정리 (작업 큐는 메모리에만 있으므로 재시작하면 사라진다)."""
-    from app.core.db import EvalSet, FinetuneRun
+    """서버가 꺼지면서 끊긴 백그라운드 작업의 상태 정리 (계산은 메모리에서 돌았으므로 재시작하면 이어 할 수 없다)."""
+    from app.core.db import EvalSet, FinetuneRun, JobRecord
 
     n = 0
     for r in db.scalars(select(FinetuneRun).where(FinetuneRun.status.in_(("pending", "running")))):
@@ -142,6 +142,10 @@ def mark_interrupted(db: Session) -> int:
         n += 1
     for e in db.scalars(select(EvalSet).where(EvalSet.status == "building")):
         e.status, e.error = "error", "서버 재시작으로 중단되었습니다. 다시 만드세요."
+        n += 1
+    for j in db.scalars(select(JobRecord).where(JobRecord.status.in_(("pending", "running")))):
+        # 작업 기록이 '영원히 실행 중'으로 남지 않게 끊긴 것으로 표시
+        j.status, j.message, j.finished_at = "interrupted", "서버 재시작으로 중단되었습니다. 다시 실행하세요.", datetime.now(UTC)
         n += 1
     db.commit()
     return n

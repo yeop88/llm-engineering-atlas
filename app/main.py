@@ -9,7 +9,7 @@ os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 from fastapi import FastAPI  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from app.core import llm_api, system_api  # noqa: E402
+from app.core import auth, llm_api, system_api  # noqa: E402
 from app.core.config import APP_DIR, get_settings  # noqa: E402
 from app.core.crud import mark_interrupted, seed_catalog  # noqa: E402
 from app.core.db import SessionLocal, init_db  # noqa: E402
@@ -19,7 +19,7 @@ from app.pipeline import api as flow_api  # noqa: E402
 from app.stages.agent import api as agent_api  # noqa: E402
 from app.stages.apps import api as apps_api  # noqa: E402
 from app.stages.distill import api as distill_api  # noqa: E402
-from app.stages.embedding import benchmarks_api, models_api, playground_api  # noqa: E402
+from app.stages.embedding import benchmarks_api, compat, models_api, playground_api  # noqa: E402
 from app.stages.embedding.model_manager import get_manager  # noqa: E402
 from app.stages.finetune import api as finetune_api  # noqa: E402
 from app.stages.quant import api as quant_api  # noqa: E402
@@ -42,7 +42,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     with SessionLocal() as db:
         added = seed_catalog(db)
         stale = mark_interrupted(db)
+        upgraded = compat.needs_check_after_upgrade(db)
     log.info("카탈로그 seed: %d개 모델 추가 · 중단된 작업 정리 %d건", added, stale)
+    if upgraded:
+        log.warning("라이브러리 버전이 지난 호환성 점검 때와 다릅니다 — 모델 화면에서 점검을 권장합니다")
+        if settings.compat_check_on_upgrade:
+            jobs.submit("compat", "호환성 점검 (라이브러리 업그레이드 감지)", lambda j: compat.run_all(j, reason="upgrade"))
     sampler.start()
     yield
     sampler.stop()
@@ -56,9 +61,11 @@ app = FastAPI(
     version="0.4.0",
     lifespan=lifespan,
 )
+app.middleware("http")(auth.middleware)  # API_TOKEN 이 있을 때만 막는다
 app.mount("/static", StaticFiles(directory=APP_DIR / "web" / "static"), name="static")
 # 공통 → 단계 순서 (흐름도 순서) → 화면
 for module in (
+    auth,
     system_api,
     llm_api,
     models_api,

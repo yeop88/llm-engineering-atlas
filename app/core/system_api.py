@@ -18,9 +18,10 @@ DB = Annotated[Session, Depends(get_db)]
 
 # ── 작업 ────────────────────────────────────────────────────────────────────
 @router.get("/jobs")
-def list_jobs(kind: str | None = None, include_result: bool = False) -> list[dict]:
+def list_jobs(kind: str | None = None, include_result: bool = False, limit: int = 100) -> list[dict]:
+    """메모리의 작업 + DB 기록(재시작 전 작업 포함)."""
     out = []
-    for j in jobs.list(kind):
+    for j in jobs.list(kind, limit=max(1, min(limit, 500))):
         d = j.to_dict()
         if not include_result:
             d["result"] = None

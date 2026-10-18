@@ -29,6 +29,7 @@
       <a href="/docs" target="_blank">API</a>
     </nav>
     <span class="badge muted" title="카탈로그 기준">카탈로그 {{ catalog_version }}</span>
+    {% if auth_enabled() %}<a class="small" href="/logout" title="접근 토큰 로그인 해제">로그아웃</a>{% endif %}
   </header>
   <main class="container">
     {% set st = stage_for_nav(nav) %}

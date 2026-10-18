@@ -33,6 +33,7 @@ LLM Engineering Atlas 의 문서는 [전체 맵](map.md)의 단계 순서로 정
 - [아키텍처 — 코드 구조(core · stages · web)와 동작 방식](guides/architecture.md)
 - [REST API](guides/api.md)
 - [데이터 처리 — 수집 · 전처리 · 평가 자료 기록과 유효하게 처리하는 법](guides/data-processing.md)
+- [배포 · 운영 — Docker, 접근 토큰, 작업 기록, 모델 호환성 점검, 새 모델 후보](guides/deploy.md)
 - [LLM 연결 — 로컬 llama.cpp · OpenAI 호환 · Claude, 소형 모델 비교](guides/llm.md)
 - [CPU · CUDA · ROCm 설치](guides/gpu.md)
 - [문제 해결](guides/troubleshooting.md)

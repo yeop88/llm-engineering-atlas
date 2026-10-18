@@ -59,6 +59,59 @@ def search(query: str = "", limit: int = 30, sort: str = "downloads", pipeline_t
     return sorted(seen.values(), key=lambda r: r[key], reverse=True)[:limit]
 
 
+# 새 모델 후보를 찾는 Hub 질의: (설명, pipeline_tag, 태그 필터). 인기 급상승(trending) 순으로 받아 최근 공개 · 반응 있는 것만 남긴다.
+DISCOVER_QUERIES = [
+    ("한국어 임베딩", "sentence-similarity", "ko"),
+    ("다국어 · 일반 임베딩", "sentence-similarity", None),
+    ("특징 추출(멀티모달 포함)", "feature-extraction", None),
+    ("한국어 리랭커", "text-ranking", "ko"),
+    ("리랭커", "text-ranking", None),
+]
+_discover_cache: tuple[float, dict[str, Any], list[dict[str, Any]]] = (0.0, {}, [])
+
+
+def discover(registered: set[str], excluded: set[str], days: int = 180, min_likes: int = 10, limit: int = 30,
+             per_query: int = 60, force: bool = False) -> list[dict[str, Any]]:  # fmt: skip
+    """카탈로그에 없는 새 임베딩 · 리랭커 후보. 카탈로그는 손으로 고른 목록이라 새 모델이 나와도 모르고 지나가기 쉬워서 둔다.
+
+    자동으로 추가하지는 않는다 — 스펙(프롬프트 · 차원 · 라이선스)은 카탈로그 추가 규칙대로 사람이 Hub 설정 파일로 확인하고 가져온다.
+    점수 = 좋아요(로그) + 최근일수록 가산 + 한국어 태그 가산. Hub 호출이 여러 번이라 1시간 캐시.
+    """
+    global _discover_cache
+    import math
+    import time as _t
+
+    key = {"days": days, "min_likes": min_likes, "per_query": per_query}
+    if not force and _t.time() - _discover_cache[0] < 3600 and _discover_cache[1] == key:
+        rows = _discover_cache[2]
+    else:
+        api = _api()
+        expand = ["downloads", "likes", "createdAt", "lastModified", "gated", "pipeline_tag", "library_name", "tags"]
+        seen: dict[str, dict[str, Any]] = {}
+        now = datetime.now(UTC)
+        for label, tag, filt in DISCOVER_QUERIES:
+            for m in api.list_models(pipeline_tag=tag, filter=filt, sort="trending_score", limit=per_query, expand=expand):
+                if m.id in seen or not m.created_at:
+                    continue
+                tags_ = m.tags or []
+                if "gguf" in tags_ or m.id.lower().endswith(("-gguf", "-onnx", "-mlx")) or "nvfp4" in m.id.lower():
+                    continue  # PyTorch(sentence-transformers)로 못 올리는 변환본 — 원본 모델이 따로 있다
+                age = (now - m.created_at).days
+                if age > days or (m.likes or 0) < min_likes:
+                    continue
+                korean = "ko" in tags_ or "korean" in m.id.lower()
+                seen[m.id] = {
+                    "hf_id": m.id, "found_by": label, "pipeline_tag": m.pipeline_tag, "likes": m.likes or 0,
+                    "downloads": m.downloads or 0, "created_at": _iso(m.created_at), "age_days": age, "korean": korean,
+                    "gated": bool(m.gated), "sentence_transformers": "sentence-transformers" in tags_ or m.library_name == "sentence-transformers",
+                    "license": next((t.split(":", 1)[1] for t in tags_ if t.startswith("license:")), ""),
+                    "score": round(math.log1p(m.likes or 0) + 2 * max(0.0, 1 - age / days) + (1.5 if korean else 0), 3),
+                }  # fmt: skip
+        rows = sorted(seen.values(), key=lambda r: r["score"], reverse=True)
+        _discover_cache = (_t.time(), key, rows)
+    return [r for r in rows if r["hf_id"] not in registered and r["hf_id"] not in excluded][:limit]
+
+
 def _read_json(repo_id: str, filename: str) -> dict[str, Any] | None:
     try:
         path = hf_hub_download(repo_id, filename, token=get_settings().hf_token or None)

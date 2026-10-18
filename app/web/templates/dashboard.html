@@ -100,7 +100,7 @@ async function refresh() {
   $("#jobs").innerHTML = jobs.slice(0, 6).map(j => `
     <div class="row between small" style="padding:4px 0">
       <span>${esc(j.title)}</span>
-      <span class="row"><span class="badge ${j.status === "done" ? "ok" : j.status === "error" ? "err" : "warn"}">${j.status}</span>
+      <span class="row"><span class="badge ${j.status === "done" ? "ok" : j.status === "error" ? "err" : "warn"}">${({ pending: "대기", running: "실행 중", done: "완료", error: "오류", cancelled: "취소", interrupted: "중단됨(재시작)" })[j.status] || j.status}</span>
       ${["pending", "running"].includes(j.status) ? `<div class="progress"><div style="width:${pct(j.progress)}%"></div></div>` : ""}</span>
     </div>${j.error ? `<div class="errbox">${esc(j.error)}</div>` : j.message ? `<div class="small muted">${esc(j.message)}</div>` : ""}`).join("") || '<div class="empty">작업 없음</div>';
 

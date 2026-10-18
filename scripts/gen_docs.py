@@ -21,6 +21,7 @@ GUIDES = [
     ("guides/architecture.md", "아키텍처 — 코드 구조(core · stages · web)와 동작 방식"),
     ("guides/api.md", "REST API"),
     ("guides/data-processing.md", "데이터 처리 — 수집 · 전처리 · 평가 자료 기록과 유효하게 처리하는 법"),
+    ("guides/deploy.md", "배포 · 운영 — Docker, 접근 토큰, 작업 기록, 모델 호환성 점검, 새 모델 후보"),
     ("guides/llm.md", "LLM 연결 — 로컬 llama.cpp · OpenAI 호환 · Claude, 소형 모델 비교"),
     ("guides/gpu.md", "CPU · CUDA · ROCm 설치"),
     ("guides/troubleshooting.md", "문제 해결"),

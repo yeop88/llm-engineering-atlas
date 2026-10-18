@@ -17,6 +17,12 @@
 - **짧은 청크 합치기**: 청킹 옵션 `merge_below` — 법률 자료에서 100자 이하 청크 35% 문제(976 → 24개)
 - 소형 LLM(Gemma 4 E2B QAT Q4_0)을 라우팅 빠른 경로 · 양자화 비교용으로 준비(`OPENAI_MODEL_URLS`)
 
+- **작업 기록**: 백그라운드 작업의 상태 · 진행률 · 결과를 DB 에도 남김(마이그레이션 0008 `job_records`) — 재시작해도 결과가 남고, 끊긴 작업은 '중단됨'으로 표시. `/api/jobs` 가 재시작 전 작업도 보여 줌
+- **접근 토큰**(선택): `API_TOKEN` 을 설정하면 화면은 `/login`(HMAC 쿠키), API 는 `Authorization: Bearer` 로만 열림. `/api/health`
+- **Docker**: `Dockerfile` · `.dockerignore` · compose `app` 프로필(데이터 · 모델 캐시 볼륨, `TORCH_EXTRA` 로 CPU · CUDA 선택, 헬스체크) — `docs/guides/deploy.md`
+- **모델 호환성 점검**: 내려받은 모델을 지금 라이브러리로 로드 · 인코딩해 차원 · NaN · 프롬프트 정의 · 관련/무관 순서를 확인, 라이브러리 버전이 바뀌면 '점검 권장'(선택: `COMPAT_CHECK_ON_UPGRADE` 로 시작 시 자동). 모델 화면, `/api/models/compat-check`
+- **새 모델 후보**: Hub 인기 급상승에서 카탈로그에 없는 최근 임베딩 · 리랭커(한국어 우선, 변환본 제외)를 찾아 제안(자동 추가 안 함). Hub 화면, `/api/hub/discover`
+
 ### 변경
 - 근거 검증을 단일 진입점 `answer.verify` 로 통일(답변 · 평가 · 연결 비교 · 보상 · 에이전트 · 증류 데이터)
 - `answer.evaluate_one` 이 질문 항목 전체를 받음, 파인튜닝 · 증류의 누수 방지가 여러 근거를 모두 제외

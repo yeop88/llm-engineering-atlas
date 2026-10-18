@@ -14,6 +14,11 @@ async function api(path, { method = "GET", body, form } = {}) {
   const text = await res.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if (res.status === 401 && !path.startsWith("/login")) {
+    // 토큰 인증이 켜져 있고 로그인이 풀린 경우 — 로그인 화면으로 (돌아올 곳을 함께)
+    location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+    throw new Error("로그인이 필요합니다");
+  }
   if (!res.ok) {
     let msg = data?.detail ?? data ?? res.statusText;
     if (Array.isArray(msg)) msg = msg.map(d => `${(d.loc || []).join(".")}: ${d.msg}`).join("\n");

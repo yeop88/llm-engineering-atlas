@@ -84,7 +84,7 @@ uv run uvicorn app.main:app --reload --port 8000
 
 - [docs/map.md](docs/map.md) — 전체 흐름도와 각 단계의 목적 · 계획
 - 단계: [1 임베딩](docs/stages/1-embedding/README.md) · [2 RAG](docs/stages/2-rag/README.md) · [3 리랭킹](docs/stages/3-rerank/README.md) ([상세](docs/stages/3-rerank/rerank.md)) · [4 검색 향상](docs/stages/4-search-lab/README.md) · [5 파인튜닝](docs/stages/5-finetune/README.md) · [6 라우팅](docs/stages/6-routing/README.md) ([상세](docs/stages/6-routing/routing.md)) · [7a 지식 증류](docs/stages/7a-distill/README.md) ([상세](docs/stages/7a-distill/distill.md)) · [7b 양자화](docs/stages/7b-quant/README.md) ([상세](docs/stages/7b-quant/quant.md)) · [8a 에이전트](docs/stages/8a-agent/README.md) ([상세](docs/stages/8a-agent/agent.md)) · [8b 강화학습](docs/stages/8b-rl/README.md) ([상세](docs/stages/8b-rl/rl.md)) · [멀티모달](docs/stages/multimodal/README.md) · [의미 응용](docs/stages/apps/README.md)
-- 가이드: [아키텍처](docs/guides/architecture.md) · [API](docs/guides/api.md) · [데이터 처리](docs/guides/data-processing.md) · [LLM 연결](docs/guides/llm.md) · [GPU 설치](docs/guides/gpu.md) · [문제 해결](docs/guides/troubleshooting.md)
+- 가이드: [아키텍처](docs/guides/architecture.md) · [API](docs/guides/api.md) · [데이터 처리](docs/guides/data-processing.md) · [배포 · 운영](docs/guides/deploy.md) · [LLM 연결](docs/guides/llm.md) · [GPU 설치](docs/guides/gpu.md) · [문제 해결](docs/guides/troubleshooting.md)
 - 기록: [모델 검증과 실측](docs/records/model-verification.md) · [파인튜닝 실행 기록](docs/stages/5-finetune/finetune.md#실행-기록)
 
 ## 개발

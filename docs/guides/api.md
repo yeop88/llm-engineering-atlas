@@ -1,5 +1,7 @@
 # REST API
 
+> `API_TOKEN` 을 설정한 서버는 모든 `/api/*` 에 `Authorization: Bearer <토큰>` 헤더가 필요합니다(`/api/health` 제외) — `docs/guides/deploy.md`.
+
 서버 실행 후 http://127.0.0.1:8000/docs (Swagger UI)에서 모든 엔드포인트를 직접 호출해 볼 수 있습니다.
 
 ## 모델
@@ -87,6 +89,9 @@ POST /api/collections/1/search
 | GET | `/api/hub/search?q=&sort=&limit=&pipeline_tag=` | Hub 검색 |
 | GET | `/api/hub/info?hf_id=` | 메타데이터 미리보기 |
 | POST | `/api/hub/import` | `{"hf_id": "..."}` 카탈로그 등록 |
+| GET | `/api/hub/discover?days=180&min_likes=10&limit=30&force=` | 카탈로그에 없는 최근 인기 모델 후보(자동 추가 안 함) — `docs/guides/deploy.md` |
+| POST | `/api/models/compat-check` | 본문 `[모델 id…]` 또는 없음(내려받은 모델 전부) → 작업. 로드 · 차원 · NaN · 프롬프트 · 순서 점검 |
+| GET | `/api/models/compat-check/last` | 마지막 점검 결과 · 지금 라이브러리 버전 · `upgrade_detected` |
 
 ## 테스트
 
@@ -120,7 +125,8 @@ model_ids=1,34  query=...  files=@a.png files=@b.jpg
 | GET | `/api/public-benchmarks` | 공개 한국어 벤치마크 목록과 가져온 상태 |
 | POST | `/api/public-benchmarks/{key}/import` | 내려받아 데이터셋 `pub_{key}` 로 추가 (작업) `{"max_queries", "max_corpus", "seed"}` |
 | POST | `/api/benchmarks` | `{"model_ids": [...], "dataset": "...", "truncate_dim": null, "batch_size": null, "unload_after": false, "sweep_dims": [768, 256, 64]}` → 작업. `sweep_dims`가 있으면 결과의 모델별 `dim_sweep`에 차원별 지표 포함 |
-| GET | `/api/jobs?kind=` · `/api/jobs/{id}` | 작업 상태 (progress 0~1, message, result) |
+| GET | `/api/jobs?kind=&limit=` · `/api/jobs/{id}` | 작업 상태 (progress 0~1, message, result). DB 기록(`job_records`)을 함께 보므로 재시작 전 작업도 나옴, 끊긴 작업은 `interrupted` |
+| GET | `/api/health` | 상태 확인 (인증 없이 열림) |
 | POST | `/api/jobs/{id}/cancel` | 취소 요청 |
 | GET | `/api/runs?kind=&dataset=&limit=` · `/api/runs/{id}` | 실행 이력 (`dataset`은 벤치마크 데이터셋 이름) |
 | GET | `/api/runs/summary` | 종류별 이력 개수 |

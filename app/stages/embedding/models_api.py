@@ -11,7 +11,7 @@ from app.core import crud
 from app.core.db import CatalogExclusion, EmbeddingModel, get_db
 from app.core.jobs import jobs
 from app.core.schemas import BulkDelete, HubImport, ModelCreate, ModelOut, ModelUpdate
-from app.stages.embedding import hub
+from app.stages.embedding import compat, hub
 from app.stages.embedding.model_manager import ModelSpec, get_manager
 
 router = APIRouter(prefix="/api", tags=["models"])
@@ -133,6 +133,28 @@ def sync_model(model_id: int, db: DB, overwrite: bool = False) -> ModelOut:
     return crud.to_out(row)
 
 
+# ── 호환성 점검 ──────────────────────────────────────────────────────────────
+@router.post("/models/compat-check")
+def compat_check(model_ids: list[int] | None = None) -> dict:
+    """내려받은 모델(또는 고른 모델)을 지금 라이브러리로 로드 · 인코딩해 본다. 모델을 하나씩 올렸다 내리므로 백그라운드 작업."""
+    active = jobs.active_for("compat")
+    if active:
+        return active.to_dict()
+    return jobs.submit(
+        "compat", f"호환성 점검 ({len(model_ids) if model_ids else '내려받은'} 모델)", lambda j: compat.run_all(j, model_ids)
+    ).to_dict()
+
+
+@router.get("/models/compat-check/last")
+def compat_last(db: DB) -> dict:
+    run = compat.last_run(db)
+    return {
+        "versions": compat.lib_versions(),
+        "upgrade_detected": compat.needs_check_after_upgrade(db),
+        "run": None if run is None else {"id": run.id, "created_at": run.created_at.isoformat(), **(run.result or {})},
+    }
+
+
 @router.post("/models/{model_id}/download")
 def download_model(model_id: int, db: DB) -> dict:
     row = crud.get_model(db, model_id)
@@ -194,6 +216,19 @@ def hub_search(
     for r in results:
         r["registered_id"] = registered.get(r["hf_id"])
     return results
+
+
+@router.get("/hub/discover")
+def hub_discover(db: DB, days: int = Query(180, ge=7, le=1095), min_likes: int = Query(10, ge=0), limit: int = Query(30, ge=1, le=100),
+                 force: bool = False) -> dict:  # fmt: skip
+    """카탈로그에 없는 최근 인기 모델 후보 (가져오기는 사람이 확인 후 /hub/import)."""
+    registered = {r.hf_id for r in db.scalars(select(EmbeddingModel))}
+    excluded = {r.hf_id for r in db.scalars(select(CatalogExclusion))}
+    try:
+        rows = hub.discover(registered, excluded, days=days, min_likes=min_likes, limit=limit, force=force)
+    except Exception as exc:
+        raise HTTPException(502, f"Hub 조회 실패: {exc}") from exc
+    return {"days": days, "min_likes": min_likes, "candidates": rows}
 
 
 @router.get("/hub/info")

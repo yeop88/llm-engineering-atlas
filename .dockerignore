@@ -1,0 +1,11 @@
+# 이미지에 넣지 않는 것: 개인 설정 · 실험 데이터 · 캐시 · 가상환경 (비밀 · 대용량이 이미지에 섞이지 않게)
+.git
+.venv
+.env
+data/
+**/__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+tests/
+*.url
