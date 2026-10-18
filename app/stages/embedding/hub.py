@@ -3,6 +3,7 @@
 import io
 import json
 import logging
+import re
 import threading
 from datetime import UTC, datetime
 from typing import Any
@@ -68,6 +69,14 @@ DISCOVER_QUERIES = [
     ("리랭커", "text-ranking", None),
 ]
 _discover_cache: tuple[float, dict[str, Any], list[dict[str, Any]]] = (0.0, {}, [])
+# 변환본 표시: 이름 끝 · 이름 속 단어 · 태그. 처음엔 GGUF · ONNX · MLX · NVFP4 만 걸러 Core ML(-coreml · -coreai) 변환본이 후보에 섞였다.
+CONVERTED_WORDS = ("gguf", "onnx", "mlx", "coreml", "coreai", "openvino", "awq", "gptq", "nvfp4", "fp8", "int4", "int8", "exl2")
+
+
+def _converted(repo_id: str, tags: list[str]) -> bool:
+    name = repo_id.split("/")[-1].lower()
+    parts = set(re.split(r"[-_.]", name))
+    return bool(parts & set(CONVERTED_WORDS)) or any(t.lower() in CONVERTED_WORDS for t in tags)
 
 
 def discover(registered: set[str], excluded: set[str], days: int = 180, min_likes: int = 10, limit: int = 30,
@@ -94,7 +103,7 @@ def discover(registered: set[str], excluded: set[str], days: int = 180, min_like
                 if m.id in seen or not m.created_at:
                     continue
                 tags_ = m.tags or []
-                if "gguf" in tags_ or m.id.lower().endswith(("-gguf", "-onnx", "-mlx")) or "nvfp4" in m.id.lower():
+                if _converted(m.id, tags_):
                     continue  # PyTorch(sentence-transformers)로 못 올리는 변환본 — 원본 모델이 따로 있다
                 age = (now - m.created_at).days
                 if age > days or (m.likes or 0) < min_likes:

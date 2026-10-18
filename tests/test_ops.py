@@ -108,6 +108,9 @@ def test_discover_filters(monkeypatch):
         M("c/few-likes", 1, 5),
         M("d/x-GGUF", 99, 3, ["gguf"]),
         M("e/known", 80, 20),
+        M("f/embeddinggemma-2-coreml", 30, 9),  # Core ML 변환본 — 처음 필터에서 새어 나왔던 것
+        M("g/model_onnx", 30, 9),
+        M("h/coreml-tagged-model", 30, 9, ["coreml"]),
     ]
 
     class Api:
