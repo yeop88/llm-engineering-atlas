@@ -118,7 +118,9 @@ function fRenderEval(r) {
   const maxMs = Math.max(1, ...ok.map(x => x.steps.reduce((s, t) => s + t.mean_ms, 0)));
   const title = Object.fromEntries(r.steps.map(s => [s.key, `${s.no} ${s.title}`]));
   const used = r.steps.filter(s => ok.some(x => (x.steps.find(t => t.key === s.key)?.mean_ms || 0) > 0));
-  const vs = x => (x.vs_first ? `${(x.vs_first.diff * 100).toFixed(1)}%p ${x.vs_first.significant ? '<span class="badge err">유의</span>' : '<span class="badge">불확실</span>'}` : "기준");
+  // 답변이 있으면 답변 품질로 비교한다 — 첫 검색이 같은 경로(RAG vs 에이전트)는 nDCG 차이가 늘 0 이라 차이를 숨겼다
+  const vsOne = (d, name) => `${name} ${d.diff >= 0 ? "+" : ""}${(d.diff * 100).toFixed(1)}%p ${d.significant ? '<span class="badge err">유의</span>' : '<span class="badge">불확실</span>'}`;
+  const vs = x => (x.vs_first_quality ? vsOne(x.vs_first_quality, "품질") : x.vs_first ? vsOne(x.vs_first, "nDCG") : "기준");
   const ans = (x, k) => (x.answer && x.answer[k] != null ? pct(x.answer[k]) : "-");
   $("#f-eval-out").innerHTML = `<div class="row between"><h3>결과 · ${esc(r.eval_set?.name || "")}</h3><span class="small muted">질문 ${r.n_queries}개${r.seconds != null ? ` · ${r.seconds}s` : ""}${r.run_id ? ` · run #${r.run_id}` : ""}</span></div>
     <div class="table-wrap"><table>
@@ -131,7 +133,12 @@ function fRenderEval(r) {
       ${r.results.filter(x => x.status !== "ok").map(x => `<tr><td class="small">${esc(x.label)}</td><td colspan="9"><div class="errbox">${esc(x.error)}</div></td></tr>`).join("")}
     </table></div>
     <div class="legend">${used.map(s => `<span>${swatch(s.key)}${esc(title[s.key])}</span>`).join("")}</div>
-    <div class="small muted">검색 지표 · 답변 지표는 % 단위. 막대 길이 = 질문당 평균 처리 시간(가장 느린 연결 = 100%), 칸 = 단계별 시간(마우스를 올리면 값). '불확실'은 첫 연결과의 nDCG 차이가 우연일 수 있다는 뜻입니다.</div>`;
+    ${ok.filter(x => x.rows?.length).map(x => `<details><summary class="small">질문별 기록 · ${esc(x.label)}</summary><div class="table-wrap" style="max-height:360px"><table>
+      <tr><th>질문</th><th class="num">품질</th><th class="num">시간</th><th>에이전트 행동</th><th>번호 검사</th><th>답변</th></tr>
+      ${x.rows.map(q => `<tr><td class="small">${esc(q.query)}</td><td class="num">${q.quality != null ? pct(q.quality) : "-"}</td><td class="num small">${fmtMs(q.ms)}</td>
+        <td class="small">${esc((q.actions || []).join(" → ")) || "-"}</td><td class="small">${esc((q.citations || []).map(c => `${c[0]}:${c[1]}`).join(", ")) || "-"}</td><td class="small">${esc(q.answer)}</td></tr>`).join("")}
+    </table></div></details>`).join("")}
+    <div class="small muted">검색 지표 · 답변 지표는 % 단위. 막대 길이 = 질문당 평균 처리 시간(가장 느린 연결 = 100%), 칸 = 단계별 시간(마우스를 올리면 값). 기준 대비 = 첫 연결과 짝지은 차이(답변이 있으면 답변 품질, 없으면 nDCG), '불확실'은 우연일 수 있다는 뜻입니다.</div>`;
 }
 
 fLoad();

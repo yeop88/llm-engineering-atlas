@@ -165,3 +165,27 @@ def test_sample_passages_document_filter(law_set):
         law_id = db.scalars(select(Document.id).where(Document.collection_id == cid, Document.filename == "근로기준법.txt")).one()
         got = evaluation.sample_passages(db, cs_id, 10, min_chars=10, document_ids=[law_id])
         assert got and {p["document_id"] for p in got} == {law_id}  # 적은 종류(법령)만 골라 보충할 수 있다
+
+
+def test_agent_looks_up_numbers_in_question_first(law_set, monkeypatch):
+    """질문에 조문 번호가 있으면 LLM 이 고르기 전에 조회해 첫 관찰에 넣는다 — 첫 검색 결과만 보고 엉뚱하게 답하지 않게."""
+    _, cs_id = law_set
+    st = get_settings()
+    for k in ("llm_provider", "openai_api_key", "anthropic_api_key"):
+        monkeypatch.setattr(st, k, None)
+    monkeypatch.setattr(st, "openai_model", "fake")
+    monkeypatch.setattr(st, "openai_base_url", "http://local/v1")
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(json.loads(request.content)["messages"][-1]["content"])
+        act = {"thought": "조회 결과로 답", "action": "finish", "input": "30일 전에 예고해야 합니다 [S1]."}
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(act, ensure_ascii=False)}}]})
+
+    monkeypatch.setattr(llm, "_transport", httpx.MockTransport(handler))
+    wrong = [{"chunk_id": None, "text": "엉뚱한 첫 검색 결과", "filename": "x.txt"}]
+    with SessionLocal() as db:
+        out = agent.run_to_end(llm.resolve(None, None), "근로기준법 제26조에 따르면 어떻게 되나요?", lambda q: [], db=db,
+                               first_results=wrong, lookup_fn=legal.lookup_fn_for(db, cs_id))  # fmt: skip
+    assert out["steps"][0]["action"] == "lookup" and out["steps"][0]["given"]
+    assert "30일" in out["sources"][0]["text"] and "번호 조회" in seen[0]

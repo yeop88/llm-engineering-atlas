@@ -114,6 +114,16 @@ def run(cfg: llm.LLMConfig, question: str, search_fn: Callable[[str], list[dict[
     src = Sources()
     history: list[str] = []
     steps: list[dict[str, Any]] = []
+    if lookup_fn is not None and legal.parse_refs(question):
+        # 질문에 조문 · 사건번호가 있으면 LLM 판단을 기다리지 않고 먼저 조회한다. 연결 비교(run #243)에서 첫 검색 결과를 받은 에이전트가
+        # 번호만 있는 질문의 엉뚱한 검색 결과로 바로 답해 RAG 보다 나빴다(근거 인용 75% vs 85%) — 직접 조회하면 6/6 이었다.
+        t = time.perf_counter()
+        found = lookup_fn(question)
+        if found:
+            obs = src.show(found[:top_k], max_chars * 2)
+            history.append(f"[관찰 0 · 번호 조회: {question}]\n{obs}")
+            steps.append({"n": 0, "action": "lookup", "input": question, "observation": obs[:400],
+                          "ms": round((time.perf_counter() - t) * 1000, 1), "given": True})  # fmt: skip
     if first_results is not None:
         obs = src.show(first_results[:top_k], max_chars)
         history.append(f"[관찰 0 · 첫 검색: {question}]\n{obs}")

@@ -233,7 +233,7 @@ def evaluate(db: Session, items: list[dict[str, Any]], flows: list[dict[str, Any
     out = []
     for fi, fc in enumerate(flows):
         label = fc.get("label") or f"연결 {fi + 1}"
-        per_q, rows, lat, step_ms = [], [], [], {s["key"]: [] for s in STEPS}
+        per_q, rows, lat, step_ms, records = [], [], [], {s["key"]: [] for s in STEPS}, []
         # 라우팅을 켜면 질문마다 실행되는 단계가 달라진다 — 마지막 질문의 상태가 아니라 실행 비율을 센다
         status: dict[str, list[str]] = {s["key"]: [] for s in STEPS}
         hard = 0
@@ -253,6 +253,12 @@ def evaluate(db: Session, items: list[dict[str, Any]], flows: list[dict[str, Any
                 hard += bool(r.get("route") and r["route"]["path"] == routers.HARD)
                 if "answer" in r:
                     rows.append(r["answer"] | {"query": it["query"]})
+                # 질문별 기록 — 평균만 남기면 '왜 나빠졌는지'(에이전트가 어떤 도구를 썼나, 어디서 오래 걸렸나)를 볼 수 없었다
+                a = r.get("answer") or {}
+                records.append({"query": it["query"], "type": it.get("type"), "ms": r["total_ms"], "quality": a.get("quality"),
+                                "evidence_cited": a.get("evidence_cited"), "refused": a.get("refused"), "supported_ratio": a.get("supported_ratio"),
+                                "answer": (a.get("text") or "")[:400], "actions": [s.get("action") for s in a.get("agent_steps") or []],
+                                "citations": [(c["ref"], c["status"]) for c in (a.get("citations") or {}).get("refs", [])]})  # fmt: skip
         except JobCancelled:
             raise
         except Exception as exc:  # 한 연결 방식이 실패해도(LLM 끊김 등) 나머지는 비교한다
@@ -270,6 +276,8 @@ def evaluate(db: Session, items: list[dict[str, Any]], flows: list[dict[str, Any
             "hard_rate": round(hard / len(items), 3) if fc.get("routing") else None,
             "answer": answer.summarize_eval(rows) if rows else None,
             "per_query": [q[evaluation.PRIMARY] for q in per_q],
+            "quality_per_query": [x["quality"] for x in records] if rows else None,
+            "rows": records,
         }  # fmt: skip
         out.append(entry)
     ok = [e for e in out if e["status"] == "ok"]
@@ -277,6 +285,11 @@ def evaluate(db: Session, items: list[dict[str, Any]], flows: list[dict[str, Any
         base = ok[0]
         for e in ok[1:]:
             e["vs_first"] = {"metric": evaluation.PRIMARY, "against": base["label"], **stats.paired_mean(e["per_query"], base["per_query"])}
+            # 검색 nDCG 는 첫 검색이 같은 경로(RAG vs 에이전트)에서 늘 0 차이라, 답변이 있으면 답변 품질로도 짝지어 비교한다
+            if e["quality_per_query"] and base["quality_per_query"]:
+                e["vs_first_quality"] = {"metric": "quality", "against": base["label"],
+                                         **stats.paired_mean(e["quality_per_query"], base["quality_per_query"])}  # fmt: skip
     for e in ok:
         e.pop("per_query")
+        e.pop("quality_per_query")
     return {"n_queries": len(items), "results": out, "steps": [{"key": s["key"], "title": s["title"], **_stage(s["key"])} for s in STEPS]}
