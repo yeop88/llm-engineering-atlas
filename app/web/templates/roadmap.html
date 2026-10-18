@@ -56,6 +56,7 @@
     <div class="field"><label>{{ S.rerank.no }} 리랭커</label><select id="f-rr"><option value="">끔</option></select></div>
     <div class="field"><label>답변 · 근거 검증</label><select id="f-ans"><option value="1">켬 (LLM)</option><option value="0">끔 (검색까지)</option></select></div>
     <div class="field"><label>근거 수</label><input id="f-top" type="number" value="5" min="1" max="20" style="width:70px"></div>
+    <div class="field"><label title="청크마다 질문과 관련된 문장만 남겨 LLM 이 읽을 글을 줄임 (0 = 끔)">근거 압축 (문장 수)</label><input id="f-compress" type="number" value="0" min="0" max="20" style="width:70px"></div>
     <div class="field"><label>답변 방식 (7·8)</label><select id="f-ansmode" title="라우팅을 켜면 어려운 질문에만 적용"><option value="rag">일반 RAG 답변</option><option value="agent">8a 에이전트</option><option value="best">8b Best-of-4 (보상)</option></select></div>
     <div class="field"><label>{{ S.routing.no }} 라우팅</label><select id="f-route" title="켜면 위 향상 · 리랭커는 어려운 질문에만 씁니다"><option value="off">끔</option><option value="confidence">검색 확신도</option><option value="rule">규칙</option><option value="llm">LLM 판단</option></select></div>
     <div class="field"><label>확신도 기준</label><input id="f-th" type="number" value="0.05" step="0.01" min="0" max="1" style="width:70px"></div>

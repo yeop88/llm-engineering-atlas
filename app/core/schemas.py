@@ -161,6 +161,7 @@ class ChunkStrategy(BaseModel):
     overlap_sentences: int = Field(default=1, ge=0, le=5)
     min_chars: int = Field(default=20, ge=0, le=1000)
     include_title: bool = True
+    merge_below: int = Field(default=0, ge=0, le=8000)  # 이보다 짧은 청크는 이웃과 합침(0 = 끔) — 짧은 조문 · 구획이 많을 때
 
 
 class ChunkSetCreate(BaseModel):
@@ -405,6 +406,7 @@ class AnswerRequest(LLMRef):
     max_tokens: int = Field(default=700, ge=50, le=8000)
     temperature: float = Field(default=0.1, ge=0, le=2)
     judge: bool = False  # LLM 으로 문장별 근거 판정도 할지
+    compress: CompressConfig | None = None
 
 
 class AnswerEvalRequest(LLMRef):
@@ -417,6 +419,12 @@ class AnswerEvalRequest(LLMRef):
 
 
 # ── 흐름 연결 실행 (맵) ─────────────────────────────────────────────────────
+class CompressConfig(BaseModel):
+    """근거 압축 — 청크마다 질문과 형태소가 많이 겹치는 문장 keep 개만 남겨 LLM 이 읽을 글을 줄인다."""
+
+    keep: int = Field(default=3, ge=1, le=20)
+
+
 class AgentConfig(BaseModel):
     """8a 에이전트: 도구(검색 · 읽기 · 계산)를 여러 번 쓰는 다단계 RAG. 비용이 단계 수에 비례해 상한을 둔다."""
 
@@ -438,6 +446,7 @@ class FlowPath(BaseModel):
     model: str | None = Field(default=None, max_length=200)
     agent: AgentConfig | None = None  # 8a: 답변을 에이전트로 (여러 번 검색 · 읽기)
     best_of: int | None = Field(default=None, ge=2, le=8)  # 8b: 답을 N 개 만들어 보상이 가장 높은 것
+    compress: CompressConfig | None = None  # 근거 압축: 청크마다 질문 관련 문장만
     best_of_temperature: float = Field(default=0.8, ge=0, le=2)
 
 

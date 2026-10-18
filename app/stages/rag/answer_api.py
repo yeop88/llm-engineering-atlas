@@ -55,7 +55,8 @@ def generate_answer(collection_id: int, body: AnswerRequest) -> StreamingRespons
             except (service.RagError, StoreUnavailable, ValueError) as exc:
                 yield _event("error", message=f"검색 실패: {exc}")
                 return
-            context, sources = answer.build_context(res["results"], body.max_context_chars)
+            results = answer.compress(res["results"], body.question, body.compress.keep) if body.compress else res["results"]
+            context, sources = answer.build_context(results, body.max_context_chars)
             keep = ("rank", "chunk_id", "document_id", "filename", "title", "page", "heading", "text", "score")
             yield _event(
                 "search",

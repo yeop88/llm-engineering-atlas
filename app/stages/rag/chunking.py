@@ -28,6 +28,7 @@ DEFAULTS: dict[str, Any] = {
     "overlap_sentences": 1,
     "min_chars": 20,
     "include_title": True,
+    "merge_below": 0,  # 이보다 짧은 청크는 이웃과 합침 (0 = 끔)
 }
 
 
@@ -49,7 +50,28 @@ def normalize(strategy: dict[str, Any] | None) -> dict[str, Any]:
     s["overlap_sentences"] = max(0, min(int(s["overlap_sentences"]), 5))
     s["min_chars"] = max(0, int(s["min_chars"]))
     s["include_title"] = bool(s["include_title"])
+    s["merge_below"] = max(0, min(int(s.get("merge_below") or 0), s["size"]))
     return s
+
+
+def _merge_short(page: str, items: list[tuple[int, int, str, str]], below: int, size: int) -> list[tuple[int, int, str, str]]:
+    """짧은 청크를 바로 뒤(또는 앞) 청크와 합친다 — 크기 한도 안에서.
+
+    법률 구조 청킹은 짧은 조문 · 판결문의 짧은 구획(참조조문 등)을 그대로 한 청크로 둬, 실측에서 100자 이하 청크가
+    35% 였다. 짧은 청크는 문맥이 모자라 임베딩이 불안정하고 검색 결과 자리만 차지한다. 이웃 조문 · 구획은 내용이 이어지는
+    경우가 많아 합쳐도 주제가 크게 섞이지 않는다. 합친 글은 원문 구간(page[시작:끝])으로 다시 잘라 겹침이 중복되지 않게 한다.
+    """
+    out: list[tuple[int, int, str, str]] = []
+    for a, b, c, h in items:
+        if out:
+            pa, pb, pc, ph = out[-1]
+            if (len(pc) < below or len(c) < below) and (b - pa) <= size and a >= pa:
+                # 제목은 첫 청크 것에 '외'를 한 번만 붙인다(세 개 이상 합쳐도 '외 외'가 되지 않게)
+                heading = ph if not h or h == ph or ph.endswith(" 외") else (f"{ph} 외" if ph else h)
+                out[-1] = (pa, b, page[pa:b].strip(), heading)
+                continue
+        out.append((a, b, c, h))
+    return out
 
 
 # ── 기본 분할기 ─────────────────────────────────────────────────────────────
@@ -213,6 +235,8 @@ def chunk_pages(pages: list[str], strategy: dict[str, Any], paged: bool = True) 
                 if len(page) <= size * 2
                 else [(a, b, c, "") for a, b, c in _recursive(page, size, overlap)]
             )
+        if s["merge_below"]:
+            items = _merge_short(page, items, s["merge_below"], size)
         for a, b, c, heading in items:
             if len(c) < s["min_chars"]:
                 continue

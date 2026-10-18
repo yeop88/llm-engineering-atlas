@@ -47,6 +47,7 @@
       <div class="row">
         <div class="field" id="s-osent-wrap"><label>겹칠 문장 수</label><input id="s-osent" type="number" min="0" max="5"></div>
         <div class="field"><label>최소 길이</label><input id="s-min" type="number" min="0" max="1000"></div>
+        <div class="field"><label title="이보다 짧은 청크는 이웃 조문 · 구획과 합침 (짧은 조문이 많은 법령에 권장, 0 = 끔)">짧은 청크 합치기</label><input id="s-merge" type="number" min="0" max="8000" value="0" style="width:80px"></div>
         <label class="row" style="align-self:end"><input type="checkbox" id="s-title"> 임베딩할 때 문서 제목·조문 제목 붙이기</label>
       </div>
       <div class="small muted" id="s-hint"></div>

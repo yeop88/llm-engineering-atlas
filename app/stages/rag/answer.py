@@ -9,7 +9,7 @@ import re
 from typing import Any
 
 from app.core import llm
-from app.core.korean import split_sentences
+from app.core.korean import split_sentences, tokenize
 from app.stages.rag.evaluation import coverage, grams
 
 NOT_FOUND = "근거에서 찾을 수 없습니다"
@@ -42,6 +42,35 @@ def build_context(results: list[dict[str, Any]], max_chars: int = 6000) -> tuple
         used.append(r)
         total += len(block)
     return "\n\n".join(parts), used
+
+
+def compress(results: list[dict[str, Any]], question: str, keep: int = 3, min_chars: int = 200) -> list[dict[str, Any]]:
+    """근거 압축: 청크마다 질문과 형태소가 많이 겹치는 문장 keep 개만 원래 순서로 남긴다(사이가 빠지면 '…').
+
+    왜: 로컬 LLM 의 질문당 시간 중 대부분(25~31초)이 근거 약 2,000토큰을 읽는 데 들었다. 근거 수를 줄이면 정답 청크를
+    통째로 잃지만, 청크 안에서 관련 문장만 남기면 근거 수(=검색 재현율)는 그대로 두고 읽을 글만 줄일 수 있다.
+    점수는 형태소 겹침(Kiwi)이라 모델 호출이 없다 — 압축 자체가 느리면 의미가 없으므로.
+    위험: 질문과 단어가 겹치지 않는 근거 문장(바꿔 말한 질문)을 버릴 수 있다 — 평가에서 '근거 유지율'로 확인한다.
+    짧은 청크(min_chars 미만)는 그대로 둔다(줄일 것이 없고 문맥이 깨진다).
+    """
+    q = set(tokenize(question))
+    out = []
+    for r in results:
+        text = r["text"]
+        sents = split_sentences(text) if len(text) >= min_chars else []
+        if len(sents) <= keep:
+            out.append(r)
+            continue
+        scored = [(len(q & set(tokenize(s))) / (len(set(tokenize(s))) ** 0.5 or 1), i) for i, s in enumerate(sents)]
+        chosen = sorted(i for _, i in sorted(scored, reverse=True)[:keep])
+        parts, prev = [], -1
+        for i in chosen:
+            if prev >= 0 and i != prev + 1:
+                parts.append("…")
+            parts.append(sents[i])
+            prev = i
+        out.append(r | {"text": " ".join(parts), "compressed_from": len(text)})
+    return out
 
 
 def user_prompt(question: str, context: str) -> str:

@@ -84,13 +84,13 @@ async function delDoc(id, name) {
 
 // ── ② 청크 세트 ──
 function strategyFromForm() {
-  return { method: $("#s-method").value, size: +$("#s-size").value, overlap: +$("#s-overlap").value, overlap_sentences: +$("#s-osent").value, min_chars: +$("#s-min").value, include_title: $("#s-title").checked };
+  return { method: $("#s-method").value, size: +$("#s-size").value, overlap: +$("#s-overlap").value, overlap_sentences: +$("#s-osent").value, min_chars: +$("#s-min").value, include_title: $("#s-title").checked, merge_below: +$("#s-merge").value || 0 };
 }
 function initStrategyForm() {
   $("#s-method").innerHTML = Object.entries(opts.chunk_methods).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("");
   const d = { ...opts.chunk_defaults, ...(DOMAIN_STRATEGY[col.domain] || {}) };
   $("#s-method").value = d.method; $("#s-size").value = d.size; $("#s-overlap").value = d.overlap;
-  $("#s-osent").value = d.overlap_sentences; $("#s-min").value = d.min_chars; $("#s-title").checked = d.include_title;
+  $("#s-osent").value = d.overlap_sentences; $("#s-min").value = d.min_chars; $("#s-title").checked = d.include_title; $("#s-merge").value = d.merge_below || 0;
   updateHint();
 }
 function updateHint() {
@@ -116,7 +116,7 @@ $("#s-create").onclick = async e => {
 };
 function strategyLabel(s) {
   const m = { recursive: "재귀", fixed: "고정", sentence: "문장", legal: "법률 구조", page: "페이지" }[s.method] || s.method;
-  return `${m} · ${s.size}자${s.method === "sentence" ? ` · 겹침 ${s.overlap_sentences}문장` : ` · 겹침 ${s.overlap}`}${s.include_title ? " · 제목 포함" : ""}`;
+  return `${m} · ${s.size}자${s.method === "sentence" ? ` · 겹침 ${s.overlap_sentences}문장` : ` · 겹침 ${s.overlap}`}${s.include_title ? " · 제목 포함" : ""}${s.merge_below ? ` · ${s.merge_below}자 미만 합침` : ""}`;
 }
 function renderChunkSets() {
   if (!$("#s-method").options.length) initStrategyForm();

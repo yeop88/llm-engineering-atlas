@@ -66,11 +66,12 @@ function fConfig(p) {
   // 답변 방식(8a 에이전트 · 8b Best-of-N)은 비싼 쪽 경로에만 붙인다 — 라우팅을 켜면 어려운 질문에만 쓰인다
   const mode = p ? p.mode || "rag" : $("#f-ansmode").value;
   const how = mode === "agent" ? { agent: { max_steps: 5, top_k: 4 } } : mode === "best" ? { best_of: 4 } : {};
-  const full = { config: { ...search, reranker_id: +rr || null, rerank_top: 10, enhance: enh === "none" ? null : { technique: enh } }, answer, context_top: +$("#f-top").value || 5, ...how };
+  const comp = +$("#f-compress").value ? { compress: { keep: +$("#f-compress").value } } : {};
+  const full = { config: { ...search, reranker_id: +rr || null, rerank_top: 10, enhance: enh === "none" ? null : { technique: enh } }, answer, context_top: +$("#f-top").value || 5, ...how, ...comp };
   const router = p ? p.route : $("#f-route").value !== "off" ? $("#f-route").value : null;
   if (!router) return { label: p?.label || "", ...full };
   // 라우팅을 켜면 위의 향상 · 리랭커 설정은 '어려운 질문용 전체 경로'가 되고, 기본 경로는 향상 · 리랭커 없이 간다
-  return { label: p?.label || "", config: search, answer, context_top: full.context_top, routing: { router, threshold: +$("#f-th").value || 0.05, hard: full } };
+  return { label: p?.label || "", config: search, answer, context_top: full.context_top, ...comp, routing: { router, threshold: +$("#f-th").value || 0.05, hard: full } };
 }
 
 function fTrace(steps) {

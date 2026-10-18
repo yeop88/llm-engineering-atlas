@@ -19,6 +19,7 @@
     <div class="field"><label>LLM</label><select id="a-provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
     <div class="field"><label>모델 (비우면 설정값)</label><input id="a-model" list="a-model-list"><datalist id="a-model-list"></datalist></div>
     <label class="row small" style="margin:0"><input type="checkbox" id="a-judge"> LLM 으로 문장별 근거 판정도 하기 (느림)</label>
+    <label class="row small" style="margin:0" title="근거 청크마다 질문과 관련된 문장 3개만 넣어 읽는 시간을 줄임"><input type="checkbox" id="a-compress"> 근거 압축 (청크마다 관련 문장 3개)</label>
     <div class="small muted" id="a-llm"></div>
   </aside>
   <section class="stack">
@@ -112,7 +113,7 @@ async function send() {
   if (!$("#a-col").value) return toast("컬렉션을 먼저 만드세요", "err");
   const bm25 = $("#a-mode").value === "bm25";
   const body = {
-    question: q, context_top: +$("#a-top").value, max_tokens: +$("#a-max").value, judge: $("#a-judge").checked,
+    question: q, context_top: +$("#a-top").value, max_tokens: +$("#a-max").value, judge: $("#a-judge").checked, compress: $("#a-compress").checked ? { keep: 3 } : null,
     provider: $("#a-provider").value || null, model: $("#a-model").value.trim() || null,
     config: { mode: $("#a-mode").value, index_id: bm25 ? null : +$("#a-idx").value || null, chunk_set_id: bm25 ? +$("#a-cs").value || null : null, reranker_id: +$("#a-rr").value || null },
   };

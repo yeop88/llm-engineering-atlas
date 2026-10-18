@@ -219,7 +219,7 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | GET | `/api/rl/preferences/export` | DPO 형식 JSONL (`?source=auto|human`) |
 | POST | `/api/rl/evaluate` | Best-of-N 평가 작업 — 평소 답 대비 품질 · 보상 짝지은 비교, 보상 차가 큰 쌍 자동 저장 |
 
-검색 설정(`SearchConfig`): `"rerank_fusion": true`(크로스 인코더 순위와 1단계 순위 RRF), `"llm_rerank": {"top": 10, "max_chars": 300, "fusion": false}`(LLM 목록형, 연결 계층에서 적용). 처리 경로(`FlowPath`): `"model"`(경로 답변 모델), `"agent": {"max_steps", "top_k"}`(8a), `"best_of": 4`(8b).
+검색 설정(`SearchConfig`): `"rerank_fusion": true`(크로스 인코더 순위와 1단계 순위 RRF), `"llm_rerank": {"top": 10, "max_chars": 300, "fusion": false}`(LLM 목록형, 연결 계층에서 적용). 처리 경로(`FlowPath`): `"model"`(경로 답변 모델), `"agent": {"max_steps", "top_k"}`(8a), `"best_of": 4`(8b), `"compress": {"keep": 3}`(근거 압축). 청킹 전략(`ChunkStrategy`)에 `"merge_below": 200`(짧은 청크 합치기).
 
 평가 세트 항목: `{"query", "doc_ids": [...], "evidence", "evidences": [...]?, "answerable": true, "type"}` — 여러 문서 질문은 `evidences` 에 근거를 모두, 답 없는 질문은 `"answerable": false` 와 빈 `doc_ids`. LLM 생성(`/eval-sets/generate`)의 `styles` 에 `condition` · `long_situation` · `multi` · `unanswerable`, 수는 `n_multi` · `n_unanswerable`.
 

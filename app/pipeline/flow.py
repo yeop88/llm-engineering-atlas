@@ -157,6 +157,8 @@ def run(
             gen_seconds, out_tokens = sum(c["seconds"] for c in bo["candidates"]), None
             extra = {"best_of": {"picked": bo["best"], "rewards": [c["reward"] for c in bo["candidates"]]}}
         else:
+            if fc.get("compress"):  # 근거 압축: 청크마다 질문과 관련된 문장만 (읽는 시간 줄이기)
+                top = answer.compress(top, question, int(fc["compress"].get("keep") or 3))
             context, sources = answer.build_context(top, int(fc.get("max_context_chars") or 6000))
             gen = llm.chat(
                 lcfg,
