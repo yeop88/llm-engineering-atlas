@@ -48,13 +48,17 @@ def lexical_overlap(a: str, b: str) -> float:
 
 
 # ── 지문 고르기 ─────────────────────────────────────────────────────────────
-def sample_passages(db: Session, chunk_set_id: int, n: int, min_chars: int = 200, seed: int = 0) -> list[dict[str, Any]]:
-    """문서마다 골고루(라운드 로빈) 무작위로 청크를 고른다."""
-    rows = db.execute(
+def sample_passages(db: Session, chunk_set_id: int, n: int, min_chars: int = 200, seed: int = 0,
+                    document_ids: list[int] | None = None) -> list[dict[str, Any]]:  # fmt: skip
+    """문서마다 골고루(라운드 로빈) 무작위로 청크를 고른다.
+    document_ids: 이 문서들에서만 — 문서 수가 적은 종류(법률 자료의 법령 6건 vs 판례 164건)는 무작위로 뽑으면 거의 안 나와서
+    (법률 세트 #4 에서 0문항) 그 종류만 따로 보충할 때 쓴다."""
+    q = (
         select(Chunk.id, Chunk.document_id, Chunk.text, Document.filename, Document.title)
         .join(Document, Document.id == Chunk.document_id)
         .where(Chunk.chunk_set_id == chunk_set_id)
-    ).all()
+    )
+    rows = db.execute(q.where(Chunk.document_id.in_(document_ids)) if document_ids else q).all()
     by_doc: dict[int, list] = defaultdict(list)
     for r in rows:
         if len(r.text) >= min_chars:

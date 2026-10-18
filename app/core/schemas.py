@@ -376,6 +376,7 @@ class EvalSetGenerate(LLMRef):
     method: Literal["llm", "sentence"] = "llm"
     chunk_set_id: int  # 지문을 뽑을 청크 세트 (평가는 다른 청크 세트로도 할 수 있다)
     n_passages: int = Field(default=30, ge=1, le=500)
+    document_ids: list[int] | None = Field(default=None, max_length=1000)  # 이 문서들에서만 지문을 뽑기 (적은 종류 보충용)
     styles: list[Literal["fact", "paraphrase", "situation", "condition", "long_situation", "multi", "unanswerable"]] = Field(
         default=["fact", "paraphrase", "situation"], min_length=1, max_length=7
     )

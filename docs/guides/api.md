@@ -157,7 +157,7 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | 메서드 | 경로 | 설명 |
 |---|---|---|
 | GET / POST | `/api/collections/{id}/eval-sets` | 평가 세트 목록 / 직접 입력·가져오기 `{"name", "method": "manual"\|"import", "items": [{"query", "doc_ids", "evidence"}]}` |
-| POST | `/api/collections/{id}/eval-sets/generate` | 생성 (작업) `{"method": "llm"\|"sentence", "chunk_set_id", "n_passages", "styles", "provider"?, "model"?}` |
+| POST | `/api/collections/{id}/eval-sets/generate` | 생성 (작업) `{"method": "llm"|"sentence", "chunk_set_id", "n_passages", "document_ids"?, "styles", "provider"?, "model"?}` — `document_ids` 면 그 문서에서만 지문 |\|"sentence", "chunk_set_id", "n_passages", "styles", "provider"?, "model"?}` |
 | GET / PATCH / DELETE | `/api/eval-sets/{id}` | 조회(질문 포함) / 이름·질문 수정 / 삭제 |
 | GET | `/api/eval-sets/{id}/export` | JSON 내려받기 |
 | POST | `/api/eval-sets/{id}/evaluate` | 조합 평가 (작업) `{"configs": [SearchConfig, ...], "max_queries"?}` |

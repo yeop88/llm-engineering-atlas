@@ -100,7 +100,7 @@ def generate_eval_set(collection_id: int, body: EvalSetGenerate, db: DB) -> dict
             row = sdb.get(EvalSet, set_id)
             try:
                 job.update(0.02, "지문 고르는 중")
-                passages = evaluation.sample_passages(sdb, body.chunk_set_id, body.n_passages, body.min_chars, body.seed)
+                passages = evaluation.sample_passages(sdb, body.chunk_set_id, body.n_passages, body.min_chars, body.seed, body.document_ids)
                 if not passages:
                     raise ValueError(f"{body.min_chars}자 이상인 청크가 없습니다. 최소 길이를 낮추세요.")
                 if cfg:

@@ -150,3 +150,16 @@ def test_attach_images(client, tmp_path):
 
     assert max(Image.open(BytesIO(images[0])).size) <= answer.IMAGE_MAX_SIDE  # 크게 보내지 않는다
     client.delete(f"/api/collections/{cid}")
+
+
+def test_sample_passages_document_filter(law_set):
+    from sqlalchemy import select
+
+    from app.core.db import Document
+    from app.stages.rag import evaluation
+
+    cid, cs_id = law_set
+    with SessionLocal() as db:
+        law_id = db.scalars(select(Document.id).where(Document.collection_id == cid, Document.filename == "근로기준법.txt")).one()
+        got = evaluation.sample_passages(db, cs_id, 10, min_chars=10, document_ids=[law_id])
+        assert got and {p["document_id"] for p in got} == {law_id}  # 적은 종류(법령)만 골라 보충할 수 있다
