@@ -66,6 +66,12 @@ class Settings(BaseSettings):
     llm_timeout: float = 120.0
     # Qwen3 계열처럼 '생각' 모드가 있는 모델에 생각을 끄라고 요청 (OpenAI 호환 로컬 서버만, 공식 OpenAI API 에는 보내지 않음)
     llm_disable_thinking: bool = True
+    # 답변 근거 검증 방식: lexical(글자 겹침, 기본) · semantic(임베딩 유사도) · hybrid(둘 중 하나라도 통과).
+    # 답변 평가 · 연결 비교 · 보상이 모두 이 방식을 쓴다. 사람 판정과의 일치도(/rag/verify)를 보고 고른다.
+    answer_verify_method: str = "lexical"
+    verify_model: str = "nlpai-lab/KURE-v1"  # 의미 검증용 임베딩 모델(카탈로그의 hf_id)
+    verify_semantic_ok: float = 0.80  # 잠정값 — 라벨로 훑은 최적 문턱으로 바꿀 것
+    verify_semantic_weak: float = 0.65
 
     @property
     def db_url(self) -> str:

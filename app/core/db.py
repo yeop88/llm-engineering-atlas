@@ -261,6 +261,25 @@ class PreferencePair(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
+class VerifyLabel(Base):
+    """답변 문장이 인용한 근거로 뒷받침되는지 사람이 판정한 라벨. 자동 검증 방식(글자 · 의미 · 혼합 · LLM)의 일치도를 재는 기준.
+
+    판정 당시의 자동 점수(scores)를 함께 저장해, 나중에 문턱만 바꿔 다시 계산할 수 있게 한다(답변을 다시 만들지 않고).
+    """
+
+    __tablename__ = "verify_labels"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    collection_id: Mapped[int | None] = mapped_column(ForeignKey("collections.id", ondelete="SET NULL"), nullable=True, index=True)
+    question: Mapped[str] = mapped_column(Text)
+    sentence: Mapped[str] = mapped_column(Text)
+    sources: Mapped[str] = mapped_column(Text)  # 문장이 인용한 근거 글
+    label: Mapped[bool] = mapped_column(Boolean)  # True = 근거로 뒷받침됨
+    labeler: Mapped[str] = mapped_column(String(20), default="human")
+    scores: Mapped[dict[str, Any]] = mapped_column(default=dict)  # lexical · semantic · llm
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
 _settings = get_settings()
 _is_sqlite = _settings.db_url.startswith("sqlite")
 engine = create_engine(_settings.db_url, connect_args={"check_same_thread": False} if _is_sqlite else {})

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}검증 보정{% endblock %}
+{% block content %}
+<h1>답변 근거 검증 보정</h1>
+<p class="lead">답변 문장이 인용한 근거로 정말 뒷받침되는지, 자동 검증(글자 겹침 · 의미 유사도 · 둘 중 하나 · LLM 판정)이 사람 판단과 얼마나 맞는지 잽니다. 가장 잘 맞는 방식을 <code>ANSWER_VERIFY_METHOD</code> 로 고르면 답변 평가 · 연결 비교 · 보상이 모두 그 방식을 씁니다.</p>
+
+<div class="card stack">
+  <h2>지금 설정</h2>
+  <div id="s-out" class="small"></div>
+</div>
+
+<div class="card stack" style="margin-top:16px">
+  <h2>1. 판정할 문장 만들기</h2>
+  <div class="row">
+    <div class="field"><label>컬렉션</label><select id="v-col"></select></div>
+    <div class="field"><label>벡터 인덱스</label><select id="v-idx"></select></div>
+    <div class="field grow"><label>평가 세트</label><select id="v-set"></select></div>
+    <div class="field"><label>질문 수</label><input id="v-n" type="number" value="10" min="1" max="200" style="width:70px"></div>
+    <label class="row small" style="margin:0"><input type="checkbox" id="v-llm" checked> LLM 판정도</label>
+    <div style="align-self:end"><button class="btn primary" id="v-run">만들기</button></div>
+  </div>
+  <div id="v-progress" hidden></div>
+</div>
+
+<div class="card stack" style="margin-top:16px">
+  <div class="row between"><h2>2. 판정하기</h2><span class="small muted" id="l-count"></span></div>
+  <div class="small muted">문장이 인용한 근거 글만 보고 판단하세요. 숫자 · 날짜 · 대상 · 조건 중 하나라도 근거와 다르거나 근거에 없으면 '근거 없음'입니다. 자동 점수는 판정이 끌려가지 않도록 저장한 뒤 일치도에서만 씁니다.</div>
+  <div id="l-out"></div>
+</div>
+
+<div class="card stack" style="margin-top:16px">
+  <div class="row between"><h2>3. 방식별 일치도</h2><button class="btn" id="a-run">계산</button></div>
+  <div id="a-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let queue = [], colId = null;
+setupCollectionPickers({ col: $("#v-col"), idx: $("#v-idx"), set: $("#v-set"), key: "verify-col", onDetail: d => (colId = d.id) });
+const MNAME = { lexical: "글자 겹침", semantic: "의미 유사도", hybrid: "글자 또는 의미", llm: "LLM 판정" };
+
+(async () => {
+  const s = await api("/api/verify/settings");
+  $("#s-out").innerHTML = `방식 <b>${esc(MNAME[s.method] || s.method)}</b> · 의미 검증 모델 <span class="mono">${esc(s.model)}</span> · 의미 문턱 ${s.semantic_ok} (약함 ${s.semantic_weak}) · 글자 문턱 ${s.lexical_ok}`;
+  loadCount();
+})();
+
+$("#v-run").onclick = e => {
+  if (!$("#v-set").value) return toast("평가 세트가 필요합니다", "err");
+  runJobInto(e.target, "/api/verify/sample", { eval_set_id: +$("#v-set").value, config: { mode: "dense", index_id: +$("#v-idx").value }, n_questions: +$("#v-n").value || 10,
+    llm_judge: $("#v-llm").checked }, $("#v-progress"), r => { queue = r.items; showQueue(); toast(`판정할 문장 ${r.items.length}개`, "ok"); });
+};
+
+function showQueue() {
+  $("#l-out").innerHTML = queue.length ? queue.map((x, i) => `<div class="card stack" style="padding:10px" id="q${i}">
+      <div class="small muted">질문: ${esc(x.question)}</div>
+      <div><b>${esc(x.sentence)}</b></div>
+      <details><summary class="small">인용한 근거 보기</summary><pre class="small" style="white-space:pre-wrap;max-height:260px;overflow:auto">${esc(x.sources)}</pre></details>
+      <div class="row"><button class="btn sm" onclick="mark(${i}, true)">근거 있음</button><button class="btn sm danger" onclick="mark(${i}, false)">근거 없음</button><button class="btn sm" onclick="mark(${i}, null)">모르겠음 (건너뜀)</button></div></div>`).join("")
+    + `<div class="row"><span class="spacer"></span><button class="btn primary" onclick="saveMarks()">판정 저장</button></div>` : '<div class="empty">1 에서 판정할 문장을 만드세요</div>';
+}
+function mark(i, v) { queue[i].label = v; const el = $(`#q${i}`); el.style.opacity = v === null ? 0.4 : 1; el.style.borderColor = v === true ? "var(--ok)" : v === false ? "var(--err)" : ""; }
+async function saveMarks() {
+  const items = queue.filter(x => x.label === true || x.label === false).map(({ question, sentence, sources, label, scores }) => ({ question, sentence, sources, label, scores }));
+  if (!items.length) return toast("판정한 문장이 없습니다", "err");
+  await api("/api/verify/labels", { method: "POST", body: { collection_id: colId, items } });
+  toast(`${items.length}개 저장`, "ok"); queue = []; showQueue(); loadCount();
+}
+async function loadCount() { const r = await api("/api/verify/labels?limit=1"); $("#l-count").textContent = `저장된 라벨: 근거 있음 ${r.counts.supported} · 없음 ${r.counts.unsupported}`; }
+
+$("#a-run").onclick = async e => {
+  const r = await busy(e.target, () => api(`/api/verify/agreement${colId ? `?collection_id=${colId}` : ""}`));
+  if (!r.n) { $("#a-out").innerHTML = '<div class="empty">라벨이 없습니다</div>'; return; }
+  const rows = ["lexical", "semantic", "hybrid", "llm"].filter(k => r[k]);
+  const best = rows.reduce((a, k) => (!a || r[k].kappa > r[a].kappa ? k : a), null);
+  $("#a-out").innerHTML = `<div class="small muted">라벨 ${r.n}개 (근거 있음 ${pct(r.positive_rate)}%)</div>
+    <div class="table-wrap"><table><tr><th>방식</th><th class="num">카파</th><th class="num">정확도</th><th class="num">정밀도</th><th class="num">재현율</th><th class="num">F1</th><th class="num">놓침 / 잘못 통과</th><th>문턱</th></tr>
+    ${rows.map(k => `<tr><td><b>${MNAME[k]}</b>${k === best ? ' <span class="badge ok">가장 일치</span>' : ""}</td><td class="num">${r[k].kappa}</td><td class="num">${pct(r[k].accuracy)}</td>
+      <td class="num">${pct(r[k].precision)}</td><td class="num">${pct(r[k].recall)}</td><td class="num">${pct(r[k].f1)}</td><td class="num small">${r[k].fn} / ${r[k].fp}</td><td class="small">${r[k].threshold ?? "-"}</td></tr>`).join("")}</table></div>
+    <div class="small muted">카파 = 우연히 맞을 확률을 뺀 일치도(0.6 이상이면 꽤 일치). '놓침' = 사람은 근거 있다는데 자동은 없다고 함(바꿔 말한 문장), '잘못 통과' = 사람은 없다는데 자동은 있다고 함(환각을 놓침). 의미 문턱은 라벨로 훑어 카파가 가장 높은 값입니다 — 같은 라벨로 고르고 재면 낙관적이니 라벨이 늘면 다시 재세요.</div>
+    ${best && best !== "llm" ? `<pre class="small">ANSWER_VERIFY_METHOD=${best}${r[best].threshold ? `\nVERIFY_SEMANTIC_OK=${r[best].threshold}` : ""}</pre>` : ""}`;
+};
+</script>
+{% endblock %}

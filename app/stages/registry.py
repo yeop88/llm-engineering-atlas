@@ -105,6 +105,7 @@ STAGES: list[Stage] = [
         pages=[
             Page("rag", "/collections", "컬렉션", "문서 · 청킹 · 인덱스 · 검색 비교 · 평가"),
             Page("rag_answer", "/rag/answer", "답변 생성", "근거 인용 답변 · 환각 검증"),
+            Page("rag_verify", "/rag/verify", "검증 보정", "사람 판정으로 근거 검증 방식(글자 · 의미 · LLM) 고르기"),
             Page("llm", "/llm", "LLM 연결", "로컬 · OpenAI 호환 · Claude"),
         ],
         docs=[("문서 검색(RAG)", "docs/stages/2-rag/rag.md"), ("LLM 연결", "docs/guides/llm.md")],

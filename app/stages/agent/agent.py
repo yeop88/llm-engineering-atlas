@@ -170,7 +170,7 @@ def run(cfg: llm.LLMConfig, question: str, search_fn: Callable[[str], list[dict[
         )
     # 인용 형식을 RAG 답변과 같은 [n] 으로 통일([S3] → [3]) — 화면 · 검증 · 평가가 같은 번호 체계를 쓰게
     final_text = final_text.replace("[S", "[")
-    check = answer.verify_lexical(final_text, src.items)
+    check = answer.verify(final_text, src.items)
     yield {"type": "final", "answer": final_text, "sources": src.items, "verify": check, "steps": steps,
            "n_steps": sum(1 for s in steps if not s.get("given")), "seconds": round(time.perf_counter() - started, 2)}  # fmt: skip
 

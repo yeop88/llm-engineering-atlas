@@ -222,3 +222,12 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 검색 설정(`SearchConfig`): `"rerank_fusion": true`(크로스 인코더 순위와 1단계 순위 RRF), `"llm_rerank": {"top": 10, "max_chars": 300, "fusion": false}`(LLM 목록형, 연결 계층에서 적용). 처리 경로(`FlowPath`): `"model"`(경로 답변 모델), `"agent": {"max_steps", "top_k"}`(8a), `"best_of": 4`(8b).
 
 평가 세트 항목: `{"query", "doc_ids": [...], "evidence", "evidences": [...]?, "answerable": true, "type"}` — 여러 문서 질문은 `evidences` 에 근거를 모두, 답 없는 질문은 `"answerable": false` 와 빈 `doc_ids`. LLM 생성(`/eval-sets/generate`)의 `styles` 에 `condition` · `long_situation` · `multi` · `unanswerable`, 수는 `n_multi` · `n_unanswerable`.
+
+## 답변 근거 검증 보정
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/verify/settings` | 현재 검증 방식 · 모델 · 문턱 |
+| POST | `/api/verify/sample` | 판정할 문장 만들기 작업 `{"eval_set_id", "config", "n_questions", "llm_judge"}` → 문장 · 인용 근거 · 자동 점수(lexical · semantic · llm) |
+| GET / POST / DELETE | `/api/verify/labels` · `/api/verify/labels/{id}` | 사람 판정 라벨 목록 / 저장 `{"collection_id", "items": [{"question", "sentence", "sources", "label", "scores"}]}` / 삭제 |
+| GET | `/api/verify/agreement` | 방식별 일치도(정확도 · 정밀도 · 재현율 · F1 · 카파), 의미 문턱 탐색 결과 |

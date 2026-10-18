@@ -98,6 +98,22 @@ def verify_lexical(answer: str, sources: list[dict[str, Any]]) -> dict[str, Any]
     }
 
 
+def verify(answer: str, sources: list[dict[str, Any]], method: str | None = None) -> dict[str, Any]:
+    """근거 검증의 단일 진입점. 설정(ANSWER_VERIFY_METHOD)의 방식으로 — 답변 화면 · 평가 · 연결 비교 · 보상이 같은 방식을 쓰게.
+    의미 · 혼합 검증이 실패하면(검증 모델 없음 등) 글자 검증으로 돌아가고 그 사실을 남긴다(평가가 멈추지 않게)."""
+    from app.core.config import get_settings
+    from app.stages.rag import verify as vf
+
+    check = verify_lexical(answer, sources)
+    method = method or get_settings().answer_verify_method
+    if method in ("semantic", "hybrid"):
+        try:
+            return vf.apply(check, sources, method)
+        except Exception as exc:  # noqa: BLE001 — 검증 방식 문제로 답변 평가 전체를 멈추지 않는다
+            return check | {"method": "lexical", "fallback": f"{method} 실패: {type(exc).__name__}: {str(exc)[:120]}"}
+    return check | {"method": "lexical"}
+
+
 JUDGE_SYSTEM = "당신은 답변이 근거 문서로 뒷받침되는지 엄격하게 판정하는 검토자입니다. 반드시 JSON 만 출력합니다."
 
 
@@ -134,7 +150,7 @@ def evaluate_one(
 
     context, sources = build_context(results, max_chars)
     res = llm.chat(cfg, SYSTEM, user_prompt(item["query"], context), max_tokens=max_tokens, temperature=0.1, no_cache=no_cache)
-    check = verify_lexical(res["text"], sources)
+    check = verify(res["text"], sources)
     row = {
         "query": item["query"],
         "type": item.get("type"),

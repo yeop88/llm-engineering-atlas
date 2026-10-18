@@ -46,7 +46,7 @@ def build(job: Job, teacher: llm.LLMConfig, questions: list[str], search_fn, max
         except llm.LLMError:
             dropped["error"] += 1
             continue
-        check = answer.verify_lexical(res["text"], sources)
+        check = answer.verify(res["text"], sources)
         if check["refused"]:
             dropped["refused"] += 1
         elif check["invalid_citations"]:

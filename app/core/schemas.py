@@ -637,3 +637,28 @@ class LLMDistillDataRequest(BaseModel):
     max_context_chars: int = Field(default=6000, ge=500, le=60000)
     max_tokens: int = Field(default=500, ge=50, le=8000)
     seed: int = 0
+
+
+# ── 답변 근거 검증 보정 ─────────────────────────────────────────────────────
+class VerifySampleRequest(LLMRef):
+    """사람이 판정할 답변 문장 만들기: 평가 세트 질문에 답하고 인용 문장마다 자동 점수(글자 · 의미 · LLM)를 매겨 돌려준다."""
+
+    eval_set_id: int
+    config: SearchConfig
+    n_questions: int = Field(default=10, ge=1, le=200)
+    llm_judge: bool = True  # LLM 판정도 함께 (질문마다 LLM 호출 1번 더)
+    context_top: int = Field(default=5, ge=1, le=20)
+    seed: int = 0
+
+
+class VerifyLabelIn(BaseModel):
+    question: str = Field(max_length=4000)
+    sentence: str = Field(min_length=1, max_length=4000)
+    sources: str = Field(max_length=60000)
+    label: bool
+    scores: dict[str, Any] = Field(default_factory=dict)
+
+
+class VerifyLabelsIn(BaseModel):
+    collection_id: int | None = None
+    items: list[VerifyLabelIn] = Field(min_length=1, max_length=1000)

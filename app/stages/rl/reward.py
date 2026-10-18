@@ -30,7 +30,7 @@ def reward(text: str, sources: list[dict[str, Any]], evidence: str = "", weights
            item: dict[str, Any] | None = None) -> dict[str, Any]:  # fmt: skip
     """item 을 주면(평가 세트) 그 질문의 근거들 · 답 없음 여부로 채점한다. 답 없는 질문에 답하면 지어낸 것이라 감점."""
     w = WEIGHTS | (weights or {})
-    check = answer.verify_lexical(text, sources)
+    check = answer.verify(text, sources)
     parts: dict[str, float] = {}
     if item is not None and not evaluation.answerable(item):
         parts["honest_refusal" if check["refused"] else "hallucination"] = w["honest_refusal"] if check["refused"] else w["hallucination"]

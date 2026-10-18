@@ -153,7 +153,7 @@ def run(
                                int(fc.get("max_context_chars") or 6000), int(fc.get("max_tokens") or 500), no_cache)  # fmt: skip
             best = bo["candidates"][bo["best"]]
             text, sources = best["text"], bo["sources"]
-            check = answer.verify_lexical(text, sources)
+            check = answer.verify(text, sources)
             gen_seconds, out_tokens = sum(c["seconds"] for c in bo["candidates"]), None
             extra = {"best_of": {"picked": bo["best"], "rewards": [c["reward"] for c in bo["candidates"]]}}
         else:
@@ -167,7 +167,7 @@ def run(
                 no_cache=no_cache,
             )
             text = gen["text"]
-            check = answer.verify_lexical(text, sources)
+            check = answer.verify(text, sources)
             gen_seconds, out_tokens = gen["seconds"], gen["usage"].get("output_tokens")
         ratio = check["supported_ratio"]
         detail = (

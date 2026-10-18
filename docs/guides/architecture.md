@@ -20,7 +20,7 @@ app/
     system_api.py      작업 · 실행 이력 · 시스템 정보 API
   stages/            LLM 시스템 엔지니어링 맵의 단계 — 뒤 단계가 앞 단계를 가져다 쓴다
     embedding/         1 · 데이터 임베딩: catalog · hub · model_manager · benchmark · public_benchmarks · projection, datasets/
-    rag/               2 · RAG 검색: parsers · chunking · bm25 · fusion · service(검색·리랭킹) · evaluation · answer
+    rag/               2 · RAG 검색: parsers · chunking · bm25 · fusion · service(검색·리랭킹) · evaluation(질문 유형 · 채점 규칙) · answer · verify(근거 검증 방식 · 일치도) · public_corpus(공개 자료)
     multimodal/        멀티모달: media(이미지 · 영상 수집, 프레임 추출 · 같은 장면 제외) — 결과는 RAG 컬렉션의 미디어 문서
     rerank/            3 · 리랭킹: llm_rerank(목록형) · evaluate(리랭커 × 후보 수 × 융합) · api
     distill/           7a · 지식 증류: service(교사 오답 · 점수 차 → MarginMSE 학습 → 비교) · llm_data(교사 답 JSONL) · api

@@ -82,7 +82,7 @@ def generate_answer(collection_id: int, body: AnswerRequest) -> StreamingRespons
             text = final.get("text", "")
             timings["llm_s"] = final.get("seconds", 0)
             timings["ttft_s"] = final.get("ttft_s")
-            check = answer.verify_lexical(text, sources)
+            check = answer.verify(text, sources)
             yield _event("verify", **check)
             judged = None
             if body.judge and check["sentences"]:
