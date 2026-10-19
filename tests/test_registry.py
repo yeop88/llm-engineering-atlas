@@ -46,8 +46,23 @@ def test_stage_and_map_pages(client):
         assert r.status_code == 200 and str(escape(s.principle[:20])) in r.text and s.status_label in r.text, s.key
     assert client.get("/stages/없음").status_code == 404
     m = client.get("/roadmap").text
-    assert all(f"/stages/{s.key}" in m for s in registry.STAGES) and "부분 연결" in m and "전체 연결" in m
+    assert all(f"/stages/{s.key}" in m for s in registry.map_stages("llm")) and "부분 연결" in m and "전체 연결" in m
+    # 두 번째 맵: 지식 그래프 · GraphRAG — 단계가 그 맵 화면에 모두 있고, LLM 맵 표에는 섞이지 않는다
+    kg = client.get("/maps/knowledge-graph").text
+    assert all(f"/stages/{s.key}" in kg for s in registry.map_stages("kg")) and "Text2Cypher" in kg
+    assert "K1" not in m.split("단계별 상태")[1].split("연결 실행")[0]
+    st = client.get("/stages/ontology").text
+    assert 'href="/maps/knowledge-graph"' in st and "/stages/kg_extract" in st  # 같은 맵 안에서 다음 단계
     # 단계에 속한 화면 위에는 그 단계의 원리 · 왜 · 어떻게 패널
     r = client.get("/finetune").text
     assert 'class="stage-info" data-stage="finetune"' in r and registry.BY_KEY["finetune"].why[:20] in r
     assert 'class="stage-info"' not in client.get("/history").text
+
+
+def test_maps():
+    assert [m.key for m in registry.MAPS] == ["llm", "kg"]
+    assert {s.map for s in registry.STAGES} == {"llm", "kg"}
+    assert [s.no for s in registry.KG_FLOW] == [f"K{i}" for i in range(1, 9)]
+    assert all(s.map == "llm" for s in registry.MAIN_FLOW + registry.EXTRA)  # 본선 · 곁가지는 LLM 맵
+    menu = next(i for i in nav_items() if i["label"] == "맵")
+    assert [x["href"] for x in menu["items"]] == ["/roadmap", "/maps/knowledge-graph"]

@@ -73,12 +73,14 @@ def stage_readme(s: registry.Stage) -> str:
         lines += ["", "## 앞으로 할 일", "", *[f"- {p}" for p in s.plans]]
     if s.docs:
         lines += ["", "## 상세 문서", "", *[f"- [{t}]({rel(me, p)})" for t, p in s.docs]]
-    if s.flow == "main":
+    if s.flow in ("main", "kg"):
+        # 이전 · 다음은 같은 맵 안에서 (지식 그래프 맵은 K1 → K8)
+        flow = registry.KG_FLOW if s.flow == "kg" else flow
         i = [x.key for x in flow].index(s.key)
         nav = []
         if i > 0:
             nav.append(f"← [{flow[i - 1].no} {flow[i - 1].title}]({rel(me, flow[i - 1].readme)})")
-        nav.append(f"[전체 맵]({rel(me, 'docs/map.md')})")
+        nav.append(f"[전체 맵]({rel(me, s.map_info.doc)})")
         if i < len(flow) - 1:
             nav.append(f"[{flow[i + 1].no} {flow[i + 1].title}]({rel(me, flow[i + 1].readme)}) →")
         lines += ["", "---", "", " · ".join(nav)]
@@ -87,19 +89,23 @@ def stage_readme(s: registry.Stage) -> str:
 
 def index() -> str:
     me = "docs/README.md"
-    rows = [
-        f"| {s.no} | [{s.title}]({rel(me, s.readme)}) | {STATUS_MARK[s.status]} {s.status_label} | {s.summary} | "
-        + (" · ".join(f"[{t}]({rel(me, p)})" for t, p in s.docs if p != "docs/map.md") or "—")
-        + " |"
-        for s in registry.STAGES
-    ]
+
+    def rows(key: str) -> list[str]:
+        maps = {m.doc for m in registry.MAPS}  # 맵 개요 문서는 표 위에 따로 걸므로 행마다 반복하지 않는다
+        return [
+            f"| {s.no} | [{s.title}]({rel(me, s.readme)}) | {STATUS_MARK[s.status]} {s.status_label} | {s.summary} | "
+            + (" · ".join(f"[{t}]({rel(me, p)})" for t, p in s.docs if p not in maps) or "—")
+            + " |"
+            for s in registry.map_stages(key)
+        ]
+
     return "\n".join(
         [
             GENERATED,
             "",
             "# 문서",
             "",
-            "LLM Engineering Atlas 의 문서는 [전체 맵](map.md)의 단계 순서로 정리되어 있습니다. 각 단계 폴더의 `README.md` 에 그 단계의 **원리 · 왜 하는가 · 어떻게(이 앱에서)** 가 있고, 같은 폴더에 상세 문서가 있습니다.",
+            "LLM Engineering Atlas 의 문서는 맵의 단계 순서로 정리되어 있습니다. 맵은 둘입니다 — [LLM 시스템 엔지니어링 맵](map.md) · [지식 그래프 · GraphRAG 맵](kg-map.md). 각 단계 폴더의 `README.md` 에 그 단계의 **원리 · 왜 하는가 · 어떻게(이 앱에서)** 가 있고, 같은 폴더에 상세 문서가 있습니다.",
             "",
             "```",
             "[데이터 임베딩] → [RAG 검색] → [리랭킹 (정밀 필터링)]",
@@ -108,11 +114,25 @@ def index() -> str:
             "                       → 어려운 질문: [파인튜닝 · 강화학습된 에이전트 LLM]",
             "```",
             "",
-            "## 단계",
+            "## LLM 시스템 엔지니어링 맵",
             "",
             "| # | 단계 | 상태 | 무엇을 | 상세 문서 |",
             "|---|---|---|---|---|",
-            *rows,
+            *rows("llm"),
+            "",
+            "## 지식 그래프 · GraphRAG 맵",
+            "",
+            "```",
+            "[요구사항 정의] → [온톨로지 설계] → [데이터 추출 (ETL · LLM)] → [지식 융합 · 정제]",
+            "                                        ↓",
+            "                              [그래프 DB (Neo4j)]",
+            "                                        ↓",
+            "  GraphRAG: [Text2Cypher] · [그래프 하이브리드 검색] · [글로벌 커뮤니티 요약]",
+            "```",
+            "",
+            "| # | 단계 | 상태 | 무엇을 | 상세 문서 |",
+            "|---|---|---|---|---|",
+            *rows("kg"),
             "",
             "## 가이드",
             "",

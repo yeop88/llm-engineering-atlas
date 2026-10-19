@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% block title %}{{ stage.title }}{% endblock %}
 {% block content %}
-{% set flow = registry.MAIN_FLOW %}
-{% set idx = (flow | map(attribute="key") | list).index(stage.key) if stage.flow == "main" else -1 %}
-<a href="/roadmap" class="small">← 맵</a>
+{# 이전 · 다음 단계는 같은 맵의 흐름 안에서 — 지식 그래프 맵 단계는 K1 → K8 #}
+{% set flow = registry.KG_FLOW if stage.flow == "kg" else registry.MAIN_FLOW %}
+{% set idx = (flow | map(attribute="key") | list).index(stage.key) if stage.flow in ("main", "kg") else -1 %}
+<a href="{{ stage.map_info.href }}" class="small">← {{ stage.map_info.title }}</a>
 <div class="row between" style="align-items:flex-end">
   <h1><span class="stage-no">{{ stage.no }}</span> {{ stage.title }} <span class="muted" style="font-weight:400;font-size:18px">{{ stage.en }}</span></h1>
   <span class="badge {{ 'ok' if stage.status == 'done' else ('warn' if stage.status == 'basic' else '') }}">{{ stage.status_label }}</span>

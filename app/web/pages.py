@@ -14,9 +14,14 @@ templates = Jinja2Templates(directory=APP_DIR / "web" / "templates")
 
 def nav_items() -> list[dict]:
     """메뉴: 흐름도 순서. 화면이 여러 개인 단계는 드롭다운, 예정 단계(⑥~⑧)는 하나로 묶는다."""
+    # 맵이 여러 개라 드롭다운 — 지식 그래프 맵의 단계(예정)는 메뉴에 하나씩 늘어놓지 않고 이 묶음에서 강조만 한다
+    maps = [
+        {"label": m.title, "href": m.href, "desc": m.summary, "key": "roadmap" if m.key == "llm" else f"map_{m.key}"} for m in registry.MAPS
+    ]
+    kg_keys = [f"stage_{s.key}" for s in registry.KG_FLOW]
     items: list[dict] = [
         {"label": "대시보드", "href": "/", "keys": ["dashboard"]},
-        {"label": "맵", "href": "/roadmap", "keys": ["roadmap"]},
+        {"label": "맵", "items": maps, "keys": [x["key"] for x in maps] + kg_keys},
     ]
     later: list[dict] = []
     for s in registry.MAIN_FLOW:
@@ -68,6 +73,7 @@ PAGES = {
     "/agent": ("agent/agent.html", "agent"),
     "/rl": ("rl/rl.html", "rl"),
     "/roadmap": ("roadmap.html", "roadmap"),
+    "/maps/knowledge-graph": ("maps/knowledge_graph.html", "map_kg"),
 }
 
 
