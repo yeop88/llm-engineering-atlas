@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-20
+
 ### 변경
 - 화면 스크립트 전체를 자동 이스케이프 `html`` ` 로 — 손으로 부르는 `esc()` 450곳 → 3곳(글자를 먼저 이스케이프한 뒤 표시를 끼우는 형광펜 · 답변 본문). 하나만 빠뜨려도 화면이 깨지거나 스크립트가 끼어들 수 있던 구조를 없앰. 목록 잇기 `html.join` · 빈 목록 대신 보일 것 `html.or` 추가
 - 화면 규칙 테스트: `esc()` 상한 3, 지역 변수 이름 `html` 금지(태그 함수를 가림)
@@ -253,7 +255,8 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.7.1...v1.0.0
 [0.7.1]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.6.0...v0.7.0

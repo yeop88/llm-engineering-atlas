@@ -58,7 +58,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title=get_settings().app_name,
     description="Global LLM system engineering lab · Korean-first — 임베딩 → RAG → 리랭킹 → 라우팅 → 소형/대형 모델",
-    version="1.0.0",
+    version="1.0.1",
     lifespan=lifespan,
 )
 app.middleware("http")(auth.middleware)  # API_TOKEN 이 있을 때만 막는다
