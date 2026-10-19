@@ -70,7 +70,8 @@ p.lead { color: var(--muted); margin: 0 0 18px; }
 .nav-group > button { font: inherit; padding: 6px 9px; border-radius: 8px; color: var(--muted); background: none; border: 0; cursor: pointer; }
 .nav-group > button.active, .nav-group:hover > button, .nav-group:focus-within > button { background: var(--accent-weak); color: var(--accent); }
 .nav-menu { display: none; position: absolute; top: 100%; left: 0; z-index: 50; min-width: 260px; padding: 6px; margin-top: 2px;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, .12); }
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+  max-height: calc(100vh - 80px); overflow-y: auto; }  /* 맵이 18개라 드롭다운이 화면을 넘지 않게 */
 .nav-group:hover .nav-menu, .nav-group:focus-within .nav-menu { display: block; }
 .topbar nav .nav-menu a { display: block; padding: 8px 10px; color: var(--text); }
 .topbar nav .nav-menu a b { display: block; font-weight: 600; }

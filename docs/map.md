@@ -2,7 +2,7 @@
 
 임베딩 · RAG 검색 · 파인튜닝이 모델의 **지식**(파라미터에 담긴 기억과 외부 문서 기억)을 다룬다면, 리랭킹 · 에이전트 · 양자화 · 라우팅은 이를 실제 서비스에서 **적은 비용으로 빠르고 정확하게** 돌리기 위한 시스템 구성 요소(RAGOps / AI 엔지니어링)입니다.
 
-다른 맵이 따로 있습니다 — [지식 그래프 · GraphRAG](kg-map.md), [멀티에이전트 · 멀티모달](agents-map.md), [평가 · 관측](maps/evalops.md), [보안 · 가드레일](maps/guardrails.md), [문서 처리](maps/docintel.md), [서빙 · 최적화](maps/serving.md), [대화 · 메모리](maps/conversation.md), [고객 AS 상담 시나리오](maps/as-service.md), [후학습](maps/posttrain.md). 전체 목록은 [문서 색인](README.md).
+다른 맵이 따로 있습니다 — [지식 그래프 · GraphRAG](kg-map.md), [멀티에이전트 · 멀티모달](agents-map.md), [평가 · 관측](maps/evalops.md), [보안 · 가드레일](maps/guardrails.md), [문서 처리](maps/docintel.md), [서빙 · 최적화](maps/serving.md), [대화 · 메모리](maps/conversation.md), [고객 AS 상담 시나리오](maps/as-service.md), [후학습](maps/posttrain.md), 그리고 여러 맵을 가로지르는 [데이터 플라이휠](maps/flywheel.md) · [엔터프라이즈 플랫폼](maps/platform.md) · [에이전트 상호운용](maps/interop.md) · [실시간 음성 상담](maps/voice.md) · [규제 대응](maps/compliance.md) · [장기 실행 에이전트](maps/longrun.md) · [RLVR](maps/rlvr.md) · [온디바이스 · 엣지](maps/edge.md). 전체 목록은 [문서 색인](README.md).
 
 앱의 **맵**(`/roadmap`)과 단계 소개(`/stages/<단계>`)에 같은 내용이 있습니다. 화면 문구는 단계 레지스트리(`app/stages/registry.py`) 한 곳에서 만들어지므로, 단계를 진행하면 레지스트리의 상태 · 화면 · 할 일을 고칩니다. 아래 항목 중 '예정'인 것은 진행할 때 테스트 화면이 생깁니다.
 
