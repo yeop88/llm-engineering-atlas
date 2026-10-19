@@ -231,6 +231,8 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 
 ## 답변 근거 검증 보정
 
+> 라벨은 두 가지 — `label`(근거 일치) · `relevant`(질문 관련성) — 을 따로 받습니다(둘 중 하나는 필수). `/agreement` 는 근거 일치 방식별 일치도와 함께 `relevance` · `relevance_current` · `relevance_auc` · `relevance_sweep`(질문-문장 유사도 기준 탐색)을 돌려줍니다. 답변 검증 결과(`verify`)의 문장에는 `relevance` · `off_topic`, 전체에는 `relevant_ratio` · `off_topic` 이 붙습니다(`ANSWER_RELEVANCE`).
+
 | 메서드 | 경로 | 설명 |
 |---|---|---|
 | GET | `/api/verify/settings` | 현재 검증 방식 · 모델 · 문턱 |

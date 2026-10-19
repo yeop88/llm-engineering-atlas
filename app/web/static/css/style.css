@@ -204,6 +204,8 @@ mark { background: color-mix(in srgb, #fab219 45%, transparent); color: inherit;
 .cite.bad { background: color-mix(in srgb, var(--status-critical) 18%, transparent); color: var(--status-critical); }
 .sent { border-radius: 4px; padding: 1px 0; }
 .sent-weak, .sent-uncited { background: color-mix(in srgb, var(--warn) 14%, transparent); }
+/* 질문과 관련 낮은 문장: 근거 상태(배경색)와 따로 보이게 점선 밑줄만 더한다 — 색을 하나 더 쓰지 않고 모양으로 구분 */
+.sent-offtopic { text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
 .sent-unsupported { background: color-mix(in srgb, var(--status-critical) 16%, transparent); text-decoration: underline wavy color-mix(in srgb, var(--status-critical) 60%, transparent); }
 .src { padding: 8px; border: 1px solid var(--border); border-radius: 8px; }
 .src.cited { border-color: var(--accent); }

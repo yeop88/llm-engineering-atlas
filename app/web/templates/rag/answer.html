@@ -158,10 +158,11 @@ async function send() {
           verify = ev;
           const cnt = {};
           ev.sentences.forEach(s => (cnt[s.status] = (cnt[s.status] || 0) + 1));
-          $t("[data-answer]").innerHTML = ev.sentences.map(s => `<span class="sent sent-${s.status}" title="${STATUS[s.status][1]} · 인용 근거와 글자 겹침 ${Math.round(s.support * 100)}%${s.best_source ? ` (가장 비슷한 근거 [${s.best_source}] ${Math.round(s.best_support * 100)}%)` : ""}">${renderAnswer(s.text, turnId, sources.length)}</span>`).join(" ");
+          $t("[data-answer]").innerHTML = ev.sentences.map(s => `<span class="sent sent-${s.status}${s.off_topic ? " sent-offtopic" : ""}" title="${STATUS[s.status][1]} · 인용 근거와 글자 겹침 ${Math.round(s.support * 100)}%${s.best_source ? ` (가장 비슷한 근거 [${s.best_source}] ${Math.round(s.best_support * 100)}%)` : ""}${s.relevance != null ? ` · 질문 관련성 ${Math.round(s.relevance * 100)}%${s.off_topic ? " — 질문과 관련 낮음" : ""}` : ""}">${renderAnswer(s.text, turnId, sources.length)}</span>`).join(" ");
           $t("[data-verify]").innerHTML = `<div class="row small" style="gap:6px">${Object.entries(cnt).map(([k, v]) => `<span class="badge ${STATUS[k][0]}">${STATUS[k][1]} ${v}</span>`).join("")}
             ${ev.invalid_citations.length ? `<span class="badge err">없는 근거 번호 ${ev.invalid_citations.join(", ")}</span>` : ""}
-            <span class="muted">문장에 마우스를 올리면 근거와의 겹침이 보입니다.</span></div>${citeBox(ev.citations)}`;
+            ${ev.off_topic ? `<span class="badge warn" title="근거에 있어도 질문과 상관없는 문장은 틀린 답입니다 (질문-문장 유사도 < ${ev.relevance_threshold})">질문과 관련 낮음 ${ev.off_topic}</span>` : ""}
+            <span class="muted">문장에 마우스를 올리면 근거와의 겹침 · 질문 관련성이 보입니다. 점선 밑줄 = 질문과 관련 낮음.</span></div>${citeBox(ev.citations)}`;
           ev.cited_sources.forEach(k => document.getElementById(`${turnId}-src-${k}`)?.classList.add("cited"));
         } else if (ev.type === "judge") {
           if (ev.error) { $t("[data-verify]").insertAdjacentHTML("beforeend", `<div class="warnbox small">LLM 판정 실패: ${esc(ev.error)}</div>`); continue; }
@@ -212,6 +213,7 @@ function renderEval(r) {
       ${stat("근거 검색률", p(s.evidence_retrieved), "근거 문장 청크가 LLM 에 전달됨")}
       ${stat("정답 근거 인용률", p(s.evidence_cited), `검색됐을 때 인용 ${p(s.cited_given_retrieved)}`)}
       ${stat("문장 근거율", p(s.sentence_support), `잘못된 인용 ${p(s.invalid_citation_rate)} · 지나친 거절 ${p(s.false_refusal)}`)}
+      ${s.relevant_ratio != null ? stat("질문 관련 문장", p(s.relevant_ratio), `관련 없는 문장이 섞인 답 ${p(s.off_topic_rate)}`) : ""}
     </div>
     <div class="table-wrap" style="max-height:520px"><table><tr><th>질문</th><th>답변</th><th>근거 검색</th><th>근거 인용</th><th class="num">문장 근거</th><th class="num">시간</th></tr>
     ${r.rows.map(x => `<tr><td class="small">${esc(x.query)}</td><td class="small">${esc(x.answer)}${x.invalid_citations.length ? ` <span class="badge err">없는 번호 ${x.invalid_citations.join(",")}</span>` : ""}</td>

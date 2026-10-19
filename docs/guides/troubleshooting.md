@@ -6,6 +6,18 @@
 ### `alembic` 명령이 "애플리케이션 제어 정책에서 차단" 오류로 실행되지 않음
 Windows 의 앱 제어 정책(Smart App Control 등)이 가상환경의 `alembic.exe` 를 막는 경우입니다. `uv run python -m alembic ...` 처럼 모듈로 실행하세요. 앱은 시작할 때 마이그레이션을 직접 적용하므로 평소에는 명령을 칠 필요가 없습니다.
 
+### 재부팅 뒤 `uv run` 이 `os error 4551`("애플리케이션 제어 정책에서 이 파일을 차단했습니다")
+같은 정책이 가상환경의 실행 파일들(`python.exe` · `uvicorn.exe` · `pytest.exe` — uv 가 만든 서명 없는 작은 실행기)을 막는 경우입니다. 2026-10-19 재부팅 뒤 실제로 겪었습니다.
+
+- **정책을 끌 수 있으면**: Windows 보안 → 앱 및 브라우저 컨트롤 → Smart App Control 끄기(한 번 끄면 다시 켤 수 없음). 끈 뒤에도 `uvicorn.exe` · `pytest.exe` 같은 실행기는 한동안 막힐 수 있으니 모듈로 실행합니다: `uv run python -m uvicorn app.main:app --port 8000`, `uv run python -m pytest -q`. 첫 실행 때 PyAV 같은 DLL 을 검사하느라 테스트 수집이 한 번 실패할 수 있습니다 — 다시 실행하면 됩니다.
+- **끌 수 없으면**(회사 정책): uv 가 설치한 Python 본체(`%APPDATA%\uv\python\cpython-3.14-…\python.exe`)는 허용되는 경우가 있습니다. 가상환경 패키지를 **`site.addsitedir`** 로 더해 실행합니다.
+
+  ```powershell
+  & "$env:APPDATA\uv\python\cpython-3.14-windows-x86_64-none\python.exe" -c "import site, sys, runpy; site.addsitedir(r'C:\…\embedding_test\.venv\Lib\site-packages'); sys.argv=['uvicorn','app.main:app','--port','8000']; runpy.run_module('uvicorn', run_name='__main__')"
+  ```
+
+  `PYTHONPATH` 로 패키지 폴더만 넘기면 안 됩니다 — `.pth` 파일을 읽지 않아 pywin32 가 빠지고, Qdrant 로컬 모드가 `pywintypes is required for Win32Locker` 오류로 열리지 않습니다(실제로 겪음).
+
 ### Qdrant 로컬 모드 "already accessed by another instance"
 `QDRANT_URL` 없이 쓰는 로컬 파일 모드는 한 프로세스만 `data/qdrant` 를 열 수 있습니다. 서버를 두 개 띄웠거나 다른 스크립트가 같은 폴더를 열고 있으면 생깁니다. 여러 프로세스(예: `--workers 2`)로 운영하려면 Qdrant 서버(`docker compose up -d`)를 쓰고 `QDRANT_URL=http://localhost:6333` 을 설정하세요.
 
