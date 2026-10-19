@@ -21,7 +21,7 @@ from PIL import Image, UnidentifiedImageError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core import media
+from app.core import media_store
 from app.core.config import get_settings
 from app.core.db import Collection, Document
 
@@ -61,7 +61,7 @@ def extract_frames(data: bytes, interval: float, max_frames: int) -> tuple[list[
     try:
         with av.open(io.BytesIO(data)) as container:
             if not container.streams.video:
-                raise media.MediaError("영상 스트림이 없습니다.")
+                raise media_store.MediaError("영상 스트림이 없습니다.")
             stream = container.streams.video[0]
             stream.thread_type = "AUTO"
             duration = float(container.duration / av.time_base) if container.duration else None
@@ -83,12 +83,12 @@ def extract_frames(data: bytes, interval: float, max_frames: int) -> tuple[list[
                 frames.append((t, im))
                 if len(frames) >= max_frames:
                     break
-    except media.MediaError:
+    except media_store.MediaError:
         raise
     except Exception as exc:  # 손상 · 미지원 코덱 등 — 사용자에게 이유를 보여 준다
-        raise media.MediaError(f"영상을 읽을 수 없습니다 ({type(exc).__name__}: {exc})") from exc
+        raise media_store.MediaError(f"영상을 읽을 수 없습니다 ({type(exc).__name__}: {exc})") from exc
     if not frames:
-        raise media.MediaError("영상에서 프레임을 하나도 얻지 못했습니다.")
+        raise media_store.MediaError("영상에서 프레임을 하나도 얻지 못했습니다.")
     info = {"duration": round(duration, 2) if duration else None, "interval": interval, "skipped_same_scene": skipped_same,
             "truncated": len(frames) >= max_frames}  # fmt: skip
     return frames, info
@@ -119,7 +119,7 @@ def ingest(db: Session, collection: Collection, filename: str, data: bytes) -> t
             frames, info = extract_frames(data, s.video_frame_interval, s.video_max_frames)
     except (UnidentifiedImageError, OSError) as exc:
         return None, f"이미지를 열 수 없습니다 ({exc})"
-    except media.MediaError as exc:
+    except media_store.MediaError as exc:
         return None, str(exc)
 
     doc = Document(
@@ -128,27 +128,27 @@ def ingest(db: Session, collection: Collection, filename: str, data: bytes) -> t
     )  # fmt: skip
     db.add(doc)
     db.flush()  # 파일 폴더 이름에 문서 id 가 필요하다
-    folder = media.doc_dir(doc.id)
+    folder = media_store.doc_dir(doc.id)
     folder.mkdir(parents=True, exist_ok=True)
     try:
         original = folder / f"original{Path(filename).suffix.lower()}"
         original.write_bytes(data)
         if kind == "image":
-            items = [{"path": media.rel(original), "t": None, "label": label}]
+            items = [{"path": media_store.rel(original), "t": None, "label": label}]
         else:
             items = []
             for i, (t, im) in enumerate(frames):
                 p = folder / f"frame-{i:04d}.jpg"
                 im.save(p, "JPEG", quality=88)
-                items.append({"path": media.rel(p), "t": round(t, 2), "label": f"{label} {_fmt_t(t)}"})
+                items.append({"path": media_store.rel(p), "t": round(t, 2), "label": f"{label} {_fmt_t(t)}"})
         # pages 에는 라벨을 넣는다 — 문서 미리보기 · 글자 수 등 기존 화면이 그대로 동작하게.
         doc.pages = [it["label"] for it in items]
         doc.n_chars = sum(len(x) for x in doc.pages)
-        doc.meta = {"page_kind": "media", "media": {"kind": kind, "path": media.rel(original), **info}, "media_items": items}
+        doc.meta = {"page_kind": "media", "media": {"kind": kind, "path": media_store.rel(original), **info}, "media_items": items}
         db.commit()
     except Exception:
         db.rollback()
-        media.remove_document_media(doc.id)
+        media_store.remove_document_media(doc.id)
         raise
     msg = ""
     if kind == "video":

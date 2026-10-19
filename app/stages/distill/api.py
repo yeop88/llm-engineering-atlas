@@ -11,9 +11,9 @@ from sqlalchemy.orm import Session
 from app.core import crud, llm
 from app.core.db import ChunkSet, Collection, EmbeddingModel, EvalSet, FinetuneRun, SessionLocal, get_db
 from app.core.jobs import Job, jobs
-from app.core.schemas import DistillCreate, LLMDistillDataRequest
 from app.pipeline.search import run_search
 from app.stages.distill import llm_data, service
+from app.stages.distill.schemas import DistillCreate, LLMDistillDataRequest
 from app.stages.finetune import data
 from app.stages.finetune.api import _out
 from app.stages.rag import evaluation

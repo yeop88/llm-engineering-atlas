@@ -53,7 +53,7 @@ class Settings(BaseSettings):
 
     # ── 문서 검색 ────────────────────────────────────────────────────────────
     max_upload_mb: int = 100
-    # 영상 프레임 추출: 몇 초마다 한 장, 최대 몇 장. 장면이 바뀌지 않은 프레임은 거른다(app/stages/multimodal/media.py).
+    # 영상 프레임 추출: 몇 초마다 한 장, 최대 몇 장. 장면이 바뀌지 않은 프레임은 거른다(app/stages/multimodal/ingest.py).
     video_frame_interval: float = 2.0
     video_max_frames: int = 240
     index_batch_size: int = 32  # 인덱스 구축 시 한 번에 인코딩·저장할 청크 수

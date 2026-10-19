@@ -12,11 +12,11 @@ from app.core import crud, llm
 from app.core.config import get_settings
 from app.core.db import EvalSet, SessionLocal, get_db
 from app.core.jobs import Job, jobs
-from app.core.schemas import LlamaCommandRequest, QuantLLMRequest, QuantVectorsRequest
 from app.pipeline.search import run_search
 from app.stages.embedding import benchmark
 from app.stages.embedding.model_manager import get_manager
 from app.stages.quant import llm_bits, techniques, vectors
+from app.stages.quant.schemas import LlamaCommandRequest, QuantLLMRequest, QuantVectorsRequest
 
 router = APIRouter(prefix="/api/quant", tags=["quant"])
 DB = Annotated[Session, Depends(get_db)]

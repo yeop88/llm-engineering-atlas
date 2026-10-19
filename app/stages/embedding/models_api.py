@@ -10,9 +10,10 @@ from sqlalchemy.orm import Session
 from app.core import crud
 from app.core.db import CatalogExclusion, EmbeddingModel, get_db
 from app.core.jobs import jobs
-from app.core.schemas import BulkDelete, HubImport, ModelCreate, ModelOut, ModelUpdate
+from app.core.schemas import BulkDelete
 from app.stages.embedding import compat, hub
 from app.stages.embedding.model_manager import ModelSpec, get_manager
+from app.stages.embedding.schemas import HubImport, ModelCreate, ModelOut, ModelUpdate
 
 router = APIRouter(prefix="/api", tags=["models"])
 DB = Annotated[Session, Depends(get_db)]

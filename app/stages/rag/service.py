@@ -10,7 +10,7 @@ import numpy as np
 from sqlalchemy import func, insert, select
 from sqlalchemy.orm import Session
 
-from app.core import media
+from app.core import media_store
 from app.core.config import get_settings
 from app.core.db import Chunk, ChunkSet, Collection, Document, EmbeddingModel, SessionLocal, VectorIndex
 from app.core.jobs import Job
@@ -79,7 +79,7 @@ def delete_document(db: Session, doc: Document) -> None:
     doc_id = doc.id
     db.delete(doc)
     db.commit()
-    media.remove_document_media(doc_id)  # 이미지 · 영상 문서의 원본과 프레임 파일 (없으면 아무 일도 안 함)
+    media_store.remove_document_media(doc_id)  # 이미지 · 영상 문서의 원본과 프레임 파일 (없으면 아무 일도 안 함)
     for sid in by_set:  # 청크 수 갱신
         cs = db.get(ChunkSet, sid)
         if cs:
@@ -206,7 +206,7 @@ def _encode_part(manager, lm, part, titles, strategy, truncate_dim, batch, use_i
         emb = np.zeros((len(part), r.embeddings.shape[1]), dtype=np.float32)
         emb[txt_pos] = r.embeddings
     if img_pos:
-        images = [media.open_image(part[k].meta["media"]) for k in img_pos]
+        images = [media_store.open_image(part[k].meta["media"]) for k in img_pos]
         ri = manager.encode_images(lm, images, truncate_dim=truncate_dim, batch_size=batch)
         if emb is None:
             emb = np.zeros((len(part), ri.embeddings.shape[1]), dtype=np.float32)

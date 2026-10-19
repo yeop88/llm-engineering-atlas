@@ -10,11 +10,16 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from app.core import crud, media
+from app.core import crud, media_store
 from app.core.config import get_settings
 from app.core.db import Chunk, ChunkSet, Collection, Document, EmbeddingModel, SessionLocal, VectorIndex, get_db
 from app.core.jobs import Job, jobs
-from app.core.schemas import (
+from app.core.vectorstores import STORE_KINDS, StoreUnavailable, get_store, stores_status
+from app.pipeline.search import run_search  # 검색 향상(enhance) 등 다음 단계를 끼워 넣는 연결점
+from app.stages.embedding.model_manager import get_manager
+from app.stages.multimodal import ingest as mm_ingest
+from app.stages.rag import chunking, parsers, public_corpus, service
+from app.stages.rag.schemas import (
     ChunkSetCreate,
     ChunkStrategy,
     CollectionCreate,
@@ -23,11 +28,6 @@ from app.core.schemas import (
     PublicCorpusImport,
     SearchRequest,
 )
-from app.core.vectorstores import STORE_KINDS, StoreUnavailable, get_store, stores_status
-from app.pipeline.search import run_search  # 검색 향상(enhance) 등 다음 단계를 끼워 넣는 연결점
-from app.stages.embedding.model_manager import get_manager
-from app.stages.multimodal import media as mm_media
-from app.stages.rag import chunking, parsers, public_corpus, service
 
 router = APIRouter(prefix="/api", tags=["rag"])
 DB = Annotated[Session, Depends(get_db)]
@@ -74,7 +74,7 @@ def rag_options() -> dict:
         "chunk_methods": chunking.STRATEGIES,
         "chunk_defaults": chunking.DEFAULTS,
         "file_types": sorted(parsers.SUPPORTED),
-        "media_types": sorted(mm_media.IMAGE_EXT | mm_media.VIDEO_EXT),
+        "media_types": sorted(mm_ingest.IMAGE_EXT | mm_ingest.VIDEO_EXT),
         "max_upload_mb": get_settings().max_upload_mb,
         "stores": stores_status(),
         "default_store": get_settings().vector_store,
@@ -155,7 +155,7 @@ def delete_collection(collection_id: int, db: DB) -> dict:
     db.delete(c)
     db.commit()
     for did in doc_ids:  # DB 는 연쇄 삭제되지만 디스크의 이미지 · 프레임 파일은 직접 지워야 한다
-        media.remove_document_media(did)
+        media_store.remove_document_media(did)
     return {"deleted": collection_id}
 
 
@@ -218,7 +218,7 @@ async def upload_documents(
         name = f.filename or "unnamed"
         # 이미지 · 영상은 멀티모달 단계가 프레임 추출 · 저장을 맡고, 결과는 같은 컬렉션의 문서가 된다.
         # 업로드 창구를 하나로 두어 글과 그림을 한 컬렉션에 섞어 넣고 함께 검색할 수 있게 했다.
-        ingest = mm_media.ingest if mm_media.kind_of(name) else service.ingest
+        ingest = mm_ingest.ingest if mm_ingest.kind_of(name) else service.ingest
         doc, msg = await run_in_threadpool(ingest, db, c, name, data)
         if doc:
             added.append(_doc_out(doc) | ({"warning": msg} if msg else {}))
@@ -233,8 +233,8 @@ def document_media(document_id: int, db: DB) -> FileResponse:
     d = _get(db, Document, document_id, "문서")
     rel = ((d.meta or {}).get("media") or {}).get("path")
     try:
-        return FileResponse(media.resolve(rel or ""), media_type=_mime(rel or ""))
-    except media.MediaError as exc:
+        return FileResponse(media_store.resolve(rel or ""), media_type=_mime(rel or ""))
+    except media_store.MediaError as exc:
         raise HTTPException(404, str(exc)) from exc
 
 
@@ -244,8 +244,8 @@ def chunk_media(chunk_id: int, db: DB) -> FileResponse:
     c = _get(db, Chunk, chunk_id, "청크")
     rel = (c.meta or {}).get("media")
     try:
-        return FileResponse(media.resolve(rel or ""), media_type=_mime(rel or ""))
-    except media.MediaError as exc:
+        return FileResponse(media_store.resolve(rel or ""), media_type=_mime(rel or ""))
+    except media_store.MediaError as exc:
         raise HTTPException(404, str(exc)) from exc
 
 

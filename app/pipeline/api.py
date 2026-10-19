@@ -10,9 +10,9 @@ from sqlalchemy.orm import Session
 from app.core import crud, llm
 from app.core.db import EvalSet, SessionLocal, get_db
 from app.core.jobs import Job, jobs
-from app.core.schemas import FlowEvalRequest, FlowRunRequest
 from app.core.vectorstores import StoreUnavailable
 from app.pipeline import flow
+from app.pipeline.schemas import FlowEvalRequest, FlowRunRequest
 from app.stages.rag.service import RagError
 
 router = APIRouter(prefix="/api/flow", tags=["flow"])

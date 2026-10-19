@@ -9,10 +9,10 @@ from sqlalchemy.orm import Session
 from app.core import crud
 from app.core.db import SessionLocal, TestRun, get_db
 from app.core.jobs import Job, jobs
-from app.core.schemas import BenchmarkRequest, PublicBenchmarkImport
 from app.core.system_api import runs_query
 from app.stages.embedding import benchmark, public_benchmarks
 from app.stages.embedding.model_manager import get_manager
+from app.stages.embedding.schemas import BenchmarkRequest, PublicBenchmarkImport
 
 router = APIRouter(prefix="/api", tags=["benchmarks"])
 DB = Annotated[Session, Depends(get_db)]

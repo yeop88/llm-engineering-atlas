@@ -11,9 +11,9 @@ from starlette.concurrency import run_in_threadpool
 
 from app.core import crud
 from app.core.db import get_db
-from app.core.schemas import EmbedRequest, ProjectionRequest, RetrieveRequest, SimilarityRequest
 from app.stages.embedding import projection
 from app.stages.embedding.model_manager import LoadedModel, ModelSpec, get_manager
+from app.stages.embedding.schemas import EmbedRequest, ProjectionRequest, RetrieveRequest, SimilarityRequest
 
 router = APIRouter(prefix="/api", tags=["playground"])
 DB = Annotated[Session, Depends(get_db)]

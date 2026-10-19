@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 from app.core import llm
 from app.core.db import ChunkSet, Collection, EmbeddingModel, EvalSet, FinetuneRun, get_db
 from app.core.jobs import jobs
-from app.core.schemas import FinetuneCreate
 from app.stages.finetune import service
+from app.stages.finetune.schemas import FinetuneCreate
 
 router = APIRouter(prefix="/api/finetune", tags=["finetune"])
 DB = Annotated[Session, Depends(get_db)]

@@ -10,13 +10,14 @@ from sqlalchemy.orm import Session
 from app.core import crud, llm
 from app.core.db import AppModel, EvalSet, SessionLocal, TestRun, get_db
 from app.core.jobs import Job, jobs
-from app.core.schemas import LearnedRouterRequest, RouteTestRequest, RoutingEvalRequest
 from app.core.vectorstores import StoreUnavailable
 from app.pipeline import flow
+from app.pipeline.schemas import RouteTestRequest, RoutingEvalRequest
 from app.pipeline.search import run_search
 from app.stages.rag import evaluation
 from app.stages.rag.service import RagError
 from app.stages.routing import learned, routers, service
+from app.stages.routing.schemas import LearnedRouterRequest
 
 router = APIRouter(prefix="/api/routing", tags=["routing"])
 DB = Annotated[Session, Depends(get_db)]

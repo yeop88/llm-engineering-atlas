@@ -11,10 +11,10 @@ from sqlalchemy.orm import Session
 
 from app.core.db import CatalogExclusion, EmbeddingModel, TestRun
 from app.core.jobs import jobs
-from app.core.schemas import ModelOut
 from app.stages.embedding import hub
 from app.stages.embedding.catalog import CATALOG
 from app.stages.embedding.model_manager import ModelSpec, get_manager
+from app.stages.embedding.schemas import ModelOut
 
 _FIELDS = set(EmbeddingModel.__table__.columns.keys()) - {"id", "created_at", "updated_at"}
 

@@ -12,10 +12,10 @@ from app.core import crud, llm
 from app.core.config import get_settings
 from app.core.db import EvalSet, SessionLocal, VerifyLabel, get_db
 from app.core.jobs import Job, jobs
-from app.core.schemas import VerifyLabelsIn, VerifySampleRequest
 from app.pipeline.search import run_search
 from app.stages.rag import answer
 from app.stages.rag import verify as vf
+from app.stages.rag.schemas import VerifyLabelsIn, VerifySampleRequest
 
 router = APIRouter(prefix="/api/verify", tags=["verify"])
 DB = Annotated[Session, Depends(get_db)]

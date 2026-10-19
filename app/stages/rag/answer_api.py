@@ -12,10 +12,10 @@ from fastapi.responses import StreamingResponse
 from app.core import crud, llm
 from app.core.db import ChunkSet, Collection, EmbeddingModel, EvalSet, SessionLocal, VectorIndex
 from app.core.jobs import Job, jobs
-from app.core.schemas import AnswerEvalRequest, AnswerRequest
 from app.core.vectorstores import StoreUnavailable
 from app.pipeline.search import run_search  # 검색 향상(enhance) 등 다음 단계를 끼워 넣는 연결점
 from app.stages.rag import answer, legal, service
+from app.stages.rag.schemas import AnswerEvalRequest, AnswerRequest
 
 router = APIRouter(prefix="/api", tags=["rag-answer"])
 

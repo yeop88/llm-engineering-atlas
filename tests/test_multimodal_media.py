@@ -6,7 +6,7 @@ import av
 import pytest
 from PIL import Image
 
-from app.core import media
+from app.core import media_store as media
 from app.core.config import get_settings
 from tests.test_rag import _model, _wait
 

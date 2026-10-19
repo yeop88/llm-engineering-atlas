@@ -10,10 +10,10 @@ from fastapi.responses import StreamingResponse
 
 from app.core import crud, llm
 from app.core.db import SessionLocal
-from app.core.schemas import AgentRunRequest
 from app.core.vectorstores import StoreUnavailable
 from app.pipeline.search import run_search
 from app.stages.agent import agent
+from app.stages.agent.schemas import AgentRunRequest
 from app.stages.rag import legal
 from app.stages.rag.service import RagError
 

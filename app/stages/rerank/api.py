@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 from app.core import crud, llm
 from app.core.db import EmbeddingModel, EvalSet, SessionLocal, get_db
 from app.core.jobs import Job, jobs
-from app.core.schemas import RerankEvalRequest
 from app.stages.rerank import evaluate as rr_eval
+from app.stages.rerank.schemas import RerankEvalRequest
 
 router = APIRouter(prefix="/api/rerank", tags=["rerank"])
 DB = Annotated[Session, Depends(get_db)]

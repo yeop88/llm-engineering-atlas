@@ -12,9 +12,9 @@ from sqlalchemy.orm import Session
 from app.core import crud, llm
 from app.core.db import ChunkSet, Collection, Document, EmbeddingModel, EvalSet, SessionLocal, TestRun, VectorIndex, get_db
 from app.core.jobs import Job, jobs
-from app.core.schemas import EvalItemIn, EvalRunRequest, EvalSetCreate, EvalSetGenerate, EvalSetUpdate
 from app.pipeline.search import ENHANCE_LABEL, run_search  # 검색 향상(enhance) 등 다음 단계를 끼워 넣는 연결점
 from app.stages.rag import evaluation
+from app.stages.rag.schemas import EvalItemIn, EvalRunRequest, EvalSetCreate, EvalSetGenerate, EvalSetUpdate
 
 router = APIRouter(prefix="/api", tags=["rag-eval"])
 DB = Annotated[Session, Depends(get_db)]

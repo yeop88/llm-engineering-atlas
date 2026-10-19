@@ -92,7 +92,7 @@ def attach_images(db: Any, sources: list[dict[str, Any]], max_images: int = 3) -
     """
     import io
 
-    from app.core import media
+    from app.core import media_store
     from app.core.db import Chunk
 
     images, notes = [], []
@@ -104,7 +104,7 @@ def attach_images(db: Any, sources: list[dict[str, Any]], max_images: int = 3) -
         if not path:
             continue
         try:
-            im = media.open_image(path)
+            im = media_store.open_image(path)
         except OSError:
             continue  # 파일이 지워졌으면 글 근거로만 쓴다
         im.thumbnail((IMAGE_MAX_SIDE, IMAGE_MAX_SIDE))

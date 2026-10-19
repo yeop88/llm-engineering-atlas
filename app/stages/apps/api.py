@@ -15,7 +15,8 @@ from app.core.config import APP_DIR, get_settings
 from app.core.db import AppModel, EmbeddingModel, SessionLocal, get_db
 from app.core.jobs import Job, jobs
 from app.core.korean import noun_phrases_many, split_sentences
-from app.core.schemas import (
+from app.stages.apps import anomaly, classify, cluster, common, dedup, keywords, recommend
+from app.stages.apps.schemas import (
     AnomalyRequest,
     AppItemsRequest,
     ClusterRequest,
@@ -28,7 +29,6 @@ from app.core.schemas import (
     TrainClassifierRequest,
     ZeroShotRequest,
 )
-from app.stages.apps import anomaly, classify, cluster, common, dedup, keywords, recommend
 from app.stages.embedding.model_manager import ModelSpec
 
 router = APIRouter(prefix="/api/apps", tags=["apps"])

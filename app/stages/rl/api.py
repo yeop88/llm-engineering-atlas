@@ -12,9 +12,9 @@ from sqlalchemy.orm import Session
 from app.core import crud, llm
 from app.core.db import EvalSet, PreferencePair, SessionLocal, get_db
 from app.core.jobs import Job, jobs
-from app.core.schemas import PreferenceIn, RLEvalRequest, RLSampleRequest
 from app.pipeline.search import run_search
 from app.stages.rl import reward, service
+from app.stages.rl.schemas import PreferenceIn, RLEvalRequest, RLSampleRequest
 
 router = APIRouter(prefix="/api/rl", tags=["rl"])
 DB = Annotated[Session, Depends(get_db)]
