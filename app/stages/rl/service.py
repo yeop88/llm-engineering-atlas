@@ -30,7 +30,7 @@ def candidates(cfg: llm.LLMConfig, question: str, results: list[dict[str, Any]],
     for i in range(n):
         t = 0.1 if i == 0 else temperature  # 후보 0 = 평소 답
         res = llm.chat(cfg, answer.SYSTEM, answer.user_prompt(question, context), max_tokens=max_tokens, temperature=t, no_cache=no_cache)
-        r = reward(res["text"], sources, item=item)
+        r = reward(res["text"], sources, item=item, question=question)
         cands.append({"text": res["text"], "temperature": t, "reward": r["total"], "parts": r["parts"], "seconds": res["seconds"],
                       "refused": r["check"]["refused"], "supported_ratio": r["check"]["supported_ratio"],
                       "cited": r["check"]["cited_sources"],

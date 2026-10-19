@@ -59,6 +59,35 @@ def semantic_scores(sentences: list[str], cited: list[list[int]], sources: list[
     return out
 
 
+def relevance_scores(question: str, sentences: list[str]) -> list[float]:
+    """문장마다 질문과의 코사인. 질문은 '질의', 문장은 '문서' 프롬프트로 인코딩한다 — 검색에서 질문이 근거를 찾는 것과 같은 관계라서.
+    인용 표시([1])는 빼고 잰다(숫자 기호가 유사도를 흐리지 않게)."""
+    if not sentences:
+        return []
+    import re
+
+    manager, lm = _model()
+    q = manager.encode(lm, [question], "query").embeddings
+    s = manager.encode(lm, [re.sub(r"\[\d+(?:[,，]\s*\d+)*\]", "", x).strip() or x for x in sentences], "document").embeddings
+    return [round(float(v), 4) for v in (s @ q[0])]
+
+
+def apply_relevance(check: dict[str, Any], question: str) -> dict[str, Any]:
+    """근거 검증 결과에 질문 관련성을 더한다. 문장의 근거 상태(status)는 그대로 두고 off_topic 표시만 더한다 —
+    '근거에 있는가'와 '질문에 답하는가'는 다른 질문이라 섞으면 어느 쪽이 문제인지 알 수 없다."""
+    s = get_settings()
+    claims = [x for x in check["sentences"] if x["status"] != "refusal"]
+    if not claims:
+        return check | {"relevant_ratio": None, "off_topic": 0}
+    t = time.perf_counter()
+    for x, sc in zip(claims, relevance_scores(question, [x["text"] for x in claims]), strict=True):
+        x["relevance"] = sc
+        x["off_topic"] = sc < s.verify_relevance_ok
+    off = sum(1 for x in claims if x["off_topic"])
+    return check | {"relevant_ratio": round(1 - off / len(claims), 3), "off_topic": off,
+                    "relevance_threshold": s.verify_relevance_ok, "relevance_seconds": round(time.perf_counter() - t, 2)}  # fmt: skip
+
+
 def apply(check: dict[str, Any], sources: list[dict[str, Any]], method: str) -> dict[str, Any]:
     """글자 검증 결과(answer.verify_lexical)에 의미 점수를 더하고 방식에 맞게 문장 상태 · 근거율을 다시 매긴다."""
     if method == "lexical":
@@ -124,3 +153,23 @@ def compare_methods(rows: list[dict[str, Any]], lexical_ok: float) -> dict[str, 
     if judged:
         out["llm"] = agreement([bool(r["label"]) for r in judged], [bool(r["llm"]) for r in judged])
     return out
+
+
+def compare_relevance(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """질문 관련성 라벨(row: relevant · relevance)로 질문-문장 유사도 기준을 훑어 가장 일치하는 값 + AUC(기준과 무관한 가름 능력)."""
+    rows = [r for r in rows if r.get("relevance") is not None]
+    if not rows:
+        return {}
+    y = [bool(r["relevant"]) for r in rows]
+    sc = [float(r["relevance"]) for r in rows]
+    pos, neg = [v for v, t in zip(sc, y, strict=True) if t], [v for v, t in zip(sc, y, strict=True) if not t]
+    auc = sum((p > n) + 0.5 * (p == n) for p in pos for n in neg) / (len(pos) * len(neg)) if pos and neg else None
+    sweep = []
+    for th in [round(x, 2) for x in np.arange(0.4, 0.91, 0.02)]:
+        a = agreement(y, [v >= th for v in sc])
+        sweep.append({"threshold": th, "kappa": a["kappa"], "f1": a["f1"], "accuracy": a["accuracy"]})
+    best = max(sweep, key=lambda x: (x["kappa"], x["f1"]))
+    cur = get_settings().verify_relevance_ok
+    return {"relevance": agreement(y, [v >= best["threshold"] for v in sc]) | {"threshold": best["threshold"]},
+            "relevance_current": agreement(y, [v >= cur for v in sc]) | {"threshold": cur},
+            "relevance_auc": round(auc, 3) if auc is not None else None, "relevance_sweep": sweep}  # fmt: skip

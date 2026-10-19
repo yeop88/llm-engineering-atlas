@@ -683,8 +683,15 @@ class VerifyLabelIn(BaseModel):
     question: str = Field(max_length=4000)
     sentence: str = Field(min_length=1, max_length=4000)
     sources: str = Field(max_length=60000)
-    label: bool
+    label: bool | None = None  # 근거 일치 (인용한 근거로 뒷받침되는가)
+    relevant: bool | None = None  # 질문 관련성 (질문에 답하는 문장인가) — 둘은 따로 판정한다
     scores: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _one_needed(self) -> VerifyLabelIn:
+        if self.label is None and self.relevant is None:
+            raise ValueError("근거 일치 · 질문 관련성 중 하나는 판정해야 합니다.")
+        return self
 
 
 class VerifyLabelsIn(BaseModel):

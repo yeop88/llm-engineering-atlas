@@ -36,7 +36,7 @@ def sample(question: str, context: str, text: str) -> dict[str, Any]:
 def build(job: Job, teacher: llm.LLMConfig, questions: list[str], search_fn, max_chars: int, max_tokens: int, min_support: float,
           name: str) -> dict[str, Any]:  # fmt: skip
     """questions 마다 검색 → 교사 답변 → 검증 → 통과한 것만 저장. search_fn(question) → 검색 결과 목록."""
-    kept, dropped = [], {"refused": 0, "low_support": 0, "invalid_citation": 0, "error": 0}
+    kept, dropped = [], {"refused": 0, "low_support": 0, "invalid_citation": 0, "off_topic": 0, "error": 0}
     started = time.perf_counter()
     for i, q in enumerate(questions):
         job.update(i / max(1, len(questions)), f"교사 답변 {i + 1}/{len(questions)}")
@@ -46,13 +46,15 @@ def build(job: Job, teacher: llm.LLMConfig, questions: list[str], search_fn, max
         except llm.LLMError:
             dropped["error"] += 1
             continue
-        check = answer.verify(res["text"], sources)
+        check = answer.verify(res["text"], sources, question=q)
         if check["refused"]:
             dropped["refused"] += 1
         elif check["invalid_citations"]:
             dropped["invalid_citation"] += 1
         elif (check["supported_ratio"] or 0) < min_support:
             dropped["low_support"] += 1
+        elif check.get("off_topic"):
+            dropped["off_topic"] += 1
         else:
             kept.append(sample(q, context, res["text"]) | {"meta": {"supported_ratio": check["supported_ratio"], "teacher": teacher.model}})
     path = data_dir() / f"{name}.jsonl"

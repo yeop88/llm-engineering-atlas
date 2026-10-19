@@ -19,8 +19,10 @@ SYSTEM = (
     "1. 근거에 있는 내용만 사용하고, 추측하거나 근거에 없는 사실을 덧붙이지 마세요.\n"
     "2. 문장마다 그 문장의 근거 번호를 [1], [2] 처럼 문장 끝에 붙이세요.\n"
     f"3. 근거에 답이 없으면 '{NOT_FOUND}.' 라고만 답하세요.\n"
-    "4. 간결하게 답하세요. 숫자·날짜·금액·조문 번호는 근거 표현 그대로 쓰세요."
+    "4. 간결하게 답하세요. 숫자·날짜·금액·조문 번호는 근거 표현 그대로 쓰세요.\n"
+    "5. 질문에 대한 답을 먼저 쓰세요. 그 앞뒤의 부가 설명은 질문과 직접 관련된 근거만 쓰고, 질문과 상관없는 근거 내용(다른 조문 · 다른 사안)은 근거에 있더라도 쓰지 마세요."
 )
+# 5번 규칙을 둔 이유: 법률 답변 사람 판정(2026-10-19)에서 '틀린 문장' 12개가 모두 근거를 거의 그대로 옮긴, 질문과 상관없는 조문이었다.
 SUPPORT_OK = 0.5  # 문장의 글자 3-gram 중 이 비율 이상이 인용 근거에 있으면 '근거 있음'
 SUPPORT_WEAK = 0.25
 _CITE = re.compile(r"\[(\d{1,2}(?:\s*[,，]\s*\d{1,2})*)\]")
@@ -165,9 +167,11 @@ def verify_lexical(answer: str, sources: list[dict[str, Any]]) -> dict[str, Any]
     }
 
 
-def verify(answer: str, sources: list[dict[str, Any]], method: str | None = None) -> dict[str, Any]:
-    """근거 검증의 단일 진입점. 설정(ANSWER_VERIFY_METHOD)의 방식으로 — 답변 화면 · 평가 · 연결 비교 · 보상이 같은 방식을 쓰게.
-    의미 · 혼합 검증이 실패하면(검증 모델 없음 등) 글자 검증으로 돌아가고 그 사실을 남긴다(평가가 멈추지 않게)."""
+def verify(answer: str, sources: list[dict[str, Any]], method: str | None = None, question: str | None = None) -> dict[str, Any]:
+    """검증의 단일 진입점 — 답변 화면 · 평가 · 연결 비교 · 보상이 같은 방식을 쓰게.
+    ① 근거 일치: 설정(ANSWER_VERIFY_METHOD)의 방식. 의미 · 혼합이 실패하면(검증 모델 없음 등) 글자로 돌아가고 그 사실을 남긴다.
+    ② 질문 관련성(question 을 주고 ANSWER_RELEVANCE 가 켜져 있을 때): 근거에 있어도 질문과 상관없는 문장을 따로 표시한다.
+       근거 일치만으로는 '근거를 그대로 옮긴, 질문과 상관없는 조문'을 잡지 못했다(사람 판정 28개와 카파 −0.07~0.22)."""
     from app.core.config import get_settings
     from app.stages.rag import verify as vf
 
@@ -175,10 +179,17 @@ def verify(answer: str, sources: list[dict[str, Any]], method: str | None = None
     method = method or get_settings().answer_verify_method
     if method in ("semantic", "hybrid"):
         try:
-            return vf.apply(check, sources, method)
+            check = vf.apply(check, sources, method)
         except Exception as exc:  # noqa: BLE001 — 검증 방식 문제로 답변 평가 전체를 멈추지 않는다
-            return check | {"method": "lexical", "fallback": f"{method} 실패: {type(exc).__name__}: {str(exc)[:120]}"}
-    return check | {"method": "lexical"}
+            check = check | {"method": "lexical", "fallback": f"{method} 실패: {type(exc).__name__}: {str(exc)[:120]}"}
+    else:
+        check = check | {"method": "lexical"}
+    if question and get_settings().answer_relevance:
+        try:
+            check = vf.apply_relevance(check, question)
+        except Exception as exc:  # noqa: BLE001 — 관련성 점수가 실패해도 근거 검증 결과는 돌려준다
+            check = check | {"relevance_error": f"{type(exc).__name__}: {str(exc)[:120]}"}
+    return check
 
 
 JUDGE_SYSTEM = "당신은 답변이 근거 문서로 뒷받침되는지 엄격하게 판정하는 검토자입니다. 반드시 JSON 만 출력합니다."
@@ -217,13 +228,15 @@ def evaluate_one(
 
     context, sources = build_context(results, max_chars)
     res = llm.chat(cfg, SYSTEM, user_prompt(item["query"], context), max_tokens=max_tokens, temperature=0.1, no_cache=no_cache)
-    check = verify(res["text"], sources)
+    check = verify(res["text"], sources, question=item["query"])
     row = {
         "query": item["query"],
         "type": item.get("type"),
         "answer": res["text"],
         "refused": check["refused"],
         "supported_ratio": check["supported_ratio"],
+        "relevant_ratio": check.get("relevant_ratio"),
+        "off_topic": check.get("off_topic"),
         "invalid_citations": check["invalid_citations"],
         "cited": check["cited_sources"],
         "answerable": evaluation.answerable(item),
@@ -251,6 +264,8 @@ def summarize_eval(rows: list[dict[str, Any]]) -> dict[str, Any]:
         else [r for r in rows if r.get("answerable") is not False]
     )
     sup = [r["supported_ratio"] for r in rows if r["supported_ratio"] is not None]
+    rel = [r["relevant_ratio"] for r in rows if r.get("relevant_ratio") is not None]
+    offs = [r for r in rows if r.get("off_topic") is not None and not r["refused"]]
     retrieved = [r for r in rows if r.get("evidence_retrieved")]
     q = [r["quality"] for r in rows + unans if r.get("quality") is not None]
     return {
@@ -267,6 +282,9 @@ def summarize_eval(rows: list[dict[str, Any]]) -> dict[str, Any]:
         # 근거가 검색됐는데도 '찾을 수 없다'고 한 비율 (지나친 거절)
         "false_refusal": round(sum(r["refused"] for r in retrieved) / len(retrieved), 3) if retrieved else None,
         "sentence_support": round(sum(sup) / len(sup), 3) if sup else None,
+        # 질문 관련성: 문장 중 질문과 관련된 비율 · 질문과 상관없는 문장이 하나라도 섞인 답의 비율(근거에 있어도 틀린 답 — 사람 판정 기준)
+        "relevant_ratio": round(sum(rel) / len(rel), 3) if rel else None,
+        "off_topic_rate": round(sum(bool(r["off_topic"]) for r in offs) / len(offs), 3) if offs else None,
         "invalid_citation_rate": round(sum(bool(r["invalid_citations"]) for r in rows) / len(rows), 3) if rows else None,
         "mean_seconds": round(sum(r["seconds"] for r in rows) / len(rows), 1) if rows else None,
     }

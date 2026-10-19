@@ -22,15 +22,16 @@ WEIGHTS = {
     "honest_refusal": 0.5,
     "too_long": -0.2,
     "hallucination": -1.0,  # 답 없는 질문에 답함(지어냄)
+    "off_topic": -1.0,  # 질문과 상관없는 문장 비율 × 이 값 — 근거에 있어도 질문에 답하지 않는 문장은 틀린 답(사람 판정 기준)
 }
 MAX_CHARS = 600  # 이보다 긴 답은 감점 (근거 5개 RAG 답변의 보통 길이 기준)
 
 
 def reward(text: str, sources: list[dict[str, Any]], evidence: str = "", weights: dict[str, float] | None = None,
-           item: dict[str, Any] | None = None) -> dict[str, Any]:  # fmt: skip
+           item: dict[str, Any] | None = None, question: str | None = None) -> dict[str, Any]:  # fmt: skip
     """item 을 주면(평가 세트) 그 질문의 근거들 · 답 없음 여부로 채점한다. 답 없는 질문에 답하면 지어낸 것이라 감점."""
     w = WEIGHTS | (weights or {})
-    check = answer.verify(text, sources)
+    check = answer.verify(text, sources, question=question or (item or {}).get("query"))
     parts: dict[str, float] = {}
     if item is not None and not evaluation.answerable(item):
         parts["honest_refusal" if check["refused"] else "hallucination"] = w["honest_refusal"] if check["refused"] else w["hallucination"]
@@ -51,4 +52,6 @@ def reward(text: str, sources: list[dict[str, Any]], evidence: str = "", weights
             parts["invalid_citation"] = w["invalid_citation"] * min(2, len(check["invalid_citations"]))
         if len(text) > MAX_CHARS:
             parts["too_long"] = w["too_long"]
+        if check.get("relevant_ratio") is not None and check["relevant_ratio"] < 1:
+            parts["off_topic"] = w["off_topic"] * (1 - check["relevant_ratio"])
     return {"total": round(sum(parts.values()), 4), "parts": {k: round(v, 4) for k, v in parts.items()}, "check": check}

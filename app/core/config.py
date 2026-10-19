@@ -81,6 +81,10 @@ class Settings(BaseSettings):
     verify_model: str = "nlpai-lab/KURE-v1"  # 의미 검증용 임베딩 모델(카탈로그의 hf_id)
     verify_semantic_ok: float = 0.80  # 잠정값 — 라벨로 훑은 최적 문턱으로 바꿀 것
     verify_semantic_weak: float = 0.65
+    # 질문 관련성: 답변 문장이 질문에 답하는가(근거에 있어도 질문과 상관없는 문장은 틀린 답). 질문-문장 의미 유사도(VERIFY_MODEL)
+    # 기준값 0.68 = 법률 답변 문장 28개 사람 판정으로 고른 잠정값(카파 0.72, 같은 라벨로 고르고 쟀으므로 낙관적) — 라벨이 늘면 다시 고른다
+    answer_relevance: bool = True
+    verify_relevance_ok: float = 0.68
 
     @property
     def db_url(self) -> str:

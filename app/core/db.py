@@ -274,7 +274,9 @@ class VerifyLabel(Base):
     question: Mapped[str] = mapped_column(Text)
     sentence: Mapped[str] = mapped_column(Text)
     sources: Mapped[str] = mapped_column(Text)  # 문장이 인용한 근거 글
-    label: Mapped[bool] = mapped_column(Boolean)  # True = 근거로 뒷받침됨
+    label: Mapped[bool | None] = mapped_column(Boolean, nullable=True)  # 근거 일치: True = 인용한 근거로 뒷받침됨 (판정 안 했으면 None)
+    # 질문 관련성: True = 질문에 답하는 문장(정확한 답 또는 질문과 관련된 부가 설명). 근거에 있어도 질문과 상관없으면 False (0009)
+    relevant: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     labeler: Mapped[str] = mapped_column(String(20), default="human")
     scores: Mapped[dict[str, Any]] = mapped_column(default=dict)  # lexical · semantic · llm
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

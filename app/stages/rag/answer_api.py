@@ -86,7 +86,7 @@ def generate_answer(collection_id: int, body: AnswerRequest) -> StreamingRespons
             text = final.get("text", "")
             timings["llm_s"] = final.get("seconds", 0)
             timings["ttft_s"] = final.get("ttft_s")
-            check = answer.verify(text, sources)
+            check = answer.verify(text, sources, question=body.question)
             # 조문 · 판례 번호 검사(번호가 나온 답변만) — 번호만 바꾼 환각은 문장 검증으로 못 잡는다
             check["citations"] = legal.check_citations(text, sources, legal.lookup_fn_for(db, legal.chunk_set_of(db, search_cfg)))
             yield _event("verify", **check)

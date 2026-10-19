@@ -76,6 +76,8 @@ def _record(r: dict[str, Any], item: dict[str, Any], ev) -> dict[str, Any]:
     keep = (
         "refused",
         "supported_ratio",
+        "relevant_ratio",
+        "off_topic",
         "invalid_citations",
         "cited",
         "evidence_retrieved",

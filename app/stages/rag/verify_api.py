@@ -25,7 +25,8 @@ DB = Annotated[Session, Depends(get_db)]
 def settings() -> dict[str, Any]:
     s = get_settings()
     return {"method": s.answer_verify_method, "methods": vf.METHODS, "model": s.verify_model, "semantic_ok": s.verify_semantic_ok,
-            "semantic_weak": s.verify_semantic_weak, "lexical_ok": answer.SUPPORT_OK}  # fmt: skip
+            "semantic_weak": s.verify_semantic_weak, "lexical_ok": answer.SUPPORT_OK,
+            "relevance": s.answer_relevance, "relevance_ok": s.verify_relevance_ok}  # fmt: skip
 
 
 @router.post("/sample", status_code=202)
@@ -54,17 +55,18 @@ def sample(body: VerifySampleRequest, db: DB) -> dict:
                 if not claims:
                     continue
                 sem = vf.semantic_scores([x["text"] for x in claims], [x["citations"] for x in claims], sources)
+                rel = vf.relevance_scores(it["query"], [x["text"] for x in claims])
                 judge = None
                 if body.llm_judge:
                     try:
                         judge = answer.verify_llm(cfg, it["query"], context, [x["text"] for x in claims])["judgements"]
                     except llm.LLMError:
                         judge = None
-                for k, (x, sc) in enumerate(zip(claims, sem, strict=True)):
+                for k, (x, sc, rv) in enumerate(zip(claims, sem, rel, strict=True)):
                     src = "\n\n".join(f"[{c}] {sources[c - 1]['text']}" for c in x["citations"] if 1 <= c <= len(sources))
                     jl = judge[k]["supported"] if judge and k < len(judge) and judge[k] else None
                     out.append({"question": it["query"], "sentence": x["text"], "sources": src,
-                                "scores": {"lexical": x["support"], "semantic": sc, "llm": jl}})  # fmt: skip
+                                "scores": {"lexical": x["support"], "semantic": sc, "llm": jl, "relevance": rv}})  # fmt: skip
         return {"collection_id": s.collection_id, "items": out, "llm": cfg.public()}
 
     return jobs.submit("verify_sample", f"검증 판정 문장 만들기 · {s.name}", work, eval_set_id=s.id).to_dict()
@@ -74,7 +76,7 @@ def sample(body: VerifySampleRequest, db: DB) -> dict:
 def add_labels(body: VerifyLabelsIn, db: DB) -> dict[str, Any]:
     for it in body.items:
         db.add(VerifyLabel(collection_id=body.collection_id, question=it.question, sentence=it.sentence, sources=it.sources, label=it.label,
-                           labeler="human", scores=it.scores))  # fmt: skip
+                           relevant=it.relevant, labeler="human", scores=it.scores))  # fmt: skip
     db.commit()
     return {"saved": len(body.items)}
 
@@ -86,9 +88,11 @@ def list_labels(db: DB, collection_id: int | None = None, limit: int = 300) -> d
         q = q.where(VerifyLabel.collection_id == collection_id)
     rows = db.scalars(q.limit(limit)).all()
     counts = dict(db.execute(select(VerifyLabel.label, func.count()).group_by(VerifyLabel.label)).all())
-    return {"counts": {"supported": counts.get(True, 0), "unsupported": counts.get(False, 0)},
-            "items": [{"id": r.id, "question": r.question, "sentence": r.sentence, "label": r.label, "scores": r.scores,
-                       "created_at": r.created_at.isoformat()} for r in rows]}  # fmt: skip
+    rel = dict(db.execute(select(VerifyLabel.relevant, func.count()).group_by(VerifyLabel.relevant)).all())
+    return {"counts": {"supported": counts.get(True, 0), "unsupported": counts.get(False, 0),
+                       "relevant": rel.get(True, 0), "off_topic": rel.get(False, 0)},
+            "items": [{"id": r.id, "question": r.question, "sentence": r.sentence, "label": r.label, "relevant": r.relevant,
+                       "collection_id": r.collection_id, "scores": r.scores, "created_at": r.created_at.isoformat()} for r in rows]}  # fmt: skip
 
 
 @router.delete("/labels/{label_id}")
@@ -107,18 +111,22 @@ def agreement(db: DB, collection_id: int | None = None) -> dict[str, Any]:
     q = select(VerifyLabel)
     if collection_id:
         q = q.where(VerifyLabel.collection_id == collection_id)
-    rows = [{"label": r.label, **(r.scores or {})} for r in db.scalars(q)]
-    if not rows:
+    all_rows = [{"label": r.label, "relevant": r.relevant, **(r.scores or {})} for r in db.scalars(q)]
+    rows = [r for r in all_rows if r["label"] is not None]  # 근거 일치 판정이 있는 것
+    rel_rows = [r for r in all_rows if r["relevant"] is not None]  # 질문 관련성 판정이 있는 것
+    if not rows and not rel_rows:
         return {"n": 0}
     started = time.perf_counter()
-    res = vf.compare_methods(rows, answer.SUPPORT_OK)
+    res = vf.compare_methods(rows, answer.SUPPORT_OK) if rows else {}
+    res |= vf.compare_relevance(rel_rows) | {"n_relevance": len(rel_rows),
+                                              "relevant_rate": round(sum(r["relevant"] for r in rel_rows) / len(rel_rows), 3) if rel_rows else None}  # fmt: skip
     crud.record_run(
         db,
         "verify_agreement",
         [],
-        f"검증 일치도 · 라벨 {len(rows)}개",
+        f"검증 일치도 · 근거 라벨 {len(rows)} · 관련성 라벨 {len(rel_rows)}",
         {"collection_id": collection_id},
         res,
         (time.perf_counter() - started) * 1000,
     )
-    return {"n": len(rows), "positive_rate": round(sum(r["label"] for r in rows) / len(rows), 3)} | res
+    return {"n": len(rows), "positive_rate": round(sum(r["label"] for r in rows) / len(rows), 3) if rows else None} | res

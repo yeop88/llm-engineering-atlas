@@ -169,7 +169,7 @@ def run(
                                int(fc.get("max_context_chars") or 6000), int(fc.get("max_tokens") or 500), no_cache)  # fmt: skip
             best = bo["candidates"][bo["best"]]
             text, sources = best["text"], bo["sources"]
-            check = answer.verify(text, sources)
+            check = answer.verify(text, sources, question=question)
             gen_seconds, out_tokens = sum(c["seconds"] for c in bo["candidates"]), None
             extra = {"best_of": {"picked": bo["best"], "rewards": [c["reward"] for c in bo["candidates"]]}}
         else:
@@ -187,7 +187,7 @@ def run(
                 no_cache=no_cache,
             )
             text = gen["text"]
-            check = answer.verify(text, sources)
+            check = answer.verify(text, sources, question=question)
             gen_seconds, out_tokens = gen["seconds"], gen["usage"].get("output_tokens")
         # 조문 · 판례 번호 검사: 답변에 번호가 나올 때만(정규식 + DB 조회라 싸다). 글자 · 의미 검증이 못 잡는 '번호만 바꾼' 환각용
         # 에이전트(번호 조회 끔)는 citations=None 을 넘기므로 키를 먼저 빼고, 번호가 있을 때만 다시 넣는다
@@ -206,6 +206,7 @@ def run(
         out["answer"] = {
             "text": text, "sources": sources, "verify": check, "output_tokens": out_tokens, "seconds": gen_seconds,
             "refused": check["refused"], "supported_ratio": ratio, "invalid_citations": check["invalid_citations"], "cited": check["cited_sources"],
+            "relevant_ratio": check.get("relevant_ratio"), "off_topic": check.get("off_topic"),
         } | extra  # fmt: skip
         if item is not None:  # 평가 중이면 질문 유형별 규칙으로 근거 · 품질 채점 (여러 근거 · 답 없는 질문 포함)
             out["answer"] |= evaluation.evidence_in_sources(sources, item, check["cited_sources"]) | {
@@ -257,6 +258,7 @@ def evaluate(db: Session, items: list[dict[str, Any]], flows: list[dict[str, Any
                 a = r.get("answer") or {}
                 records.append({"query": it["query"], "type": it.get("type"), "ms": r["total_ms"], "quality": a.get("quality"),
                                 "evidence_cited": a.get("evidence_cited"), "refused": a.get("refused"), "supported_ratio": a.get("supported_ratio"),
+                                "relevant_ratio": a.get("relevant_ratio"),
                                 "answer": (a.get("text") or "")[:400], "actions": [s.get("action") for s in a.get("agent_steps") or []],
                                 "citations": [(c["ref"], c["status"]) for c in (a.get("citations") or {}).get("refs", [])]})  # fmt: skip
         except JobCancelled:

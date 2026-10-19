@@ -103,3 +103,62 @@ def test_verify_api_flow(client, fake_llm, monkeypatch):
     assert client.delete(f"/api/verify/labels/{lab['items'][0]['id']}").status_code == 200
     assert client.get("/api/verify/settings").json()["method"] == "lexical"
     client.delete(f"/api/collections/{cid}")
+
+
+def test_relevance_flags_off_topic_sentences(client, monkeypatch):
+    """근거에 그대로 있어도 질문과 상관없는 문장은 따로 표시한다 — 근거 상태(status)는 건드리지 않는다."""
+    monkeypatch.setattr(get_settings(), "verify_model", "nlpai-lab/KURE-v1")
+    srcs = [{"text": "세탁기 배수가 안 될 때는 배수 필터를 청소하세요. 냉장고 소음은 수평을 맞추면 줄어듭니다."}]
+    text = "세탁기 배수가 안 될 때는 배수 필터를 청소하세요 [1]. 냉장고 소음은 수평을 맞추면 줄어듭니다 [1]."
+    out = answer.verify(text, srcs, method="lexical", question="세탁기 배수가 안 될 때 어떻게 하나요?")
+    on, off = out["sentences"]
+    assert on["status"] == off["status"] == "supported"  # 둘 다 근거에는 있다
+    assert on["relevance"] > off["relevance"]
+    monkeypatch.setattr(get_settings(), "verify_relevance_ok", (on["relevance"] + off["relevance"]) / 2)
+    out = answer.verify(text, srcs, method="lexical", question="세탁기 배수가 안 될 때 어떻게 하나요?")
+    assert [s["off_topic"] for s in out["sentences"]] == [False, True] and out["off_topic"] == 1 and out["relevant_ratio"] == 0.5
+    assert "relevance" not in answer.verify(text, srcs, method="lexical")["sentences"][0]  # 질문이 없으면 재지 않는다
+    monkeypatch.setattr(get_settings(), "answer_relevance", False)
+    assert answer.verify(text, srcs, method="lexical", question="세탁기")["sentences"][0].get("relevance") is None
+
+
+def test_reward_penalizes_off_topic(monkeypatch):
+    from app.stages.rl import reward as rw
+
+    monkeypatch.setattr(get_settings(), "verify_model", "nlpai-lab/KURE-v1")
+    srcs = [{"text": "세탁기 배수가 안 될 때는 배수 필터를 청소하세요. 냉장고 소음은 수평을 맞추면 줄어듭니다."}]
+    q = "세탁기 배수가 안 될 때 어떻게 하나요?"
+    monkeypatch.setattr(get_settings(), "verify_relevance_ok", 0.99)  # 모든 문장을 관련 낮음으로
+    r = rw.reward("세탁기 배수가 안 될 때는 배수 필터를 청소하세요 [1].", srcs, question=q)
+    assert r["parts"]["off_topic"] == -1.0
+    monkeypatch.setattr(get_settings(), "verify_relevance_ok", 0.0)
+    assert "off_topic" not in rw.reward("세탁기 배수가 안 될 때는 배수 필터를 청소하세요 [1].", srcs, question=q)["parts"]
+
+
+def test_summarize_eval_relevance():
+    rows = [{"refused": False, "supported_ratio": 1.0, "relevant_ratio": 1.0, "off_topic": 0, "invalid_citations": [], "seconds": 1, "quality": 1.0},
+            {"refused": False, "supported_ratio": 1.0, "relevant_ratio": 0.5, "off_topic": 1, "invalid_citations": [], "seconds": 1, "quality": 1.0}]  # fmt: skip
+    s = answer.summarize_eval(rows)
+    assert s["relevant_ratio"] == 0.75 and s["off_topic_rate"] == 0.5
+
+
+def test_relevance_labels_and_agreement(client):
+    items = [
+        {"question": "q", "sentence": f"문장 {i}", "sources": "s", "relevant": i < 3, "scores": {"relevance": 0.9 - 0.1 * i}}
+        for i in range(6)
+    ]
+    assert client.post("/api/verify/labels", json={"collection_id": None, "items": items}).json()["saved"] == 6
+    bad = client.post("/api/verify/labels", json={"items": [{"question": "q", "sentence": "x", "sources": "s"}]})
+    assert bad.status_code == 422  # 둘 다 비면 저장하지 않는다
+    lab = client.get("/api/verify/labels").json()
+    assert lab["counts"]["relevant"] >= 3 and lab["counts"]["off_topic"] >= 3
+    ag = client.get("/api/verify/agreement").json()
+    assert (
+        ag["n_relevance"] >= 6
+        and ag["relevance_auc"] is not None
+        and "threshold" in ag["relevance"]
+        and ag["relevance_current"]["threshold"] == 0.68
+    )
+    for r in lab["items"]:
+        if r["sentence"].startswith("문장 "):
+            client.delete(f"/api/verify/labels/{r['id']}")
