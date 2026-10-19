@@ -1,4 +1,4 @@
-"""단계 레지스트리(app/stages/registry.py)로 문서 색인(docs/README.md)과 단계별 README 를 만든다.
+"""단계 레지스트리(app/stages/registry/)로 문서 색인(docs/README.md)과 단계별 README 를 만든다.
 
 화면(메뉴 · 단계 설명 · 맵)과 문서가 같은 원본에서 나오도록 하기 위함이다. 레지스트리를 고친 뒤 실행:
 
@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 
 from app.stages import registry  # noqa: E402
 
-GENERATED = "<!-- 이 파일은 scripts/gen_docs.py 가 단계 레지스트리(app/stages/registry.py)로 만듭니다. 내용을 바꾸려면 레지스트리를 고친 뒤 다시 실행하세요. -->"
+GENERATED = "<!-- 이 파일은 scripts/gen_docs.py 가 단계 레지스트리(app/stages/registry/)로 만듭니다. 내용을 바꾸려면 레지스트리를 고친 뒤 다시 실행하세요. -->"
 
 GUIDES = [
     ("guides/architecture.md", "아키텍처 — 코드 구조(core · stages · web)와 동작 방식"),
@@ -139,7 +139,7 @@ def index() -> str:
             *TREE,
             "",
             "- 단계 폴더 이름 = `<번호>-<이름>` (번호는 소문자, 이름은 레지스트리 키에서 맵 접두어를 뺀 것 — 예: `as1-intake`, `k1-requirements`, `m-multimodal`)",
-            "- 생성 문서(색인 · 단계 README · 공통 맵 개요 · 맵 개요의 단계 표)는 레지스트리(`app/stages/registry.py`)를 고친 뒤 `uv run python scripts/gen_docs.py` 로 다시 만듭니다.",
+            "- 생성 문서(색인 · 단계 README · 공통 맵 개요 · 맵 개요의 단계 표)는 레지스트리(`app/stages/registry/`)를 고친 뒤 `uv run python scripts/gen_docs.py` 로 다시 만듭니다.",
             "- 상태: ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정",
             "",
             "## 맵",
