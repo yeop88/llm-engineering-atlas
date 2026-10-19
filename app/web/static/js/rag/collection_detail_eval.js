@@ -23,26 +23,25 @@ $("#e-method").addEventListener("change", evMethodChanged);
 async function evLlmStatus() {
   const s = await api("/api/llm/status");
   $("#e-llm-status").innerHTML = s.default.error
-    ? `<span class="badge warn">LLM 미설정</span> ${esc(s.default.error)}`
-    : `<span class="badge ok">사용 가능</span> 기본: ${s.default.provider === "openai" ? "OpenAI 호환" : "Claude"} · <span class="mono">${esc(s.default.model)}</span>${s.default.base_url ? ` · ${esc(s.default.base_url)}` : ""}`;
+    ? html`<span class="badge warn">LLM 미설정</span> ${s.default.error}`
+    : html`<span class="badge ok">사용 가능</span> 기본: ${s.default.provider === "openai" ? "OpenAI 호환" : "Claude"} · <span class="mono">${s.default.model}</span>${s.default.base_url ? html` · ${s.default.base_url}` : ""}`;
 }
 
 function evRenderForm() {
   const ready = col.chunk_sets.filter(c => c.status === "ready");
   const cur = $("#e-cs").value;
-  $("#e-cs").innerHTML = ready.map(c => `<option value="${c.id}">#${c.id} ${esc(c.name)} (${c.n_chunks})</option>`).join("") || '<option value="">준비된 청크 세트 없음</option>';
+  $("#e-cs").innerHTML = html.or(html.join(ready.map(c => html`<option value="${c.id}">#${c.id} ${c.name} (${c.n_chunks})</option>`), ""), html`<option value="">준비된 청크 세트 없음</option>`);
   if (cur && ready.some(c => String(c.id) === cur)) $("#e-cs").value = cur;
 }
 
 async function evLoad() {
   evSets = await api(`/api/collections/${COLLECTION_ID}/eval-sets`);
-  $("#e-rows").innerHTML = evSets.map(s => `<tr>
-    <td>${s.id}</td><td><b>${esc(s.name)}</b>${s.stats?.generation?.failed ? ` <span class="badge warn" title="${esc((s.stats.generation.errors || []).join("\n"))}">실패 ${s.stats.generation.failed}</span>` : ""}</td>
-    <td class="small">${EV_METHOD[s.method] || s.method}${s.config?.llm ? `<div class="mono muted">${esc(s.config.llm.model)}</div>` : ""}</td>
+  $("#e-rows").innerHTML = html.or(html.join(evSets.map(s => html`<tr>
+    <td>${s.id}</td><td><b>${s.name}</b>${s.stats?.generation?.failed ? html` <span class="badge warn" title="${html.join((s.stats.generation.errors || []), "\n")}">실패 ${s.stats.generation.failed}</span>` : ""}</td>
+    <td class="small">${EV_METHOD[s.method] || s.method}${s.config?.llm ? html`<div class="mono muted">${s.config.llm.model}</div>` : ""}</td>
     <td class="num">${s.n_items}</td><td class="num">${s.stats?.lexical_overlap ?? "-"}</td>
     <td>${statusBadge(s.status, s.error)}</td>
-    <td class="right nowrap">${s.status === "ready" ? `<button class="btn sm" onclick="evView(${s.id})">검토</button><a class="btn sm" href="/api/eval-sets/${s.id}/export">내보내기</a>` : ""}<button class="btn sm danger" onclick="evDelete(${s.id})">삭제</button></td></tr>`).join("")
-    || '<tr><td colspan="7" class="empty">평가 세트가 없습니다</td></tr>';
+    <td class="right nowrap">${s.status === "ready" ? html`<button class="btn sm" onclick="evView(${s.id})">검토</button><a class="btn sm" href="/api/eval-sets/${s.id}/export">내보내기</a>` : ""}<button class="btn sm danger" onclick="evDelete(${s.id})">삭제</button></td></tr>`), ""), html`<tr><td colspan="7" class="empty">평가 세트가 없습니다</td></tr>`);
   clearTimeout(evTimer);
   if (evSets.some(s => s.status === "building")) evTimer = setTimeout(evLoad, 1500);
   if (typeof evRenderRunner === "function") evRenderRunner();
@@ -102,13 +101,13 @@ async function evView(id) {
   const s = evEditing;
   const g = s.stats.generation;
   $("#dlg-title").textContent = `평가 세트 #${s.id} · ${s.name}`;
-  $("#dlg-body").innerHTML = `<div class="small muted mb-2">질문 ${s.n_items}개 · 문서 ${s.stats.documents}개 · 유형 ${Object.entries(s.stats.by_type || {}).map(([k, v]) => `${EV_TYPE[k] || k} ${v}`).join(", ")}
-      ${g?.calls != null ? ` · LLM 호출 ${g.calls}회, 토큰 입력 ${fmtNum(g.input_tokens)} / 출력 ${fmtNum(g.output_tokens)}${g.empty ? `, 질문 없음 ${g.empty}` : ""}${g.evidence_fixed ? `, 근거 보정 ${g.evidence_fixed}` : ""}` : ""}</div>
+  $("#dlg-body").innerHTML = html`<div class="small muted mb-2">질문 ${s.n_items}개 · 문서 ${s.stats.documents}개 · 유형 ${html.join(Object.entries(s.stats.by_type || {}).map(([k, v]) => html`${EV_TYPE[k] || k} ${v}`), ", ")}
+      ${g?.calls != null ? html` · LLM 호출 ${g.calls}회, 토큰 입력 ${fmtNum(g.input_tokens)} / 출력 ${fmtNum(g.output_tokens)}${g.empty ? html`, 질문 없음 ${g.empty}` : ""}${g.evidence_fixed ? html`, 근거 보정 ${g.evidence_fixed}` : ""}` : ""}</div>
     <div class="table-wrap scroll-lg"><table>
       <tr><th><input type="checkbox" checked onchange="document.querySelectorAll('.ev-keep').forEach(c => c.checked = this.checked)" aria-label="전체"></th><th>질문</th><th>유형</th><th>정답 문서</th><th>근거 문장</th><th class="num">겹침</th></tr>
-      ${s.items.map((it, i) => `<tr><td><input type="checkbox" class="ev-keep" data-i="${i}" checked></td><td>${esc(it.query)}</td><td class="small nowrap">${EV_TYPE[it.type] || esc(it.type || "")}</td>
-        <td class="small">${esc(it.filename || it.doc_ids.join(","))}</td><td class="small muted">${esc((it.evidence || "").slice(0, 120))}${it.evidence_exact === false ? ' <span class="badge warn" title="LLM 이 적은 근거가 원문과 달라 가장 비슷한 원문 문장으로 바꿨습니다">보정</span>' : ""}</td>
-        <td class="num mono small">${it.lexical_overlap ?? "-"}</td></tr>`).join("")}
+      ${html.join(s.items.map((it, i) => html`<tr><td><input type="checkbox" class="ev-keep" data-i="${i}" checked></td><td>${it.query}</td><td class="small nowrap">${EV_TYPE[it.type] || it.type || ""}</td>
+        <td class="small">${it.filename || html.join(it.doc_ids, ",")}</td><td class="small muted">${(it.evidence || "").slice(0, 120)}${it.evidence_exact === false ? html` <span class="badge warn" title="LLM 이 적은 근거가 원문과 달라 가장 비슷한 원문 문장으로 바꿨습니다">보정</span>` : ""}</td>
+        <td class="num mono small">${it.lexical_overlap ?? "-"}</td></tr>`), "")}
     </table></div>
     <div class="row mt-3"><span class="small muted">체크 해제한 질문을 빼고 저장합니다.</span><span class="spacer"></span><button class="btn primary" onclick="evSaveReview(this)">저장</button></div>`;
   $("#dlg").showModal();
@@ -141,17 +140,17 @@ async function evRenderRunner() {
   const csName = id => col.chunk_sets.find(c => c.id === id)?.name || `#${id}`;
   const keep = sel => [...area.querySelectorAll(sel + ":checked")].map(x => x.value);
   const prev = area.querySelector("#r-set") ? { set: $("#r-set").value, idx: keep(".r-idx"), modes: keep(".r-mode"), rr: keep(".r-rr"), max: $("#r-max").value, out: $("#r-out").innerHTML } : null;
-  area.innerHTML = `<div class="card stack">
+  area.innerHTML = html`<div class="card stack">
     <h2>조합 평가 <span class="small muted">청킹 × 임베딩 모델 × 검색 방식 × 리랭커</span></h2>
     <div class="row">
-      <div class="field grow"><label for="r-set">평가 세트</label><select id="r-set">${ready.map(s => `<option value="${s.id}">#${s.id} ${esc(s.name)} (${s.n_items}문항)</option>`).join("")}</select></div>
+      <div class="field grow"><label for="r-set">평가 세트</label><select id="r-set">${html.join(ready.map(s => html`<option value="${s.id}">#${s.id} ${s.name} (${s.n_items}문항)</option>`), "")}</select></div>
       <div class="field"><label for="r-max">질문 수 제한</label><input class="w-md" id="r-max" type="number" min="1" placeholder="전체"></div>
     </div>
     <div class="grid cols-3">
-      <div><span class="field-label">벡터 인덱스 (청크 세트 · 모델)</span>${idxs.map(i => `<label class="row small my-1"><input type="checkbox" class="r-idx" value="${i.id}" checked> ${esc(csName(i.chunk_set_id))} · <span class="mono">${esc(i.model_hf_id.split("/").pop())}</span>${i.truncate_dim ? ` ${i.truncate_dim}d` : ""}</label>`).join("") || '<div class="small muted">준비된 인덱스가 없습니다 (BM25 만 가능)</div>'}</div>
-      <div><span class="field-label">검색 방식</span>${Object.entries(EV_MODE).map(([k, v]) => `<label class="row small my-1"><input type="checkbox" class="r-mode" value="${k}" ${k !== "dense" ? "checked" : ""}> ${v}</label>`).join("")}
+      <div><span class="field-label">벡터 인덱스 (청크 세트 · 모델)</span>${html.join(idxs.map(i => html`<label class="row small my-1"><input type="checkbox" class="r-idx" value="${i.id}" checked> ${csName(i.chunk_set_id)} · <span class="mono">${i.model_hf_id.split("/").pop()}</span>${i.truncate_dim ? html` ${i.truncate_dim}d` : ""}</label>`), "") || html`<div class="small muted">준비된 인덱스가 없습니다 (BM25 만 가능)</div>`}</div>
+      <div><span class="field-label">검색 방식</span>${html.join(Object.entries(EV_MODE).map(([k, v]) => html`<label class="row small my-1"><input type="checkbox" class="r-mode" value="${k}" ${k !== "dense" ? "checked" : ""}> ${v}</label>`), "")}
         <div class="small muted">BM25 는 고른 인덱스들의 청크 세트마다 한 번씩 (인덱스를 고르지 않으면 모든 청크 세트).</div></div>
-      <div><span class="field-label">리랭커 ('없음'은 항상 포함)</span>${evRerankers.map(r => `<label class="row small my-1"><input type="checkbox" class="r-rr" value="${r.id}"> ${esc(r.name)}${r.cached ? "" : ' <span class="badge">미다운로드</span>'}</label>`).join("") || '<div class="small muted">카탈로그에 리랭커가 없습니다</div>'}</div>
+      <div><span class="field-label">리랭커 ('없음'은 항상 포함)</span>${html.join(evRerankers.map(r => html`<label class="row small my-1"><input type="checkbox" class="r-rr" value="${r.id}"> ${r.name}${r.cached ? "" : html` <span class="badge">미다운로드</span>`}</label>`), "") || html`<div class="small muted">카탈로그에 리랭커가 없습니다</div>`}</div>
     </div>
     <div class="row"><span class="small muted" id="r-count"></span><span class="spacer"></span><button class="btn primary" id="r-run">평가 실행</button></div>
     <div id="r-progress" hidden></div>
@@ -190,13 +189,13 @@ function evCount() {
   const set = evSets.find(s => String(s.id) === $("#r-set").value);
   const q = Math.min(set?.n_items || 0, +$("#r-max").value || Infinity);
   const slow = $("#ev-area").querySelector(".r-rr:checked") ? " · 리랭커는 질문마다 후보 30개를 다시 점수 매겨 느립니다" : "";
-  $("#r-count").innerHTML = `${n}개 조합 × 질문 ${q}개 = 검색 ${fmtNum(n * q)}번${n > 32 ? ' <span class="badge err">최대 32개 조합</span>' : ""}${slow}`;
+  $("#r-count").innerHTML = html`${n}개 조합 × 질문 ${q}개 = 검색 ${fmtNum(n * q)}번${n > 32 ? html` <span class="badge err">최대 32개 조합</span>` : ""}${slow}`;
   $("#r-run").disabled = !n || n > 32;
 }
 
 async function evHistory() {
   const runs = await api(`/api/eval-sets/${$("#r-set").value}/runs`);
-  $("#r-history").innerHTML = runs.length ? `<details><summary class="small">이전 평가 ${runs.length}회</summary><table>${runs.map(r => `<tr><td class="small nowrap">${fmtDate(r.created_at)}</td><td class="small">${r.n_configs}개 조합 · 1위 <b>${esc(r.best?.label || "-")}</b> ${r.best ? `nDCG@10 ${pct(r.best.metrics["ndcg@10"])}` : ""}</td><td class="right"><button class="btn sm" onclick="evShowRun(${r.id})">보기</button></td></tr>`).join("")}</table></details>` : "";
+  $("#r-history").innerHTML = runs.length ? html`<details><summary class="small">이전 평가 ${runs.length}회</summary><table>${html.join(runs.map(r => html`<tr><td class="small nowrap">${fmtDate(r.created_at)}</td><td class="small">${r.n_configs}개 조합 · 1위 <b>${r.best?.label || "-"}</b> ${r.best ? html`nDCG@10 ${pct(r.best.metrics["ndcg@10"])}` : ""}</td><td class="right"><button class="btn sm" onclick="evShowRun(${r.id})">보기</button></td></tr>`), "")}</table></details>` : "";
 }
 async function evShowRun(id) { const r = await api(`/api/runs/${id}`); evRender({ ...r.result, run_id: id }); }
 
@@ -214,14 +213,14 @@ async function evRun(e) {
 
 // 막대 + 95% 구간 (0~100%)
 function ciBar(v, ci) {
-  const whisker = ci ? `<div title="95% 구간 ${pct(ci[0])}–${pct(ci[1])}" style="position:absolute;top:6px;height:2px;left:${ci[0] * 100}%;width:${Math.max(0.5, (ci[1] - ci[0]) * 100)}%;background:var(--text)"></div>`
-    + `<div style="position:absolute;top:3px;height:8px;width:2px;left:${ci[0] * 100}%;background:var(--text)"></div>`
-    + `<div style="position:absolute;top:3px;height:8px;width:2px;left:calc(${ci[1] * 100}% - 2px);background:var(--text)"></div>` : "";
-  return `<div class="grow bg-code min-w-sm" style="position:relative;height:14px"><div class="bar" style="position:absolute;top:0;bottom:0;left:0;width:${v * 100}%;border-radius:4px"></div>${whisker}</div>`;
+  const whisker = ci ? html`<div title="95% 구간 ${pct(ci[0])}–${pct(ci[1])}" style="position:absolute;top:6px;height:2px;left:${ci[0] * 100}%;width:${Math.max(0.5, (ci[1] - ci[0]) * 100)}%;background:var(--text)"></div>
+    <div style="position:absolute;top:3px;height:8px;width:2px;left:${ci[0] * 100}%;background:var(--text)"></div>
+    <div style="position:absolute;top:3px;height:8px;width:2px;left:calc(${ci[1] * 100}% - 2px);background:var(--text)"></div>` : "";  // + 로 이으면 글자열이 되어 아래에서 다시 이스케이프된다
+  return html`<div class="grow bg-code min-w-sm" style="position:relative;height:14px"><div class="bar" style="position:absolute;top:0;bottom:0;left:0;width:${v * 100}%;border-radius:4px"></div>${whisker}</div>`;
 }
 function rankCell(r, title) {
   const style = r === 1 ? "background:color-mix(in srgb, var(--ok) 18%, transparent)" : r == null ? "color:var(--status-critical);font-weight:700" : r > 5 ? "color:var(--status-critical)" : "";
-  return `<td class="num mono" style="${style}" title="${esc(title)}">${r ?? "✗"}</td>`;
+  return html`<td class="num mono" style="${style}" title="${title}">${r ?? "✗"}</td>`;
 }
 
 let evLastResult = null;
@@ -229,20 +228,20 @@ function evRender(r) {
   evLastResult = r;
   const ok = r.results.filter(e => e.status === "ok");
   const types = [...new Set(ok.flatMap(e => Object.keys(e.by_type || {})))];
-  const vs = e => (e.vs_best ? `${(e.vs_best.diff * 100).toFixed(1)}%p ${e.vs_best.significant ? '<span class="badge err">유의한 차이</span>' : '<span class="badge">차이 불확실</span>'}` : ok.length > 1 ? "기준" : "");
-  $("#r-out").innerHTML = `<div class="card stack">
-    <div class="row between"><h2>평가 결과 · ${esc(r.eval_set?.name || "")}</h2><span class="small muted">질문 ${r.n_queries}개${r.n_unanswerable_skipped ? ` (답 없는 질문 ${r.n_unanswerable_skipped}개는 검색 평가에서 제외 — 답변 평가에서 채점)` : ""} · ${r.results.length}개 조합${r.seconds != null ? ` · ${r.seconds}s` : ""}${r.run_id ? ` · run #${r.run_id}` : ""}</span></div>
+  const vs = e => (e.vs_best ? html`${(e.vs_best.diff * 100).toFixed(1)}%p ${e.vs_best.significant ? html`<span class="badge err">유의한 차이</span>` : html`<span class="badge">차이 불확실</span>`}` : ok.length > 1 ? "기준" : "");
+  $("#r-out").innerHTML = html`<div class="card stack">
+    <div class="row between"><h2>평가 결과 · ${r.eval_set?.name || ""}</h2><span class="small muted">질문 ${r.n_queries}개${r.n_unanswerable_skipped ? html` (답 없는 질문 ${r.n_unanswerable_skipped}개는 검색 평가에서 제외 — 답변 평가에서 채점)` : ""} · ${r.results.length}개 조합${r.seconds != null ? html` · ${r.seconds}s` : ""}${r.run_id ? html` · run #${r.run_id}` : ""}</span></div>
     <div class="table-wrap"><table>
       <tr><th>#</th><th>설정</th><th>nDCG@10 (95% 구간)</th><th class="num">Hit@1</th><th class="num">Hit@5</th><th class="num">Hit@10</th><th class="num">MRR@10</th><th class="num" title="정답 문서가 상위 5개 문서 안에 든 비율">문서 R@5</th><th class="num">지연 평균/p95</th><th>1위 대비</th></tr>
-      ${ok.map((e, i) => `<tr><td>${i + 1}</td><td class="small"><b>${esc(e.label)}</b></td>
+      ${html.join(ok.map((e, i) => html`<tr><td>${i + 1}</td><td class="small"><b>${e.label}</b></td>
         <td><div class="row nowrap-row gap-2"><span class="mono w-xs">${pct(e.metrics["ndcg@10"])}</span>${ciBar(e.metrics["ndcg@10"], e.ci["ndcg@10"])}</div></td>
         <td class="num">${pct(e.metrics["hit@1"])}</td><td class="num">${pct(e.metrics["hit@5"])}</td><td class="num">${pct(e.metrics["hit@10"])}</td><td class="num">${pct(e.metrics["mrr@10"])}</td><td class="num">${pct(e.metrics["doc_recall@5"])}</td>
-        <td class="num small nowrap">${e.latency_ms.mean} / ${e.latency_ms.p95}ms</td><td class="small nowrap">${vs(e)}</td></tr>`).join("")}
-      ${r.results.filter(e => e.status !== "ok").map(e => `<tr><td>-</td><td class="small">${esc(e.label)}</td><td colspan="8"><div class="errbox">${esc(e.error)}</div></td></tr>`).join("")}
+        <td class="num small nowrap">${e.latency_ms.mean} / ${e.latency_ms.p95}ms</td><td class="small nowrap">${vs(e)}</td></tr>`), "")}
+      ${html.join(r.results.filter(e => e.status !== "ok").map(e => html`<tr><td>-</td><td class="small">${e.label}</td><td colspan="8"><div class="errbox">${e.error}</div></td></tr>`), "")}
     </table></div>
     <div class="small muted">Hit@k = 근거 문장을 담은 청크(근거가 없으면 정답 문서의 청크)가 상위 k개 안에 든 비율, 검색 지표는 % 단위. 검은 선 = 질문을 1,000번 다시 뽑아 구한 95% 구간. '차이 불확실'은 같은 질문들로 짝지어 비교했을 때 1위와의 차이가 우연일 수 있다는 뜻입니다.</div>
-    ${types.length > 1 ? `<h3>질문 유형별 nDCG@10</h3><div class="table-wrap"><table><tr><th>설정</th>${types.map(t => `<th class="num">${EV_TYPE[t] || esc(t)} (${ok[0].by_type[t]?.n ?? 0})</th>`).join("")}</tr>
-      ${ok.map(e => `<tr><td class="small">${esc(e.label)}</td>${types.map(t => `<td class="num">${e.by_type[t] ? pct(e.by_type[t]["ndcg@10"]) : "-"}</td>`).join("")}</tr>`).join("")}</table></div>` : ""}
+    ${types.length > 1 ? html`<h3>질문 유형별 nDCG@10</h3><div class="table-wrap"><table><tr><th>설정</th>${html.join(types.map(t => html`<th class="num">${EV_TYPE[t] || t} (${ok[0].by_type[t]?.n ?? 0})</th>`), "")}</tr>
+      ${html.join(ok.map(e => html`<tr><td class="small">${e.label}</td>${html.join(types.map(t => html`<td class="num">${e.by_type[t] ? pct(e.by_type[t]["ndcg@10"]) : "-"}</td>`), "")}</tr>`), "")}</table></div>` : ""}
     <h3>질문별 정답 순위 <label class="small muted fw-normal"><input type="checkbox" id="r-diff" checked> 설정마다 결과가 다른 질문만</label></h3>
     <div class="table-wrap scroll-md"><table id="r-qtable"></table></div>
     <div class="small muted">숫자 = 정답 청크의 순위(열 번호 = 위 표의 순위), ✗ = 상위 10개 밖. 칸에 마우스를 올리면 그 설정의 1위 결과가 보입니다.</div>
@@ -250,10 +249,10 @@ function evRender(r) {
   const qtable = () => {
     const onlyDiff = $("#r-diff").checked;
     const rows = r.queries.filter(q => !onlyDiff || new Set(q.ranks.map(x => (x == null ? 99 : Math.min(x, 6)))).size > 1);
-    $("#r-qtable").innerHTML = `<tr><th>질문</th><th>정답 문서</th>${ok.map((e, i) => `<th class="num" title="${esc(e.label)}">${i + 1}</th>`).join("")}</tr>`
-      + rows.map(q => `<tr><td class="small">${esc(q.query)}${q.type ? ` <span class="badge">${EV_TYPE[q.type] || esc(q.type)}</span>` : ""}</td><td class="small muted">${esc(q.filename || "")}</td>
-        ${q.ranks.map((x, i) => rankCell(x, `${ok[i].label}\n1위: ${q.top1[i]?.filename || "-"} — ${(q.top1[i]?.text || "").slice(0, 120)}`)).join("")}</tr>`).join("")
-      || `<tr><td colspan="${ok.length + 2}" class="empty">모든 설정의 결과가 같습니다</td></tr>`;
+    $("#r-qtable").innerHTML = html`<tr><th>질문</th><th>정답 문서</th>${html.join(ok.map((e, i) => html`<th class="num" title="${e.label}">${i + 1}</th>`), "")}</tr>`
+      + rows.map(q => html`<tr><td class="small">${q.query}${q.type ? html` <span class="badge">${EV_TYPE[q.type] || q.type}</span>` : ""}</td><td class="small muted">${q.filename || ""}</td>
+        ${html.join(q.ranks.map((x, i) => rankCell(x, `${ok[i].label}\n1위: ${q.top1[i]?.filename || "-"} — ${(q.top1[i]?.text || "").slice(0, 120)}`)), "")}</tr>`).join("")
+      || html`<tr><td colspan="${ok.length + 2}" class="empty">모든 설정의 결과가 같습니다</td></tr>`;
   };
   $("#r-diff").addEventListener("change", qtable);
   qtable();

@@ -19,6 +19,10 @@ function _htmlPart(v) {
 function html(strings, ...vals) {
   return new SafeHtml(strings.reduce((out, str, i) => out + str + (i < vals.length ? _htmlPart(vals[i]) : ""), ""));
 }
+// 목록 잇기: 항목은 html`` 이면 그대로 · 글자면 이스케이프, 구분자는 코드에 적은 HTML(예: "<br>")이라 그대로
+html.join = (items, sep = "") => new SafeHtml([...items].map(_htmlPart).join(String(sep)));
+// html`` 결과는 객체라 빈 목록이어도 || 에서 참이 된다 — 빈 결과면 대신 보일 것(예: '없음' 줄)
+html.or = (a, b) => (String(a ?? "") ? a : b);
 
 // 상태 표시: 불러오는 중 · 빈 화면 · 오류 · 작업 진행 · 확인 창 — 화면마다 모양이 달라 '멈춘 건지 도는 건지' 알기 어려웠다
 const ui = {
@@ -130,15 +134,15 @@ function isRecent(m, days = RECENT_DAYS) {
 
 function modelBadges(m) {
   const b = [];
-  if (m.kind === "reranker") b.push('<span class="badge" title="검색 결과 재정렬용 Cross-Encoder">리랭커</span>');
-  if (isRecent(m)) b.push(`<span class="badge new" title="최근 ${RECENT_DAYS}일 이내 공개">최근</span>`);
-  if (m.loaded_profiles?.length) b.push(`<span class="badge ok">로드됨${m.loaded_profiles.includes("multimodal") ? "(MM)" : ""}</span>`);
-  else if (m.cached) b.push('<span class="badge">다운로드됨</span>');
-  if (m.download_job) b.push(`<span class="badge warn">다운로드 ${pct(m.download_job.progress)}%</span>`);
-  if (m.gated) b.push('<span class="badge warn" title="HF 라이선스 동의 + HF_TOKEN 필요">gated</span>');
-  if (m.trust_remote_code) b.push('<span class="badge muted" title="trust_remote_code=True">remote code</span>');
-  if (m.last_error) b.push(`<span class="badge err" title="${esc(m.last_error)}">오류</span>`);
-  return b.join(" ");
+  if (m.kind === "reranker") b.push(html`<span class="badge" title="검색 결과 재정렬용 Cross-Encoder">리랭커</span>`);
+  if (isRecent(m)) b.push(html`<span class="badge new" title="최근 ${RECENT_DAYS}일 이내 공개">최근</span>`);
+  if (m.loaded_profiles?.length) b.push(html`<span class="badge ok">로드됨${m.loaded_profiles.includes("multimodal") ? "(MM)" : ""}</span>`);
+  else if (m.cached) b.push(html`<span class="badge">다운로드됨</span>`);
+  if (m.download_job) b.push(html`<span class="badge warn">다운로드 ${pct(m.download_job.progress)}%</span>`);
+  if (m.gated) b.push(html`<span class="badge warn" title="HF 라이선스 동의 + HF_TOKEN 필요">gated</span>`);
+  if (m.trust_remote_code) b.push(html`<span class="badge muted" title="trust_remote_code=True">remote code</span>`);
+  if (m.last_error) b.push(html`<span class="badge err" title="${m.last_error}">오류</span>`);
+  return html.join(b, " ");
 }
 
 let _modelsCache = null;
@@ -153,10 +157,10 @@ async function fillModelSelect(sel, { multimodal = false, preferred = [], kind =
   const score = m => (m.loaded_profiles.length ? 2 : 0) + (m.cached ? 1 : 0);
   models.sort((a, b) => score(b) - score(a) || (b.release_date || "").localeCompare(a.release_date || ""));
   const keep = new Set([...sel.selectedOptions].map(o => o.value));
-  sel.innerHTML = models.map(m => {
+  sel.innerHTML = html.join(models.map(m => {
     const state = m.loaded_profiles.length ? "● " : m.cached ? "○ " : "  ";
-    return `<option value="${m.id}" data-dims="${(m.mrl_dims || []).join(",")}">${state}${esc(m.name)} — ${esc(m.hf_id)}${m.params ? ` (${esc(m.params)})` : ""}</option>`;
-  }).join("");
+    return html`<option value="${m.id}" data-dims="${html.join((m.mrl_dims || []), ",")}">${state}${m.name} — ${m.hf_id}${m.params ? html` (${m.params})` : ""}</option>`;
+  }), "");
   const want = keep.size ? keep : new Set(preferred.map(String));
   [...sel.options].forEach(o => { if (want.has(o.value)) o.selected = true; });
   if (!sel.multiple && !sel.value && sel.options.length) sel.options[0].selected = true;
@@ -171,7 +175,7 @@ function fillDimSelect(modelSel, dimSel) {
   [...modelSel.selectedOptions].forEach(o => (o.dataset.dims || "").split(",").filter(Boolean).forEach(d => dims.add(Number(d))));
   const cur = dimSel.value;
   dimSel.innerHTML = '<option value="">전체 차원 (기본)</option>' +
-    [...dims].sort((a, b) => b - a).map(d => `<option value="${d}">${d} (MRL)</option>`).join("");
+    [...dims].sort((a, b) => b - a).map(d => html`<option value="${d}">${d} (MRL)</option>`).join("");
   if ([...dimSel.options].some(o => o.value === cur)) dimSel.value = cur;
 }
 
@@ -187,15 +191,15 @@ async function pollJob(id, onUpdate, interval = 1000) {
 function appliedInfo(a) {
   if (!a) return "";
   const parts = [];
-  if (a.prompt_name) parts.push(`prompt_name=<code>${esc(a.prompt_name)}</code>`);
-  if (a.prefix) parts.push(`prefix=<code>${esc(a.prefix.trim())}</code>`);
-  if (a.extra_kwargs) parts.push(`kwargs=<code>${esc(JSON.stringify(a.extra_kwargs))}</code>`);
+  if (a.prompt_name) parts.push(html`prompt_name=<code>${a.prompt_name}</code>`);
+  if (a.prefix) parts.push(html`prefix=<code>${a.prefix.trim()}</code>`);
+  if (a.extra_kwargs) parts.push(html`kwargs=<code>${JSON.stringify(a.extra_kwargs)}</code>`);
   if (a.truncate_dim) parts.push(`truncate_dim=${a.truncate_dim}`);
-  return parts.join(" · ") || '<span class="muted">프롬프트 없음</span>';
+  return html.or(html.join(parts, " · "), html`<span class="muted">프롬프트 없음</span>`);
 }
 
 function warningsHtml(ws) {
-  return (ws || []).map(w => `<div class="warnbox">${esc(w)}</div>`).join("");
+  return html.join((ws || []).map(w => html`<div class="warnbox">${w}</div>`), "");
 }
 
 // 탭
@@ -282,7 +286,7 @@ function bindCtx(root = document) {
 async function setupCollectionPickers(o) {
   Ctx.used = true;
   const cols = await api("/api/collections");
-  o.col.innerHTML = cols.length ? html`${cols.map(c => html`<option value="${c.id}">${c.name}</option>`)}` : '<option value="">컬렉션 없음</option>';
+  o.col.innerHTML = cols.length ? html`${cols.map(c => html`<option value="${c.id}">${c.name}</option>`)}` : html`<option value="">컬렉션 없음</option>`;
   const want = Ctx.get();
   const remember = (k, sel) => sel?.value && Ctx.set({ [k]: sel.value, [k + "Label"]: sel.selectedOptions[0]?.textContent.trim() });
   if (want.col && cols.some(c => String(c.id) === want.col)) { o.col.value = want.col; if (!want.colLabel) remember("col", o.col); }
@@ -292,7 +296,7 @@ async function setupCollectionPickers(o) {
     const c = Ctx.get();
     const fill = (sel, items, empty, key) => {
       if (!sel) return;
-      sel.innerHTML = items.length ? html`${items}` : `<option value="">${empty}</option>`;
+      sel.innerHTML = items.length ? html`${items}` : html`<option value="">${empty}</option>`;
       if (c[key] && [...sel.options].some(x => x.value === c[key])) sel.value = c[key];
     };
     fill(o.idx, d.indexes.filter(i => i.status === "ready").map(i => html`<option value="${i.id}">${i.model_hf_id.split(/[\/]/).pop()} · #${i.id}</option>`), "준비된 인덱스 없음", "idx");
@@ -345,5 +349,5 @@ function setCrumb(name, parentHref = location.pathname.replace(/\/[^/]+\/?$/, ""
 
 // 답변의 조문 · 판례 번호 검사 결과 (rag/legal.py) — 번호가 없으면 아무것도 그리지 않는다
 const CITE_ST = { in_sources: ["근거에 있음", "ok"], in_collection: ["근거 밖 · 자료에 있음", "warn"], not_found: ["자료에 없음 (지어낸 번호?)", "err"], unchecked: ["확인 안 함", ""] };
-const citeBox = c => (c && c.n ? `<div class="small">조문 · 판례 번호: ${c.refs.map(r => `<span class="badge ${CITE_ST[r.status][1]}" title="${esc(CITE_ST[r.status][0])}">${esc(r.ref)}${r.source ? ` [${r.source}]` : ""} · ${esc(CITE_ST[r.status][0])}</span>`).join(" ")}</div>` : "");
-const vsBadge = d => (d ? `${d.diff >= 0 ? "+" : ""}${(d.diff * 100).toFixed(1)}%p ${d.significant ? '<span class="badge err">유의</span>' : '<span class="badge">불확실</span>'}` : "기준");
+const citeBox = c => (c && c.n ? html`<div class="small">조문 · 판례 번호: ${html.join(c.refs.map(r => html`<span class="badge ${CITE_ST[r.status][1]}" title="${CITE_ST[r.status][0]}">${r.ref}${r.source ? html` [${r.source}]` : ""} · ${CITE_ST[r.status][0]}</span>`), " ")}</div>` : "");
+const vsBadge = d => (d ? html`${d.diff >= 0 ? "+" : ""}${(d.diff * 100).toFixed(1)}%p ${d.significant ? html`<span class="badge err">유의</span>` : html`<span class="badge">불확실</span>`}` : "기준");

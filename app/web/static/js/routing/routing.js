@@ -7,23 +7,23 @@ const R_COLOR = { rule: 1, confidence: 2, llm: 3 };
 // 학습 라우터는 4번째 색이 검증을 통과하지 못해(파랑 · 보라, 주황 · 노랑이 겹침) 색 대신 진한 삼각형으로 구분한다
 const R_SHAPE = { always_easy: "square", always_hard: "diamond", oracle: "ring", learned: "triangle" };
 function rMark(k, x, y) {
-  if (R_COLOR[k]) return `<circle cx="${x}" cy="${y}" r="6" fill="var(--series-${R_COLOR[k]})" stroke="var(--panel)" stroke-width="2"/>`;
-  if (R_SHAPE[k] === "square") return `<rect x="${x - 5.5}" y="${y - 5.5}" width="11" height="11" rx="2" fill="var(--muted)"/>`;
-  if (R_SHAPE[k] === "triangle") return `<path d="M${x},${y - 7} L${x + 7},${y + 6} L${x - 7},${y + 6} Z" fill="var(--text)" stroke="var(--panel)" stroke-width="1.5"/>`;
-  if (R_SHAPE[k] === "diamond") return `<path d="M${x},${y - 7} L${x + 7},${y} L${x},${y + 7} L${x - 7},${y} Z" fill="var(--muted)"/>`;
-  return `<circle cx="${x}" cy="${y}" r="6" fill="none" stroke="var(--text)" stroke-width="2"/>`;
+  if (R_COLOR[k]) return html`<circle cx="${x}" cy="${y}" r="6" fill="var(--series-${R_COLOR[k]})" stroke="var(--panel)" stroke-width="2"/>`;
+  if (R_SHAPE[k] === "square") return html`<rect x="${x - 5.5}" y="${y - 5.5}" width="11" height="11" rx="2" fill="var(--muted)"/>`;
+  if (R_SHAPE[k] === "triangle") return html`<path d="M${x},${y - 7} L${x + 7},${y + 6} L${x - 7},${y + 6} Z" fill="var(--text)" stroke="var(--panel)" stroke-width="1.5"/>`;
+  if (R_SHAPE[k] === "diamond") return html`<path d="M${x},${y - 7} L${x + 7},${y} L${x},${y + 7} L${x - 7},${y} Z" fill="var(--muted)"/>`;
+  return html`<circle cx="${x}" cy="${y}" r="6" fill="none" stroke="var(--text)" stroke-width="2"/>`;
 }
 function rKey(k) {
-  return `<svg width="14" height="14" viewBox="0 0 14 14" style="vertical-align:-2px;margin-right:4px">${rMark(k, 7, 7)}</svg>`;
+  return html`<svg width="14" height="14" viewBox="0 0 14 14" style="vertical-align:-2px;margin-right:4px">${rMark(k, 7, 7)}</svg>`;
 }
-const PATH = { easy: '<span class="badge ok">쉬움 → 빠른 경로</span>', hard: '<span class="badge warn">어려움 → 전체 경로</span>' };
+const PATH = { easy: html`<span class="badge ok">쉬움 → 빠른 경로</span>`, hard: html`<span class="badge warn">어려움 → 전체 경로</span>` };
 
 async function rLoad() {
   const cols = await api("/api/collections");
-  $("#r-col").innerHTML = cols.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("") || '<option value="">컬렉션 없음</option>';
+  $("#r-col").innerHTML = html.or(html.join(cols.map(c => html`<option value="${c.id}">${c.name}</option>`), ""), html`<option value="">컬렉션 없음</option>`);
   applyCtx($("#r-col"));
   const rr = (await getModels()).filter(m => m.kind === "reranker" && m.cached);
-  $("#r-rr").innerHTML += rr.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join("");
+  $("#r-rr").innerHTML += html.join(rr.map(r => html`<option value="${r.id}">${r.name}</option>`), "");
   if (rr.length) $("#r-rr").value = String(rr[0].id);
   await rDetail();
 }
@@ -31,14 +31,14 @@ async function rDetail() {
   if (!$("#r-col").value) return;
   rCol = await api(`/api/collections/${$("#r-col").value}`);
   const idx = rCol.indexes.filter(i => i.status === "ready");
-  $("#r-idx").innerHTML = idx.map(i => `<option value="${i.id}">${esc(i.model_hf_id.split(/[\\/]/).pop())} · #${i.id}</option>`).join("") || '<option value="">준비된 인덱스 없음</option>';
+  $("#r-idx").innerHTML = html.or(html.join(idx.map(i => html`<option value="${i.id}">${i.model_hf_id.split(/[\\/]/).pop()} · #${i.id}</option>`), ""), html`<option value="">준비된 인덱스 없음</option>`);
   applyCtx($("#r-idx"));
-  $("#r-cs").innerHTML = rCol.chunk_sets.filter(c => c.status === "ready").map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  $("#r-cs").innerHTML = html.join(rCol.chunk_sets.filter(c => c.status === "ready").map(c => html`<option value="${c.id}">${c.name}</option>`), "");
   applyCtx($("#r-cs"));
   if (!idx.length) $("#r-mode").value = "bm25";
   rMode();
   const sets = (await api(`/api/collections/${rCol.id}/eval-sets`)).filter(s => s.status === "ready");
-  $("#e-set").innerHTML = sets.map(s => `<option value="${s.id}">#${s.id} ${esc(s.name)} (${s.n_items}문항)</option>`).join("") || '<option value="">평가 세트 없음</option>';
+  $("#e-set").innerHTML = html.or(html.join(sets.map(s => html`<option value="${s.id}">#${s.id} ${s.name} (${s.n_items}문항)</option>`), ""), html`<option value="">평가 세트 없음</option>`);
   applyCtx($("#e-set"));
 }
 function rMode() { const b = $("#r-mode").value === "bm25"; $("#r-idx-wrap").hidden = b; $("#r-cs-wrap").hidden = !b; }
@@ -63,8 +63,8 @@ $("#q-run").onclick = async e => {
   if (!q) return toast("질문을 입력하세요", "err");
   if (!rRouters().length) return toast("라우터를 고르세요", "err");
   const r = await busy(e.target, () => api("/api/routing/route", { method: "POST", body: { question: q, easy: rPaths().easy, routers: rRouters(), threshold: +$("#r-th").value, rule_max_chars: +$("#r-max").value } }));
-  $("#q-out").innerHTML = `<div class="table-wrap"><table><tr><th>라우터</th><th>판단</th><th>이유</th><th class="num">판단 시간</th></tr>
-    ${r.decisions.map(d => `<tr><td><b>${esc(d.label)}</b></td><td>${PATH[d.path]}</td><td class="small">${esc(d.reason)}${d.top ? ` <span class="muted">(1·2위: ${d.top.map(esc).join(", ")})</span>` : ""}</td><td class="num">${d.ms}ms</td></tr>`).join("")}</table></div>`;
+  $("#q-out").innerHTML = html`<div class="table-wrap"><table><tr><th>라우터</th><th>판단</th><th>이유</th><th class="num">판단 시간</th></tr>
+    ${html.join(r.decisions.map(d => html`<tr><td><b>${d.label}</b></td><td>${PATH[d.path]}</td><td class="small">${d.reason}${d.top ? html` <span class="muted">(1·2위: ${html.join(d.top, ", ")})</span>` : ""}</td><td class="num">${d.ms}ms</td></tr>`), "")}</table></div>`;
 };
 $("#q-text").addEventListener("keydown", e => { if (e.key === "Enter") $("#q-run").click(); });
 
@@ -91,10 +91,11 @@ function rChart(r) {
   const xMax = Math.max(...xs) * 1.08 || 1, yMin = Math.max(0, Math.floor((Math.min(...ys) - 0.05) * 10) / 10), yMax = 1;
   const X = v => L + (v / xMax) * (W - L - R), Y = v => T + (1 - (v - yMin) / (yMax - yMin || 1)) * (H - T - B);
   const ticksX = [0, 0.25, 0.5, 0.75, 1].map(f => f * xMax), ticksY = [0, 0.25, 0.5, 0.75, 1].map(f => yMin + f * (yMax - yMin));
-  const grid = ticksY.map(v => `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--border)" stroke-width="1"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${(v * 100).toFixed(0)}</text>`).join("")
-    + ticksX.map(v => `<text x="${X(v)}" y="${H - B + 16}" text-anchor="middle" font-size="11" fill="var(--muted)">${sec(v)}</text>`).join("");
+  // 두 눈금 목록을 + 로 이으면 글자열이 되어 아래 html`` 에서 태그가 글자로 찍힌다 — 배열로 넘긴다
+  const grid = [ticksY.map(v => html`<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--border)" stroke-width="1"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${(v * 100).toFixed(0)}</text>`),
+    ticksX.map(v => html`<text x="${X(v)}" y="${H - B + 16}" text-anchor="middle" font-size="11" fill="var(--muted)">${sec(v)}</text>`)];
   const line = r.sweep.map((s, i) => `${i ? "L" : "M"}${X(s.latency_ms).toFixed(1)},${Y(s.quality).toFixed(1)}`).join(" ");
-  const sweepDots = r.sweep.map(s => `<circle cx="${X(s.latency_ms)}" cy="${Y(s.quality)}" r="9" fill="transparent"><title>확신도 기준 ${s.threshold}: 어려움 ${(s.hard_rate * 100).toFixed(0)}% · 품질 ${(s.quality * 100).toFixed(1)} · ${sec(s.latency_ms)}</title></circle>`).join("");
+  const sweepDots = html.join(r.sweep.map(s => html`<circle cx="${X(s.latency_ms)}" cy="${Y(s.quality)}" r="9" fill="transparent"><title>확신도 기준 ${s.threshold}: 어려움 ${(s.hard_rate * 100).toFixed(0)}% · 품질 ${(s.quality * 100).toFixed(1)} · ${sec(s.latency_ms)}</title></circle>`), "");
   // 품질이 같은 라우터가 많아(예: 모두 100) 이름표가 겹친다 — 왼쪽부터 놓으며 겹치면 한 줄씩 아래로 비켜 놓고 지시선을 긋는다
   // 마커도 장애물로 두고, 오른쪽 → 아래 → 위 → 왼쪽 순으로 빈 자리를 찾는다. 비켜 놓으면 지시선을 긋는다.
   const boxes = pts.map(p => ({ x0: X(p.x) - 8, x1: X(p.x) + 8, y0: Y(p.y) - 8, y1: Y(p.y) + 8 }));
@@ -108,39 +109,39 @@ function rChart(r) {
     }
     return { x: cx + 10, y: cy + 4, moved: false };
   };
-  const dots = [...pts].sort((a, b) => a.x - b.x).map(p => {
+  const dots = html.join([...pts].sort((a, b) => a.x - b.x).map(p => {
     const lb = place(p);
-    return `<g>${rMark(p.k, X(p.x), Y(p.y))}
+    return html`<g>${rMark(p.k, X(p.x), Y(p.y))}
       <circle cx="${X(p.x)}" cy="${Y(p.y)}" r="12" fill="transparent"><title>${R_LABEL[p.k]}: 품질 ${(p.y * 100).toFixed(1)} · ${sec(p.x)}</title></circle>
-      ${lb.moved ? `<line x1="${X(p.x)}" y1="${Y(p.y)}" x2="${lb.x < X(p.x) ? lb.x + R_LABEL[p.k].length * 11 : lb.x}" y2="${lb.y - 4}" stroke="var(--muted)" stroke-width="1"/>` : ""}
+      ${lb.moved ? html`<line x1="${X(p.x)}" y1="${Y(p.y)}" x2="${lb.x < X(p.x) ? lb.x + R_LABEL[p.k].length * 11 : lb.x}" y2="${lb.y - 4}" stroke="var(--muted)" stroke-width="1"/>` : ""}
       <text x="${lb.x}" y="${lb.y}" font-size="11" fill="var(--text)">${R_LABEL[p.k]}</text></g>`;
-  }).join("");
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px" role="img" aria-label="라우터별 비용-품질">
+  }), "");
+  return html`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px" role="img" aria-label="라우터별 비용-품질">
     ${grid}<line x1="${L}" x2="${L}" y1="${T}" y2="${H - B}" stroke="var(--border)"/>
     <text x="${(L + W - R) / 2}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--muted)">질문당 평균 지연 →</text>
     <text x="${L - 6}" y="12" text-anchor="end" font-size="11" fill="var(--muted)">품질 ↑</text>
-    ${r.sweep.length > 1 ? `<path d="${line}" fill="none" stroke="var(--series-${R_COLOR.confidence})" stroke-width="2" stroke-dasharray="4 3" opacity=".7"/>${sweepDots}` : ""}
+    ${r.sweep.length > 1 ? html`<path d="${line}" fill="none" stroke="var(--series-${R_COLOR.confidence})" stroke-width="2" stroke-dasharray="4 3" opacity=".7"/>${sweepDots}` : ""}
     ${dots}</svg>
-    <div class="legend">${Object.keys(R_LABEL).filter(k => pts.some(p => p.k === k)).map(k => `<span>${rKey(k)}${R_LABEL[k]}</span>`).join("")}<span><span class="swatch" style="background:none;border-top:2px dashed var(--series-${R_COLOR.confidence});height:0;border-radius:0"></span>확신도 기준을 바꿀 때</span></div>`;
+    <div class="legend">${html.join(Object.keys(R_LABEL).filter(k => pts.some(p => p.k === k)).map(k => html`<span>${rKey(k)}${R_LABEL[k]}</span>`), "")}<span><span class="swatch" style="background:none;border-top:2px dashed var(--series-${R_COLOR.confidence});height:0;border-radius:0"></span>확신도 기준을 바꿀 때</span></div>`;
 }
 
 function rRender(r, box = $("#e-out")) {
   const hard = r.results.find(x => x.router === "always_hard");
-  const vs = d => (d ? `${d.diff >= 0 ? "+" : ""}${(d.diff * 100).toFixed(1)}%p ${d.significant ? '<span class="badge err">유의</span>' : '<span class="badge">불확실</span>'}` : "—");
+  const vs = d => (d ? html`${d.diff >= 0 ? "+" : ""}${(d.diff * 100).toFixed(1)}%p ${d.significant ? html`<span class="badge err">유의</span>` : html`<span class="badge">불확실</span>`}` : "—");
   const save = x => (hard && x.router !== "always_hard" ? `${((1 - x.latency_ms.mean / hard.latency_ms.mean) * 100).toFixed(0)}%` : "—");
-  box.innerHTML = `<div class="row between"><h3>결과 · ${esc(r.eval_set?.name || "")}</h3><span class="small muted">질문 ${r.n_queries}개 · 품질 = ${esc(r.quality_metric)}${r.seconds != null ? ` · ${r.seconds}s` : ""}${r.run_id ? ` · run #${r.run_id}` : ""}</span></div>
+  box.innerHTML = html`<div class="row between"><h3>결과 · ${r.eval_set?.name || ""}</h3><span class="small muted">질문 ${r.n_queries}개 · 품질 = ${r.quality_metric}${r.seconds != null ? html` · ${r.seconds}s` : ""}${r.run_id ? html` · run #${r.run_id}` : ""}</span></div>
     <div class="table-wrap"><table>
       <tr><th>라우터</th><th class="num">어려움 비율</th><th class="num">품질 (95% 구간)</th><th>전체 경로 대비 품질</th><th class="num">nDCG@10</th><th class="num">지연 평균 / p95</th><th class="num" title="항상 전체 경로 대비 평균 지연 감소">지연 절감</th></tr>
-      ${r.results.map(x => `<tr><td><b>${esc(R_LABEL[x.router] || x.label)}</b></td><td class="num">${pct(x.hard_rate)}%</td>
+      ${html.join(r.results.map(x => html`<tr><td><b>${R_LABEL[x.router] || x.label}</b></td><td class="num">${pct(x.hard_rate)}%</td>
         <td class="num">${pct(x.quality)} <span class="small muted">(${pct(x.quality_ci[0])}–${pct(x.quality_ci[1])})</span></td><td class="small nowrap">${vs(x.vs_hard)}</td>
-        <td class="num">${pct(x.ndcg)}</td><td class="num small nowrap">${sec(x.latency_ms.mean)} / ${sec(x.latency_ms.p95)}</td><td class="num">${save(x)}</td></tr>`).join("")}
+        <td class="num">${pct(x.ndcg)}</td><td class="num small nowrap">${sec(x.latency_ms.mean)} / ${sec(x.latency_ms.p95)}</td><td class="num">${save(x)}</td></tr>`), "")}
     </table></div>
     ${rChart(r)}
     <div class="small muted">확신도 라우터의 지연에는 '어려움'으로 판단해 버린 첫 검색이, LLM 판단 라우터에는 판단 호출 시간이 들어 있습니다. 오라클은 정답을 보고 고른 상한이라 실제로는 만들 수 없습니다.</div>
     <h3>질문별 판단</h3>
-    <div class="table-wrap scroll-md"><table><tr><th>질문</th><th class="num">빠른</th><th class="num">전체</th><th class="num">확신도</th>${Object.keys(r.per_query[0]?.routes || {}).map(k => `<th>${esc(R_LABEL[k])}</th>`).join("")}</tr>
-      ${r.per_query.map(q => `<tr><td class="small">${esc(q.query)}</td><td class="num">${pct(q.easy_q)}</td><td class="num">${pct(q.hard_q)}</td><td class="num small">${q.confidence != null ? q.confidence.toFixed(3) : "-"}</td>
-        ${Object.entries(q.routes).map(([k, p]) => `<td class="small" title="${esc(k === "rule" ? q.rule_reason : k === "llm" ? q.llm_reason || "" : "")}">${p === "hard" ? "어려움" : "쉬움"}</td>`).join("")}</tr>`).join("")}
+    <div class="table-wrap scroll-md"><table><tr><th>질문</th><th class="num">빠른</th><th class="num">전체</th><th class="num">확신도</th>${html.join(Object.keys(r.per_query[0]?.routes || {}).map(k => html`<th>${R_LABEL[k]}</th>`), "")}</tr>
+      ${html.join(r.per_query.map(q => html`<tr><td class="small">${q.query}</td><td class="num">${pct(q.easy_q)}</td><td class="num">${pct(q.hard_q)}</td><td class="num small">${q.confidence != null ? q.confidence.toFixed(3) : "-"}</td>
+        ${html.join(Object.entries(q.routes).map(([k, p]) => html`<td class="small" title="${k === "rule" ? q.rule_reason : k === "llm" ? q.llm_reason || "" : ""}">${p === "hard" ? "어려움" : "쉬움"}</td>`), "")}</tr>`), "")}
     </table></div>
     <div class="small muted">빠른 · 전체 = 그 경로의 질문별 품질(%), 칸에 마우스를 올리면 규칙 · LLM 판단 이유가 보입니다.</div>`;
 }
@@ -149,18 +150,18 @@ function rRender(r, box = $("#e-out")) {
 async function lLoad() {
   const [runs, models, saved] = await Promise.all([api("/api/runs?kind=routing_eval&limit=30"), getModels(), api("/api/routing/learned")]);
   const items = runs.items || runs;
-  $("#l-run").innerHTML = items.map(r => `<option value="${r.id}">#${r.id} · ${esc(r.title)}</option>`).join("") || '<option value="">라우팅 평가 기록 없음 (먼저 위에서 비교 실행)</option>';
-  $("#l-model").innerHTML = models.filter(m => m.kind === "embedding" && m.cached).map(m => `<option value="${m.id}">${esc(m.hf_id)}</option>`).join("");
-  $("#l-saved").innerHTML = saved.length ? `<div class="small muted">저장된 학습 라우터 — 연결 실행(맵)의 라우팅에서 고를 수 있습니다</div>` + saved.map(m => `<div class="small"><b>#${m.id}</b> ${esc(m.name)} · 기준 ${m.threshold} · 교차검증 품질 ${pct(m.metrics.quality)} · 어려움 ${pct(m.metrics.hard_rate)}% · 질문 ${m.n_train}</div>`).join("") : "";
+  $("#l-run").innerHTML = html.or(html.join(items.map(r => html`<option value="${r.id}">#${r.id} · ${r.title}</option>`), ""), html`<option value="">라우팅 평가 기록 없음 (먼저 위에서 비교 실행)</option>`);
+  $("#l-model").innerHTML = html.join(models.filter(m => m.kind === "embedding" && m.cached).map(m => html`<option value="${m.id}">${m.hf_id}</option>`), "");
+  $("#l-saved").innerHTML = saved.length ? html`<div class="small muted">저장된 학습 라우터 — 연결 실행(맵)의 라우팅에서 고를 수 있습니다</div>` + saved.map(m => html`<div class="small"><b>#${m.id}</b> ${m.name} · 기준 ${m.threshold} · 교차검증 품질 ${pct(m.metrics.quality)} · 어려움 ${pct(m.metrics.hard_rate)}% · 질문 ${m.n_train}</div>`).join("") : "";
 }
 $("#l-run-btn").onclick = e => {
   if (!$("#l-run").value) return toast("라우팅 평가 기록이 필요합니다", "err");
   runJobInto(e.target, "/api/routing/learned", { run_id: +$("#l-run").value, model_id: +$("#l-model").value, margin: +$("#l-margin").value || 0,
     threshold: +$("#l-th").value || 0.5, save: $("#l-save").checked }, $("#l-progress"), r => {
     rRender({ ...r, n_queries: r.cv.n, quality_metric: "기록의 품질 지표", eval_set: { name: `학습 라우터 · 기록 #${r.run_id_source}` }, sweep: [] }, $("#l-res"));
-    $("#l-out").innerHTML = `<div class="small muted">라벨: 어려움 ${r.cv.n_hard} / ${r.cv.n} · ${r.cv.folds}겹 교차검증 — ${esc(r.note)}${r.saved ? ` · 저장 #${r.saved.id}` : ""}</div>
+    $("#l-out").innerHTML = html`<div class="small muted">라벨: 어려움 ${r.cv.n_hard} / ${r.cv.n} · ${r.cv.folds}겹 교차검증 — ${r.note}${r.saved ? html` · 저장 #${r.saved.id}` : ""}</div>
       <div class="table-wrap"><table><tr><th class="num">어려움 확률 기준</th><th class="num">어려움 비율</th><th class="num">품질</th><th class="num">지연 평균</th></tr>
-      ${r.sweep.map(s => `<tr><td class="num">${s.threshold}</td><td class="num">${pct(s.result.hard_rate)}%</td><td class="num">${pct(s.result.quality)}</td><td class="num">${sec(s.result.latency_ms.mean)}</td></tr>`).join("")}</table></div>`;
+      ${html.join(r.sweep.map(s => html`<tr><td class="num">${s.threshold}</td><td class="num">${pct(s.result.hard_rate)}%</td><td class="num">${pct(s.result.quality)}</td><td class="num">${sec(s.result.latency_ms.mean)}</td></tr>`), "")}</table></div>`;
     lLoad();
   });
 };

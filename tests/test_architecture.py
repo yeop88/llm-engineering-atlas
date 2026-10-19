@@ -135,7 +135,12 @@ def test_page_scripts_use_shared_ui():
     bad = [f.name for f in PAGE_JS if re.search(r"(?<![.\w])confirm\(", f.read_text(encoding="utf-8"))]
     assert not bad, bad
     styles = sum(f.read_text(encoding="utf-8").count('style="') for f in PAGE_JS + TEMPLATES)
-    escs = sum(f.read_text(encoding="utf-8").count("esc(") for f in PAGE_JS)
-    # 개편 때 인라인 style 446 → 83(남은 것은 대부분 막대 폭처럼 값이 바뀌는 것), esc() 450. 줄였으면 이 숫자도 낮춘다.
+    escs = sum(len(re.findall(r"(?<![\w.])esc\(", f.read_text(encoding="utf-8"))) for f in PAGE_JS)  # reEsc( 같은 다른 이름은 빼고
+    # 개편 때 인라인 style 446 → 83(남은 것은 대부분 막대 폭처럼 값이 바뀌는 것), esc() 450 → 3.
+    # 남은 esc() 3곳은 '글자를 먼저 이스케이프한 뒤 <mark> · 근거 칩을 끼우고 raw() 로 돌려주는' 형광펜 · 답변 본문 함수.
     assert styles <= 90, f"인라인 style 이 {styles}곳으로 늘었습니다 — static/css/style.css 의 유틸리티 클래스를 쓰세요"
-    assert escs <= 450, f"손으로 부르는 esc() 가 {escs}곳으로 늘었습니다 — html`` (lib/common.js) 를 쓰세요"
+    assert escs <= 3, f"손으로 부르는 esc() 가 {escs}곳으로 늘었습니다 — html`` (lib/common.js) 를 쓰세요"
+    # 지역 변수 이름이 html 이면 그 함수 안의 html`` 이 태그 함수가 아니라 그 변수를 불러 바로 오류가 난다(전환 때 3곳 있었다)
+    shadow = [f.name for f in PAGE_JS + [APP / "web" / "static" / "js" / "lib" / "charts.js"]
+              if re.search(r"\b(let|const|var)\s+html\b|function\s+\w*\s*\([^)]*\bhtml\b", f.read_text(encoding="utf-8"))]  # fmt: skip
+    assert not shadow, shadow

@@ -18,8 +18,8 @@ const METHOD_HINT = {
   page: "PDF 쪽 또는 HWP 구역 단위로 나눕니다. 너무 길면 재귀 분할합니다. 쪽 번호 인용이 중요한 문서에 씁니다.",
 };
 
-const jobBar = j => j ? `<div class="progress mt-1"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>` : "";
-const statusBadge = (s, err) => ({ ready: '<span class="badge ok">준비됨</span>', building: '<span class="badge warn">구축 중</span>', pending: '<span class="badge warn">대기</span>', error: `<span class="badge err" title="${esc(err)}">오류</span>` })[s] || esc(s);
+const jobBar = j => j ? html`<div class="progress mt-1"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${j.message}</div>` : "";
+const statusBadge = (s, err) => ({ ready: html`<span class="badge ok">준비됨</span>`, building: html`<span class="badge warn">구축 중</span>`, pending: html`<span class="badge warn">대기</span>`, error: html`<span class="badge err" title="${err}">오류</span>` })[s] || html`${s}`;
 
 async function load() {
   [col, opts] = await Promise.all([api(`/api/collections/${COLLECTION_ID}`), opts ? Promise.resolve(opts) : api("/api/rag/options")]);
@@ -42,31 +42,30 @@ function mediaBadge(d) {
   const m = d.meta?.media;
   if (!m) return "";
   const info = m.kind === "video" ? `영상 ${m.duration ?? "?"}초 · ${m.interval}초 간격 · 같은 장면 ${m.skipped_same_scene}장 제외` : `이미지 ${m.width}×${m.height}`;
-  return `<div class="small muted"><span class="badge">${m.kind === "video" ? "영상" : "이미지"}</span> ${info} · <a href="/api/documents/${d.id}/media" target="_blank" rel="noopener">원본</a></div>`;
+  return html`<div class="small muted"><span class="badge">${m.kind === "video" ? "영상" : "이미지"}</span> ${info} · <a href="/api/documents/${d.id}/media" target="_blank" rel="noopener">원본</a></div>`;
 }
 function renderDocs() {
   $("#file-types").textContent = `(${opts.file_types.join(" ")} · 이미지·영상 ${(opts.media_types || []).join(" ")} · 최대 ${opts.max_upload_mb}MB)`;
-  $("#d-rows").innerHTML = col.documents.map(d => `<tr>
-    <td><b>${esc(d.filename)}</b>${d.meta?.warning ? `<div class="warnbox small">${esc(d.meta.warning)}</div>` : ""}${mediaBadge(d)}</td>
-    <td class="small">${esc(d.title)}</td><td class="num">${fmtBytes(d.size_bytes)}</td><td class="num">${fmtNum(d.n_chars)}</td>
+  $("#d-rows").innerHTML = html.or(html.join(col.documents.map(d => html`<tr>
+    <td><b>${d.filename}</b>${d.meta?.warning ? html`<div class="warnbox small">${d.meta.warning}</div>` : ""}${mediaBadge(d)}</td>
+    <td class="small">${d.title}</td><td class="num">${fmtBytes(d.size_bytes)}</td><td class="num">${fmtNum(d.n_chars)}</td>
     <td class="num">${d.n_pages}${d.meta?.page_kind === "section" ? " 구역" : d.meta?.page_kind === "page" ? " 쪽" : d.meta?.page_kind === "media" ? (d.meta.media.kind === "video" ? " 프레임" : " 장") : ""}</td>
     <td class="small nowrap">${fmtDate(d.created_at)}</td>
-    <td class="right nowrap"><button class="btn sm" onclick="viewDoc(${d.id})">본문</button><button class="btn sm danger" onclick="delDoc(${d.id})">삭제</button></td></tr>`).join("")
-    || '<tr><td colspan="7" class="empty">문서가 없습니다</td></tr>';
+    <td class="right nowrap"><button class="btn sm" onclick="viewDoc(${d.id})">본문</button><button class="btn sm danger" onclick="delDoc(${d.id})">삭제</button></td></tr>`), ""), html`<tr><td colspan="7" class="empty">문서가 없습니다</td></tr>`);
 }
 async function upload(files) {
   if (!files.length) return;
   const form = new FormData();
   [...files].forEach(f => form.append("files", f));
-  $("#d-upload-result").innerHTML = `<div class="small muted">${files.length}개 파일 처리 중…</div>`;
+  $("#d-upload-result").innerHTML = html`<div class="small muted">${files.length}개 파일 처리 중…</div>`;
   try {
     const r = await api(`/api/collections/${COLLECTION_ID}/documents`, { method: "POST", form });
-    $("#d-upload-result").innerHTML = `<div class="small"><span class="badge ok">추가 ${r.added.length}</span> ${r.skipped.length ? `<span class="badge warn">건너뜀 ${r.skipped.length}</span>` : ""}</div>`
-      + r.skipped.map(s => `<div class="warnbox small">${esc(s.filename)}: ${esc(s.reason)}</div>`).join("")
-      + r.added.filter(a => a.warning).map(a => `<div class="warnbox small">${esc(a.filename)}: ${esc(a.warning)}</div>`).join("");
+    $("#d-upload-result").innerHTML = html`<div class="small"><span class="badge ok">추가 ${r.added.length}</span> ${r.skipped.length ? html`<span class="badge warn">건너뜀 ${r.skipped.length}</span>` : ""}</div>`
+      + r.skipped.map(s => html`<div class="warnbox small">${s.filename}: ${s.reason}</div>`).join("")
+      + r.added.filter(a => a.warning).map(a => html`<div class="warnbox small">${a.filename}: ${a.warning}</div>`).join("");
     if (r.added.length && col.chunk_sets.length) toast("문서가 바뀌었습니다. 청크 세트를 다시 만들어야 새 문서가 검색됩니다.");
     load();
-  } catch (e) { $("#d-upload-result").innerHTML = `<div class="errbox">${esc(e.message)}</div>`; }
+  } catch (e) { $("#d-upload-result").innerHTML = html`<div class="errbox">${e.message}</div>`; }
 }
 $("#d-files").addEventListener("change", e => { upload(e.target.files); e.target.value = ""; });
 const dz = $("#dropzone");
@@ -77,7 +76,7 @@ dz.addEventListener("drop", e => upload(e.dataTransfer.files));
 async function viewDoc(id) {
   const d = await api(`/api/documents/${id}`);
   $("#dlg-title").textContent = d.filename;
-  $("#dlg-body").innerHTML = `<div class="small muted mb-2">${esc(d.title)} · ${fmtNum(d.n_chars)}자${d.truncated ? " (앞부분만 표시)" : ""}</div><pre class="pre scroll-lg">${esc(d.text)}</pre>`;
+  $("#dlg-body").innerHTML = html`<div class="small muted mb-2">${d.title} · ${fmtNum(d.n_chars)}자${d.truncated ? " (앞부분만 표시)" : ""}</div><pre class="pre scroll-lg">${d.text}</pre>`;
   $("#dlg").showModal();
 }
 // 파일 이름을 onclick 글자로 넘기면 작은따옴표가 든 이름(O'Reilly.pdf)에서 스크립트가 깨져, 목록에서 찾는다
@@ -92,7 +91,7 @@ function strategyFromForm() {
   return { method: $("#s-method").value, size: +$("#s-size").value, overlap: +$("#s-overlap").value, overlap_sentences: +$("#s-osent").value, min_chars: +$("#s-min").value, include_title: $("#s-title").checked, merge_below: +$("#s-merge").value || 0 };
 }
 function initStrategyForm() {
-  $("#s-method").innerHTML = Object.entries(opts.chunk_methods).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("");
+  $("#s-method").innerHTML = html.join(Object.entries(opts.chunk_methods).map(([k, v]) => html`<option value="${k}">${v}</option>`), "");
   const d = { ...opts.chunk_defaults, ...(DOMAIN_STRATEGY[col.domain] || {}) };
   $("#s-method").value = d.method; $("#s-size").value = d.size; $("#s-overlap").value = d.overlap;
   $("#s-osent").value = d.overlap_sentences; $("#s-min").value = d.min_chars; $("#s-title").checked = d.include_title; $("#s-merge").value = d.merge_below || 0;
@@ -108,12 +107,12 @@ $("#s-preview").onclick = async e => {
   const r = await busy(e.target, () => api(`/api/collections/${COLLECTION_ID}/chunk-preview?limit=12`, { method: "POST", body: strategyFromForm() }));
   const st = r.stats;
   const maxH = Math.max(...Object.values(st.hist || { x: 1 }));
-  $("#s-preview-out").innerHTML = `<h3>미리보기 · 청크 ${fmtNum(st.count)}개</h3>
+  $("#s-preview-out").innerHTML = html`<h3>미리보기 · 청크 ${fmtNum(st.count)}개</h3>
     <div class="small muted">평균 ${st.avg}자 · 중앙값 ${st.median} · p95 ${st.p95} · 최소 ${st.min} · 최대 ${st.max}</div>
-    <div class="my-2">${Object.entries(st.hist || {}).map(([k, n]) => `<div class="row small nowrap-row gap-2"><span class="mono w-md">${k}</span>
-      <div class="grow bg-code"><div class="bar" style="width:${Math.max(2, n / maxH * 100)}%"></div></div><span class="mono w-xs text-right">${n}</span></div>`).join("")}</div>
-    <div class="stack scroll scroll-md">${r.samples.map(s => `<div class="rank-item"><div class="small muted">${esc(s.document)}${s.page ? ` · ${s.page}쪽` : ""}${s.heading ? ` · <b>${esc(s.heading)}</b>` : ""} · ${s.chars}자</div>
-      <div class="small pre">${esc(s.text.slice(0, 400))}${s.text.length > 400 ? "…" : ""}</div></div>`).join("")}</div>`;
+    <div class="my-2">${html.join(Object.entries(st.hist || {}).map(([k, n]) => html`<div class="row small nowrap-row gap-2"><span class="mono w-md">${k}</span>
+      <div class="grow bg-code"><div class="bar" style="width:${Math.max(2, n / maxH * 100)}%"></div></div><span class="mono w-xs text-right">${n}</span></div>`), "")}</div>
+    <div class="stack scroll scroll-md">${html.join(r.samples.map(s => html`<div class="rank-item"><div class="small muted">${s.document}${s.page ? html` · ${s.page}쪽` : ""}${s.heading ? html` · <b>${s.heading}</b>` : ""} · ${s.chars}자</div>
+      <div class="small pre">${s.text.slice(0, 400)}${s.text.length > 400 ? "…" : ""}</div></div>`), "")}</div>`;
 };
 $("#s-create").onclick = async e => {
   await busy(e.target, () => api(`/api/collections/${COLLECTION_ID}/chunk-sets`, { method: "POST", body: { name: $("#s-name").value, strategy: strategyFromForm() } }));
@@ -125,22 +124,21 @@ function strategyLabel(s) {
 }
 function renderChunkSets() {
   if (!$("#s-method").options.length) initStrategyForm();
-  $("#cs-rows").innerHTML = col.chunk_sets.map(c => `<tr>
-    <td>${c.id}</td><td><b>${esc(c.name)}</b><div class="small muted">${esc(strategyLabel(c.strategy))}</div></td>
-    <td>${statusBadge(c.status, c.error)} ${c.stale ? '<span class="badge warn" title="이 청크 세트를 만든 뒤 문서가 추가·삭제되었습니다. 새 문서를 검색하려면 다시 만드세요.">문서 변경됨</span>' : ""}${jobBar(c.job)}${c.error ? `<div class="errbox small">${esc(c.error)}</div>` : ""}</td>
+  $("#cs-rows").innerHTML = html.or(html.join(col.chunk_sets.map(c => html`<tr>
+    <td>${c.id}</td><td><b>${c.name}</b><div class="small muted">${strategyLabel(c.strategy)}</div></td>
+    <td>${statusBadge(c.status, c.error)} ${c.stale ? html`<span class="badge warn" title="이 청크 세트를 만든 뒤 문서가 추가·삭제되었습니다. 새 문서를 검색하려면 다시 만드세요.">문서 변경됨</span>` : ""}${jobBar(c.job)}${c.error ? html`<div class="errbox small">${c.error}</div>` : ""}</td>
     <td class="num">${fmtNum(c.n_chunks)}</td><td class="num">${c.stats?.avg ?? "-"}</td><td class="num">${c.stats?.p95 ?? "-"}</td>
     <td class="small nowrap">${fmtDate(c.created_at)}</td>
-    <td class="right nowrap">${c.status === "ready" ? `<button class="btn sm" onclick="viewChunks(${c.id}, 0)">청크 보기</button>` : ""}<button class="btn sm danger" onclick="delChunkSet(${c.id})">삭제</button></td></tr>`).join("")
-    || '<tr><td colspan="8" class="empty">청크 세트가 없습니다. 위에서 전략을 골라 만드세요.</td></tr>';
+    <td class="right nowrap">${c.status === "ready" ? html`<button class="btn sm" onclick="viewChunks(${c.id}, 0)">청크 보기</button>` : ""}<button class="btn sm danger" onclick="delChunkSet(${c.id})">삭제</button></td></tr>`), ""), html`<tr><td colspan="8" class="empty">청크 세트가 없습니다. 위에서 전략을 골라 만드세요.</td></tr>`);
 }
 async function viewChunks(id, offset) {
   const r = await api(`/api/chunk-sets/${id}/chunks?offset=${offset}&limit=30`);
   $("#dlg-title").textContent = `청크 세트 #${id} · ${offset + 1}–${Math.min(offset + 30, r.total)} / ${fmtNum(r.total)}`;
-  $("#dlg-body").innerHTML = `<div class="stack scroll scroll-lg">${r.items.map(c => `<div class="rank-item">
-      <div class="small muted">#${c.id} · ${esc(c.filename)}${c.page ? ` · ${c.page}쪽` : ""}${c.heading ? ` · <b>${esc(c.heading)}</b>` : ""} · ${c.chars}자</div>
-      <div class="small pre">${esc(c.text)}</div>
-      <div class="small muted mono">BM25 토큰: ${esc(c.tokens.join(" "))}</div></div>`).join("")}</div>
-    <div class="row mt-3">${offset > 0 ? `<button class="btn sm" onclick="viewChunks(${id}, ${offset - 30})">← 이전</button>` : ""}<span class="spacer"></span>${offset + 30 < r.total ? `<button class="btn sm" onclick="viewChunks(${id}, ${offset + 30})">다음 →</button>` : ""}</div>`;
+  $("#dlg-body").innerHTML = html`<div class="stack scroll scroll-lg">${html.join(r.items.map(c => html`<div class="rank-item">
+      <div class="small muted">#${c.id} · ${c.filename}${c.page ? html` · ${c.page}쪽` : ""}${c.heading ? html` · <b>${c.heading}</b>` : ""} · ${c.chars}자</div>
+      <div class="small pre">${c.text}</div>
+      <div class="small muted mono">BM25 토큰: ${html.join(c.tokens, " ")}</div></div>`), "")}</div>
+    <div class="row mt-3">${offset > 0 ? html`<button class="btn sm" onclick="viewChunks(${id}, ${offset - 30})">← 이전</button>` : ""}<span class="spacer"></span>${offset + 30 < r.total ? html`<button class="btn sm" onclick="viewChunks(${id}, ${offset + 30})">다음 →</button>` : ""}</div>`;
   if (!$("#dlg").open) $("#dlg").showModal();
 }
 async function delChunkSet(id) {
@@ -153,14 +151,14 @@ async function delChunkSet(id) {
 async function renderIndexForm() {
   const ready = col.chunk_sets.filter(c => c.status === "ready");
   const keepCs = $("#i-cs").value;
-  $("#i-cs").innerHTML = ready.map(c => `<option value="${c.id}">#${c.id} ${esc(c.name)} (${fmtNum(c.n_chunks)}개)</option>`).join("") || '<option value="">준비된 청크 세트 없음</option>';
+  $("#i-cs").innerHTML = html.or(html.join(ready.map(c => html`<option value="${c.id}">#${c.id} ${c.name} (${fmtNum(c.n_chunks)}개)</option>`), ""), html`<option value="">준비된 청크 세트 없음</option>`);
   if (keepCs) $("#i-cs").value = keepCs;
   if (!$("#i-model").options.length) {
     await fillModelSelect($("#i-model"));
     $("#i-model").addEventListener("change", () => fillDims());
   }
   const keepStore = $("#i-store").value;
-  $("#i-store").innerHTML = opts.stores.map(s => `<option value="${s.kind}" ${s.ok ? "" : "disabled"}>${esc(s.label)}${s.default ? " (기본)" : ""}${s.ok ? "" : " — " + (s.configured ? "연결 실패" : "설정 안 됨")}</option>`).join("");
+  $("#i-store").innerHTML = html.join(opts.stores.map(s => html`<option value="${s.kind}" ${s.ok ? "" : "disabled"}>${s.label}${s.default ? " (기본)" : ""}${s.ok ? "" : " — " + (s.configured ? "연결 실패" : "설정 안 됨")}</option>`), "");
   $("#i-store").value = keepStore || opts.default_store;
   fillDims();
 }
@@ -168,7 +166,7 @@ function fillDims() {
   const o = $("#i-model").selectedOptions[0];
   const dims = (o?.dataset.dims || "").split(",").filter(Boolean).map(Number);
   const cur = $("#i-dim").value;
-  $("#i-dim").innerHTML = '<option value="">전체 차원</option>' + dims.slice(1).map(d => `<option value="${d}">${d}</option>`).join("");
+  $("#i-dim").innerHTML = '<option value="">전체 차원</option>' + dims.slice(1).map(d => html`<option value="${d}">${d}</option>`).join("");
   if ([...$("#i-dim").options].some(x => x.value === cur)) $("#i-dim").value = cur;
 }
 $("#i-create").onclick = async e => {
@@ -180,13 +178,12 @@ $("#i-create").onclick = async e => {
 function renderIndexes() {
   const csName = id => col.chunk_sets.find(c => c.id === id)?.name || `#${id}`;
   const storeLabel = k => opts.stores.find(s => s.kind === k)?.label || k;
-  $("#i-rows").innerHTML = col.indexes.map(i => `<tr>
-    <td>${i.id}</td><td class="mono small">${esc(i.model_hf_id)}</td><td class="small">${esc(csName(i.chunk_set_id))}</td><td class="small">${esc(storeLabel(i.store))}<div class="muted mono">${esc(i.store_collection)}</div></td>
+  $("#i-rows").innerHTML = html.or(html.join(col.indexes.map(i => html`<tr>
+    <td>${i.id}</td><td class="mono small">${i.model_hf_id}</td><td class="small">${csName(i.chunk_set_id)}</td><td class="small">${storeLabel(i.store)}<div class="muted mono">${i.store_collection}</div></td>
     <td class="num">${i.dim || "-"}${i.truncate_dim ? " (MRL)" : ""}</td>
-    <td>${statusBadge(i.status, i.error)}${jobBar(i.job)}${i.error ? `<div class="errbox small">${esc(i.error)}</div>` : ""}</td>
+    <td>${statusBadge(i.status, i.error)}${jobBar(i.job)}${i.error ? html`<div class="errbox small">${i.error}</div>` : ""}</td>
     <td class="num">${fmtNum(i.n_vectors)}</td><td class="num">${i.build_seconds ? i.build_seconds + "s" : "-"}</td>
-    <td class="right nowrap">${i.job ? "" : `<button class="btn sm" onclick="rebuild(${i.id})">다시 구축</button>`}<button class="btn sm danger" onclick="delIndex(${i.id})">삭제</button></td></tr>`).join("")
-    || '<tr><td colspan="9" class="empty">인덱스가 없습니다. 의미 검색을 하려면 하나 이상 만드세요 (BM25 검색은 인덱스 없이 됩니다).</td></tr>';
+    <td class="right nowrap">${i.job ? "" : html`<button class="btn sm" onclick="rebuild(${i.id})">다시 구축</button>`}<button class="btn sm danger" onclick="delIndex(${i.id})">삭제</button></td></tr>`), ""), html`<tr><td colspan="9" class="empty">인덱스가 없습니다. 의미 검색을 하려면 하나 이상 만드세요 (BM25 검색은 인덱스 없이 됩니다).</td></tr>`);
 }
 async function rebuild(id) { await api(`/api/indexes/${id}/rebuild`, { method: "POST" }); toast("다시 구축합니다", "ok"); load(); }
 async function delIndex(id) {
@@ -215,21 +212,21 @@ async function renderConfigs() {
   const readyIdx = col.indexes.filter(i => i.status === "ready");
   const readyCs = col.chunk_sets.filter(c => c.status === "ready");
   const sel = (v, x) => (String(v ?? "") === String(x) ? "selected" : "");
-  $("#cfgs").innerHTML = configs.map((c, n) => `<div class="card stack" style="padding:12px" data-n="${n}">
-    <div class="row between"><input data-k="label" value="${esc(c.label || "")}" placeholder="설정 ${n + 1}" style="font-weight:600;flex:1">
-      ${configs.length > 1 ? `<button class="btn sm" data-del="${n}" title="이 설정 빼기">✕</button>` : ""}</div>
+  $("#cfgs").innerHTML = html.join(configs.map((c, n) => html`<div class="card stack" style="padding:12px" data-n="${n}">
+    <div class="row between"><input data-k="label" value="${c.label || ""}" placeholder="설정 ${n + 1}" style="font-weight:600;flex:1">
+      ${configs.length > 1 ? html`<button class="btn sm" data-del="${n}" title="이 설정 빼기">✕</button>` : ""}</div>
     <div class="row"><div class="field grow"><label>방식</label><select aria-label="방식" data-k="mode">
       <option value="hybrid" ${sel(c.mode, "hybrid")}>하이브리드 (의미+BM25)</option><option value="dense" ${sel(c.mode, "dense")}>의미 검색만</option><option value="bm25" ${sel(c.mode, "bm25")}>BM25 만</option></select></div></div>
     ${c.mode === "bm25"
-      ? `<div><label>청크 세트</label><select aria-label="청크 세트" data-k="chunk_set_id" data-num>${readyCs.map(x => `<option value="${x.id}" ${sel(c.chunk_set_id, x.id)}>#${x.id} ${esc(x.name)}</option>`).join("")}</select></div>`
-      : `<div><label>벡터 인덱스</label><select aria-label="벡터 인덱스" data-k="index_id" data-num>${readyIdx.map(x => `<option value="${x.id}" ${sel(c.index_id, x.id)}>#${x.id} ${esc(x.model_hf_id.split("/").pop())} · ${x.store}${x.truncate_dim ? " · " + x.truncate_dim + "d" : ""}</option>`).join("") || '<option value="">준비된 인덱스 없음</option>'}</select></div>`}
-    ${c.mode === "hybrid" ? `<div class="row"><div class="field grow"><label>합치기</label><select aria-label="합치기" data-k="fusion"><option value="rrf" ${sel(c.fusion, "rrf")}>RRF (순위 기반, 권장)</option><option value="weighted" ${sel(c.fusion, "weighted")}>가중합</option></select></div>
-      ${c.fusion === "weighted" ? `<div class="field" style="min-width:90px"><label>의미 가중치</label><input aria-label="의미 가중치" data-k="alpha" data-num type="number" step="0.1" min="0" max="1" value="${c.alpha ?? 0.5}"></div>` : ""}</div>` : ""}
-    <div class="row"><div class="field grow"><label>리랭커</label><select aria-label="리랭커" data-k="reranker_id" data-num><option value="">사용 안 함</option>${rerankers.map(r => `<option value="${r.id}" ${sel(c.reranker_id, r.id)}>${esc(r.name)}${r.params ? ` (${esc(r.params)})` : ""}</option>`).join("")}</select></div>
-      ${c.reranker_id ? `<div class="field" style="min-width:80px"><label>재정렬 후보</label><input aria-label="재정렬 후보" data-k="rerank_top" data-num type="number" min="1" max="200" value="${c.rerank_top ?? 30}"></div>` : ""}</div>
+      ? html`<div><label>청크 세트</label><select aria-label="청크 세트" data-k="chunk_set_id" data-num>${html.join(readyCs.map(x => html`<option value="${x.id}" ${sel(c.chunk_set_id, x.id)}>#${x.id} ${x.name}</option>`), "")}</select></div>`
+      : html`<div><label>벡터 인덱스</label><select aria-label="벡터 인덱스" data-k="index_id" data-num>${html.join(readyIdx.map(x => html`<option value="${x.id}" ${sel(c.index_id, x.id)}>#${x.id} ${x.model_hf_id.split("/").pop()} · ${x.store}${x.truncate_dim ? " · " + x.truncate_dim + "d" : ""}</option>`), "") || html`<option value="">준비된 인덱스 없음</option>`}</select></div>`}
+    ${c.mode === "hybrid" ? html`<div class="row"><div class="field grow"><label>합치기</label><select aria-label="합치기" data-k="fusion"><option value="rrf" ${sel(c.fusion, "rrf")}>RRF (순위 기반, 권장)</option><option value="weighted" ${sel(c.fusion, "weighted")}>가중합</option></select></div>
+      ${c.fusion === "weighted" ? html`<div class="field" style="min-width:90px"><label>의미 가중치</label><input aria-label="의미 가중치" data-k="alpha" data-num type="number" step="0.1" min="0" max="1" value="${c.alpha ?? 0.5}"></div>` : ""}</div>` : ""}
+    <div class="row"><div class="field grow"><label>리랭커</label><select aria-label="리랭커" data-k="reranker_id" data-num><option value="">사용 안 함</option>${html.join(rerankers.map(r => html`<option value="${r.id}" ${sel(c.reranker_id, r.id)}>${r.name}${r.params ? html` (${r.params})` : ""}</option>`), "")}</select></div>
+      ${c.reranker_id ? html`<div class="field" style="min-width:80px"><label>재정렬 후보</label><input aria-label="재정렬 후보" data-k="rerank_top" data-num type="number" min="1" max="200" value="${c.rerank_top ?? 30}"></div>` : ""}</div>
     <div class="row"><div class="field"><label>결과 수</label><input aria-label="결과 수" data-k="top_k" data-num type="number" min="1" max="100" value="${c.top_k ?? 10}"></div>
       <div class="field"><label>검색 후보</label><input aria-label="검색 후보" data-k="candidates" data-num type="number" min="1" max="500" value="${c.candidates ?? 50}"></div></div>
-  </div>`).join("");
+  </div>`), "");
   $("#cfg-add").disabled = configs.length >= 4;
 }
 $("#cfgs").addEventListener("change", e => {
@@ -246,14 +243,15 @@ $("#cfgs").addEventListener("click", e => {
 });
 $("#cfg-add").onclick = () => { configs.push({ ...configs[configs.length - 1], label: `설정 ${configs.length + 1}` }); saveConfigs(); renderConfigs(); };
 
+// 글자를 먼저 이스케이프한 뒤 <mark> 를 끼운다 — 결과는 이미 안전한 HTML 이라 raw
 function highlight(text, tokens) {
-  let html = esc(text);
+  let out = esc(text);
   const toks = [...new Set(tokens)].filter(t => t.length >= 2).sort((a, b) => b.length - a.length).slice(0, 20);
   for (const t of toks) {
     const re = new RegExp(esc(t).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
-    html = html.replace(re, m => `<mark>${m}</mark>`);
+    out = out.replace(re, m => html`<mark>${m}</mark>`);  // m 은 이미 이스케이프된 글자 조각
   }
-  return html;
+  return raw(out);
 }
 function cfgSummary(c) {
   const idx = col.indexes.find(i => i.id === c.index_id);
@@ -267,28 +265,28 @@ $("#q-run").onclick = async e => {
   const query = $("#q").value.trim();
   if (!query) return toast("검색어를 입력하세요", "err");
   const body = { query, configs: configs.map(c => ({ ...c, index_id: c.mode === "bm25" ? null : c.index_id, chunk_set_id: c.mode === "bm25" ? c.chunk_set_id : null, reranker_id: c.reranker_id || null })) };
-  $("#q-out").innerHTML = '<div class="empty">검색 중… (처음 쓰는 모델은 로드에 시간이 걸립니다)</div>';
+  $("#q-out").innerHTML = html`<div class="empty">검색 중… (처음 쓰는 모델은 로드에 시간이 걸립니다)</div>`;
   const r = await busy(e.target, () => api(`/api/collections/${COLLECTION_ID}/search`, { method: "POST", body }));
-  $("#q-out").innerHTML = r.results.map((res, n) => {
+  $("#q-out").innerHTML = html.join(r.results.map((res, n) => {
     const c = res.config;
-    if (res.error) return `<div class="card"><h3>${esc(c.label || `설정 ${n + 1}`)}</h3><div class="errbox">${esc(res.error)}</div></div>`;
+    if (res.error) return html`<div class="card"><h3>${c.label || html`설정 ${n + 1}`}</h3><div class="errbox">${res.error}</div></div>`;
     const t = res.timings_ms;
     const timing = Object.entries(t).map(([k, v]) => `${({ load: "모델 로드", embed: "질의 임베딩", vector_search: "벡터 검색", bm25: "BM25", rerank_load: "리랭커 로드", rerank: "리랭킹" })[k] || k} ${v}ms`).join(" · ");
-    return `<div class="card"><h3>${esc(c.label || `설정 ${n + 1}`)}</h3>
-      <div class="small muted">${esc(cfgSummary(c))}</div>
+    return html`<div class="card"><h3>${c.label || html`설정 ${n + 1}`}</h3>
+      <div class="small muted">${cfgSummary(c)}</div>
       <div class="small muted" style="margin:4px 0 8px">총 ${res.total_ms}ms — ${timing}</div>
-      ${res.results.map(x => `<div class="rank-item">
-        <div class="row between small nowrap-row"><span><span class="badge ${x.rank === 1 ? "ok" : "muted"}">#${x.rank}</span> <b>${esc(x.filename)}</b>${x.page ? ` · ${x.page}쪽` : ""}${x.heading ? ` · ${esc(x.heading)}` : ""}</span><b class="mono">${x.score.toFixed(3)}</b></div>
-        <div class="small muted mono my-1">${["dense", "bm25"].filter(k => x.ranks[k]).map(k => `${k === "dense" ? "의미" : "BM25"} #${x.ranks[k]} (${x.scores[k].toFixed(3)})`).join(" · ")}${x.ranks.before_rerank ? ` · 리랭크 전 #${x.ranks.before_rerank}` : ""}</div>
+      ${html.join(res.results.map(x => html`<div class="rank-item">
+        <div class="row between small nowrap-row"><span><span class="badge ${x.rank === 1 ? "ok" : "muted"}">#${x.rank}</span> <b>${x.filename}</b>${x.page ? html` · ${x.page}쪽` : ""}${x.heading ? html` · ${x.heading}` : ""}</span><b class="mono">${x.score.toFixed(3)}</b></div>
+        <div class="small muted mono my-1">${html.join(["dense", "bm25"].filter(k => x.ranks[k]).map(k => html`${k === "dense" ? "의미" : "BM25"} #${x.ranks[k]} (${x.scores[k].toFixed(3)})`), " · ")}${x.ranks.before_rerank ? html` · 리랭크 전 #${x.ranks.before_rerank}` : ""}</div>
         ${x.media ? mediaThumb(x) : ""}
-        <div class="small pre">${highlight(x.text.length > 500 ? x.text.slice(0, 500) + "…" : x.text, res.query_tokens)}</div></div>`).join("") || '<div class="empty">결과 없음</div>'}
+        <div class="small pre">${highlight(x.text.length > 500 ? x.text.slice(0, 500) + "…" : x.text, res.query_tokens)}</div></div>`), "") || html`<div class="empty">결과 없음</div>`}
     </div>`;
-  }).join("");
+  }), "");
 };
 // 이미지 · 영상 프레임 결과: 썸네일, 누르면 원본(영상은 그 장면 시각부터 — 미디어 조각 #t=초)
 function mediaThumb(x) {
   const href = x.media.source_url + (x.media.t != null ? `#t=${x.media.t}` : "");
-  return `<a href="${href}" target="_blank" rel="noopener" title="원본 열기"><img src="${x.media.url}" alt="${esc(x.text)}" loading="lazy" style="max-height:140px;max-width:100%;border-radius:6px;margin:4px 0;display:block"></a>`;
+  return html`<a href="${href}" target="_blank" rel="noopener" title="원본 열기"><img src="${x.media.url}" alt="${x.text}" loading="lazy" style="max-height:140px;max-width:100%;border-radius:6px;margin:4px 0;display:block"></a>`;
 }
 $("#q").addEventListener("keydown", e => { if (e.key === "Enter") $("#q-run").click(); });
 
@@ -298,8 +296,8 @@ load().then(initTabs);
 (async () => {
   if (!$("#d-public")) return;
   const ps = await api("/api/public-corpora");
-  $("#d-public").innerHTML = ps.map(p => `<option value="${p.key}">${esc(p.title)}</option>`).join("");
-  const info = () => { const p = ps.find(x => x.key === $("#d-public").value); $("#d-public-info").innerHTML = p ? `${esc(p.description)}<br>라이선스: ${p.licenses.map(esc).join(" · ")}` : ""; };
+  $("#d-public").innerHTML = html.join(ps.map(p => html`<option value="${p.key}">${p.title}</option>`), "");
+  const info = () => { const p = ps.find(x => x.key === $("#d-public").value); $("#d-public-info").innerHTML = p ? html`${p.description}<br>라이선스: ${html.join(p.licenses, " · ")}` : ""; };
   $("#d-public").addEventListener("change", info); info();
   $("#d-public-run").onclick = e => runJobInto(e.target, `/api/collections/${COLLECTION_ID}/import-public`, { preset: $("#d-public").value }, $("#d-public-progress"), r => {
     toast(`문서 ${r.added}개를 넣었습니다 (${Object.entries(r.by_kind).map(([k, v]) => `${k === "statute" ? "법령" : "판례"} ${v}`).join(" · ")}${r.n_skipped ? ` · 건너뜀 ${r.n_skipped}` : ""})`, "ok");

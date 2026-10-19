@@ -56,7 +56,8 @@ base.html
 | 제목 · 설명 · 동작 버튼 · 뒤로 가기 | `ui.page_header(title, back=(이름, 주소), actions=html, title_id=, badge=, prefix=)` — 모든 화면 필수(테스트) |
 | 이름표 + 입력란 | `<label for="x">` + `id="x"`, 또는 `ui.field("x", "이름", '<select id="x">…')`. 체크박스는 `<label><input type="checkbox"> 글</label>`. 체크박스 묶음 제목은 `<span class="field-label">` |
 | 맵 흐름의 단계 상자 | `ui.flow_box(key, text=None)` |
-| HTML 만들기 (JS) | `` html`<b>${name}</b>` `` — 값은 자동 이스케이프, `html` 결과 · `raw()` · 그 배열은 그대로. 손으로 부르는 `esc()` 는 늘리지 않습니다(테스트) |
+| HTML 만들기 (JS) | `` html`<b>${name}</b>` `` — 값은 자동 이스케이프, `html` 결과 · `raw()` · 그 배열은 그대로. 목록은 `` ${items.map(x => html`<li>${x}</li>`)} `` 처럼 배열째 넣거나, 구분자가 있으면 `html.join(items, " · ")`(구분자는 코드에 적은 HTML 이라 그대로). `html` 결과는 객체라 빈 목록도 `\|\|` 에서 참 — 대신 보일 것은 `html.or(목록, html`<tr>…없음</tr>`)`. 손으로 부르는 `esc()` 는 쓰지 않습니다(테스트, 예외: 글자를 먼저 이스케이프한 뒤 `<mark>` 를 끼우고 `raw()` 로 돌려주는 형광펜 함수) |
+| HTML 만들 때 주의 | ① `+` 로 이은 결과는 글자열이 되어 다른 `html` 안에서 다시 이스케이프됩니다 — 이을 땐 배열이나 `html` 안에서. ② 속성 조각(`'style="…"'`)도 `` html`style="…"` `` 로. ③ 함수 안 지역 변수 이름을 `html` 로 짓지 않습니다(태그 함수를 가림, 테스트) |
 | 불러오는 중 · 빈 화면 · 오류 | `ui.loading(el)` · `ui.empty(el, "인덱스가 없습니다", { href, label })` · `ui.error(el, e)` |
 | 백그라운드 작업 | `runJobInto(btn, path, body, box, render)` 또는 `pollJob(id, j => box.innerHTML = ui.jobProgress(j))` — 진행률 · 경과 시간 · 취소가 같은 모양 |
 | 삭제 · 되돌릴 수 없는 동작 | `await ui.confirm(글, { ok: "삭제", danger: true })`. 선택지가 여럿이면 `ui.choose(글, [{ label, value, danger }])` → 고른 value 또는 `null`(취소). 브라우저 `confirm()` 금지(테스트) |

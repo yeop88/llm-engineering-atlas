@@ -268,8 +268,8 @@ const BenchCharts = (() => {
 
   // ── 5. STS 작은 다중 산점도 (모델별 1개 — 모델 수가 많아도 색 구분이 필요 없음) ────
   function stsMultiples(container, ok, t) {
-    container.innerHTML = ok.map((r, i) => `<div class="mini"><h4 title="${esc(r.hf_id)}">${esc(shortName(r.hf_id))} <span class="muted">ρ=${r.metrics.spearman.toFixed(3)}</span></h4>
-      <div class="chart-box h-sm"><canvas id="sts-mini-${i}" aria-label="${esc(r.hf_id)} STS 산점도"></canvas></div></div>`).join("");
+    container.innerHTML = html.join(ok.map((r, i) => html`<div class="mini"><h4 title="${r.hf_id}">${shortName(r.hf_id)} <span class="muted">ρ=${r.metrics.spearman.toFixed(3)}</span></h4>
+      <div class="chart-box h-sm"><canvas id="sts-mini-${i}" aria-label="${r.hf_id} STS 산점도"></canvas></div></div>`), "");
     const lo = Math.min(...ok.flatMap(r => r.per_pair.map(p => p.cosine)));
     ok.forEach((r, i) => {
       const o = baseOptions(t);
@@ -350,9 +350,9 @@ const BenchCharts = (() => {
       },
     });
     // 표 보기 (차트와 같은 값)
-    tableBox.innerHTML = `<details><summary>표로 보기</summary><div class="table-wrap" style="margin-top:8px"><table>
-      <tr><th>모델</th>${dims.map(d => `<th class="num">${d}</th>`).join("")}</tr>
-      ${withSweep.map(r => `<tr><td class="mono small">${esc(r.hf_id)}</td>${dims.map(d => `<td class="num">${fmt(valueOf(r, d))}</td>`).join("")}</tr>`).join("")}
+    tableBox.innerHTML = html`<details><summary>표로 보기</summary><div class="table-wrap" style="margin-top:8px"><table>
+      <tr><th>모델</th>${html.join(dims.map(d => html`<th class="num">${d}</th>`), "")}</tr>
+      ${html.join(withSweep.map(r => html`<tr><td class="mono small">${r.hf_id}</td>${html.join(dims.map(d => html`<td class="num">${fmt(valueOf(r, d))}</td>`), "")}</tr>`), "")}
     </table></div></details>`;
   }
 
@@ -368,14 +368,14 @@ const BenchCharts = (() => {
       color: i < 3 ? t.series[i] : t.other, shape: i < 3 ? "circle" : SHAPES[(i - 2) % SHAPES.length],
     }]));
     const okRes = res.results.filter(r => !r.error);
-    root.innerHTML = `<div class="multiples" style="grid-template-columns:repeat(auto-fill,minmax(340px,1fr))">${res.results.map((r, mi) => `
-      <div class="card chart-card"><div class="row between" style="flex-wrap:nowrap"><h3 class="mono" style="word-break:break-all">${esc(r.hf_id)}</h3>${r.error ? "" : '<button class="btn sm png-btn" title="PNG로 저장">PNG</button>'}</div>
-      ${r.error ? `<div class="errbox">${esc(r.error)}</div>` : `
-        <p class="chart-sub">${r.dim}차원 → 2D ${res.method.toUpperCase()}${r.explained_variance != null ? ` · 두 축이 전체 분산의 ${(r.explained_variance * 100).toFixed(0)}% 설명` : ""}</p>
+    root.innerHTML = html`<div class="multiples" style="grid-template-columns:repeat(auto-fill,minmax(340px,1fr))">${html.join(res.results.map((r, mi) => html`
+      <div class="card chart-card"><div class="row between" style="flex-wrap:nowrap"><h3 class="mono" style="word-break:break-all">${r.hf_id}</h3>${r.error ? "" : html`<button class="btn sm png-btn" title="PNG로 저장">PNG</button>`}</div>
+      ${r.error ? html`<div class="errbox">${r.error}</div>` : html`
+        <p class="chart-sub">${r.dim}차원 → 2D ${res.method.toUpperCase()}${r.explained_variance != null ? html` · 두 축이 전체 분산의 ${(r.explained_variance * 100).toFixed(0)}% 설명` : ""}</p>
         ${warningsHtml(r.warnings)}
-        <div class="chart-box" style="height:340px"><canvas id="proj-${mi}" role="img" aria-label="${esc(r.hf_id)} 임베딩 2D 지도"></canvas></div>
+        <div class="chart-box" style="height:340px"><canvas id="proj-${mi}" role="img" aria-label="${r.hf_id} 임베딩 2D 지도"></canvas></div>
         ${r.alignment ? alignmentHtml(r.alignment) : ""}`}
-      </div>`).join("")}</div>
+      </div>`), "")}</div>
       ${okRes.some(r => r.alignment) ? alignmentTable(okRes) : ""}`;
 
     const pairLines = {
@@ -441,21 +441,21 @@ const BenchCharts = (() => {
   }
 
   function alignmentHtml(a) {
-    return `<div class="kv small" style="margin-top:10px">
+    return html`<div class="kv small" style="margin-top:10px">
       <div>의미 쌍 코사인 (평균)</div><div><b>${a.pair_cosine.toFixed(3)}</b></div>
       <div>다른 문장과 코사인</div><div>${a.other_cosine.toFixed(3)}</div>
       <div>차이 (클수록 좋음)</div><div><b>${a.margin.toFixed(3)}</b></div>
-      <div>짝 찾기 정확도</div><div>${esc(a.groups[0])}→${esc(a.groups[1])} ${(a.top1_a_to_b * 100).toFixed(0)}% · ${esc(a.groups[1])}→${esc(a.groups[0])} ${(a.top1_b_to_a * 100).toFixed(0)}%</div>
+      <div>짝 찾기 정확도</div><div>${a.groups[0]}→${a.groups[1]} ${(a.top1_a_to_b * 100).toFixed(0)}% · ${a.groups[1]}→${a.groups[0]} ${(a.top1_b_to_a * 100).toFixed(0)}%</div>
     </div>`;
   }
   function alignmentTable(rs) {
     const rows = rs.filter(r => r.alignment);
     const best = Math.max(...rows.map(r => r.alignment.margin));
-    return `<div class="card chart-card" style="margin-top:16px"><h3>의미 쌍 정렬도 비교</h3>
+    return html`<div class="card chart-card" style="margin-top:16px"><h3>의미 쌍 정렬도 비교</h3>
       <p class="chart-sub">원래 차원에서 계산한 값입니다(2D 투영 전). 같은 뜻의 문장끼리 가깝고(쌍 코사인↑) 다른 문장과는 멀수록(차이↑) 좋습니다.</p>
       <div class="table-wrap"><table><tr><th>모델</th><th class="num">쌍 코사인</th><th class="num">다른 문장</th><th class="num">차이</th><th class="num">짝 찾기 A→B</th><th class="num">짝 찾기 B→A</th></tr>
-      ${rows.map(r => { const a = r.alignment; return `<tr><td class="mono small">${esc(r.hf_id)}</td><td class="num">${a.pair_cosine.toFixed(3)}</td><td class="num">${a.other_cosine.toFixed(3)}</td>
-        <td class="num ${a.margin === best && rows.length > 1 ? "best" : ""}">${a.margin.toFixed(3)}</td><td class="num">${(a.top1_a_to_b * 100).toFixed(0)}%</td><td class="num">${(a.top1_b_to_a * 100).toFixed(0)}%</td></tr>`; }).join("")}
+      ${html.join(rows.map(r => { const a = r.alignment; return html`<tr><td class="mono small">${r.hf_id}</td><td class="num">${a.pair_cosine.toFixed(3)}</td><td class="num">${a.other_cosine.toFixed(3)}</td>
+        <td class="num ${a.margin === best && rows.length > 1 ? "best" : ""}">${a.margin.toFixed(3)}</td><td class="num">${(a.top1_a_to_b * 100).toFixed(0)}%</td><td class="num">${(a.top1_b_to_a * 100).toFixed(0)}%</td></tr>`; }), "")}
       </table></div></div>`;
   }
 
@@ -616,38 +616,38 @@ const BenchCharts = (() => {
     const mrlSet = new Set(models.filter(m => (m.mrl_dims || []).length || (m.tags || []).includes("matryoshka")).map(m => m.hf_id));
 
     const card = (title, sub, body, wide = false) =>
-      `<div class="card chart-card" ${wide ? 'style="grid-column:1/-1"' : ""}><div class="row between"><h3>${title}</h3><button class="btn sm png-btn" title="이 차트를 PNG로 저장">PNG</button></div><p class="chart-sub">${sub}</p>${body}</div>`;
-    let html = `<div class="grid cols-2" style="margin-top:16px">`;
-    html += card("성능 vs 속도", `원 크기 = 파라미터 수. 오른쪽 위로 갈수록 빠르고 정확합니다. 파란 원은 파레토 최적(자기보다 빠르면서 더 정확한 모델이 없음)이고, 회색 원은 마우스를 올리면 이름이 보입니다.`,
-      `<div class="chart-box h-md"><canvas id="ch-bubble" role="img" aria-label="성능 대 속도 버블 차트"></canvas></div>`, !isRetrieval);
+      html`<div class="card chart-card" ${wide ? html`style="grid-column:1/-1"` : ""}><div class="row between"><h3>${title}</h3><button class="btn sm png-btn" title="이 차트를 PNG로 저장">PNG</button></div><p class="chart-sub">${sub}</p>${body}</div>`;
+    let out = html`<div class="grid cols-2 mt-4">`;
+    out += card("성능 vs 속도", `원 크기 = 파라미터 수. 오른쪽 위로 갈수록 빠르고 정확합니다. 파란 원은 파레토 최적(자기보다 빠르면서 더 정확한 모델이 없음)이고, 회색 원은 마우스를 올리면 이름이 보입니다.`,
+      html`<div class="chart-box h-md"><canvas id="ch-bubble" role="img" aria-label="성능 대 속도 버블 차트"></canvas></div>`, !isRetrieval);
     if (isRetrieval) {
-      html += card("Recall@k", "상위 k개 안에 정답이 들어온 비율. 선이 왼쪽부터 높을수록 1위 정확도가 좋습니다. 범례를 눌러 모델을 숨길 수 있습니다.",
-        `<div class="chart-box h-md"><canvas id="ch-recall" role="img" aria-label="Recall@k 선 그래프"></canvas></div>`);
+      out += card("Recall@k", "상위 k개 안에 정답이 들어온 비율. 선이 왼쪽부터 높을수록 1위 정확도가 좋습니다. 범례를 눌러 모델을 숨길 수 있습니다.",
+        html`<div class="chart-box h-md"><canvas id="ch-recall" role="img" aria-label="Recall@k 선 그래프"></canvas></div>`);
     }
     if (hasGroups) {
       const h = Math.max(260, ok.length * 46 + 80);
-      html += card(`언어 그룹별 ${primary}`, "막대가 짧은 곳이 그 모델의 약점입니다(특히 교차언어 ko→en / en→ko).",
-        `<div class="chart-box" style="height:${h}px"><canvas id="ch-groups" role="img" aria-label="언어 그룹별 막대 차트"></canvas></div>`);
+      out += card(`언어 그룹별 ${primary}`, "막대가 짧은 곳이 그 모델의 약점입니다(특히 교차언어 ko→en / en→ko).",
+        html`<div class="chart-box" style="height:${h}px"><canvas id="ch-groups" role="img" aria-label="언어 그룹별 막대 차트"></canvas></div>`);
     }
     if (isRetrieval) {
-      html += card("모델 프로필", `최대 3개 모델을 골라 비교합니다. 모든 축 0~100%.${stsScores ? ` STS는 최근 '${esc(stsTitle)}' 결과에서 가져왔습니다.` : " STS 벤치마크를 한 번 실행하면 STS 축이 추가됩니다."}`,
-        `<div class="picker" id="radar-pick">${ok.map((r, i) => `<label><input type="checkbox" value="${esc(r.hf_id)}" ${i < 3 ? "checked" : ""}>
-          <span class="swatch" style="background:${colors[r.hf_id]}"></span>${esc(shortName(r.hf_id))}</label>`).join("")}</div>
+      out += card("모델 프로필", `최대 3개 모델을 골라 비교합니다. 모든 축 0~100%.${stsScores ? ` STS는 최근 '${stsTitle}' 결과에서 가져왔습니다.` : " STS 벤치마크를 한 번 실행하면 STS 축이 추가됩니다."}`,
+        html`<div class="picker" id="radar-pick">${html.join(ok.map((r, i) => html`<label><input type="checkbox" value="${r.hf_id}" ${i < 3 ? "checked" : ""}>
+          <span class="swatch" style="background:${colors[r.hf_id]}"></span>${shortName(r.hf_id)}</label>`), "")}</div>
          <div class="chart-box h-md"><canvas id="ch-radar" role="img" aria-label="모델 프로필 레이더 차트"></canvas></div>`);
     }
     if (!isRetrieval) {
-      html += card("모델별 정답 점수 vs 코사인 유사도", "점이 왼쪽 아래 → 오른쪽 위로 가지런히 놓일수록 모델이 사람의 판단과 비슷하게 유사도를 매깁니다. 점에 마우스를 올리면 문장쌍이 보입니다.",
-        `<div class="multiples" id="ch-sts"></div>`, true);
+      out += card("모델별 정답 점수 vs 코사인 유사도", "점이 왼쪽 아래 → 오른쪽 위로 가지런히 놓일수록 모델이 사람의 판단과 비슷하게 유사도를 매깁니다. 점에 마우스를 올리면 문장쌍이 보입니다.",
+        html`<div class="multiples" id="ch-sts"></div>`, true);
     }
     if (hasSweep) {
-      html += card(`차원별 ${primary} (Matryoshka)`,
+      out += card(`차원별 ${primary} (Matryoshka)`,
         "임베딩을 앞에서부터 잘라 차원을 줄였을 때의 성능입니다. 곡선이 평평할수록 저장 공간을 줄여도 성능이 유지됩니다. ◆ 모양은 MRL로 학습되지 않은 모델(카탈로그 기준)로, 잘랐을 때 성능이 크게 떨어질 수 있습니다.",
-        `<div class="row" style="margin-bottom:8px"><div class="tabs" id="sweep-mode" style="margin:0;border:none">
+        html`<div class="row" style="margin-bottom:8px"><div class="tabs" id="sweep-mode" style="margin:0;border:none">
            <button data-mode="abs" class="active">절대값</button><button data-mode="rel">전체 차원 대비 %</button></div></div>
          <div class="chart-box h-md"><canvas id="ch-sweep" role="img" aria-label="차원별 성능 선 그래프"></canvas></div><div id="ch-sweep-table" style="margin-top:8px"></div>`, true);
     }
-    html += `</div>`;
-    root.innerHTML = html;
+    out += html`</div>`;
+    root.innerHTML = out;
 
     bubble(root.querySelector("#ch-bubble"), ok, primary, params, t);
     if (isRetrieval) recallLines(root.querySelector("#ch-recall"), ok, colors, t);

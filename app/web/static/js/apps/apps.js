@@ -7,5 +7,5 @@ const APPS = [
   { key: "anomaly", title: "이상·신종 탐지", use: "스팸·피싱 필터링, 해킹 징후, 신종 공격 문구 감지", how: "정상 데이터를 학습해 벗어난 텍스트를 찾고, 알려진 유형과 비교해 '새로운 유형'을 가려냅니다." },
   { key: "keywords", title: "키워드·요약", use: "문서 태깅, 검색 색인어, 긴 문서 핵심 문장", how: "형태소 후보 중 문서 의미와 가까운 키워드를 고르고(MMR), 중심 문장으로 추출 요약합니다." },
 ];
-$("#apps").innerHTML = APPS.filter(a => AVAILABLE.includes(a.key)).map(a => `<a class="card stack" href="/apps/${a.key}" style="color:inherit;text-decoration:none">
-  <h2 class="m-0">${a.title}</h2><div class="small"><b>활용</b> ${a.use}</div><div class="small muted">${a.how}</div></a>`).join("");
+$("#apps").innerHTML = html.join(APPS.filter(a => AVAILABLE.includes(a.key)).map(a => html`<a class="card stack" href="/apps/${a.key}" style="color:inherit;text-decoration:none">
+  <h2 class="m-0">${a.title}</h2><div class="small"><b>활용</b> ${a.use}</div><div class="small muted">${a.how}</div></a>`), "");

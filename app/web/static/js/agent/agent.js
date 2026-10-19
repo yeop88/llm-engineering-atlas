@@ -28,18 +28,18 @@ $("#a-run").onclick = async e => {
 function show(ev) {
   if (ev.type === "step") {
     const [name, cls] = ACT[ev.action] || [ev.action, ""];
-    $("#a-steps-out").insertAdjacentHTML("beforeend", `<div class="card stack p-2">
-      <div class="row between"><span><span class="stage-no">${ev.n}</span> <span class="badge ${cls}">${esc(name)}</span> <span class="mono small">${esc(ev.input || "")}</span></span><span class="small muted">${ev.ms ? (ev.ms / 1000).toFixed(1) + "s" : "주어진 첫 검색"}</span></div>
-      ${ev.thought ? `<div class="small muted">생각: ${esc(ev.thought)}</div>` : ""}
-      ${ev.observation ? `<pre class="small pre m-0">${esc(ev.observation)}</pre>` : ""}</div>`);
+    $("#a-steps-out").insertAdjacentHTML("beforeend", html`<div class="card stack p-2">
+      <div class="row between"><span><span class="stage-no">${ev.n}</span> <span class="badge ${cls}">${name}</span> <span class="mono small">${ev.input || ""}</span></span><span class="small muted">${ev.ms ? (ev.ms / 1000).toFixed(1) + "s" : "주어진 첫 검색"}</span></div>
+      ${ev.thought ? html`<div class="small muted">생각: ${ev.thought}</div>` : ""}
+      ${ev.observation ? html`<pre class="small pre m-0">${ev.observation}</pre>` : ""}</div>`);
   } else if (ev.type === "final") {
     const v = ev.verify;
-    $("#a-final").innerHTML = `<div class="card stack mt-3"><div class="row between"><h2>답변</h2><span class="small muted">${ev.n_steps}단계 · ${ev.seconds}s${ev.run_id ? ` · run #${ev.run_id}` : ""}</span></div>
-      <div class="pre">${esc(ev.answer)}</div>
-      <div class="small muted">근거 있는 문장 ${v.supported_ratio != null ? (v.supported_ratio * 100).toFixed(0) + "%" : "-"} · 인용 ${v.cited_sources.map(n => `[${n}]`).join("") || "없음"}${v.invalid_citations.length ? ` · <span class="badge err">없는 근거 ${v.invalid_citations.join(", ")}</span>` : ""}</div>
+    $("#a-final").innerHTML = html`<div class="card stack mt-3"><div class="row between"><h2>답변</h2><span class="small muted">${ev.n_steps}단계 · ${ev.seconds}s${ev.run_id ? html` · run #${ev.run_id}` : ""}</span></div>
+      <div class="pre">${ev.answer}</div>
+      <div class="small muted">근거 있는 문장 ${v.supported_ratio != null ? (v.supported_ratio * 100).toFixed(0) + "%" : "-"} · 인용 ${html.join(v.cited_sources.map(n => html`[${n}]`), "") || "없음"}${v.invalid_citations.length ? html` · <span class="badge err">없는 근거 ${html.join(v.invalid_citations, ", ")}</span>` : ""}</div>
       ${citeBox(ev.citations)}
-      <h3>모은 근거 (${ev.sources.length})</h3>${ev.sources.map((s, i) => `<div class="small"><span class="badge">[${i + 1}]</span> <b>${esc(s.filename || "")}</b>${s.page ? ` p.${s.page}` : ""} <span class="muted">${esc((s.text || "").slice(0, 160))}</span></div>`).join("")}</div>`;
+      <h3>모은 근거 (${ev.sources.length})</h3>${html.join(ev.sources.map((s, i) => html`<div class="small"><span class="badge">[${i + 1}]</span> <b>${s.filename || ""}</b>${s.page ? html` p.${s.page}` : ""} <span class="muted">${(s.text || "").slice(0, 160)}</span></div>`), "")}</div>`;
   } else if (ev.type === "error") {
-    $("#a-final").innerHTML = `<div class="errbox">${esc(ev.message)}</div>`;
+    $("#a-final").innerHTML = html`<div class="errbox">${ev.message}</div>`;
   }
 }

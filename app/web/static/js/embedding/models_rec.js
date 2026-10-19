@@ -22,10 +22,10 @@ const REC_GROUPS = [
 let recKey = localGet("rec-tab") || "ready";
 
 function recAction(m) {
-  if (m.loaded_profiles.length) return `<a class="btn sm primary" href="/embedding/playground?model=${m.id}">테스트</a>`;
-  if (m.download_job) return `<span class="badge warn">다운로드 ${pct(m.download_job.progress)}%</span>`;
-  if (m.cached) return `<button class="btn sm" onclick="recDo(${m.id}, 'load', this)">로드</button>`;
-  return `<button class="btn sm" onclick="recDo(${m.id}, 'download', this)">다운로드</button>`;
+  if (m.loaded_profiles.length) return html`<a class="btn sm primary" href="/embedding/playground?model=${m.id}">테스트</a>`;
+  if (m.download_job) return html`<span class="badge warn">다운로드 ${pct(m.download_job.progress)}%</span>`;
+  if (m.cached) return html`<button class="btn sm" onclick="recDo(${m.id}, 'load', this)">로드</button>`;
+  return html`<button class="btn sm" onclick="recDo(${m.id}, 'download', this)">다운로드</button>`;
 }
 async function recDo(id, action, btn) {
   await busy(btn, () => api(`/api/models/${id}/${action}`, { method: "POST" }));
@@ -38,17 +38,17 @@ function renderRecommendations(all) {
   const models = all.filter(m => m.kind !== "reranker");
   const groups = REC_GROUPS.map(g => ({ ...g, items: g.key === "reranker" ? g.pick(all) : g.pick(models) }));
   if (!groups.find(g => g.key === recKey)?.items.length) recKey = groups.find(g => g.items.length)?.key || "light";
-  $("#rec-tabs").innerHTML = groups.map(g =>
-    `<button data-key="${g.key}" class="${g.key === recKey ? "active" : ""}">${g.label} <span class="muted small">${g.items.length}</span></button>`).join("");
+  $("#rec-tabs").innerHTML = html.join(groups.map(g =>
+    html`<button data-key="${g.key}" class="${g.key === recKey ? "active" : ""}">${g.label} <span class="muted small">${g.items.length}</span></button>`), "");
   const g = groups.find(x => x.key === recKey);
   $("#rec-desc").textContent = g.desc;
   $("#rec-more").href = g.more;
-  $("#rec-list").innerHTML = g.items.slice(0, 8).map(m => `
+  $("#rec-list").innerHTML = html.or(html.join(g.items.slice(0, 8).map(m => html`
     <div class="row between nowrap-row">
-      <div class="min-0"><a href="/embedding/models/${m.id}"><b>${esc(m.name)}</b></a> ${modelBadges(m)}<br>
-        <span class="small muted">${esc(m.provider)} · ${esc(m.release_date)} · ${esc(m.params)} · ${m.dim ?? "?"}d · ${esc(m.license)} · ${esc(m.languages)}</span></div>
+      <div class="min-0"><a href="/embedding/models/${m.id}"><b>${m.name}</b></a> ${modelBadges(m)}<br>
+        <span class="small muted">${m.provider} · ${m.release_date} · ${m.params} · ${m.dim ?? "?"}d · ${m.license} · ${m.languages}</span></div>
       <div class="nowrap">${recAction(m)}</div>
-    </div>`).join("") || '<div class="empty">해당 모델이 없습니다</div>';
+    </div>`), ""), html`<div class="empty">해당 모델이 없습니다</div>`);
 }
 $("#rec-tabs").addEventListener("click", e => {
   const btn = e.target.closest("button[data-key]");

@@ -10,13 +10,12 @@ async function load() {
   $("#summary").textContent = `전체 ${summary.total}건 · ` + Object.entries(summary.by_kind).map(([k, n]) => `${k} ${n}`).join(" · ");
   $("#btn-del-all").textContent = kind ? `'${kind}' 전체 삭제` : "전체 삭제";
   $("#btn-del-all").disabled = (kind ? summary.by_kind[kind] || 0 : summary.total) === 0;
-  $("#rows").innerHTML = runs.map(r => `<tr>
+  $("#rows").innerHTML = html.or(html.join(runs.map(r => html`<tr>
     <td><input type="checkbox" class="sel" value="${r.id}" ${selected.has(r.id) ? "checked" : ""} aria-label="#${r.id} 선택"></td>
-    <td>${r.id}</td><td><span class="badge muted">${r.kind}</span></td><td>${esc(r.title)}</td>
-    <td class="small mono">${r.model_hf_ids.map(esc).join("<br>")}</td><td class="num">${(r.duration_ms / 1000).toFixed(2)}s</td><td class="small nowrap">${fmtDate(r.created_at)}</td>
-    <td class="right nowrap">${r.kind === "benchmark" ? `<a class="btn sm" href="/embedding/benchmark" onclick="sessionStorage.setItem('run', ${r.id})">결과 보기</a>` : ""}
-      <button class="btn sm" onclick="show(${r.id})">JSON</button><button class="btn sm danger" onclick="del(${r.id})">삭제</button></td></tr>`).join("")
-    || '<tr><td colspan="8" class="empty">기록이 없습니다. 단계 화면에서 실험을 실행하면 여기에 쌓입니다.</td></tr>';
+    <td>${r.id}</td><td><span class="badge muted">${r.kind}</span></td><td>${r.title}</td>
+    <td class="small mono">${html.join(r.model_hf_ids, "<br>")}</td><td class="num">${(r.duration_ms / 1000).toFixed(2)}s</td><td class="small nowrap">${fmtDate(r.created_at)}</td>
+    <td class="right nowrap">${r.kind === "benchmark" ? html`<a class="btn sm" href="/embedding/benchmark" onclick="sessionStorage.setItem('run', ${r.id})">결과 보기</a>` : ""}
+      <button class="btn sm" onclick="show(${r.id})">JSON</button><button class="btn sm danger" onclick="del(${r.id})">삭제</button></td></tr>`), ""), html`<tr><td colspan="8" class="empty">기록이 없습니다. 단계 화면에서 실험을 실행하면 여기에 쌓입니다.</td></tr>`);
   updateSelection();
 }
 function updateSelection() {

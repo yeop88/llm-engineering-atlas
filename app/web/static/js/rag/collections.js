@@ -4,18 +4,17 @@ let cols = [];
 async function load() {
   let stores;
   [cols, stores] = await Promise.all([api("/api/collections"), api("/api/vector-stores")]);
-  $("#rows").innerHTML = cols.map(c => `<tr>
-    <td><a href="/rag/collections/${c.id}"><b>${esc(c.name)}</b></a><div class="small muted">${esc(c.description)}</div></td>
+  $("#rows").innerHTML = html.or(html.join(cols.map(c => html`<tr>
+    <td><a href="/rag/collections/${c.id}"><b>${c.name}</b></a><div class="small muted">${c.description}</div></td>
     <td><span class="badge muted">${DOMAINS[c.domain] || c.domain}</span></td>
     <td class="num">${c.n_documents}</td><td class="num">${fmtNum(c.n_chars)}</td><td class="num">${c.n_chunk_sets}</td><td class="num">${c.n_indexes}</td>
     <td class="small nowrap">${fmtDate(c.created_at)}</td>
     <td class="right nowrap"><a class="btn sm primary" href="/rag/collections/${c.id}#t-search">검색</a> <a class="btn sm" href="/rag/collections/${c.id}">관리</a>
-      <button class="btn sm danger" onclick="del(${c.id})">삭제</button></td></tr>`).join("")
-    || '<tr><td colspan="8" class="empty">컬렉션이 없습니다. 위에서 새 컬렉션을 만든 뒤, 문서를 올리거나 공개 자료(법령 · 판례)를 가져오세요.</td></tr>';
-  $("#stores").innerHTML = stores.map(s => `<div class="row between">
-    <span><b>${esc(s.label)}</b> ${s.default ? '<span class="badge">기본</span>' : ""}</span>
-    <span>${s.ok ? `<span class="badge ok">연결됨</span> <span class="muted">${esc(s.version)}</span>` : `<span class="badge ${s.configured ? "err" : "muted"}">${s.configured ? "연결 실패" : "설정 안 됨"}</span>`}</span></div>
-    <div class="muted" style="margin:-6px 0 4px">${esc(s.detail)}</div>`).join("");
+      <button class="btn sm danger" onclick="del(${c.id})">삭제</button></td></tr>`), ""), html`<tr><td colspan="8" class="empty">컬렉션이 없습니다. 위에서 새 컬렉션을 만든 뒤, 문서를 올리거나 공개 자료(법령 · 판례)를 가져오세요.</td></tr>`);
+  $("#stores").innerHTML = html.join(stores.map(s => html`<div class="row between">
+    <span><b>${s.label}</b> ${s.default ? html`<span class="badge">기본</span>` : ""}</span>
+    <span>${s.ok ? html`<span class="badge ok">연결됨</span> <span class="muted">${s.version}</span>` : html`<span class="badge ${s.configured ? "err" : "muted"}">${s.configured ? "연결 실패" : "설정 안 됨"}</span>`}</span></div>
+    <div class="muted" style="margin:-6px 0 4px">${s.detail}</div>`), "");
 }
 // 이름을 onclick 글자로 넘기면 작은따옴표가 든 이름에서 스크립트가 깨져, 목록에서 찾는다
 async function del(id) {

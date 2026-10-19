@@ -1,37 +1,37 @@
 // 7b 양자화 테스트: 기술 카탈로그(선택) · 임베딩 조합 실험 · LLM 서버 명령 조합 · LLM 비교
 let QOPT = null;
 const fmtGB = v => (v >= 1 ? `${v.toFixed(2)} GB` : `${(v * 1024).toFixed(0)} MB`);
-const vsTxt = d => (d ? `${d.diff >= 0 ? "+" : ""}${(d.diff * 100).toFixed(1)}%p ${d.significant ? '<span class="badge err">유의</span>' : '<span class="badge">불확실</span>'}` : "기준");
+const vsTxt = d => (d ? html`${d.diff >= 0 ? "+" : ""}${(d.diff * 100).toFixed(1)}%p ${d.significant ? html`<span class="badge err">유의</span>` : html`<span class="badge">불확실</span>`}` : "기준");
 // 처음에 체크해 둘 기술: 무난한 비교 묶음(기준 + int8 + binary + 재점수 + 모델 int8)
 const DEFAULT_ON = new Set(["float32", "int8", "binary", "binary_rescore", "w_fp32", "w_int8"]);
 
 async function qLoad() {
   QOPT = await api("/api/quant/options");
   qCatalog();
-  $("#v-ds").innerHTML = QOPT.datasets.map(d => `<option value="${esc(d.name)}">${esc(d.title || d.name)} (질문 ${d.size} · 문서 ${d.corpus_size})</option>`).join("");
+  $("#v-ds").innerHTML = html.join(QOPT.datasets.map(d => html`<option value="${d.name}">${d.title || d.name} (질문 ${d.size} · 문서 ${d.corpus_size})</option>`), "");
   if (QOPT.datasets.some(d => d.name === "pub_ko_strategyqa")) $("#v-ds").value = "pub_ko_strategyqa";
   await fillModelSelect($("#v-models"), {});
-  $("#c-file").innerHTML = QOPT.gguf_files.map(f => `<option value="${esc(f.path)}">${esc(f.name)} (${f.gb} GB)</option>`).join("") || '<option value="">.env 의 LLM_MODELS_DIR 에 GGUF 폴더를 지정하세요</option>';
-  $("#c-k").innerHTML = $("#c-v").innerHTML = QOPT.kv_types.map(k => `<option>${k}</option>`).join("");
+  $("#c-file").innerHTML = html.or(html.join(QOPT.gguf_files.map(f => html`<option value="${f.path}">${f.name} (${f.gb} GB)</option>`), ""), html`<option value="">.env 의 LLM_MODELS_DIR 에 GGUF 폴더를 지정하세요</option>`);
+  $("#c-k").innerHTML = $("#c-v").innerHTML = html.join(QOPT.kv_types.map(k => html`<option>${k}</option>`), "");
   const cols = await api("/api/collections");
-  $("#l-col").innerHTML = cols.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("") || '<option value="">컬렉션 없음</option>';
+  $("#l-col").innerHTML = html.or(html.join(cols.map(c => html`<option value="${c.id}">${c.name}</option>`), ""), html`<option value="">컬렉션 없음</option>`);
   applyCtx($("#l-col"));
   await lDetail();
   const names = new Set(Object.keys(QOPT.model_urls || {}));
   try { (await api("/api/llm/models")).models.forEach(m => names.add(m)); } catch { /* 기본 서버가 꺼져 있으면 목록 없음 */ }
-  $("#l-model-list").innerHTML = [...names].map(x => `<option value="${esc(x)}">`).join("");
+  $("#l-model-list").innerHTML = html.join([...names].map(x => html`<option value="${x}">`), "");
   qCombo();
 }
 
 function qCatalog() {
   const groups = Object.entries(QOPT.groups);
-  $("#t-cat").innerHTML = groups.map(([g, title]) => `<details ${g !== "llm" ? "open" : ""}><summary><b>${esc(title)}</b></summary>
-    <div class="grid cols-2 mt-2">${QOPT.techniques.filter(t => t.group === g).map(t => `<div class="card stack p-2">
-      <div class="row between nowrap-row"><label class="row m-0 gap-2">${t.run && g !== "llm" ? `<input type="checkbox" class="t-pick" value="${t.key}" ${DEFAULT_ON.has(t.key) || t.key === "float32" || t.key === "w_fp32" ? "checked" : ""} ${t.key === "float32" || t.key === "w_fp32" ? "disabled" : ""}>` : ""}<b>${esc(t.name)}</b></label>
-        <span>${t.bits != null ? `<span class="badge">${esc(String(t.bits))}비트</span> ` : ""}<span class="badge ${t.run ? "ok" : ""}">${t.run ? "실행" : "설명"}</span></span></div>
-      <div class="small">${esc(t.principle)}</div>
-      <div class="small muted">장점: ${esc(t.pros)} · 한계: ${esc(t.cons)}</div>
-      <div class="small muted">언제: ${esc(t.when)}</div></div>`).join("")}</div></details>`).join("");
+  $("#t-cat").innerHTML = html.join(groups.map(([g, title]) => html`<details ${g !== "llm" ? "open" : ""}><summary><b>${title}</b></summary>
+    <div class="grid cols-2 mt-2">${html.join(QOPT.techniques.filter(t => t.group === g).map(t => html`<div class="card stack p-2">
+      <div class="row between nowrap-row"><label class="row m-0 gap-2">${t.run && g !== "llm" ? html`<input type="checkbox" class="t-pick" value="${t.key}" ${DEFAULT_ON.has(t.key) || t.key === "float32" || t.key === "w_fp32" ? "checked" : ""} ${t.key === "float32" || t.key === "w_fp32" ? "disabled" : ""}>` : ""}<b>${t.name}</b></label>
+        <span>${t.bits != null ? html`<span class="badge">${String(t.bits)}비트</span> ` : ""}<span class="badge ${t.run ? "ok" : ""}">${t.run ? "실행" : "설명"}</span></span></div>
+      <div class="small">${t.principle}</div>
+      <div class="small muted">장점: ${t.pros} · 한계: ${t.cons}</div>
+      <div class="small muted">언제: ${t.when}</div></div>`), "")}</div></details>`), "");
   $$(".t-pick").forEach(x => x.addEventListener("change", qCombo));
   $("#v-dims").addEventListener("input", qCombo);
 }
@@ -48,10 +48,10 @@ function qCombo() {
 async function lDetail() {
   if (!$("#l-col").value) return;
   const d = await api(`/api/collections/${$("#l-col").value}`);
-  $("#l-idx").innerHTML = d.indexes.filter(i => i.status === "ready").map(i => `<option value="${i.id}">${esc(i.model_hf_id.split(/[\\/]/).pop())} · #${i.id}</option>`).join("") || '<option value="">인덱스 없음</option>';
+  $("#l-idx").innerHTML = html.or(html.join(d.indexes.filter(i => i.status === "ready").map(i => html`<option value="${i.id}">${i.model_hf_id.split(/[\\/]/).pop()} · #${i.id}</option>`), ""), html`<option value="">인덱스 없음</option>`);
   applyCtx($("#l-idx"));
   const sets = (await api(`/api/collections/${d.id}/eval-sets`)).filter(s => s.status === "ready");
-  $("#l-set").innerHTML = sets.map(s => `<option value="${s.id}">#${s.id} ${esc(s.name)} (${s.n_items}문항)</option>`).join("") || '<option value="">평가 세트 없음</option>';
+  $("#l-set").innerHTML = html.or(html.join(sets.map(s => html`<option value="${s.id}">#${s.id} ${s.name} (${s.n_items}문항)</option>`), ""), html`<option value="">평가 세트 없음</option>`);
   applyCtx($("#l-set"));
 }
 $("#l-col").addEventListener("change", lDetail);
@@ -89,39 +89,39 @@ function vChart(rows) {
   const ticks = [...new Set(ok.map(r => r.bytes.ram))].sort((a, b) => a - b);
   const tickTxt = b => (b >= 1024 ? `${(b / 1024).toFixed(b % 1024 ? 1 : 0)}KB` : `${b}B`);
   const yTicks = [0, 0.5, 1].map(f => yMin + f * (yMax - yMin));
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px" role="img" aria-label="조합별 메모리-정확도">
-    ${yTicks.map(v => `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--border)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${(v * 100).toFixed(1)}</text>`).join("")}
-    ${ticks.filter((b, i) => i === 0 || X(b) - X(ticks[i - 1]) > 34).map(b => `<text x="${X(b)}" y="${H - B + 15}" text-anchor="middle" font-size="10" fill="var(--muted)">${tickTxt(b)}</text>`).join("")}
+  return html`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px" role="img" aria-label="조합별 메모리-정확도">
+    ${html.join(yTicks.map(v => html`<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--border)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${(v * 100).toFixed(1)}</text>`), "")}
+    ${html.join(ticks.filter((b, i) => i === 0 || X(b) - X(ticks[i - 1]) > 34).map(b => html`<text x="${X(b)}" y="${H - B + 15}" text-anchor="middle" font-size="10" fill="var(--muted)">${tickTxt(b)}</text>`), "")}
     <text x="4" y="11" font-size="11" fill="var(--muted)">nDCG@10 ↑</text>
     <text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="11" fill="var(--muted)">벡터당 메모리 (로그) →</text>
-    <path d="${front.map((r, i) => `${i ? "L" : "M"}${X(r.bytes.ram).toFixed(1)},${Y(r.metrics["ndcg@10"]).toFixed(1)}`).join(" ")}" fill="none" stroke="var(--series-1)" stroke-width="2"/>
-    ${ok.filter(r => !r.pareto).map(r => `<circle cx="${X(r.bytes.ram)}" cy="${Y(r.metrics["ndcg@10"])}" r="4" fill="var(--muted)" opacity=".55"><title>${esc(r.label)}: ${pct(r.metrics["ndcg@10"])} · ${r.bytes.ram}B</title></circle>`).join("")}
-    ${front.map((r, i) => `<circle cx="${X(r.bytes.ram)}" cy="${Y(r.metrics["ndcg@10"])}" r="8" fill="var(--series-1)" stroke="var(--panel)" stroke-width="2"><title>${esc(r.label)}: ${pct(r.metrics["ndcg@10"])} · ${r.bytes.ram}B</title></circle>
-      <text x="${X(r.bytes.ram)}" y="${Y(r.metrics["ndcg@10"]) + 3.5}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" pointer-events="none">${i + 1}</text>`).join("")}
+    <path d="${html.join(front.map((r, i) => html`${i ? "L" : "M"}${X(r.bytes.ram).toFixed(1)},${Y(r.metrics["ndcg@10"]).toFixed(1)}`), " ")}" fill="none" stroke="var(--series-1)" stroke-width="2"/>
+    ${html.join(ok.filter(r => !r.pareto).map(r => html`<circle cx="${X(r.bytes.ram)}" cy="${Y(r.metrics["ndcg@10"])}" r="4" fill="var(--muted)" opacity=".55"><title>${r.label}: ${pct(r.metrics["ndcg@10"])} · ${r.bytes.ram}B</title></circle>`), "")}
+    ${html.join(front.map((r, i) => html`<circle cx="${X(r.bytes.ram)}" cy="${Y(r.metrics["ndcg@10"])}" r="8" fill="var(--series-1)" stroke="var(--panel)" stroke-width="2"><title>${r.label}: ${pct(r.metrics["ndcg@10"])} · ${r.bytes.ram}B</title></circle>
+      <text x="${X(r.bytes.ram)}" y="${Y(r.metrics["ndcg@10"]) + 3.5}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" pointer-events="none">${i + 1}</text>`), "")}
   </svg><div class="legend"><span><span class="swatch" style="background:var(--series-1)"></span>파레토 최적 (메모리 대비 정확도에서 다른 조합에 지지 않음)</span><span><span class="swatch" style="background:var(--muted)"></span>그 밖의 조합</span></div>
-    <ol class="small" style="margin:4px 0 8px;padding-left:22px">${front.map(r => `<li>${esc(r.label)} — ${r.bytes.ram}B · nDCG ${pct(r.metrics["ndcg@10"])}</li>`).join("")}</ol>`;
+    <ol class="small" style="margin:4px 0 8px;padding-left:22px">${html.join(front.map(r => html`<li>${r.label} — ${r.bytes.ram}B · nDCG ${pct(r.metrics["ndcg@10"])}</li>`), "")}</ol>`;
 }
 
 function vRender(r) {
-  $("#v-out").innerHTML = r.results.map(m => m.status !== "ok" ? `<div class="errbox">${esc(m.hf_id)}: ${esc(m.error)}</div>` : `
-    <h3>${esc(m.hf_id)} <span class="small muted">${m.dim}차원 · 문서 ${fmtNum(m.n_corpus)} · 질문 ${m.n_queries}</span></h3>
+  $("#v-out").innerHTML = r.results.map(m => m.status !== "ok" ? html`<div class="errbox">${m.hf_id}: ${m.error}</div>` : html`
+    <h3>${m.hf_id} <span class="small muted">${m.dim}차원 · 문서 ${fmtNum(m.n_corpus)} · 질문 ${m.n_queries}</span></h3>
     ${vChart(m.rows)}
     <div class="table-wrap scroll-lg"><table>
       <tr><th>조합</th><th class="num">nDCG@10 (95% 구간)</th><th>기준 대비</th><th class="num" title="기준 상위 10개 중 그대로 찾은 비율">기준 상위 10 유지</th>
         <th class="num">벡터당 메모리</th><th class="num" title="벡터 100만 개 · RAM / 디스크">100만 개</th><th class="num">질의당 검색</th><th class="num" title="이 가중치로 초당 인코딩한 글 수">인코딩</th></tr>
-      ${m.rows.map(p => p.status !== "ok" ? `<tr><td class="small">${esc(p.weight)} ${esc(p.precision || "")}</td><td colspan="7"><div class="errbox">${esc(p.error)}</div></td></tr>` : `<tr>
-        <td class="small"><b>${esc(p.label)}</b>${p.pareto ? ' <span class="badge ok">파레토</span>' : ""}${p.is_base ? ' <span class="badge">기준</span>' : ""}</td>
+      ${html.join(m.rows.map(p => p.status !== "ok" ? html`<tr><td class="small">${p.weight} ${p.precision || ""}</td><td colspan="7"><div class="errbox">${p.error}</div></td></tr>` : html`<tr>
+        <td class="small"><b>${p.label}</b>${p.pareto ? html` <span class="badge ok">파레토</span>` : ""}${p.is_base ? html` <span class="badge">기준</span>` : ""}</td>
         <td class="num">${pct(p.metrics["ndcg@10"])} <span class="small muted">(${pct(p.ci[0])}–${pct(p.ci[1])})</span></td><td class="small nowrap">${vsTxt(p.vs_base)}</td><td class="num">${pct(p["overlap@10"])}</td>
         <td class="num">${p.bytes.ram} B <span class="small muted">(${(p.ram_ratio * 100).toFixed(1)}%)</span></td>
-        <td class="num small">${fmtGB(p.gb_per_million.ram)} / ${fmtGB(p.gb_per_million.disk)}</td><td class="num small">${p.search_ms.toFixed(2)}ms</td><td class="num small">${p.encode_texts_per_s ?? "-"}/s</td></tr>`).join("")}
-    </table></div>`).join("") + `<div class="small muted">질의당 검색 시간은 numpy 전수 비교 값이라 실제 벡터 DB 속도와 다릅니다(정밀도끼리 상대 비교용, PQ 는 코드북 학습 포함). 재점수 후보 = 상위 10 × ${r.options?.rescore_mult ?? "-"}.${r.run_id ? ` · run #${r.run_id}` : ""}</div>`;
+        <td class="num small">${fmtGB(p.gb_per_million.ram)} / ${fmtGB(p.gb_per_million.disk)}</td><td class="num small">${p.search_ms.toFixed(2)}ms</td><td class="num small">${p.encode_texts_per_s ?? "-"}/s</td></tr>`), "")}
+    </table></div>`).join("") + html`<div class="small muted">질의당 검색 시간은 numpy 전수 비교 값이라 실제 벡터 DB 속도와 다릅니다(정밀도끼리 상대 비교용, PQ 는 코드북 학습 포함). 재점수 후보 = 상위 10 × ${r.options?.rescore_mult ?? "-"}.${r.run_id ? html` · run #${r.run_id}` : ""}</div>`;
 }
 
 $("#c-make").onclick = async e => {
   const alias = $("#c-alias").value.trim() || "gemma-quant";
   const r = await busy(e.target, () => api("/api/quant/llm-command", { method: "POST", body: { model_path: $("#c-file").value, alias, port: +$("#c-port").value || 8084, kv_k: $("#c-k").value, kv_v: $("#c-v").value } }));
-  $("#c-out").innerHTML = `<div class="small muted">llama.cpp 폴더에서 실행 → .env 에 아래 줄을 넣고 앱을 다시 시작하면 모델 이름 <span class="mono">${esc(r.alias)}</span> 으로 비교 · 라우팅에 쓸 수 있습니다.</div>
-    <pre class="small">${esc(r.command)}</pre><pre class="small">${esc(r.env_line)}</pre>`;
+  $("#c-out").innerHTML = html`<div class="small muted">llama.cpp 폴더에서 실행 → .env 에 아래 줄을 넣고 앱을 다시 시작하면 모델 이름 <span class="mono">${r.alias}</span> 으로 비교 · 라우팅에 쓸 수 있습니다.</div>
+    <pre class="small">${r.command}</pre><pre class="small">${r.env_line}</pre>`;
 };
 
 $("#l-run").onclick = e => {
@@ -133,13 +133,13 @@ $("#l-run").onclick = e => {
 
 function lRender(r) {
   const s = (x, k) => (x.summary?.[k] != null ? pct(x.summary[k]) : "-");
-  $("#l-out").innerHTML = `<div class="table-wrap"><table>
+  $("#l-out").innerHTML = html`<div class="table-wrap"><table>
     <tr><th>모델</th><th class="num">품질 (95% 구간)</th><th>기준 대비</th><th class="num">답변률</th><th class="num">근거 인용</th><th class="num">문장 근거율</th><th class="num">질문당 시간</th><th class="num" title="근거 · 질문을 읽는 속도 (llama-server 기록)">읽기 속도</th><th class="num" title="답을 쓰는 속도 (llama-server 기록)">생성 속도</th></tr>
-    ${r.results.map(x => x.status !== "ok" ? `<tr><td>${esc(x.model)}</td><td colspan="8"><div class="errbox">${esc(x.error)}</div></td></tr>` : `<tr><td><b>${esc(x.model)}</b><div class="small muted">${esc(x.base_url)}</div></td>
+    ${html.join(r.results.map(x => x.status !== "ok" ? html`<tr><td>${x.model}</td><td colspan="8"><div class="errbox">${x.error}</div></td></tr>` : html`<tr><td><b>${x.model}</b><div class="small muted">${x.base_url}</div></td>
       <td class="num">${pct(x.quality)} <span class="small muted">(${pct(x.quality_ci[0])}–${pct(x.quality_ci[1])})</span></td><td class="small nowrap">${vsTxt(x.vs_first)}</td>
       <td class="num">${s(x, "answer_rate")}</td><td class="num">${s(x, "evidence_cited")}</td><td class="num">${s(x, "sentence_support")}</td>
-      <td class="num">${x.mean_seconds}s${x.prompt_seconds != null ? `<div class="small muted">읽기 ${x.prompt_seconds}s</div>` : ""}</td><td class="num">${x.prompt_per_second ?? "-"} tok/s</td><td class="num">${x.generation_per_second ?? x.tokens_per_second ?? "-"} tok/s</td></tr>`).join("")}
-  </table></div><div class="small muted">품질 = 정답 근거를 인용한 비율(근거 문장이 없으면 문장 근거율). 질문 ${r.n_queries}개 · 모든 모델이 같은 근거를 받았고, 서버의 프롬프트 캐시는 끄고 쟀습니다(이전 실행이 남긴 캐시로 한 모델만 빨라 보이지 않게)${r.run_id ? ` · run #${r.run_id}` : ""}.</div>`;
+      <td class="num">${x.mean_seconds}s${x.prompt_seconds != null ? html`<div class="small muted">읽기 ${x.prompt_seconds}s</div>` : ""}</td><td class="num">${x.prompt_per_second ?? "-"} tok/s</td><td class="num">${x.generation_per_second ?? x.tokens_per_second ?? "-"} tok/s</td></tr>`), "")}
+  </table></div><div class="small muted">품질 = 정답 근거를 인용한 비율(근거 문장이 없으면 문장 근거율). 질문 ${r.n_queries}개 · 모든 모델이 같은 근거를 받았고, 서버의 프롬프트 캐시는 끄고 쟀습니다(이전 실행이 남긴 캐시로 한 모델만 빨라 보이지 않게)${r.run_id ? html` · run #${r.run_id}` : ""}.</div>`;
 }
 
 qLoad();

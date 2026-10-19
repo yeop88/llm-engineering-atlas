@@ -5,7 +5,7 @@ const histSelected = new Set();
 
 async function loadDatasets(select) {
   datasets = await api("/api/datasets");
-  $("#b-dataset").innerHTML = datasets.map(d => `<option value="${esc(d.name)}">${esc(d.title)} [${d.type}${d.builtin ? "" : " · 사용자"}] (${d.size}${d.corpus_size ? ` / 문서 ${d.corpus_size}` : ""})</option>`).join("");
+  $("#b-dataset").innerHTML = html.join(datasets.map(d => html`<option value="${d.name}">${d.title} [${d.type}${d.builtin ? "" : " · 사용자"}] (${d.size}${d.corpus_size ? html` / 문서 ${d.corpus_size}` : ""})</option>`), "");
   if (select) $("#b-dataset").value = select;
   showDesc();
 }
@@ -29,59 +29,59 @@ function renderResult(res, runId) {
   const fmt = v => (type === "retrieval" ? pct(v) : v.toFixed(4));
   const hasCi = ok.some(r => r.ci);
   // 대표 지표 칸 아래에 95% 구간, 1위가 아닌 모델은 1위와의 짝지은 비교
-  const ciCell = (r, c) => (c === primary && r.ci?.[c] ? `<div class="small muted nowrap">${fmt(r.ci[c][0])}–${fmt(r.ci[c][1])}</div>` : "");
+  const ciCell = (r, c) => (c === primary && r.ci?.[c] ? html`<div class="small muted nowrap">${fmt(r.ci[c][0])}–${fmt(r.ci[c][1])}</div>` : "");
   const vsCell = r => {
     const v = r.vs_best;
-    if (!v) return `<td class="small muted">${hasCi && ok.length > 1 ? "기준" : ""}</td>`;
+    if (!v) return html`<td class="small muted">${hasCi && ok.length > 1 ? "기준" : ""}</td>`;
     const d = type === "retrieval" ? `${(v.diff * 100).toFixed(1)}%p` : v.diff.toFixed(4);
-    return `<td class="small nowrap" title="1위(${esc(v.against)}) 대비 ${primary} 차이의 95% 구간 ${v.ci.join(" ~ ")} · p=${v.p}">${d} ${v.significant ? '<span class="badge err">유의한 차이</span>' : '<span class="badge">차이 불확실</span>'}</td>`;
+    return html`<td class="small nowrap" title="1위(${v.against}) 대비 ${primary} 차이의 95% 구간 ${html.join(v.ci, " ~ ")} · p=${v.p}">${d} ${v.significant ? html`<span class="badge err">유의한 차이</span>` : html`<span class="badge">차이 불확실</span>`}</td>`;
   };
 
   current = { res, runId };
-  let html = `<div class="card"><div class="row between"><h2>결과 · ${esc(res.dataset.title || res.dataset.name)}</h2>
-    <div class="row"><span class="small muted">${res.truncate_dim ? `truncate_dim=${res.truncate_dim} · ` : ""}${res.sweep_dims?.length ? "차원 스윕 · " : ""}총 ${res.total_seconds}s${runId ? ` · run #${runId}` : ""}</span>
+  let out = html`<div class="card"><div class="row between"><h2>결과 · ${res.dataset.title || res.dataset.name}</h2>
+    <div class="row"><span class="small muted">${res.truncate_dim ? html`truncate_dim=${res.truncate_dim} · ` : ""}${res.sweep_dims?.length ? "차원 스윕 · " : ""}총 ${res.total_seconds}s${runId ? html` · run #${runId}` : ""}</span>
       <button class="btn sm" onclick="exportReport(this)" title="표와 차트를 한 파일로 저장 (브라우저로 열기)">HTML 리포트</button>
       <button class="btn sm" onclick="exportJson()" title="원본 결과 데이터">JSON</button>
-      ${runId ? `<button class="btn sm danger" onclick="deleteRun(${runId}, true)">이 결과 삭제</button>` : ""}</div></div>
-    <div class="table-wrap"><table><tr><th>#</th><th>모델</th>${cols.map(c => `<th class="num">${c}</th>`).join("")}${hasCi && ok.length > 1 ? "<th>1위 대비</th>" : ""}<th class="num">차원</th><th class="num">texts/s</th><th class="num">인코딩</th><th class="num">로드</th></tr>
-    ${res.results.map((r, i) => r.status !== "ok"
-      ? `<tr><td>-</td><td class="mono">${esc(r.hf_id)}</td><td colspan="${cols.length + 4 + (hasCi && ok.length > 1 ? 1 : 0)}"><div class="errbox">${esc(r.error)}</div></td></tr>`
-      : `<tr><td>${i + 1}</td><td class="mono">${esc(r.hf_id)}${r.warnings?.length ? ` <span class="badge warn" title="${esc(r.warnings.join("\n"))}">경고</span>` : ""}</td>
-        ${cols.map(c => `<td class="num ${r.metrics[c] === best[c] && ok.length > 1 ? "best" : ""}">${fmt(r.metrics[c])}${ciCell(r, c)}</td>`).join("")}
+      ${runId ? html`<button class="btn sm danger" onclick="deleteRun(${runId}, true)">이 결과 삭제</button>` : ""}</div></div>
+    <div class="table-wrap"><table><tr><th>#</th><th>모델</th>${html.join(cols.map(c => html`<th class="num">${c}</th>`), "")}${hasCi && ok.length > 1 ? html`<th>1위 대비</th>` : ""}<th class="num">차원</th><th class="num">texts/s</th><th class="num">인코딩</th><th class="num">로드</th></tr>
+    ${html.join(res.results.map((r, i) => r.status !== "ok"
+      ? html`<tr><td>-</td><td class="mono">${r.hf_id}</td><td colspan="${cols.length + 4 + (hasCi && ok.length > 1 ? 1 : 0)}"><div class="errbox">${r.error}</div></td></tr>`
+      : html`<tr><td>${i + 1}</td><td class="mono">${r.hf_id}${r.warnings?.length ? html` <span class="badge warn" title="${html.join(r.warnings, "\n")}">경고</span>` : ""}</td>
+        ${html.join(cols.map(c => html`<td class="num ${r.metrics[c] === best[c] && ok.length > 1 ? "best" : ""}">${fmt(r.metrics[c])}${ciCell(r, c)}</td>`), "")}
         ${hasCi && ok.length > 1 ? vsCell(r) : ""}<td class="num">${r.dim}</td><td class="num ${r.texts_per_second === fastest && ok.length > 1 ? "best" : ""}">${r.texts_per_second ?? "-"}</td>
-        <td class="num">${r.encode_seconds}s</td><td class="num">${r.load_seconds ? r.load_seconds + "s" : "-"}</td></tr>`).join("")}
+        <td class="num">${r.encode_seconds}s</td><td class="num">${r.load_seconds ? r.load_seconds + "s" : "-"}</td></tr>`), "")}
     </table></div>
-    <p class="small muted">${type === "retrieval" ? "검색 지표는 % 단위. " : ""}굵은 초록색 = 최고값.${hasCi ? ` ${primary} 아래 숫자는 95% 신뢰구간(${type === "retrieval" ? "질문" : "문장쌍"}을 ${res.bootstrap?.n || 1000}번 다시 뽑아 계산)입니다. '차이 불확실'은 같은 ${type === "retrieval" ? "질문" : "문장쌍"}에 대한 짝지은 비교에서 1위와의 차이가 우연일 수 있다는 뜻으로, 평가 데이터를 늘려야 순위를 믿을 수 있습니다.` : ""}</p></div>
+    <p class="small muted">${type === "retrieval" ? "검색 지표는 % 단위. " : ""}굵은 초록색 = 최고값.${hasCi ? html` ${primary} 아래 숫자는 95% 신뢰구간(${type === "retrieval" ? "질문" : "문장쌍"}을 ${res.bootstrap?.n || 1000}번 다시 뽑아 계산)입니다. '차이 불확실'은 같은 ${type === "retrieval" ? "질문" : "문장쌍"}에 대한 짝지은 비교에서 1위와의 차이가 우연일 수 있다는 뜻으로, 평가 데이터를 늘려야 순위를 믿을 수 있습니다.` : ""}</p></div>
     <div id="b-charts"></div>`;
 
   if (groups.length) {
-    html += `<div class="card mt-4"><h2>언어/그룹별 ${primary}</h2><div class="table-wrap"><table>
-      <tr><th>모델</th>${groups.map(g => `<th class="num">${esc(g)} <span class="muted">(n=${ok[0].by_group[g]?.n ?? "?"})</span></th>`).join("")}</tr>
-      ${ok.map(r => `<tr><td class="mono">${esc(r.hf_id)}</td>${groups.map(g => {
+    out += html`<div class="card mt-4"><h2>언어/그룹별 ${primary}</h2><div class="table-wrap"><table>
+      <tr><th>모델</th>${html.join(groups.map(g => html`<th class="num">${g} <span class="muted">(n=${ok[0].by_group[g]?.n ?? "?"})</span></th>`), "")}</tr>
+      ${html.join(ok.map(r => html`<tr><td class="mono">${r.hf_id}</td>${html.join(groups.map(g => {
         const v = r.by_group[g]?.[primary]; const b = Math.max(...ok.map(x => x.by_group[g]?.[primary] ?? -1));
-        return `<td class="num ${v === b && ok.length > 1 ? "best" : ""}">${pct(v)}</td>`; }).join("")}</tr>`).join("")}
+        return html`<td class="num ${v === b && ok.length > 1 ? "best" : ""}">${pct(v)}</td>`; }), "")}</tr>`), "")}
     </table></div></div>`;
   }
 
   if (type === "retrieval" && ok.length) {
     const queries = ok[0].per_query.map(q => q.id);
-    html += `<div class="card mt-4"><h2>쿼리별 첫 정답 순위</h2>
+    out += html`<div class="card mt-4"><h2>쿼리별 첫 정답 순위</h2>
       <p class="small muted">숫자 = 첫 번째 정답 문서의 순위 (1이 최상). 초록 칸 = 1위, 빨간 칸(굵게) = Top-3 밖. 칸에 마우스를 올리면 Top-5 문서가 보입니다.</p><div class="table-wrap"><table>
-      <tr><th>쿼리</th>${ok.map(r => `<th class="num" title="${esc(r.hf_id)}">${esc(r.hf_id.split("/").pop())}</th>`).join("")}</tr>
-      ${queries.map((qid, qi) => `<tr><td class="small"><span class="badge muted">${esc(ok[0].per_query[qi].lang || "")}</span> ${esc(ok[0].per_query[qi].text)}</td>
-        ${ok.map(r => { const pq = r.per_query[qi]; const rank = pq.rank_of_first_relevant;
+      <tr><th>쿼리</th>${html.join(ok.map(r => html`<th class="num" title="${r.hf_id}">${r.hf_id.split("/").pop()}</th>`), "")}</tr>
+      ${html.join(queries.map((qid, qi) => html`<tr><td class="small"><span class="badge muted">${ok[0].per_query[qi].lang || ""}</span> ${ok[0].per_query[qi].text}</td>
+        ${html.join(ok.map(r => { const pq = r.per_query[qi]; const rank = pq.rank_of_first_relevant;
           const cls = rank === 1 ? "rank-good" : rank == null || rank > 3 ? "rank-bad" : "";
-          return `<td class="num ${cls}" title="Top5: ${esc(pq.top.map(t => `${t.id}${t.relevant ? "✓" : ""} ${t.score}`).join(", "))}" style="${cls === "rank-bad" ? "font-weight:700" : ""}">${rank ?? "-"}</td>`; }).join("")}</tr>`).join("")}
+          return html`<td class="num ${cls}" title="Top5: ${html.join(pq.top.map(t => html`${t.id}${t.relevant ? "✓" : ""} ${t.score}`), ", ")}" style="${cls === "rank-bad" ? "font-weight:700" : ""}">${rank ?? "-"}</td>`; }), "")}</tr>`), "")}
       </table></div></div>`;
   }
   if (type === "sts" && ok.length) {
-    html += `<div class="card mt-4"><h2>문장쌍별 코사인 유사도</h2><div class="table-wrap"><table>
-      <tr><th>문장 1</th><th>문장 2</th><th class="num">정답</th>${ok.map(r => `<th class="num">${esc(r.hf_id.split("/").pop())}</th>`).join("")}</tr>
-      ${ok[0].per_pair.map((p, i) => `<tr><td class="small">${esc(p.s1)}</td><td class="small">${esc(p.s2)}</td><td class="num">${p.gold}</td>
-        ${ok.map(r => `<td class="num">${r.per_pair[i].cosine.toFixed(3)}</td>`).join("")}</tr>`).join("")}
+    out += html`<div class="card mt-4"><h2>문장쌍별 코사인 유사도</h2><div class="table-wrap"><table>
+      <tr><th>문장 1</th><th>문장 2</th><th class="num">정답</th>${html.join(ok.map(r => html`<th class="num">${r.hf_id.split("/").pop()}</th>`), "")}</tr>
+      ${html.join(ok[0].per_pair.map((p, i) => html`<tr><td class="small">${p.s1}</td><td class="small">${p.s2}</td><td class="num">${p.gold}</td>
+        ${html.join(ok.map(r => html`<td class="num">${r.per_pair[i].cosine.toFixed(3)}</td>`), "")}</tr>`), "")}
       </table></div></div>`;
   }
-  $("#b-result").innerHTML = html;
+  $("#b-result").innerHTML = out;
   renderCharts(res);
 }
 
@@ -105,14 +105,14 @@ async function renderCharts(res) {
   const root = $("#b-charts");
   if (!root || typeof BenchCharts === "undefined") return;
   if (typeof Chart === "undefined") {
-    root.innerHTML = '<div class="warnbox mt-4">차트 라이브러리(Chart.js CDN)를 불러오지 못했습니다. 인터넷 연결을 확인하세요. 결과 표는 그대로 사용할 수 있습니다.</div>';
+    root.innerHTML = html`<div class="warnbox mt-4">차트 라이브러리(Chart.js CDN)를 불러오지 못했습니다. 인터넷 연결을 확인하세요. 결과 표는 그대로 사용할 수 있습니다.</div>`;
     return;
   }
   try {
     const sts = res.dataset.type === "retrieval" ? await latestStsScores() : null;
     await BenchCharts.render(root, res, { stsScores: sts?.scores ?? null, stsTitle: sts?.title ?? "" });
   } catch (e) {
-    root.innerHTML = `<div class="errbox">차트를 그리지 못했습니다: ${esc(e.message)}</div>`;
+    root.innerHTML = html`<div class="errbox">차트를 그리지 못했습니다: ${e.message}</div>`;
   }
 }
 
@@ -125,13 +125,13 @@ async function loadHistory() {
   [...histSelected].forEach(id => { if (!historyRuns.some(r => r.id === id)) histSelected.delete(id); });
   $("#h-del-all").textContent = ds ? "이 데이터셋 이력 전체 삭제" : "벤치마크 이력 전체 삭제";
   $("#h-del-all").disabled = historyRuns.length === 0;
-  $("#b-history").innerHTML = historyRuns.length ? `<div class="table-wrap"><table><tr><th><input type="checkbox" id="h-sel-all" aria-label="전체 선택"></th><th>#</th><th>제목</th><th>모델</th><th>옵션</th><th>시간</th><th></th></tr>${historyRuns.map(r => `
+  $("#b-history").innerHTML = historyRuns.length ? html`<div class="table-wrap"><table><tr><th><input type="checkbox" id="h-sel-all" aria-label="전체 선택"></th><th>#</th><th>제목</th><th>모델</th><th>옵션</th><th>시간</th><th></th></tr>${html.join(historyRuns.map(r => html`
     <tr><td><input type="checkbox" class="h-sel" value="${r.id}" ${histSelected.has(r.id) ? "checked" : ""} aria-label="#${r.id} 선택"></td>
-    <td>${r.id}</td><td>${esc(r.title)}</td><td class="small mono">${r.model_hf_ids.map(esc).join("<br>")}</td>
-    <td class="small muted">${r.params?.truncate_dim ? `차원 ${r.params.truncate_dim}` : ""}${r.params?.sweep_dims?.length ? "차원 스윕" : ""}</td>
+    <td>${r.id}</td><td>${r.title}</td><td class="small mono">${html.join(r.model_hf_ids, "<br>")}</td>
+    <td class="small muted">${r.params?.truncate_dim ? html`차원 ${r.params.truncate_dim}` : ""}${r.params?.sweep_dims?.length ? "차원 스윕" : ""}</td>
     <td class="nowrap small">${fmtDate(r.created_at)}</td>
-    <td class="right nowrap"><button class="btn sm" onclick="showRun(${r.id})">보기</button><button class="btn sm danger" onclick="deleteRun(${r.id})">삭제</button></td></tr>`).join("")}</table></div>`
-    : '<div class="empty">아직 없음</div>';
+    <td class="right nowrap"><button class="btn sm" onclick="showRun(${r.id})">보기</button><button class="btn sm danger" onclick="deleteRun(${r.id})">삭제</button></td></tr>`), "")}</table></div>`
+    : html`<div class="empty">아직 없음</div>`;
   updateHistSelection();
 }
 function updateHistSelection() {
@@ -193,20 +193,20 @@ async function exportReport(btn) {
     $$(".chart-card", clone).forEach((card, i) => {
       const img = BenchCharts.cardToCanvas(origCards[i]);
       $$(".chart-box, .multiples, .picker, #sweep-mode, .png-btn, .tabs", card).forEach(el => el.remove());
-      if (img) card.insertAdjacentHTML("beforeend", `<img src="${img.toDataURL("image/png")}" alt="${esc(card.querySelector("h3")?.textContent || "")}" style="width:100%;height:auto">`);
+      if (img) card.insertAdjacentHTML("beforeend", html`<img src="${img.toDataURL("image/png")}" alt="${card.querySelector("h3")?.textContent || ""}" style="width:100%;height:auto">`);
     });
     $$("button, input, script", clone).forEach(el => el.remove());
     $$("details", clone).forEach(d => d.setAttribute("open", ""));
     const r = current.res;
-    const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>벤치마크 리포트 · ${esc(r.dataset.title || r.dataset.name)}</title><style>${css}</style></head><body><main class="container">
-<h1>벤치마크 리포트 · ${esc(r.dataset.title || r.dataset.name)}</h1>
-<p class="lead">${current.runId ? `run #${current.runId} · ` : ""}생성 ${esc(new Date().toLocaleString("ko-KR"))} · ${r.results.length}개 모델 · 총 ${r.total_seconds}s${r.truncate_dim ? ` · truncate_dim=${r.truncate_dim}` : ""}<br>
-환경: Python ${esc(sys.python)} · ${esc(sys.device)}/${esc(sys.dtype)} · sentence-transformers ${esc(sys.packages["sentence-transformers"])} · transformers ${esc(sys.packages.transformers)} · torch ${esc(sys.packages.torch)}</p>
+    const page = html`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>벤치마크 리포트 · ${r.dataset.title || r.dataset.name}</title><style>${css}</style></head><body><main class="container">
+<h1>벤치마크 리포트 · ${r.dataset.title || r.dataset.name}</h1>
+<p class="lead">${current.runId ? html`run #${current.runId} · ` : ""}생성 ${new Date().toLocaleString("ko-KR")} · ${r.results.length}개 모델 · 총 ${r.total_seconds}s${r.truncate_dim ? html` · truncate_dim=${r.truncate_dim}` : ""}<br>
+환경: Python ${sys.python} · ${sys.device}/${sys.dtype} · sentence-transformers ${sys.packages["sentence-transformers"]} · transformers ${sys.packages.transformers} · torch ${sys.packages.torch}</p>
 ${clone.innerHTML}
 <p class="small muted" style="margin-top:24px">LLM Engineering Atlas 에서 생성한 리포트입니다. 차트는 생성 시점의 이미지입니다.</p>
 </main></body></html>`;
-    download(reportName("html"), html, "text/html");
+    download(reportName("html"), String(page), "text/html");
   });
 }
 
@@ -290,10 +290,10 @@ $("#b-del-ds").onclick = async () => {
 // ── 공개 벤치마크 ──
 async function loadPublic() {
   const rows = await api("/api/public-benchmarks");
-  $("#pub-list").innerHTML = `<table>${rows.map(c => `<tr>
-    <td><b>${esc(c.title)}</b> <span class="badge">${c.type}</span><div class="small muted">${esc(c.description)}</div><div class="small muted">${esc(c.repo)} · ${esc(c.license)}</div></td>
-    <td class="small nowrap">${c.imported ? `<span class="badge ok">가져옴</span> ${c.type === "sts" ? "문장쌍" : "질문"} ${c.imported.size}${c.imported.corpus_size ? ` / 문서 ${c.imported.corpus_size}` : ""}` : ""}</td>
-    <td class="right nowrap">${c.imported ? `<button class="btn sm" onclick="loadDatasets('${c.dataset}')">선택</button>` : ""}<button class="btn sm" onclick="importPublic(this, '${c.key}')">${c.imported ? "다시 가져오기" : "가져오기"}</button></td></tr>`).join("")}</table>`;
+  $("#pub-list").innerHTML = html`<table>${html.join(rows.map(c => html`<tr>
+    <td><b>${c.title}</b> <span class="badge">${c.type}</span><div class="small muted">${c.description}</div><div class="small muted">${c.repo} · ${c.license}</div></td>
+    <td class="small nowrap">${c.imported ? html`<span class="badge ok">가져옴</span> ${c.type === "sts" ? "문장쌍" : "질문"} ${c.imported.size}${c.imported.corpus_size ? html` / 문서 ${c.imported.corpus_size}` : ""}` : ""}</td>
+    <td class="right nowrap">${c.imported ? html`<button class="btn sm" onclick="loadDatasets('${c.dataset}')">선택</button>` : ""}<button class="btn sm" onclick="importPublic(this, '${c.key}')">${c.imported ? "다시 가져오기" : "가져오기"}</button></td></tr>`), "")}</table>`;
 }
 async function importPublic(btn, key) {
   const body = { max_queries: +$("#pub-q").value || null, max_corpus: +$("#pub-c").value || null };

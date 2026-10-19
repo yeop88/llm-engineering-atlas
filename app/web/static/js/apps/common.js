@@ -12,15 +12,15 @@ const Apps = (() => {
   // 입력 소스 선택기. opts: {app, labels: "none"|"optional"|"required", placeholder}
   async function sourcePicker(root, opts = {}) {
     const id = Math.random().toString(36).slice(2, 7);
-    root.innerHTML = `
+    root.innerHTML = html`
       <div class="row mb-2">
         <label class="row m-0"><input type="radio" name="src-${id}" value="texts" checked> 직접 입력</label>
         <label class="row m-0"><input type="radio" name="src-${id}" value="collection"> 문서 검색 컬렉션</label>
       </div>
       <div data-pane="texts" class="stack">
         <div class="row"><div class="field grow"><label for="${id}-preset">예시 데이터</label><select id="${id}-preset" data-preset><option value="">— 직접 입력 —</option></select></div></div>
-        <div><label for="${id}-text">텍스트 (한 줄에 하나${opts.labels !== "none" ? ", 라벨은 <code>[라벨] 텍스트</code>" : ""})</label>
-          <textarea id="${id}-text" data-text rows="10" class="small" placeholder="${esc(opts.placeholder || "")}"></textarea></div>
+        <div><label for="${id}-text">텍스트 (한 줄에 하나${opts.labels !== "none" ? html`, 라벨은 <code>[라벨] 텍스트</code>` : ""})</label>
+          <textarea id="${id}-text" data-text rows="10" class="small" placeholder="${opts.placeholder || ""}"></textarea></div>
         <div class="small muted" data-count></div>
       </div>
       <div data-pane="collection" class="stack" hidden>
@@ -44,7 +44,7 @@ const Apps = (() => {
     }));
     // 예시 데이터
     const presets = await api(`/api/apps/presets${opts.app ? `?app=${opts.app}` : ""}`);
-    $r("[data-preset]").innerHTML += presets.map(p => `<option value="${esc(p.name)}">${esc(p.title)} (${p.n})</option>`).join("");
+    $r("[data-preset]").innerHTML += html.join(presets.map(p => html`<option value="${p.name}">${p.title} (${p.n})</option>`), "");
     $r("[data-preset]").addEventListener("change", async e => {
       if (!e.target.value) return;
       const p = await api(`/api/apps/presets/${e.target.value}`);
@@ -54,7 +54,7 @@ const Apps = (() => {
     });
     // 컬렉션
     const cols = await api("/api/collections");
-    $r("[data-col]").innerHTML = cols.map(c => `<option value="${c.id}">${esc(c.name)} (문서 ${c.n_documents})</option>`).join("") || '<option value="">컬렉션 없음</option>';
+    $r("[data-col]").innerHTML = html.or(html.join(cols.map(c => html`<option value="${c.id}">${c.name} (문서 ${c.n_documents})</option>`), ""), html`<option value="">컬렉션 없음</option>`);
     // 작업 맥락의 컬렉션을 기본으로 (이 화면들은 직접 입력이 기본이라 맥락 줄은 띄우지 않는다)
     const ctxCol = Ctx.get().col;
     if (ctxCol && cols.some(c => String(c.id) === ctxCol)) $r("[data-col]").value = ctxCol;
@@ -62,7 +62,7 @@ const Apps = (() => {
       const cid = $r("[data-col]").value;
       if (!cid) return;
       const d = await api(`/api/collections/${cid}`);
-      $r("[data-cs]").innerHTML = d.chunk_sets.filter(c => c.status === "ready").map(c => `<option value="${c.id}">#${c.id} ${esc(c.name)} (${c.n_chunks})</option>`).join("") || '<option value="">청크 세트 없음</option>';
+      $r("[data-cs]").innerHTML = html.or(html.join(d.chunk_sets.filter(c => c.status === "ready").map(c => html`<option value="${c.id}">#${c.id} ${c.name} (${c.n_chunks})</option>`), ""), html`<option value="">청크 세트 없음</option>`);
     };
     $r("[data-col]").addEventListener("change", loadSets);
     $r("[data-unit]").addEventListener("change", e => { $r("[data-cs-wrap]").hidden = e.target.value !== "chunk"; });

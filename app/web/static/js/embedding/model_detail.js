@@ -41,23 +41,23 @@ async function load() {
   $("#b-download").hidden = model.cached;
   $("#b-unload").hidden = !model.loaded_profiles.length;
   if (!document.activeElement || !$("#form").contains(document.activeElement)) fillForm(model);
-  $("#error").innerHTML = model.last_error ? `<div class="errbox"><b>최근 로드 오류</b><br>${esc(model.last_error)}</div>` : "";
+  $("#error").innerHTML = model.last_error ? html`<div class="errbox"><b>최근 로드 오류</b><br>${model.last_error}</div>` : "";
 
   const prompts = [...new Set(loadedInfo.flatMap(l => l.prompts))];
-  $("#prompt-names").innerHTML = prompts.map(p => `<option value="${esc(p)}">`).join("");
-  $("#runtime").innerHTML = [
+  $("#prompt-names").innerHTML = html.join(prompts.map(p => html`<option value="${p}">`), "");
+  $("#runtime").innerHTML = html.join([
     ["로컬 캐시", model.cached ? `${fmtBytes(model.cache_size_bytes)}` : "없음"],
     ["로드 상태", loadedInfo.length ? loadedInfo.map(l => `${l.profile} · ${l.device}/${l.dtype} · ${l.dim}d · max_seq ${l.max_seq_length ?? "-"} · ${l.load_seconds}s`).join("<br>") : "로드 안 됨"],
-    ["모델 정의 프롬프트", prompts.length ? prompts.map(p => `<code>${esc(p)}</code>`).join(" ") : '<span class="muted">로드 후 표시</span>'],
+    ["모델 정의 프롬프트", prompts.length ? html.join(prompts.map(p => html`<code>${p}</code>`), " ") : html`<span class="muted">로드 후 표시</span>`],
     ["Hub 다운로드(30일)", fmtNum(model.hub_downloads)],
     ["Hub 좋아요", fmtNum(model.hub_likes)],
     ["Hub 최종 수정", fmtDate(model.hub_last_modified)],
     ["Hub 동기화", fmtDate(model.hub_synced_at)],
     ["등록 경로", model.source],
-  ].map(([k, v]) => `<div>${k}</div><div>${v}</div>`).join("");
+  ].map(([k, v]) => html`<div>${k}</div><div>${v}</div>`), "");
 
   const job = model.download_job;
-  $("#dl-progress").innerHTML = job ? `<div class="row"><div class="progress grow"><div style="width:${pct(job.progress)}%"></div></div><span class="small muted">${esc(job.message)}</span></div>` : "";
+  $("#dl-progress").innerHTML = job ? html`<div class="row"><div class="progress grow"><div style="width:${pct(job.progress)}%"></div></div><span class="small muted">${job.message}</span></div>` : "";
   if (job) setTimeout(load, 1500);
 }
 
@@ -93,9 +93,9 @@ $("#qt-run").onclick = async e => {
   const documents = $("#qt-docs").value.split("\n").map(s => s.trim()).filter(Boolean);
   const r = await busy(e.target, () => api("/api/retrieve", { method: "POST", body: { model_ids: [MODEL_ID], query: $("#qt-query").value, documents, top_k: documents.length } }));
   const res = r.results[0];
-  $("#qt-out").innerHTML = res.error ? `<div class="errbox">${esc(res.error)}</div>` :
-    `<div class="small muted">${res.dim}차원 · ${res.seconds}s · 쿼리: ${appliedInfo(res.applied.query)} · 문서: ${appliedInfo(res.applied.document)}</div>${warningsHtml(res.warnings)}` +
-    res.ranking.map(x => `<div class="rank-item"><div class="row between"><b>${x.score.toFixed(4)}</b></div><div class="bar" style="width:${Math.max(2, x.score * 100)}%"></div><div class="small">${esc(x.text)}</div></div>`).join("");
+  $("#qt-out").innerHTML = res.error ? html`<div class="errbox">${res.error}</div>` :
+    html`<div class="small muted">${res.dim}차원 · ${res.seconds}s · 쿼리: ${appliedInfo(res.applied.query)} · 문서: ${appliedInfo(res.applied.document)}</div>${warningsHtml(res.warnings)}` +
+    res.ranking.map(x => html`<div class="rank-item"><div class="row between"><b>${x.score.toFixed(4)}</b></div><div class="bar" style="width:${Math.max(2, x.score * 100)}%"></div><div class="small">${x.text}</div></div>`).join("");
   load();
 };
 
