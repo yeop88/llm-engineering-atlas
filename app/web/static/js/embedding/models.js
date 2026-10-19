@@ -136,3 +136,21 @@ $("#btn-restore").onclick = async e => {
 ["f-kind", "f-modality", "f-tag", "f-status", "f-sort"].forEach(id => $(`#${id}`).addEventListener("change", load));
 let qTimer; $("#f-q").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(load, 250); });
 load();
+
+// 호환성 점검 — 마지막 결과와 '라이브러리가 바뀌어 다시 점검 권장' 표시
+function showCompat(r) {
+  if (!r) { $("#c-out").innerHTML = '<div class="empty">아직 점검한 적이 없습니다</div>'; return; }
+  $("#c-out").innerHTML = `<div class="small muted">${esc(r.created_at ? fmtDate(r.created_at) : "방금")} · ${r.n_ok}/${r.n} 통과 · ${r.seconds}초 · ${Object.entries(r.versions || {}).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(" · ")}</div>
+    <div class="table-wrap"><table><tr><th>모델</th><th>결과</th><th class="num">차원</th><th class="num">관련−무관 차이</th><th class="num">로드(초)</th><th>문제</th></tr>
+    ${r.results.map(x => `<tr><td class="mono small">${esc(x.hf_id)}</td><td>${x.ok ? '<span class="badge ok">✓ 통과</span>' : '<span class="badge err">✗ 문제</span>'}</td>
+      <td class="num">${x.dim ?? "-"}</td><td class="num small">${(x.margins || []).join(" / ") || "-"}</td><td class="num">${x.load_seconds ?? "-"}</td>
+      <td class="small">${esc((x.issues || []).concat(x.warnings || []).join(" · ")) || "-"}</td></tr>`).join("")}</table></div>`;
+}
+(async () => {
+  const r = await api("/api/models/compat-check/last");
+  $("#c-ver").textContent = Object.entries(r.versions).map(([k, v]) => `${k} ${v}`).join(" · ");
+  if (r.upgrade_detected) { $("#c-head").innerHTML = '<span class="badge warn">⚠ 지난 점검 뒤 라이브러리 버전이 바뀜 — 점검 권장</span>'; $("#compat").open = true; }
+  else if (r.run) $("#c-head").textContent = `마지막 점검: ${r.run.n_ok}/${r.run.n} 통과`;
+  showCompat(r.run);
+})();
+$("#c-run").onclick = e => runJobInto(e.target, "/api/models/compat-check", undefined, $("#c-progress"), r => { showCompat(r); $("#c-head").textContent = `마지막 점검: ${r.n_ok}/${r.n} 통과`; });

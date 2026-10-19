@@ -59,7 +59,7 @@ mE5-instruct는 쌍 유사도가 가장 높지만 뜻이 다른 문장끼리도 
 ## 라이브러리
 
 - **Chart.js 4.5.1**(2026-10 기준 최신 안정 버전)을 cdnjs에서 SRI 무결성 해시와 함께 불러옵니다(`templates/benchmark.html`).
-- 실제 차트 코드는 `static/js/charts.js`(Chart.js를 사용하는 이 프로젝트의 파일)에 있습니다.
+- 실제 차트 코드는 `static/js/lib/charts.js`(Chart.js를 사용하는 이 프로젝트의 파일)에 있습니다.
 - CDN에 접속할 수 없으면 차트 대신 안내 문구가 나오고, 결과 표는 그대로 쓸 수 있습니다.
 - 버전을 올릴 때는 새 파일의 SRI 해시를 다시 계산해 `integrity` 값을 바꿉니다.
 
