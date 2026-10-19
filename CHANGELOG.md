@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-19
+
 ### 추가
 - **두 번째 맵: 지식 그래프 · GraphRAG** (`/maps/knowledge-graph`) — 구축(K1 요구사항 정의 → K2 온톨로지 설계 → K3 데이터 추출 → K4 지식 융합 · 정제) → 저장(K5 그래프 DB · Neo4j) → 활용(K6 Text2Cypher · K7 그래프 하이브리드 검색 · K8 글로벌 커뮤니티 요약). 8단계 모두 '예정', 단계마다 원리 · 왜 · 어떻게 · 할 일과 법률 자료에 적용하는 계획, 질문 성격별로 맞는 방식 표. 개요 문서 `docs/kg-map.md`, 단계 문서 `docs/stages/kg/`
 - **세 번째 맵: 멀티에이전트 · 멀티모달** (`/maps/multi-agent`) — MA1 멀티모달 입력 · 임베딩 · MA2 멀티모달 RAG(🟡 기초 있음) → MA3 오케스트레이터(라우터 자리) → MA4 검색 전문가(🟡) · MA5 분석 · 코딩 · MA6 보고서 작성 → MA7 품질 검증(🟡) → MA8 멀티모달 출력. 단계마다 **기반 단계**(LLM 맵의 어느 구현된 단계 위에 짓는지)와 LLM 맵 실측에서 가져온 설계 원칙. 개요 `docs/agents-map.md`, 단계 문서 `docs/stages/agents/`
@@ -193,7 +195,8 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.3.0...v0.4.0
