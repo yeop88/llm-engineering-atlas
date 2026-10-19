@@ -14,9 +14,17 @@ templates = Jinja2Templates(directory=APP_DIR / "web" / "templates")
 
 def nav_items() -> list[dict]:
     """메뉴: 흐름도 순서. 화면이 여러 개인 단계는 드롭다운, 예정 단계(⑥~⑧)는 하나로 묶는다."""
+
     # 맵이 여러 개라 드롭다운 — 지식 그래프 맵의 단계(예정)는 메뉴에 하나씩 늘어놓지 않고 이 묶음에서 강조만 한다
+    # 맵이 10개라 메뉴 설명은 긴 요약 대신 단계 수 · 상태만 (요약은 맵 화면 첫 문단에)
+    def counts(key: str) -> str:
+        st = [s.status for s in registry.map_stages(key)]
+        labels = ((registry.DONE, "구현"), (registry.BASIC, "기초"), (registry.PLANNED, "예정"))
+        return " · ".join([f"{len(st)}단계"] + [f"{label} {st.count(code)}" for code, label in labels if st.count(code)])
+
     maps = [
-        {"label": m.title, "href": m.href, "desc": m.summary, "key": "roadmap" if m.key == "llm" else f"map_{m.key}"} for m in registry.MAPS
+        {"label": m.title, "href": m.href, "desc": counts(m.key), "key": "roadmap" if m.key == "llm" else f"map_{m.key}"}
+        for m in registry.MAPS
     ]
     other_keys = [f"stage_{s.key}" for s in registry.OTHER_MAP_STAGES]
     items: list[dict] = [
@@ -119,6 +127,15 @@ def app_page(request: Request, name: str) -> HTMLResponse:
     if name not in APP_PAGES:
         return templates.TemplateResponse(request, "apps/apps.html", {"nav": "apps", "available": list(APP_PAGES)}, status_code=404)
     return templates.TemplateResponse(request, f"apps/{name}.html", {"nav": "apps", "app_name_key": name, "app_title": APP_PAGES[name]})
+
+
+@router.get("/maps/{slug}", response_class=HTMLResponse)
+def map_page(request: Request, slug: str) -> HTMLResponse:
+    """따로 만든 화면이 없는 맵은 공통 화면으로 (지식 그래프 · 멀티에이전트 맵은 위 PAGES 의 전용 화면이 먼저 잡힌다)."""
+    m = next((x for x in registry.MAPS if x.href == f"/maps/{slug}"), None)
+    if m is None or m.template:
+        return templates.TemplateResponse(request, "roadmap.html", {"nav": "roadmap"}, status_code=404)
+    return templates.TemplateResponse(request, "maps/generic.html", {"nav": f"map_{m.key}", "m": m})
 
 
 @router.get("/stages/{key}", response_class=HTMLResponse)

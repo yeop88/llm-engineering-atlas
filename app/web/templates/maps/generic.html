@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{# 공통 맵 화면: 레지스트리의 맵 정의(lead · groups · principles · example)와 단계로 그린다 — 맵마다 템플릿을 만들지 않으려고 #}
+{% block title %}{{ m.title }}{% endblock %}
+{% block content %}
+{% set S = registry.BY_KEY %}
+{% macro box(key, text=None) -%}
+  {%- set s = S[key] -%}
+  <a class="flow-box {{ 'done' if s.status == 'done' else ('basic' if s.status == 'basic' else 'plan') }}" href="/stages/{{ key }}" title="{{ s.status_label }} · {{ s.summary }}">
+    <span class="stage-no">{{ s.no }}</span> {{ text or s.title }}</a>
+{%- endmacro %}
+{% set stages = registry.map_stages(m.key) %}
+<div class="row between"><h1>{{ m.title }}</h1>
+  <span class="small">다른 맵: {% for o in registry.MAPS if o.key != m.key %}<a href="{{ o.href }}">{{ o.title | replace(" 맵", "") }}</a>{{ " · " if not loop.last }}{% endfor %}</span></div>
+<p class="lead">{{ m.lead }}</p>
+
+<div class="card stack">
+  <div class="row between"><h2>전체 흐름</h2>
+    <span class="small muted">{{ stages | selectattr("status", "equalto", "done") | list | length }} 구현됨 · {{ stages | selectattr("status", "equalto", "basic") | list | length }} 기초 있음 · {{ stages | selectattr("status", "equalto", "planned") | list | length }} 예정</span></div>
+  <div class="flow">
+    {% for label, keys in m.groups %}
+      <div class="small muted">{{ loop.index }}. {{ label }}</div>
+      <div class="flow-row">{% for k in keys %}{{ box(k) }}{% if not loop.last %}<span class="flow-arrow">→</span>{% endif %}{% endfor %}</div>
+      {% if not loop.last %}<div class="flow-down">↓</div>{% endif %}
+    {% endfor %}
+  </div>
+  <div class="small muted"><span class="flow-box done sm">구현됨</span> <span class="flow-box basic sm">기초 있음</span> <span class="flow-box plan sm">예정</span> — 기초 있음 = 기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직</div>
+</div>
+
+<div class="card stack" style="margin-top:16px">
+  <h2>단계 · 기반 단계</h2>
+  <div class="table-wrap"><table>
+    <tr><th>단계</th><th>상태</th><th>무엇을</th><th>기반 단계</th><th>앞으로 할 일</th></tr>
+    {% for s in stages %}
+    <tr><td class="nowrap"><span class="stage-no">{{ s.no }}</span> <a href="/stages/{{ s.key }}"><b>{{ s.title }}</b></a><div class="small muted">{{ s.en }}</div></td>
+      <td><span class="badge {{ 'ok' if s.status == 'done' else ('warn' if s.status == 'basic' else '') }}">{{ s.status_label }}</span></td>
+      <td class="small">{{ s.summary }}</td>
+      <td class="small">{% for k in s.builds_on %}{% set b = S[k] %}<a class="nowrap" href="/stages/{{ k }}" title="{{ b.map_info.title }}">{{ b.no }} {{ b.menu }}</a>{{ " · " if not loop.last }}{% else %}<span class="muted">—</span>{% endfor %}</td>
+      <td class="small">{{ s.plans | join(" · ") }}</td></tr>
+    {% endfor %}
+  </table></div>
+</div>
+
+<div class="grid cols-2" style="margin-top:16px">
+  <div class="card stack">
+    <h2>설계 원칙</h2>
+    <div class="small muted">이 프로젝트의 실측 · 경험에서 가져온 것</div>
+    <ul class="small">{% for p in m.principles %}<li>{{ p }}</li>{% endfor %}</ul>
+  </div>
+  <div class="card stack">
+    <h2>예시</h2>
+    <div class="small">{{ m.example }}</div>
+    <h3>문서</h3>
+    <div class="small"><a href="{{ doc_url(m.doc) }}" target="_blank" rel="noopener">맵 개요 문서</a></div>
+  </div>
+</div>
+{% endblock %}

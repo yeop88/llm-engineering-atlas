@@ -64,8 +64,14 @@ def test_stage_and_map_pages(client):
 
 
 def test_maps():
-    assert [m.key for m in registry.MAPS] == ["llm", "kg", "agents"]
-    assert {s.map for s in registry.STAGES} == {"llm", "kg", "agents"}
+    keys = ["llm", "kg", "agents", "evalops", "guardrails", "docintel", "serving", "conversation", "as_service", "posttrain"]
+    assert [m.key for m in registry.MAPS] == keys and {s.map for s in registry.STAGES} == set(keys)
+    for m in registry.MAPS:
+        # 공통 화면 맵은 흐름 묶음이 그 맵의 단계를 빠짐없이 한 번씩 담아야 한다(화면 흐름도에서 빠지는 단계가 없게)
+        if not m.template:
+            grouped = [k for _, ks in m.groups for k in ks]
+            assert sorted(grouped) == sorted(s.key for s in registry.map_stages(m.key)), m.key
+            assert m.lead and m.principles and m.example and m.generated_doc, m.key
     assert [s.no for s in registry.AGENTS_FLOW] == [f"MA{i}" for i in range(1, 9)]
     # 기반 단계는 실제 단계여야 하고, 구현됨 · 기초 있음 단계는 기반이 있어야 한다(이미 있는 것을 보여 주려고)
     for s in registry.OTHER_MAP_STAGES:
@@ -76,4 +82,12 @@ def test_maps():
     assert [s.no for s in registry.KG_FLOW] == [f"K{i}" for i in range(1, 9)]
     assert all(s.map == "llm" for s in registry.MAIN_FLOW + registry.EXTRA)  # 본선 · 곁가지는 LLM 맵
     menu = next(i for i in nav_items() if i["label"] == "맵")
-    assert [x["href"] for x in menu["items"]] == ["/roadmap", "/maps/knowledge-graph", "/maps/multi-agent"]
+    assert [x["href"] for x in menu["items"]] == [m.href for m in registry.MAPS]
+
+
+def test_every_map_page(client):
+    for m in registry.MAPS:
+        r = client.get(m.href)
+        assert r.status_code == 200, m.key
+        assert all(f"/stages/{s.key}" in r.text for s in registry.map_stages(m.key)), m.key
+    assert client.get("/maps/없는맵").status_code == 404

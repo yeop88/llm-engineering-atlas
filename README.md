@@ -17,7 +17,7 @@
 
 | 단계 | 상태 | 이 앱에서 할 수 있는 것 |
 |---|---|---|
-| **맵** | ✅ | LLM 시스템 엔지니어링 맵, 지식 그래프 · GraphRAG 맵(⬜ 예정 8단계), 멀티에이전트 · 멀티모달 맵(🟡 기초 있음 4 · ⬜ 예정 4), 전체 흐름도와 단계 상태, 단계 소개(`/stages/<단계>`), **연결 실행**: 단계를 켜고 끄며 한 질문을 서비스 순서대로 처리(단계별 상태 · 시간, 미구현 단계는 기본 동작), 평가 세트로 부분 · 전체 연결 비교 |
+| **맵** | ✅ | 맵 10개 — LLM 시스템 엔지니어링(본선), 지식 그래프 · GraphRAG, 멀티에이전트 · 멀티모달, 평가 · 관측, 보안 · 가드레일, 문서 처리, 서빙 · 최적화, 대화 · 메모리, 고객 AS 상담 시나리오, 후학습. 다른 맵 단계는 기반 단계(이미 있는 기능)와 함께 🟡 기초 있음 · ⬜ 예정으로 표시, 전체 흐름도와 단계 상태, 단계 소개(`/stages/<단계>`), **연결 실행**: 단계를 켜고 끄며 한 질문을 서비스 순서대로 처리(단계별 상태 · 시간, 미구현 단계는 기본 동작), 평가 세트로 부분 · 전체 연결 비교 |
 | **1 데이터 임베딩** | ✅ | 2026-10 기준 임베딩 모델 37개 · 리랭커 11개 카탈로그(EmbeddingGemma 2 포함), Hub 검색 · 다운로드 · LRU 로드, 플레이그라운드(검색 비교 · 유사도 행렬 · 임베딩 지도 · Matryoshka), 벤치마크(내장 · 공개 한국어 6종 · 내 데이터셋, 95% 신뢰구간 · 1위 대비 유의성, 차트) |
 | **2 RAG 검색** | ✅ | HWP · HWPX · PDF · DOCX 등 업로드, 청킹 5종(법령 · 판결문 구조 포함), 벡터 인덱스(Qdrant 기본 · pgvector · MariaDB, 작은 인덱스는 정확 검색), 한국어 형태소 BM25 · 하이브리드(RRF), 평가 세트(LLM 질문 생성 · 직접 입력) · 조합 평가, 근거 번호를 인용하는 LLM 답변(스트리밍)과 문장별 환각 검증 · 답변 일괄 평가 |
 | **3 리랭킹** | ✅ | 크로스 인코더 11종 · LLM 목록형 리랭커, 1단계 순위와의 융합, 리랭커 × 후보 수 × 융합 품질-지연 평가 |
@@ -85,6 +85,7 @@ uv run uvicorn app.main:app --reload --port 8000
 - [docs/map.md](docs/map.md) — 전체 흐름도와 각 단계의 목적 · 계획
 - [docs/kg-map.md](docs/kg-map.md) — 두 번째 맵: 지식 그래프 · GraphRAG (온톨로지 → 그래프 DB → Text2Cypher · 하이브리드 · 커뮤니티 요약, 예정)
 - [docs/agents-map.md](docs/agents-map.md) — 세 번째 맵: 멀티에이전트 · 멀티모달 (오케스트레이터 · 검색 · 분석 · 작성 · 검증 에이전트, 멀티모달 입출력 — 기초 있음 4 · 예정 4)
+- [docs/maps/](docs/maps/) — 평가 · 관측(LLMOps) · 보안 · 가드레일 · 문서 처리 · 서빙 · 최적화 · 대화 · 메모리 · 고객 AS 상담 시나리오 · 후학습 맵 (전체 목록은 [docs/README.md](docs/README.md))
 - 단계: [1 임베딩](docs/stages/1-embedding/README.md) · [2 RAG](docs/stages/2-rag/README.md) · [3 리랭킹](docs/stages/3-rerank/README.md) ([상세](docs/stages/3-rerank/rerank.md)) · [4 검색 향상](docs/stages/4-search-lab/README.md) · [5 파인튜닝](docs/stages/5-finetune/README.md) · [6 라우팅](docs/stages/6-routing/README.md) ([상세](docs/stages/6-routing/routing.md)) · [7a 지식 증류](docs/stages/7a-distill/README.md) ([상세](docs/stages/7a-distill/distill.md)) · [7b 양자화](docs/stages/7b-quant/README.md) ([상세](docs/stages/7b-quant/quant.md)) · [8a 에이전트](docs/stages/8a-agent/README.md) ([상세](docs/stages/8a-agent/agent.md)) · [8b 강화학습](docs/stages/8b-rl/README.md) ([상세](docs/stages/8b-rl/rl.md)) · [멀티모달](docs/stages/multimodal/README.md) · [의미 응용](docs/stages/apps/README.md)
 - 가이드: [아키텍처](docs/guides/architecture.md) · [API](docs/guides/api.md) · [데이터 처리](docs/guides/data-processing.md) · [배포 · 운영](docs/guides/deploy.md) · [LLM 연결](docs/guides/llm.md) · [GPU 설치](docs/guides/gpu.md) · [문제 해결](docs/guides/troubleshooting.md)
 - 기록: [모델 검증과 실측](docs/records/model-verification.md) · [파인튜닝 실행 기록](docs/stages/5-finetune/finetune.md#실행-기록)

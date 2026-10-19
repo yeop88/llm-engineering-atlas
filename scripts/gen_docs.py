@@ -142,8 +142,32 @@ def index() -> str:
     )
 
 
+def map_doc(m: registry.Map) -> str:
+    """공통 화면 맵의 개요 문서(docs/maps/<key>.md). 지식 그래프 · 멀티에이전트 맵은 손으로 쓴 개요가 따로 있다."""
+    me = m.doc
+    stages = registry.map_stages(m.key)
+    others = [o for o in registry.MAPS if o.key != m.key]
+    lines = [
+        GENERATED, "", f"# {m.title}", "", m.summary, "", m.lead, "",
+        f"앱의 **맵 → {m.title}**(`{m.href}`)과 단계 소개(`/stages/<단계>`)에 같은 내용이 있습니다. "
+        "**기초 있음** = 기능은 다른 맵에 있고(기반 단계), 이 맵의 관점으로 묶은 화면 · 측정은 아직인 단계입니다.", "",
+        "## 전체 흐름", "", "```", *m.diagram.splitlines(), "```", "",
+        "## 단계", "", "| # | 단계 | 상태 | 무엇을 | 기반 단계 |", "|---|---|---|---|---|",
+        *[f"| {s.no} | [{s.title}]({rel(me, s.readme)}) | {STATUS_MARK[s.status]} {s.status_label} | {s.summary} | "
+          + (" · ".join(f"[{registry.BY_KEY[k].no} {registry.BY_KEY[k].menu}]({rel(me, registry.BY_KEY[k].readme)})" for k in s.builds_on) or "—")
+          + " |" for s in stages],
+        "", "## 설계 원칙", "", *[f"- {p}" for p in m.principles],
+        "", "## 예시", "", m.example,
+        "", "---", "", "다른 맵: " + " · ".join(f"[{o.title}]({rel(me, o.doc)})" for o in others),
+    ]  # fmt: skip
+    return "\n".join(lines) + "\n"
+
+
 def outputs() -> dict[str, str]:
     out = {"docs/README.md": index()}
+    for m in registry.MAPS:
+        if m.generated_doc:
+            out[m.doc] = map_doc(m)
     for s in registry.STAGES:
         out[s.readme] = stage_readme(s)
     return out
