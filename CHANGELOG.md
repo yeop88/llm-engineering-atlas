@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+### 변경
+- **파일 구조 정리**(동작 · API · 화면 · DB 는 그대로) — 유지 · 확장할 때 찾을 곳이 하나가 되도록
+  - 단계 레지스트리 `app/stages/registry.py`(2,900줄) → 패키지 `app/stages/registry/`: `model.py`(Map · Page · Stage) + `maps/<맵>.py`(맵 1개 = 파일 1개, 18개). 새 맵은 파일 하나와 `MAP_MODULES` 한 줄로 추가
+  - 요청 스키마 `app/core/schemas.py`(71개) → 단계별 `app/stages/<단계>/schemas.py`, 여러 단계를 묶는 경로 · 연결 설정은 `app/pipeline/schemas.py`. core 에는 공용(LLMRef · BulkDelete)만
+  - 화면 스크립트: 템플릿 17곳의 인라인 스크립트를 정적 파일로 옮기고 `static/js/<영역>/<화면>.js`(템플릿과 같은 경로), 공용은 `static/js/lib/`(common · charts). 템플릿에는 서버 값 한 줄 설정만
+  - 이름이 겹치던 모듈: `core/media.py` → `core/media_store.py`(파일 위치), `stages/multimodal/media.py` → `ingest.py`(수집)
+  - 테스트를 `app/` 와 같은 구조로(`tests/core` · `tests/pipeline` · `tests/web` · `tests/stages/<단계>`), 공용 자료 `tests/helpers.py` · 공용 픽스처(`scripted_llm` · `rag_collection`)
+  - 구조 규칙 테스트 `tests/test_architecture.py`: 의존 방향, 레지스트리는 데이터만, 스키마 위치, 화면 스크립트 위치, 테스트 배치
+  - `docs/guides/architecture.md` 에 새 구조와 확장 체크리스트(새 단계 · 새 맵 · 새 화면)
+
 ## [0.7.1] - 2026-10-19
 
 ### 변경

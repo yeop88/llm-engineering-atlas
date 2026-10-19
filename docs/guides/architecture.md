@@ -5,43 +5,71 @@
 ```
 app/
   main.py            앱 생성, 시작 시 DB 마이그레이션 · 카탈로그 seed · 중단된 작업 정리, 라우터 등록(공통 → 단계 순서 → 화면)
-  core/              모든 단계가 함께 쓰는 기반
+  core/              모든 단계가 함께 쓰는 기반 (단계를 모른다 — 예외: 모델 카탈로그용 1 임베딩)
     config.py          설정(.env), 경로(BASE_DIR · APP_DIR)
     db.py · migrate.py SQLAlchemy 모델 · Alembic 자동 적용
     crud.py            모델 카탈로그 DB 헬퍼, 실행 이력 기록(record_run), 중단 작업 정리
-    schemas.py         API 요청/응답 스키마
-    jobs.py            인메모리 백그라운드 작업 큐
+    schemas.py         공용 스키마만(LLMRef · BulkDelete) — 단계의 요청 스키마는 각 단계의 schemas.py
+    jobs.py            백그라운드 작업 큐(스레드 풀) + 작업 기록(job_records, 재시작해도 남음)
+    auth.py            선택형 접근 토큰(API_TOKEN)
     runtime.py         디바이스 · dtype · 시스템 정보 · 메모리 표본
     stats.py           부트스트랩 신뢰구간 · 짝지은 비교
-    llm.py · llm_api.py LLM 클라이언트(OpenAI 호환 · Claude, 스트리밍) · 연결 API
+    llm.py · llm_api.py LLM 클라이언트(OpenAI 호환 · Claude, 스트리밍 · 그림 입력) · 연결 API
     korean.py          Kiwi 형태소 · 문장 분리 · 명사구
-    media.py           이미지 · 영상 프레임 파일 위치(data/media/doc-<id>/) · 안전한 경로 해석
+    media_store.py     이미지 · 영상 프레임 파일 위치(data/media/doc-<id>/) · 안전한 경로 해석
     vectorstores/      VectorStore 인터페이스 + Qdrant · pgvector · MariaDB (작은 인덱스는 정확 검색)
     system_api.py      작업 · 실행 이력 · 시스템 정보 API
   stages/            LLM 시스템 엔지니어링 맵의 단계 — 뒤 단계가 앞 단계를 가져다 쓴다
-    embedding/         1 · 데이터 임베딩: catalog · hub · model_manager · benchmark · public_benchmarks · projection, datasets/
-    rag/               2 · RAG 검색: parsers · chunking · bm25 · fusion · service(검색·리랭킹) · evaluation(질문 유형 · 채점 규칙) · answer · verify(근거 검증 방식 · 일치도) · public_corpus(공개 자료)
-    multimodal/        멀티모달: media(이미지 · 영상 수집, 프레임 추출 · 같은 장면 제외) — 결과는 RAG 컬렉션의 미디어 문서
-    rerank/            3 · 리랭킹: llm_rerank(목록형) · evaluate(리랭커 × 후보 수 × 융합) · api
-    distill/           7a · 지식 증류: service(교사 오답 · 점수 차 → MarginMSE 학습 → 비교) · llm_data(교사 답 JSONL) · api
-    agent/             8a · 에이전트: agent(ReAct 루프 · 도구 search/read/calc · 근거 검증) · api(스트리밍)
-    rl/                8b · 강화학습: reward(보상 함수) · service(Best-of-N · 선호 쌍 · DPO 내보내기) · api
-    quant/             7b · 양자화: vectors(float32 · int8 · binary · 재점수 점수와 메모리) · llm_bits(같은 근거로 LLM 비트 수 비교) · api
-    routing/           6 · 라우팅: routers(규칙 · 검색 확신도 · LLM 판단) · service(두 경로 기록으로 라우터 채점 · 오라클 · 기준값 곡선) · api
-    search_lab/        4 · 검색 향상: enhance(질의 재작성 · HyDE · 다중 질의, LLM 변형 캐시)
-    finetune/          파인튜닝: data(학습 쌍) · trainer · service(학습 → 등록 → 전후 비교 → 기록)
-    apps/              의미 기반 응용: 추천 · 분류 · 군집 · 중복 · 이상 · 키워드, presets/
-    (각 단계의 *_api.py · api.py 가 그 단계의 HTTP API)
+    <단계>/            로직 모듈 + schemas.py(요청 스키마) + api.py 또는 <주제>_api.py(HTTP API)
+    embedding/         1 · 데이터 임베딩: catalog · hub · compat(호환성 점검) · model_manager · benchmark · public_benchmarks · projection, datasets/
+    rag/               2 · RAG 검색: parsers · chunking · bm25 · fusion · service(검색·리랭킹) · evaluation · answer · verify · legal · public_corpus
+    rerank/            3 · 리랭킹: llm_rerank(목록형) · evaluate
+    search_lab/        4 · 검색 향상: enhance(질의 재작성 · HyDE · 다중 질의)
+    finetune/          5 · 파인튜닝: data · trainer · service
+    routing/           6 · 라우팅: routers(규칙 · 확신도 · LLM) · learned(학습 라우터) · service(라우터 채점)
+    distill/ quant/    7a 지식 증류 · 7b 양자화
+    agent/ rl/         8a 에이전트 · 8b 강화학습
+    multimodal/        M · 멀티모달: ingest(이미지 · 영상 수집, 프레임 추출 · 같은 장면 제외)
+    apps/              A · 의미 응용: 추천 · 분류 · 군집 · 중복 · 이상 · 키워드, presets/
+    registry/          맵 · 단계 설명(데이터만, 다른 앱 모듈을 불러오지 않음)
+      model.py           Map · Page · Stage 구조와 문서 경로 규칙
+      maps/<맵>.py       맵 1개 = 파일 1개: MAP(흐름 · 원칙 · 예시) + STAGES
+      __init__.py        MAP_MODULES 순서로 모으기 · 조회(map_stages · map_flow · stage_for_nav)
   pipeline/          단계 연결 계층 — 단계들을 이어 붙이는 진입점
     search.py          run_search: 2 RAG 검색(+3 리랭킹)에 4 검색 향상을 끼움. 모든 검색 API 가 여기를 거침
-    flow.py · api.py   연결 실행기: 4 → 1 → 2 → 3 → 6 → 7·8 → 답변을 이어 단계별 상태 · 시간 기록, 평가 세트로 연결 방식 비교(/api/flow/*)
+    flow.py · api.py   연결 실행기(4 → 1 → 2 → 3 → 6 → 7·8 → 답변), 연결 비교(/api/flow/*)
+    schemas.py         경로 · 연결 설정(FlowPath · FlowConfig · RoutingConfig · 라우터 평가 요청)
   web/               화면
-    pages.py           페이지 라우터
-    templates/         base · dashboard · history · roadmap + 단계별 하위 폴더(embedding · rag · finetune · multimodal · apps)
-    static/            css · js
+    pages.py           페이지 라우터 (맵은 전용 화면 3개 + 공통 화면 /maps/<맵>)
+    templates/         base · dashboard · history · roadmap · stage + <영역>/<화면>.html, maps/
+    static/js/lib/     공용 스크립트(common.js · charts.js)
+    static/js/<영역>/<화면>.js   화면 스크립트 — 템플릿과 같은 구조(templates/rag/answer.html ↔ static/js/rag/answer.js)
+tests/               app/ 와 같은 구조: core/ · pipeline/ · web/ · stages/<단계>/, 공용 helpers.py · conftest.py,
+                     구조 규칙 test_architecture.py · 문서 test_docs.py
 ```
 
-의존 방향: `web · *_api → pipeline → stages → core`, 단계끼리는 흐름도 앞 단계만 가져다 씁니다(예: `rag` 는 `embedding.model_manager`, `finetune` 은 `rag.evaluation` 을 씀). 앞 단계 화면에서 뒤 단계 기능을 켜야 할 때(예: 2 RAG 의 검색 · 평가 · 답변에서 4 검색 향상)는 단계끼리 직접 가져다 쓰지 않고 API 가 `pipeline` 을 부릅니다 — 단계 내부 로직은 `pipeline` 을 모릅니다. 예외로 `core` 의 모델 CRUD 는 1 임베딩의 모델 관리자 · 카탈로그를 씁니다. 이 규칙은 `tests/test_search_lab.py::test_dependency_direction` 이 검사합니다. 새 단계(리랭킹 고도화 · 라우팅 · 증류 · 양자화 · 에이전트 · 강화학습)는 `app/stages/<단계>/` 로 추가합니다([roadmap.md](../maps/llm.md)).
+### 의존 방향과 배치 규칙 (`tests/test_architecture.py` 가 검사)
+
+- `web · *_api → pipeline → stages → core`. 단계끼리는 흐름도 앞 단계만 가져다 씁니다(예: `rag` 는 `embedding.model_manager`, `finetune` 은 `rag.evaluation`). 앞 단계 화면에서 뒤 단계 기능을 켜야 하면(2 RAG 검색에서 4 검색 향상) 단계끼리 직접 부르지 않고 API 가 `pipeline` 을 부릅니다 — 단계 내부 로직은 `pipeline` 을 모릅니다. 예외로 `core` 의 모델 CRUD 는 1 임베딩의 모델 관리자 · 카탈로그 · 스키마를 씁니다.
+- 요청 스키마는 그 단계의 `schemas.py` 에. 여러 단계 설정을 묶는 스키마(경로 · 연결)는 `pipeline/schemas.py`. `core/schemas.py` 는 공용만(80줄 미만 · 단계 import 없음).
+- 레지스트리는 데이터만 — 앱의 다른 모듈을 불러오지 않습니다(화면 · 문서 생성이 무거운 모델 코드를 끌고 오지 않게). `maps/` 의 모든 파일이 `MAP_MODULES` 에 있어야 합니다.
+- 화면 스크립트는 정적 파일로. 템플릿에는 서버 값 한 줄 설정(`const MODEL_ID = {{ model_id }};`)만 인라인으로 두고, `static/js/` 의 화면 파일은 짝이 되는 템플릿이 있어야 합니다(한 화면을 나누면 `<화면>_<부분>.js`).
+- 테스트는 `app/` 와 같은 구조. 최상위에는 `conftest.py` · `helpers.py` · `test_architecture.py` · `test_docs.py` 만.
+
+### 확장 체크리스트
+
+**새 단계 (구현)** — 예: 리랭킹 고도화 · 라우팅 · 에이전트처럼 화면 · API 가 있는 단계
+
+1. `app/stages/<단계>/` — 로직 모듈, `schemas.py`(요청 스키마), `api.py`(라우터, 블로킹 작업은 `def` 또는 `jobs.submit`)
+2. `app/main.py` 라우터 목록(흐름도 순서), DB 가 필요하면 `core/db.py` 모델 + Alembic 리비전
+3. 화면: `app/web/templates/<단계>/<화면>.html` + `app/web/static/js/<단계>/<화면>.js`, `pages.py` 의 `PAGES`
+4. 레지스트리: `app/stages/registry/maps/<맵>.py` 의 단계 항목(상태 · `pages` · 원리 · 왜 · 어떻게 · 할 일)
+5. 테스트: `tests/stages/<단계>/test_<주제>.py` (가짜 모델 · `tests/helpers.py` · 공용 픽스처 `scripted_llm` · `rag_collection`)
+6. 문서: `docs/stages/<맵>/<번호>-<이름>/<단계>.md` 상세 · 실측, `uv run python scripts/gen_docs.py`, `CHANGELOG.md`, `docs/guides/api.md`
+
+**새 맵** — 1. `app/stages/registry/maps/<맵>.py` 에 `MAP`(흐름 묶음 · 원칙 · 예시) + `STAGES` 2. `registry/__init__.py` 의 `MAP_MODULES` 에 한 줄 3. `uv run python scripts/gen_docs.py` (화면 `/maps/<맵>` · 개요 · 단계 문서가 생김). 전용 화면이 필요할 때만 `template` 을 지정하고 템플릿을 만듭니다.
+
+**새 화면만** — 템플릿 + 같은 경로의 화면 스크립트 + `PAGES` + 레지스트리 단계의 `pages`.
 
 ## 요청 흐름
 
@@ -108,7 +136,7 @@ FastAPI 라우터 ── core/system_api · llm_api / stages/*/…_api / web/pag
 
 ## 백그라운드 작업
 
-`jobs.submit(kind, title, fn)` → ThreadPoolExecutor(2 workers). 작업 상태는 메모리에만 있고 서버를 재시작하면 사라집니다(시작할 때 DB 에 '진행 중'으로 남은 파인튜닝 · 평가 세트 생성은 '중단됨'으로 정리). 벤치마크 결과는 완료 시 `test_runs`에 저장됩니다. 다운로드 진행률은 `snapshot_download(tqdm_class=...)`의 바이트 진행 바를 가로채 계산합니다.
+`jobs.submit(kind, title, fn)` → ThreadPoolExecutor(2 workers). 계산은 메모리에서 돌고 상태 · 진행률 · 결과는 DB(`job_records`)에도 남깁니다 — 재시작하면 끝나지 않은 작업은 '중단됨'으로 표시합니다(파인튜닝 · 평가 세트 생성도 같이 정리). 벤치마크 결과는 완료 시 `test_runs`에 저장됩니다. 다운로드 진행률은 `snapshot_download(tqdm_class=...)`의 바이트 진행 바를 가로채 계산합니다.
 
 ## 데이터 저장 위치
 
