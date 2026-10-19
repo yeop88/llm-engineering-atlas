@@ -1,28 +1,28 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}검증 보정{% endblock %}
 {% block content %}
-<h1>답변 검증 보정</h1>
-<p class="lead">답변 문장마다 두 가지를 따로 판정합니다 — <b>근거 일치</b>(인용한 근거로 뒷받침되는가)와 <b>질문 관련성</b>(질문에 답하는 문장인가). 근거에 그대로 있는 문장이라도 질문과 상관없으면 틀린 답입니다. 자동 검증(글자 겹침 · 의미 유사도 · 둘 중 하나 · LLM 판정 · 질문-문장 유사도)이 사람 판정과 얼마나 맞는지 재서 방식과 기준값을 고릅니다.</p>
+{% call ui.page_header("답변 검증 보정") %}답변 문장마다 두 가지를 따로 판정합니다 — <b>근거 일치</b>(인용한 근거로 뒷받침되는가)와 <b>질문 관련성</b>(질문에 답하는 문장인가). 근거에 그대로 있는 문장이라도 질문과 상관없으면 틀린 답입니다. 자동 검증(글자 겹침 · 의미 유사도 · 둘 중 하나 · LLM 판정 · 질문-문장 유사도)이 사람 판정과 얼마나 맞는지 재서 방식과 기준값을 고릅니다.{% endcall %}
 
 <div class="card stack">
   <h2>지금 설정</h2>
   <div id="s-out" class="small"></div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>1. 판정할 문장 만들기</h2>
   <div class="row">
-    <div class="field"><label>컬렉션</label><select id="v-col"></select></div>
-    <div class="field"><label>벡터 인덱스</label><select id="v-idx"></select></div>
-    <div class="field grow"><label>평가 세트</label><select id="v-set"></select></div>
-    <div class="field"><label>질문 수</label><input id="v-n" type="number" value="10" min="1" max="200" style="width:70px"></div>
-    <label class="row small" style="margin:0"><input type="checkbox" id="v-llm" checked> LLM 판정도</label>
-    <div style="align-self:end"><button class="btn primary" id="v-run">만들기</button></div>
+    <div class="field"><label for="v-col">컬렉션</label><select id="v-col"></select></div>
+    <div class="field"><label for="v-idx">벡터 인덱스</label><select id="v-idx"></select></div>
+    <div class="field grow"><label for="v-set">평가 세트</label><select id="v-set"></select></div>
+    <div class="field"><label for="v-n">질문 수</label><input class="w-sm" id="v-n" type="number" value="10" min="1" max="200"></div>
+    <label class="row small m-0"><input type="checkbox" id="v-llm" checked> LLM 판정도</label>
+    <div class="self-end"><button class="btn primary" id="v-run">만들기</button></div>
   </div>
   <div id="v-progress" hidden></div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <div class="row between"><h2>2. 판정하기</h2><span class="small muted" id="l-count"></span></div>
   <div class="small muted">
     <b>근거 일치</b> — 문장이 인용한 근거 글만 보고 판단합니다. 숫자 · 날짜 · 대상 · 조건 중 하나라도 근거와 다르거나 근거에 없으면 '근거 없음'.<br>
@@ -32,7 +32,7 @@
   <div id="l-out"></div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <div class="row between"><h2>3. 방식별 일치도</h2><button class="btn" id="a-run">계산</button></div>
   <div id="a-out"></div>
 </div>

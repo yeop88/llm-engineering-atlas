@@ -4,8 +4,7 @@ const urls = {};
 async function gLoad() {
   const cols = await api("/api/collections");
   $("#g-col").innerHTML = cols.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("") || '<option value="">컬렉션 없음</option>';
-  const saved = localGet("mm-col");
-  if (saved && cols.some(c => String(c.id) === saved)) $("#g-col").value = saved;
+  applyCtx($("#g-col"));
   await gIdx();
 }
 async function gIdx() {
@@ -15,8 +14,9 @@ async function gIdx() {
   const media = new Set(d.chunk_sets.filter(c => c.stats?.n_media).map(c => c.id));
   const idx = d.indexes.filter(i => i.status === "ready" && media.has(i.chunk_set_id));
   $("#g-idx").innerHTML = idx.map(i => `<option value="${i.id}">${esc(i.model_hf_id.split("/").pop())} · #${i.id}</option>`).join("") || '<option value="">이미지 · 영상 인덱스 없음</option>';
+  applyCtx($("#g-idx"));
 }
-$("#g-col").addEventListener("change", () => { localSet("mm-col", $("#g-col").value); gIdx(); });
+$("#g-col").addEventListener("change", () => { gIdx(); });
 $("#g-run").onclick = async e => {
   const q = $("#g-q").value.trim();
   if (!q || !$("#g-idx").value) return toast("인덱스와 검색어가 필요합니다", "err");
@@ -25,7 +25,7 @@ $("#g-run").onclick = async e => {
   if (res.error) { $("#g-out").innerHTML = `<div class="errbox">${esc(res.error)}</div>`; return; }
   $("#g-out").innerHTML = res.results.map(x => x.media
     ? `<figure><a href="${x.media.source_url}${x.media.t != null ? `#t=${x.media.t}` : ""}" target="_blank" rel="noopener"><img src="${x.media.url}" alt="${esc(x.text)}" loading="lazy"></a><figcaption>#${x.rank} ${esc(x.text)} <span class="mono">${x.score.toFixed(3)}</span></figcaption></figure>`
-    : `<figure><div class="small" style="padding:6px">${esc(x.text.slice(0, 120))}</div><figcaption>#${x.rank} ${esc(x.filename)} <span class="mono">${x.score.toFixed(3)}</span></figcaption></figure>`).join("") || '<div class="empty">결과 없음</div>';
+    : `<figure><div class="small p-1">${esc(x.text.slice(0, 120))}</div><figcaption>#${x.rank} ${esc(x.filename)} <span class="mono">${x.score.toFixed(3)}</span></figcaption></figure>`).join("") || '<div class="empty">결과 없음</div>';
 };
 $("#g-q").addEventListener("keydown", e => { if (e.key === "Enter") $("#g-run").click(); });
 gLoad();
@@ -47,10 +47,10 @@ $("#m-run").onclick = async e => {
   files.forEach(f => form.append("files", f));
   $("#m-out").innerHTML = '<div class="empty">모델 로드 및 인코딩 중…</div>';
   const r = await busy(e.target, () => api("/api/multimodal/retrieve", { method: "POST", form }));
-  $("#m-out").innerHTML = r.results.map(res => `<div class="card result-col" style="flex:1">
-    <h3 class="mono" style="word-break:break-all">${esc(res.hf_id)}</h3>
+  $("#m-out").innerHTML = r.results.map(res => `<div class="card result-col grow">
+    <h3 class="mono break-all">${esc(res.hf_id)}</h3>
     ${res.error ? `<div class="errbox">${esc(res.error)}</div>` : `<div class="small muted">${res.seconds}s · Q: ${appliedInfo(res.applied.query)}</div>${warningsHtml(res.warnings)}
-    <div class="thumbs" style="margin-top:8px">${res.ranking.map((x, i) => `<figure><img src="${urls[x.name]}" alt="">
+    <div class="thumbs mt-2">${res.ranking.map((x, i) => `<figure><img src="${urls[x.name]}" alt="">
       <figcaption><span class="badge ${i === 0 ? "ok" : "muted"}">#${i + 1}</span> <b class="mono">${x.score.toFixed(3)}</b><br>${esc(x.name)}</figcaption></figure>`).join("")}</div>`}
   </div>`).join("");
 };

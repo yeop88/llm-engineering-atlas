@@ -1,42 +1,36 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}멀티에이전트 · 멀티모달 맵{% endblock %}
 {% block content %}
-{% set S = registry.BY_KEY %}
-{% macro box(key, text=None) -%}
-  {%- set s = S[key] -%}
-  <a class="flow-box {{ 'done' if s.status == 'done' else ('basic' if s.status == 'basic' else 'plan') }}" href="/stages/{{ key }}" title="{{ s.status_label }} · {{ s.summary }}">
-    <span class="stage-no">{{ s.no }}</span> {{ text or s.title }}</a>
-{%- endmacro %}
-<div class="row between"><h1>멀티에이전트 · 멀티모달 맵</h1><span class="small"><a href="/roadmap">LLM 시스템 엔지니어링 맵</a> · <a href="/maps/knowledge-graph">지식 그래프 · GraphRAG 맵</a></span></div>
-<p class="lead">RAG 파이프라인을 두 방향으로 넓힙니다. <b>멀티모달</b>은 처리하는 데이터의 종류(텍스트 · 이미지 · 표 · 음성)를 넓혀 시스템에 눈과 귀를 주고 — 파이프라인의 맨 앞(입력 · 임베딩 · 검색)과 맨 뒤(출력)에 들어갑니다. <b>멀티에이전트</b>는 처리 과정을 검색 · 분석 · 작성 · 검증 전문가의 협업으로 넓히고 — LLM 맵의 라우터 자리를 오케스트레이터가 이어받습니다. 상자를 누르면 원리 · 왜 · 어떻게를, <span class="flow-box done sm">구현됨</span> <span class="flow-box basic sm">기초 있음</span> 상자는 이미 있는 기능을 볼 수 있습니다.</p>
+{% call ui.page_header("멀티에이전트 · 멀티모달 맵", actions='<a class="btn sm" href="/maps">모든 맵</a>') %}RAG 파이프라인을 두 방향으로 넓힙니다. <b>멀티모달</b>은 처리하는 데이터의 종류(텍스트 · 이미지 · 표 · 음성)를 넓혀 시스템에 눈과 귀를 주고 — 파이프라인의 맨 앞(입력 · 임베딩 · 검색)과 맨 뒤(출력)에 들어갑니다. <b>멀티에이전트</b>는 처리 과정을 검색 · 분석 · 작성 · 검증 전문가의 협업으로 넓히고 — LLM 맵의 라우터 자리를 오케스트레이터가 이어받습니다. 상자를 누르면 원리 · 왜 · 어떻게를, <span class="flow-box done sm">구현됨</span> <span class="flow-box basic sm">기초 있음</span> 상자는 이미 있는 기능을 볼 수 있습니다.{% endcall %}
 
 <div class="card stack">
   <h2>전체 흐름</h2>
   <div class="flow">
     <div class="small muted">멀티모달 입력 — 텍스트 · 이미지 · 음성 · 문서</div>
-    <div class="flow-row">{{ box("mm_input") }}<span class="flow-arrow">→</span><span class="small muted">이미지와 텍스트를 같은 벡터 공간으로</span></div>
+    <div class="flow-row">{{ ui.flow_box("mm_input") }}<span class="flow-arrow">→</span><span class="small muted">이미지와 텍스트를 같은 벡터 공간으로</span></div>
     <div class="flow-down">↓</div>
     <div class="small muted">멀티에이전트 시작 — 복잡한 의도를 분석해 작업으로 나눠 분배 (LLM 맵의 라우터 자리)</div>
-    <div class="flow-row">{{ box("orchestrator") }}</div>
+    <div class="flow-row">{{ ui.flow_box("orchestrator") }}</div>
     <div class="flow-down">↓</div>
     <div class="flow-row" style="align-items:stretch;gap:12px">
-      <div class="card stack" style="padding:10px;flex:1;min-width:220px">{{ box("retrieval_agent", "A. 검색 전문가") }}
-        <div class="small">{{ box("mm_rag") }}<br>이미지 · 텍스트 청크 검색, 멀티모달 리랭킹, 부실하면 질의를 고쳐 재검색</div></div>
-      <div class="card stack" style="padding:10px;flex:1;min-width:220px">{{ box("analysis_agent", "B. 분석 · 코딩") }}
+      <div class="card stack p-2 grow min-w-md">{{ ui.flow_box("retrieval_agent", "A. 검색 전문가") }}
+        <div class="small">{{ ui.flow_box("mm_rag") }}<br>이미지 · 텍스트 청크 검색, 멀티모달 리랭킹, 부실하면 질의를 고쳐 재검색</div></div>
+      <div class="card stack p-2 grow min-w-md">{{ ui.flow_box("analysis_agent", "B. 분석 · 코딩") }}
         <div class="small">표 · 그래프 데이터 파싱, 코드 실행으로 계산 · 무결성 검증, 결과 차트</div></div>
-      <div class="card stack" style="padding:10px;flex:1;min-width:220px">{{ box("report_agent", "C. 보고서 작성") }}
+      <div class="card stack p-2 grow min-w-md">{{ ui.flow_box("report_agent", "C. 보고서 작성") }}
         <div class="small">sLLM / LLM 라우팅, 템플릿에 맞춘 작성</div></div>
     </div>
     <div class="flow-down">↓</div>
-    <div class="flow-row">{{ box("critic_agent", "최종 결과 교차 검증 (품질 검증 에이전트)") }}<span class="small muted">환각 · 질문 관련성 · 보안 규정 → 통과 / 수정 요청 / 반려</span></div>
+    <div class="flow-row">{{ ui.flow_box("critic_agent", "최종 결과 교차 검증 (품질 검증 에이전트)") }}<span class="small muted">환각 · 질문 관련성 · 보안 규정 → 통과 / 수정 요청 / 반려</span></div>
     <div class="flow-down">↓</div>
     <div class="small muted">멀티모달 출력</div>
-    <div class="flow-row">{{ box("mm_output", "멀티모달 답변 (텍스트 + 차트 + 음성)") }}</div>
+    <div class="flow-row">{{ ui.flow_box("mm_output", "멀티모달 답변 (텍스트 + 차트 + 음성)") }}</div>
   </div>
   <div class="small muted"><span class="flow-box done sm">구현됨</span> <span class="flow-box basic sm">기초 있음</span> <span class="flow-box plan sm">예정</span></div>
 </div>
 
-<div class="grid cols-2" style="margin-top:16px">
+<div class="grid cols-2 mt-4">
   <div class="card stack">
     <h2>멀티모달 — 어디에, 어떻게</h2>
     <div class="small"><b>어디에</b>: 파이프라인의 맨 앞(입력 · 임베딩 · 검색)과 맨 뒤(답변 생성 · 출력)</div>
@@ -58,7 +52,7 @@
   </div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>이미 있는 것 위에 짓는다</h2>
   <div class="small muted">이 맵의 단계는 LLM 맵에서 구현 · 실측한 기능을 기반으로 합니다. 기반 단계의 실측은 설계에 그대로 반영합니다.</div>
   <div class="table-wrap"><table>
@@ -80,7 +74,7 @@
   </ul>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>두 개념이 합쳐지면 — 예시 (AS 문의)</h2>
   <div class="small">고객이 세탁기 오류 화면 사진을 올림(<b>멀티모달 입력</b>) → 오케스트레이터가 작업을 나눔 → 검색 에이전트가 사진으로 비슷한 오류 사례 · 매뉴얼 쪽을 찾고 → 분석 에이전트가 오류 코드 표에서 원인 · 조치 순서를 확인 → 작성 에이전트가 안내문을 쓰고 → 검증 에이전트가 매뉴얼과 맞는지 · 질문에 답하는지 확인 → 단계별 그림과 음성 안내로 답(<b>멀티모달 출력</b>).</div>
 </div>

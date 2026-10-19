@@ -8,6 +8,7 @@ async function fInit() {
   $("#f-base").innerHTML = fModels.map(m => `<option value="${m.id}">${m.loaded_profiles?.length ? "● " : m.cached ? "○ " : ""}${esc(m.name)} (${esc(m.params || "?")})${m.source === "finetuned" ? " · 파인튜닝" : ""}</option>`).join("");
   fCols = await api("/api/collections");
   $("#f-col").innerHTML = fCols.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("") || '<option value="">컬렉션 없음</option>';
+  applyCtx($("#f-col"));
   await fColChanged();
   const s = await api("/api/llm/status");
   $("#f-llm-status").innerHTML = s.default.error ? '<span class="badge warn">LLM 미설정</span>' : `LLM: <span class="mono">${esc(s.default.model)}</span>`;
@@ -16,8 +17,10 @@ async function fColChanged() {
   if (!$("#f-col").value) return;
   const d = await api(`/api/collections/${$("#f-col").value}`);
   $("#f-cs").innerHTML = d.chunk_sets.filter(c => c.status === "ready").map(c => `<option value="${c.id}">${esc(c.name)} (${c.n_chunks})</option>`).join("") || '<option value="">청크 세트 없음</option>';
+  applyCtx($("#f-cs"));
   const sets = (await api(`/api/collections/${d.id}/eval-sets`)).filter(s => s.status === "ready");
   $("#f-eval").innerHTML = '<option value="">비교하지 않음</option>' + sets.map(s => `<option value="${s.id}">#${s.id} ${esc(s.name)} (${s.n_items}문항)</option>`).join("");
+  applyCtx($("#f-eval"));
   const manual = sets.find(s => s.method === "manual" || s.method === "import") || sets.find(s => s.method === "llm");
   if (manual) $("#f-eval").value = manual.id;
   fHint();
@@ -50,7 +53,7 @@ $("#f-run").onclick = async e => {
 async function fLoad() {
   const rows = await api("/api/finetune");
   const st = r => ({ done: '<span class="badge ok">완료</span>', error: `<span class="badge err" title="${esc(r.error || "")}">오류</span>`, cancelled: '<span class="badge">취소</span>',
-    running: `<span class="badge warn">진행 중</span>${r.job ? `<div class="progress" style="margin-top:4px;min-width:120px"><div style="width:${pct(r.job.progress)}%"></div></div><div class="small muted">${esc(r.job.message)}</div>` : ""}`,
+    running: `<span class="badge warn">진행 중</span>${r.job ? `<div class="progress mt-1 min-w-sm"><div style="width:${pct(r.job.progress)}%"></div></div><div class="small muted">${esc(r.job.message)}</div>` : ""}`,
     pending: '<span class="badge warn">대기</span>' })[r.status] || esc(r.status);
   $("#f-rows").innerHTML = rows.map(r => {
     const t = r.metrics?.train || {}, c = r.metrics?.comparison?.dense;
@@ -64,9 +67,12 @@ async function fLoad() {
   if (rows.some(r => r.status === "running" || r.status === "pending")) fTimer = setTimeout(fLoad, 3000);
 }
 $("#f-refresh").onclick = fLoad;
-async function fCancel(jobId) { if (confirm("학습을 취소할까요?")) { await api(`/api/jobs/${jobId}/cancel`, { method: "POST" }); fLoad(); } }
+async function fCancel(jobId) { if (await ui.confirm("학습을 취소할까요? 지금까지 학습한 부분은 버려집니다.", { ok: "학습 취소", danger: true })) { await api(`/api/jobs/${jobId}/cancel`, { method: "POST" }); fLoad(); } }
 async function fDelete(id) {
-  const withModel = confirm(`실행 #${id} 기록을 삭제합니다.\n학습한 모델(카탈로그 항목과 파일)도 함께 지울까요? [확인 = 함께 삭제 / 취소 = 기록만 삭제]`);
+  // 예전 confirm 은 '취소 = 기록만 삭제'라 삭제 자체를 멈출 수 없었다 → 기록만 / 모델까지 / 취소
+  const withModel = await ui.choose(`실행 #${id} 기록을 삭제합니다. 학습한 모델(카탈로그 항목과 파일)도 함께 지울까요?`,
+    [{ label: "기록만 삭제", value: false }, { label: "모델까지 삭제", value: true, danger: true }]);
+  if (withModel === null) return;
   await api(`/api/finetune/${id}?delete_model=${withModel}`, { method: "DELETE" }); toast("삭제했습니다", "ok"); $("#f-detail").innerHTML = ""; fLoad();
 }
 
@@ -94,7 +100,7 @@ async function fShow(id) {
     <td class="small nowrap">${(p.paired.diff * 100).toFixed(1)}%p [${(p.paired.ci[0] * 100).toFixed(1)}, ${(p.paired.ci[1] * 100).toFixed(1)}] <span class="badge ${p.paired.significant ? (p.paired.diff > 0 ? "ok" : "err") : ""}">${p.paired.significant ? "유의한 차이" : "차이 불확실"}</span></td></tr>` : "";
   const changed = (cmp?.queries || []).filter(q => q.ranks["원래 모델 · 의미"] !== q.ranks["학습한 모델 · 의미"]);
   $("#f-detail").innerHTML = `<div class="card stack">
-    <div class="row between"><h2>실행 #${r.id} · ${esc(r.name)}</h2>${r.output_model_id ? `<a class="btn sm" href="/models/${r.output_model_id}">학습한 모델 보기</a>` : ""}</div>
+    <div class="row between"><h2>실행 #${r.id} · ${esc(r.name)}</h2>${r.output_model_id ? `<a class="btn sm" href="/embedding/models/${r.output_model_id}">학습한 모델 보기</a>` : ""}</div>
     ${r.error ? `<div class="errbox">${esc(r.error)}</div>` : ""}
     <div class="grid cols-2">
       <div class="stack"><h3>학습 데이터</h3><div class="small">${d.method === "llm" ? `LLM 질문 생성 (${esc(d.llm?.model || "")})` : "ICT"} · 지문 ${d.passages ?? "-"}개 → 학습 쌍 <b>${d.pairs ?? "-"}</b>개 · 문서 ${d.documents ?? "-"}개 · 평가 세트 근거로 제외한 지문 ${d.excluded_for_eval ?? 0}개</div>
@@ -104,7 +110,7 @@ async function fShow(id) {
     ${cmp && !cmp.skipped ? `<h3>학습 전후 비교 · ${esc(cmp.eval_set.name)} (${cmp.eval_set.n}문항)</h3>
       <table><tr><th>검색</th><th class="num">nDCG@10</th><th class="num">Hit@1</th><th class="num">Hit@5</th><th>학습 전 대비 (95% 구간)</th></tr>${cmpRow("의미", cmp.dense)}${cmpRow("하이브리드", cmp.hybrid)}</table>
       ${changed.length ? `<details><summary class="small">의미 검색 순위가 바뀐 질문 ${changed.length}개</summary><table>${changed.map(q => `<tr><td class="small">${esc(q.query)}</td><td class="num mono">${q.ranks["원래 모델 · 의미"] ?? "✗"} → ${q.ranks["학습한 모델 · 의미"] ?? "✗"}</td></tr>`).join("")}</table></details>` : ""}` : ""}
-    <details><summary class="small">기록 (모델 카드 · 학습한 모델 폴더의 README.md)</summary><pre class="small" style="white-space:pre-wrap">${esc(card)}</pre></details>
+    <details><summary class="small">기록 (모델 카드 · 학습한 모델 폴더의 README.md)</summary><pre class="small pre">${esc(card)}</pre></details>
   </div>`;
   $("#f-detail").scrollIntoView({ behavior: "smooth" });
 }

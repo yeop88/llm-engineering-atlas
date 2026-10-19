@@ -70,17 +70,17 @@ $("#run").onclick = async e => {
       <div class="stat"><div class="label">노이즈</div><div class="value">${r.noise}</div></div>
       ${a ? `<div class="stat"><div class="label">정답 라벨과 일치 (ARI · 순도)</div><div class="value">${a.ari}</div><div class="small muted">순도 ${(a.purity * 100).toFixed(1)}% · 라벨 ${a.n_labels}종</div></div>` : "<div></div>"}
     </div>
-    ${r.k_scores ? `<details><summary>군집 수별 실루엣</summary><div style="margin-top:8px">${r.k_scores.map(s => `<div class="row small" style="flex-wrap:nowrap;gap:8px"><span class="mono" style="width:40px">k=${s.k}</span>
-      <div style="flex:1;background:var(--code);border-radius:4px"><div class="bar" style="width:${Math.max(2, (s.silhouette || 0) * 200)}%;${s.k === r.k ? "" : "opacity:.45"}"></div></div><span class="mono" style="width:60px;text-align:right">${s.silhouette ?? "-"}</span></div>`).join("")}</div></details>` : ""}
+    ${r.k_scores ? `<details><summary>군집 수별 실루엣</summary><div class="mt-2">${r.k_scores.map(s => `<div class="row small nowrap-row gap-2"><span class="mono w-xs">k=${s.k}</span>
+      <div class="grow bg-code"><div class="bar" style="width:${Math.max(2, (s.silhouette || 0) * 200)}%;${s.k === r.k ? "" : "opacity:.45"}"></div></div><span class="mono w-sm text-right">${s.silhouette ?? "-"}</span></div>`).join("")}</div></details>` : ""}
     <div class="grid cols-2">
       <div><h3>군집 지도 <span class="small muted">PCA 2D · 두 축이 분산의 ${(r.explained_variance * 100).toFixed(0)}% 설명 · 점이나 군집 카드를 누르면 강조</span></h3>
         <div class="chart-box" style="height:420px"><canvas id="map" role="img" aria-label="군집 지도"></canvas></div></div>
-      <div><h3>군집</h3><div id="clusters" class="stack" style="max-height:440px;overflow:auto">${r.clusters.map(c => `
+      <div><h3>군집</h3><div id="clusters" class="stack scroll scroll-md">${r.clusters.map(c => `
         <div class="card" data-c="${c.id}" style="padding:10px;cursor:pointer" onclick="selectCluster(${c.id})">
           <div class="row between small"><b>${c.noise ? "노이즈 (어느 군집에도 속하지 않음)" : `C${c.id}`}</b><span class="muted">${c.size}개${c.noise ? "" : ` · 응집도 ${c.cohesion}`}</span></div>
-          ${c.keywords.length ? `<div style="margin:4px 0">${c.keywords.map(k => `<span class="badge">${esc(k)}</span>`).join(" ")}</div>` : ""}
+          ${c.keywords.length ? `<div class="my-1">${c.keywords.map(k => `<span class="badge">${esc(k)}</span>`).join(" ")}</div>` : ""}
           ${Object.keys(c.gold_labels).length ? `<div class="small muted">정답 라벨: ${Object.entries(c.gold_labels).map(([k, v]) => `${esc(k)} ${v}`).join(" · ")}</div>` : ""}
-          ${c.representatives.map(x => `<div class="small" style="margin-top:2px">· ${esc(x.text)}</div>`).join("")}
+          ${c.representatives.map(x => `<div class="small mt-1">· ${esc(x.text)}</div>`).join("")}
         </div>`).join("")}</div></div>
     </div></div>`;
   if (typeof Chart !== "undefined") drawMap();

@@ -1,5 +1,5 @@
 // rerank/rerank.html 화면 스크립트 (템플릿에서 옮김 — 화면 JS 는 static/js/<영역>/<화면>.js)
-setupCollectionPickers({ col: $("#r-col"), idx: $("#r-idx"), cs: $("#r-cs"), set: $("#r-set"), key: "rerank-col" });
+setupCollectionPickers({ col: $("#r-col"), idx: $("#r-idx"), cs: $("#r-cs"), set: $("#r-set") });
 $("#r-mode").addEventListener("change", () => { const b = $("#r-mode").value === "bm25"; $("#r-idx-wrap").hidden = b; $("#r-cs-wrap").hidden = !b; });
 (async () => {
   const rr = (await getModels()).filter(m => m.kind === "reranker" && m.cached);

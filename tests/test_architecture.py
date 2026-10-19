@@ -105,3 +105,37 @@ def test_tests_mirror_app_layout():
     app_stages = {p.name for p in (APP / "stages").iterdir() if p.is_dir() and not p.name.startswith("_")}
     test_stages = {p.name for p in (TESTS / "stages").iterdir() if p.is_dir() and p.name != "__pycache__"}
     assert test_stages <= app_stages, test_stages - app_stages
+
+
+# ── 화면 규칙 (1.0 UI 개편) ─────────────────────────────────────────────────
+PAGE_JS = [f for f in (APP / "web" / "static" / "js").rglob("*.js") if "lib" not in f.parts]
+TEMPLATES = [t for t in (APP / "web" / "templates").rglob("*.html") if t.parent.name != "_ui" and t.name != "base.html"]
+
+
+def test_pages_use_shared_header():
+    """모든 화면은 공통 머리말(templates/_ui/macros.html page_header) — 제목 · 설명 접기 · 동작 버튼 · 뒤로 가기가 같은 모양."""
+    bad = [t.relative_to(APP).as_posix() for t in TEMPLATES if "ui.page_header" not in t.read_text(encoding="utf-8")]
+    assert not bad, bad
+
+
+def test_labels_are_connected():
+    """이름표는 입력란과 연결(for=id 또는 입력란을 감쌈) — 이름표를 눌러도 입력란에 커서가 가고, 화면 낭독기가 입력 이름을 읽는다.
+    개편 전에는 이름표 302개 중 연결된 것이 0개였다."""
+    bad = []
+    for t in TEMPLATES:
+        for m in re.finditer(r"<label(?![^>]*\bfor=)[^>]*>(.*?)</label>", t.read_text(encoding="utf-8"), re.S):
+            if not re.search(r"<(input|select|textarea)\b", m.group(1)):
+                bad.append(f"{t.relative_to(APP).as_posix()}: {m.group(0)[:60]}")
+    assert not bad, "\n".join(bad)
+
+
+def test_page_scripts_use_shared_ui():
+    """삭제 확인은 ui.confirm / ui.choose (브라우저 기본 confirm() 은 무엇이 함께 지워지는지 적을 수 없고 Enter 한 번에 실행된다).
+    인라인 style · 손으로 부르는 esc() 는 지금보다 늘리지 않는다 — 새 코드는 유틸리티 클래스와 자동 이스케이프 html`` 로."""
+    bad = [f.name for f in PAGE_JS if re.search(r"(?<![.\w])confirm\(", f.read_text(encoding="utf-8"))]
+    assert not bad, bad
+    styles = sum(f.read_text(encoding="utf-8").count('style="') for f in PAGE_JS + TEMPLATES)
+    escs = sum(f.read_text(encoding="utf-8").count("esc(") for f in PAGE_JS)
+    # 개편 때 인라인 style 446 → 83(남은 것은 대부분 막대 폭처럼 값이 바뀌는 것), esc() 450. 줄였으면 이 숫자도 낮춘다.
+    assert styles <= 90, f"인라인 style 이 {styles}곳으로 늘었습니다 — static/css/style.css 의 유틸리티 클래스를 쓰세요"
+    assert escs <= 450, f"손으로 부르는 esc() 가 {escs}곳으로 늘었습니다 — html`` (lib/common.js) 를 쓰세요"

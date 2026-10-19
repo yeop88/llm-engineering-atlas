@@ -1,46 +1,46 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}지식 증류 테스트{% endblock %}
 {% block content %}
-<h1>지식 증류 테스트</h1>
-<p class="lead">큰 모델(교사)의 판단을 작은 모델(학생)이 따라 하게 학습합니다. 임베딩은 교사가 매긴 '정답 − 오답' 점수 차를 학생이 배우고(MarginMSE, 교사는 큰 임베딩 모델 또는 리랭커), LLM 은 교사 답변 중 검증을 통과한 것만 모아 작은 LLM 학습 데이터로 내보냅니다.</p>
+{% call ui.page_header("지식 증류 테스트") %}큰 모델(교사)의 판단을 작은 모델(학생)이 따라 하게 학습합니다. 임베딩은 교사가 매긴 '정답 − 오답' 점수 차를 학생이 배우고(MarginMSE, 교사는 큰 임베딩 모델 또는 리랭커), LLM 은 교사 답변 중 검증을 통과한 것만 모아 작은 LLM 학습 데이터로 내보냅니다.{% endcall %}
 
 <div class="card stack">
   <h2>임베딩 증류</h2>
   <div class="small muted">학습 질문은 파인튜닝과 같은 방법(LLM 질문 · ICT)으로 만들고, 평가 세트의 근거가 든 지문은 학습에서 뺍니다. 학습한 학생은 카탈로그에 등록되고, 교사 · 학생(전) · 학생(후)를 같은 평가 세트로 비교합니다. 학습 기록은 파인튜닝 화면에도 함께 보입니다.</div>
   <div class="row">
-    <div class="field"><label>교사 (큰 임베딩 모델 또는 리랭커)</label><select id="d-teacher"></select></div>
-    <div class="field"><label>학생 (작은 임베딩 모델)</label><select id="d-student"></select></div>
+    <div class="field"><label for="d-teacher">교사 (큰 임베딩 모델 또는 리랭커)</label><select id="d-teacher"></select></div>
+    <div class="field"><label for="d-student">학생 (작은 임베딩 모델)</label><select id="d-student"></select></div>
   </div>
   <div class="row">
-    <div class="field"><label>컬렉션</label><select id="d-col"></select></div>
-    <div class="field"><label>학습 지문 청크 세트</label><select id="d-cs"></select></div>
-    <div class="field grow"><label>비교 평가 세트 (학습에서 자동 제외)</label><select id="d-set"></select></div>
+    <div class="field"><label for="d-col">컬렉션</label><select id="d-col"></select></div>
+    <div class="field"><label for="d-cs">학습 지문 청크 세트</label><select id="d-cs"></select></div>
+    <div class="field grow"><label for="d-set">비교 평가 세트 (학습에서 자동 제외)</label><select id="d-set"></select></div>
   </div>
   <div class="row">
-    <div class="field"><label>질문 만들기</label><select id="d-method"><option value="llm">LLM 질문</option><option value="ict">ICT (문장 → 나머지)</option></select></div>
-    <div class="field"><label>지문 수</label><input id="d-n" type="number" value="100" min="8" style="width:80px"></div>
-    <div class="field"><label>에폭</label><input id="d-ep" type="number" value="1" min="1" max="20" style="width:60px"></div>
-    <div class="field"><label>배치</label><input id="d-bs" type="number" value="16" min="2" style="width:60px"></div>
-    <div class="field"><label>학습률</label><input id="d-lr" value="2e-5" style="width:80px"></div>
+    <div class="field"><label for="d-method">질문 만들기</label><select id="d-method"><option value="llm">LLM 질문</option><option value="ict">ICT (문장 → 나머지)</option></select></div>
+    <div class="field"><label for="d-n">지문 수</label><input class="w-md" id="d-n" type="number" value="100" min="8"></div>
+    <div class="field"><label for="d-ep">에폭</label><input class="w-sm" id="d-ep" type="number" value="1" min="1" max="20"></div>
+    <div class="field"><label for="d-bs">배치</label><input class="w-sm" id="d-bs" type="number" value="16" min="2"></div>
+    <div class="field"><label for="d-lr">학습률</label><input class="w-md" id="d-lr" value="2e-5"></div>
     <span class="spacer"></span><button class="btn primary" id="d-run">증류 시작</button>
   </div>
   <div id="d-progress" hidden></div>
   <div id="d-runs"></div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>LLM 증류 데이터</h2>
   <div class="small muted">컬렉션 지문으로 새 질문을 만들고(평가 세트는 쓰지 않음 — 나중에 그 세트로 학생을 재야 하므로), 교사 LLM 이 서비스와 똑같은 형식(근거 번호 + 질문)으로 답한 것 중 문장 근거율 · 인용 검증을 통과한 것만 대화 형식 JSONL 로 저장합니다. 작은 LLM 학습(SFT)은 GPU 환경의 TRL · Unsloth · LLaMA-Factory 등에서 이 파일로 합니다.</div>
   <div class="row">
-    <div class="field"><label>컬렉션</label><select id="l-col"></select></div>
-    <div class="field"><label>질문 만들 청크 세트</label><select id="l-cs"></select></div>
-    <div class="field"><label>답변 검색 인덱스</label><select id="l-idx"></select></div>
+    <div class="field"><label for="l-col">컬렉션</label><select id="l-col"></select></div>
+    <div class="field"><label for="l-cs">질문 만들 청크 세트</label><select id="l-cs"></select></div>
+    <div class="field"><label for="l-idx">답변 검색 인덱스</label><select id="l-idx"></select></div>
   </div>
   <div class="row">
-    <div class="field"><label>교사 LLM (비우면 기본)</label><input id="l-teacher" style="width:180px"></div>
-    <div class="field"><label>지문 수</label><input id="l-n" type="number" value="20" min="1" style="width:70px"></div>
-    <div class="field"><label>최소 문장 근거율</label><input id="l-min" type="number" value="0.8" step="0.05" min="0" max="1" style="width:70px"></div>
-    <div class="field"><label>파일 이름 (비우면 자동)</label><input id="l-name" style="width:180px"></div>
+    <div class="field"><label for="l-teacher">교사 LLM (비우면 기본)</label><input class="w-xl" id="l-teacher"></div>
+    <div class="field"><label for="l-n">지문 수</label><input class="w-sm" id="l-n" type="number" value="20" min="1"></div>
+    <div class="field"><label for="l-min">최소 문장 근거율</label><input class="w-sm" id="l-min" type="number" value="0.8" step="0.05" min="0" max="1"></div>
+    <div class="field"><label for="l-name">파일 이름 (비우면 자동)</label><input class="w-xl" id="l-name"></div>
     <span class="spacer"></span><button class="btn primary" id="l-run">데이터 만들기</button>
   </div>
   <div id="l-progress" hidden></div>

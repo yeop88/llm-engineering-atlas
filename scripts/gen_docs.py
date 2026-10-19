@@ -20,6 +20,7 @@ GENERATED = "<!-- 이 파일은 scripts/gen_docs.py 가 단계 레지스트리(a
 GUIDES = [
     ("guides/architecture.md", "아키텍처 — 코드 구조(core · stages · web)와 동작 방식"),
     ("guides/api.md", "REST API"),
+    ("guides/ui.md", "화면(UI) — 화면 뼈대 · 새 화면 만들기 · 부품 · 작업 맥락 · 스타일 · 접근성"),
     ("guides/data-processing.md", "데이터 처리 — 수집 · 전처리 · 평가 자료 기록과 유효하게 처리하는 법"),
     ("guides/deploy.md", "배포 · 운영 — Docker, 접근 토큰, 작업 기록, 모델 호환성 점검, 새 모델 후보"),
     ("guides/llm.md", "LLM 연결 — 로컬 llama.cpp · OpenAI 호환 · Claude, 소형 모델 비교"),
@@ -99,7 +100,7 @@ TREE = [
     "  maps/<맵>.md                            맵 개요 — 모든 맵에 같은 '단계' 표 (전용 화면이 있는 맵은 직접 쓴 개요 + 생성 표)",
     "  stages/<맵>/<번호>-<이름>/README.md       단계 문서: 원리 · 왜 · 어떻게 · 화면 · 할 일 · 기반 단계 (생성)",
     "  stages/<맵>/<번호>-<이름>/*.md            그 단계의 상세 문서 · 실측 기록 (직접 씀)",
-    "  guides/                                 여러 단계에 걸친 가이드 (아키텍처 · API · 데이터 처리 · 배포 · LLM · 설치 · 문제 해결)",
+    "  guides/                                 여러 단계에 걸친 가이드 (아키텍처 · API · 화면 · 데이터 처리 · 배포 · LLM · 설치 · 문제 해결)",
     "  records/                                단계 밖의 실측 · 정정 기록",
     "```",
 ]
@@ -132,7 +133,7 @@ def index() -> str:
             "# 문서",
             "",
             f"LLM Engineering Atlas 의 문서는 **맵 → 단계** 순서로 정리되어 있습니다. 맵 {len(registry.MAPS)}개 · 단계 {len(registry.STAGES)}개. "
-            "모든 맵이 같은 규칙을 따릅니다 — 맵 이름 하나를 화면 주소(`/maps/<맵>`, LLM 맵은 `/roadmap`) · 개요(`maps/<맵>.md`) · 단계 폴더(`stages/<맵>/`)에 같이 씁니다.",
+            "모든 맵이 같은 규칙을 따릅니다 — 맵 이름 하나를 화면 주소(`/maps/<맵>`) · 개요(`maps/<맵>.md`) · 단계 폴더(`stages/<맵>/`)에 같이 씁니다.",
             "",
             "## 구조",
             "",
@@ -218,4 +219,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    # Windows 콘솔(cp949)은 '—' 같은 글자를 못 써서 --check 실패 메시지를 내다 오류로 끝났다 — 못 쓰는 글자는 바꿔 출력
+    sys.stdout.reconfigure(errors="replace")
     raise SystemExit(main())

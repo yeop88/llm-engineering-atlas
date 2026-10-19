@@ -1,9 +1,9 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}텍스트 분류{% endblock %}
 {% block content %}
 <a href="/apps" class="small">← 응용</a>
-<h1>텍스트 분류</h1>
-<p class="lead">감성분석, 고객·AS 문의 라우팅, 스팸 판별처럼 텍스트를 정해진 라벨로 나눕니다. 라벨 설명만으로 바로 분류(제로샷)하거나, 라벨 붙은 예시로 분류기를 학습해 저장하고 API 로 씁니다.</p>
+{% call ui.page_header("텍스트 분류") %}감성분석, 고객·AS 문의 라우팅, 스팸 판별처럼 텍스트를 정해진 라벨로 나눕니다. 라벨 설명만으로 바로 분류(제로샷)하거나, 라벨 붙은 예시로 분류기를 학습해 저장하고 API 로 씁니다.{% endcall %}
 
 <div class="tabs">
   <button data-tab="t-train">퓨샷 학습</button>
@@ -20,21 +20,21 @@
     <div class="card stack">
       <h2>학습 설정</h2>
       <div class="row">
-        <div class="field grow"><label>임베딩 모델</label><select id="tr-model"></select></div>
-        <div class="field"><label>차원</label><select id="tr-dim"></select></div>
+        <div class="field grow"><label for="tr-model">임베딩 모델</label><select id="tr-model"></select></div>
+        <div class="field"><label for="tr-dim">차원</label><select id="tr-dim"></select></div>
       </div>
       <div class="row">
-        <div class="field grow"><label>방법</label>
+        <div class="field grow"><label for="tr-method">방법</label>
           <select id="tr-method"><option value="logreg">로지스틱 회귀 (권장)</option><option value="centroid">중심점 (라벨별 평균 벡터)</option><option value="knn">k-최근접 이웃</option></select></div>
-        <div class="field" id="tr-k-wrap" hidden><label>k</label><input id="tr-k" type="number" value="5" min="1" max="50"></div>
+        <div class="field" id="tr-k-wrap" hidden><label for="tr-k">k</label><input id="tr-k" type="number" value="5" min="1" max="50"></div>
       </div>
       <div class="small muted">로지스틱 회귀는 예시가 수십 개 이상일 때 가장 정확합니다. 중심점은 예시가 아주 적거나(라벨당 2~5개) 라벨이 자주 바뀔 때, kNN 은 한 라벨 안에 여러 유형이 섞여 있을 때 유리합니다. 정확도는 5겹 교차검증(라벨 비율 유지)으로 잽니다.</div>
-      <div class="row"><label class="row" style="margin:0"><input type="checkbox" id="tr-save" checked> 전체 데이터로 학습해 저장</label><div class="field grow"><input id="tr-name" placeholder="이름 (예: 문의 라우팅 v1)"></div></div>
+      <div class="row"><label class="row m-0"><input type="checkbox" id="tr-save" checked> 전체 데이터로 학습해 저장</label><div class="field grow"><input id="tr-name" placeholder="이름 (예: 문의 라우팅 v1)"></div></div>
       <div class="row"><span class="spacer"></span><button class="btn primary" id="tr-run">학습·평가</button></div>
     </div>
   </div>
-  <div class="card" id="tr-progress" hidden style="margin-top:16px"></div>
-  <div id="tr-out" style="margin-top:16px"></div>
+  <div class="card mt-4" id="tr-progress" hidden></div>
+  <div class="mt-4" id="tr-out"></div>
 </section>
 
 <section class="tab-panel" id="t-zero">
@@ -45,17 +45,17 @@
     </div>
     <div class="card stack">
       <h2>라벨 정의</h2>
-      <div><label>한 줄에 하나, <code>라벨: 설명</code> (설명이 자세할수록 정확)</label><textarea id="zs-labels" rows="7" placeholder="긍정: 제품에 만족하고 칭찬하는 리뷰&#10;부정: 불만이 있고 환불을 원하는 리뷰"></textarea></div>
+      <div><label for="zs-labels">한 줄에 하나, <code>라벨: 설명</code> (설명이 자세할수록 정확)</label><textarea id="zs-labels" rows="7" placeholder="긍정: 제품에 만족하고 칭찬하는 리뷰&#10;부정: 불만이 있고 환불을 원하는 리뷰"></textarea></div>
       <div class="row">
-        <div class="field grow"><label>임베딩 모델</label><select id="zs-model"></select></div>
-        <div class="field"><label>차원</label><select id="zs-dim"></select></div>
+        <div class="field grow"><label for="zs-model">임베딩 모델</label><select id="zs-model"></select></div>
+        <div class="field"><label for="zs-dim">차원</label><select id="zs-dim"></select></div>
       </div>
       <div class="small muted">텍스트와 "라벨: 설명" 문장의 유사도로 고릅니다. 학습 데이터 없이 바로 쓸 수 있지만 보통 학습한 분류기보다 정확도가 낮습니다. 입력에 정답 라벨(<code>[라벨] 텍스트</code>)이 있으면 정확도도 계산합니다.</div>
       <div class="row"><span class="spacer"></span><button class="btn primary" id="zs-run">분류</button></div>
     </div>
   </div>
-  <div class="card" id="zs-progress" hidden style="margin-top:16px"></div>
-  <div id="zs-out" style="margin-top:16px"></div>
+  <div class="card mt-4" id="zs-progress" hidden></div>
+  <div class="mt-4" id="zs-out"></div>
 </section>
 
 <section class="tab-panel" id="t-saved">
@@ -63,10 +63,10 @@
     <thead><tr><th>#</th><th>이름</th><th>라벨</th><th>방법 · 임베딩</th><th class="num">학습 수</th><th class="num">교차검증 정확도</th><th>만든 시각</th><th></th></tr></thead>
     <tbody id="sv-rows"></tbody>
   </table></div>
-  <div class="card stack" style="margin-top:16px">
+  <div class="card stack mt-4">
     <h2>예측해 보기</h2>
-    <div class="row"><div class="field grow"><label>분류기</label><select id="pd-model"></select></div></div>
-    <div><label>텍스트 (한 줄에 하나)</label><textarea id="pd-text" rows="4">택배가 아직 안 왔어요
+    <div class="row"><div class="field grow"><label for="pd-model">분류기</label><select id="pd-model"></select></div></div>
+    <div><label for="pd-text">텍스트 (한 줄에 하나)</label><textarea id="pd-text" rows="4">택배가 아직 안 왔어요
 환불은 언제 되나요?
 전원이 안 켜집니다</textarea></div>
     <div class="row"><span class="spacer"></span><button class="btn primary" id="pd-run">예측</button></div>

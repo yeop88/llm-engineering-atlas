@@ -22,14 +22,13 @@ let fLastEnh = "rewrite", fLastRr = "";
 async function fLoad() {
   const cols = await api("/api/collections");
   $("#f-col").innerHTML = cols.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("") || '<option value="">컬렉션 없음</option>';
-  const saved = localGet("flow-col");
-  if (saved && cols.some(c => String(c.id) === saved)) $("#f-col").value = saved;
+  applyCtx($("#f-col"));
   const rr = (await getModels()).filter(m => m.kind === "reranker" && m.cached);
   $("#f-rr").innerHTML += rr.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join("");
   fLastRr = rr[0] ? String(rr[0].id) : "";
   $("#f-presets").innerHTML += F_PRESETS.map(p => `<button class="btn sm" data-p="${p.key}">${esc(p.label)}</button>`).join("");
   $$("[data-p]", $("#f-presets")).forEach(b => (b.onclick = () => fApply(F_PRESETS.find(p => p.key === b.dataset.p))));
-  $("#f-pick").innerHTML = '<span class="muted">비교할 연결:</span>' + F_PRESETS.map((p, i) => `<label class="row" style="margin:0;gap:4px"><input type="checkbox" value="${p.key}" ${["search", "rag", "full", "routed"].includes(p.key) ? "checked" : ""}> ${esc(p.label)}</label>`).join("");
+  $("#f-pick").innerHTML = '<span class="muted">비교할 연결:</span>' + F_PRESETS.map((p, i) => `<label class="row m-0 gap-1"><input type="checkbox" value="${p.key}" ${["search", "rag", "full", "routed"].includes(p.key) ? "checked" : ""}> ${esc(p.label)}</label>`).join("");
   await fDetail();
 }
 async function fDetail() {
@@ -37,11 +36,14 @@ async function fDetail() {
   fCol = await api(`/api/collections/${$("#f-col").value}`);
   const idx = fCol.indexes.filter(i => i.status === "ready");
   $("#f-idx").innerHTML = idx.map(i => `<option value="${i.id}">${esc(i.model_hf_id.split(/[\\/]/).pop())} · #${i.id}</option>`).join("") || '<option value="">준비된 인덱스 없음</option>';
+  applyCtx($("#f-idx"));
   $("#f-cs").innerHTML = fCol.chunk_sets.filter(c => c.status === "ready").map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  applyCtx($("#f-cs"));
   if (!idx.length) $("#f-mode").value = "bm25";
   fMode();
   const sets = (await api(`/api/collections/${fCol.id}/eval-sets`)).filter(s => s.status === "ready");
   $("#f-set").innerHTML = sets.map(s => `<option value="${s.id}">#${s.id} ${esc(s.name)} (${s.n_items}문항)</option>`).join("") || '<option value="">평가 세트 없음</option>';
+  applyCtx($("#f-set"));
 }
 function fMode() { const b = $("#f-mode").value === "bm25"; $("#f-idx-wrap").hidden = b; $("#f-cs-wrap").hidden = !b; }
 function fApply(p) {
@@ -54,7 +56,7 @@ function fApply(p) {
   $("#f-ansmode").value = p.mode || "rag";
   toast(`${p.label}${p.rr && !fLastRr ? " — 받아 둔 리랭커가 없어 리랭킹은 꺼집니다" : ""}`);
 }
-$("#f-col").addEventListener("change", () => { localSet("flow-col", $("#f-col").value); fDetail(); });
+$("#f-col").addEventListener("change", () => { fDetail(); });
 $("#f-mode").addEventListener("change", fMode);
 
 function fConfig(p) {
@@ -78,7 +80,7 @@ function fConfig(p) {
 
 function fTrace(steps) {
   return `<div class="trace">${steps.map((s, i) => `<div class="trace-step ${s.status}" title="${esc(s.detail)}">
-      <div class="row between" style="flex-wrap:nowrap;gap:4px"><span>${swatch(s.key)}<span class="stage-no">${esc(s.no)}</span> <b>${esc(s.title)}</b></span>${i < steps.length - 1 ? '<span class="muted">→</span>' : ""}</div>
+      <div class="row between nowrap-row gap-1"><span>${swatch(s.key)}<span class="stage-no">${esc(s.no)}</span> <b>${esc(s.title)}</b></span>${i < steps.length - 1 ? '<span class="muted">→</span>' : ""}</div>
       <div class="muted">${esc(s.stage)} · ${F_STATUS[s.status]}</div>
       <div><span class="ms">${s.status === "run" ? `${s.ms}ms` : "—"}</span></div>
       <div class="muted" style="overflow-wrap:anywhere">${esc(s.detail.slice(0, 90))}</div></div>`).join("")}</div>`;
@@ -89,10 +91,10 @@ $("#f-run").onclick = async e => {
   if (!q) return toast("질문을 입력하세요", "err");
   const out = await busy(e.target, () => api("/api/flow/run", { method: "POST", body: { question: q, flow: fConfig() } }));
   const a = out.answer;
-  $("#f-out").innerHTML = `<div class="stack" style="margin-top:8px">
+  $("#f-out").innerHTML = `<div class="stack mt-2">
     <div class="row between small"><b>처리 흐름</b><span class="muted">총 ${out.total_ms}ms${out.run_id ? ` · run #${out.run_id}` : ""}</span></div>
     ${fTrace(out.steps)}
-    ${a ? `<div class="card stack"><b>답변</b><div style="white-space:pre-wrap">${esc(a.text)}</div>
+    ${a ? `<div class="card stack"><b>답변</b><div class="pre">${esc(a.text)}</div>
       <div class="small muted">근거 있는 문장 ${a.supported_ratio != null ? `${(a.supported_ratio * 100).toFixed(0)}%` : "-"} · 인용 ${a.cited.length ? a.cited.map(n => `[${n}]`).join("") : "없음"}${a.invalid_citations.length ? ` · <span class="badge err">없는 근거 번호 ${a.invalid_citations.join(", ")}</span>` : ""}${a.refused ? ' · <span class="badge warn">근거에서 찾을 수 없음</span>' : ""}</div>${citeBox(a.citations)}</div>` : ""}
     <div class="card stack"><b>근거 (상위 ${out.results.length})</b>${out.results.map(x => `<div class="small"><span class="badge">[${x.rank}]</span> <b>${esc(x.filename)}</b>${x.page ? ` p.${x.page}` : ""} <span class="muted">${esc(x.text.slice(0, 140))}</span></div>`).join("") || '<div class="empty">결과 없음</div>'}</div>
   </div>`;
@@ -107,8 +109,8 @@ $("#f-eval").onclick = async e => {
   const job = await busy(e.target, () => api("/api/flow/evaluate", { method: "POST", body }));
   const box = $("#f-progress"); box.hidden = false; e.target.disabled = true;
   try {
-    const done = await pollJob(job.id, j => { box.innerHTML = `<div class="progress"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>`; }, 1500);
-    if (done.status !== "done") { box.innerHTML = `<div class="errbox">${esc(done.error || done.status)}</div>`; return; }
+    const done = await pollJob(job.id, j => { box.innerHTML = ui.jobProgress(j); }, 1500);
+    if (done.status !== "done") { ui.error(box, done.status === "cancelled" ? "취소했습니다." : (done.error || done.status)); return; }
     box.hidden = true; fRenderEval(done.result);
   } finally { e.target.disabled = false; }
 };
@@ -129,11 +131,11 @@ function fRenderEval(r) {
         <td class="small nowrap">${vs(x)}</td><td class="num">${ans(x, "answer_rate")}${x.answer?.n_unanswerable ? `<div class="small muted" title="답 없는 질문을 올바르게 거절한 비율">답 없음 거절 ${ans(x, "correct_refusal")}</div>` : ""}</td><td class="num">${ans(x, "evidence_cited")}</td><td class="num">${ans(x, "sentence_support")}</td><td class="num">${ans(x, "relevant_ratio")}</td>
         <td class="num small nowrap">${x.latency_ms.mean} / ${x.latency_ms.p95}ms</td>
         <td style="min-width:200px"><div class="stackbar" style="width:${Math.max(4, x.steps.reduce((s, t) => s + t.mean_ms, 0) / maxMs * 100)}%">${x.steps.filter(t => t.mean_ms > 0).map(t => `<span style="flex:${t.mean_ms};background:var(--series-${F_COLOR[t.key]})" title="${esc(title[t.key])}: ${t.mean_ms}ms"></span>`).join("")}</div>
-          <div class="small muted" style="margin-top:2px">${x.steps.filter(t => t.mean_ms > 0).map(t => `${esc(title[t.key].split(" ").slice(1).join(" "))} ${fmtMs(t.mean_ms)}`).join(" · ")}</div></td></tr>`).join("")}
+          <div class="small muted mt-1">${x.steps.filter(t => t.mean_ms > 0).map(t => `${esc(title[t.key].split(" ").slice(1).join(" "))} ${fmtMs(t.mean_ms)}`).join(" · ")}</div></td></tr>`).join("")}
       ${r.results.filter(x => x.status !== "ok").map(x => `<tr><td class="small">${esc(x.label)}</td><td colspan="10"><div class="errbox">${esc(x.error)}</div></td></tr>`).join("")}
     </table></div>
     <div class="legend">${used.map(s => `<span>${swatch(s.key)}${esc(title[s.key])}</span>`).join("")}</div>
-    ${ok.filter(x => x.rows?.length).map(x => `<details><summary class="small">질문별 기록 · ${esc(x.label)}</summary><div class="table-wrap" style="max-height:360px"><table>
+    ${ok.filter(x => x.rows?.length).map(x => `<details><summary class="small">질문별 기록 · ${esc(x.label)}</summary><div class="table-wrap scroll-md"><table>
       <tr><th>질문</th><th class="num">품질</th><th class="num">시간</th><th>에이전트 행동</th><th>번호 검사</th><th>답변</th></tr>
       ${x.rows.map(q => `<tr><td class="small">${esc(q.query)}</td><td class="num">${q.quality != null ? pct(q.quality) : "-"}</td><td class="num small">${fmtMs(q.ms)}</td>
         <td class="small">${esc((q.actions || []).join(" → ")) || "-"}</td><td class="small">${esc((q.citations || []).map(c => `${c[0]}:${c[1]}`).join(", ")) || "-"}</td><td class="small">${esc(q.answer)}</td></tr>`).join("")}

@@ -15,6 +15,7 @@ async function qLoad() {
   $("#c-k").innerHTML = $("#c-v").innerHTML = QOPT.kv_types.map(k => `<option>${k}</option>`).join("");
   const cols = await api("/api/collections");
   $("#l-col").innerHTML = cols.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("") || '<option value="">컬렉션 없음</option>';
+  applyCtx($("#l-col"));
   await lDetail();
   const names = new Set(Object.keys(QOPT.model_urls || {}));
   try { (await api("/api/llm/models")).models.forEach(m => names.add(m)); } catch { /* 기본 서버가 꺼져 있으면 목록 없음 */ }
@@ -25,8 +26,8 @@ async function qLoad() {
 function qCatalog() {
   const groups = Object.entries(QOPT.groups);
   $("#t-cat").innerHTML = groups.map(([g, title]) => `<details ${g !== "llm" ? "open" : ""}><summary><b>${esc(title)}</b></summary>
-    <div class="grid cols-2" style="margin-top:8px">${QOPT.techniques.filter(t => t.group === g).map(t => `<div class="card stack" style="padding:10px">
-      <div class="row between" style="flex-wrap:nowrap"><label class="row" style="margin:0;gap:6px">${t.run && g !== "llm" ? `<input type="checkbox" class="t-pick" value="${t.key}" ${DEFAULT_ON.has(t.key) || t.key === "float32" || t.key === "w_fp32" ? "checked" : ""} ${t.key === "float32" || t.key === "w_fp32" ? "disabled" : ""}>` : ""}<b>${esc(t.name)}</b></label>
+    <div class="grid cols-2 mt-2">${QOPT.techniques.filter(t => t.group === g).map(t => `<div class="card stack p-2">
+      <div class="row between nowrap-row"><label class="row m-0 gap-2">${t.run && g !== "llm" ? `<input type="checkbox" class="t-pick" value="${t.key}" ${DEFAULT_ON.has(t.key) || t.key === "float32" || t.key === "w_fp32" ? "checked" : ""} ${t.key === "float32" || t.key === "w_fp32" ? "disabled" : ""}>` : ""}<b>${esc(t.name)}</b></label>
         <span>${t.bits != null ? `<span class="badge">${esc(String(t.bits))}비트</span> ` : ""}<span class="badge ${t.run ? "ok" : ""}">${t.run ? "실행" : "설명"}</span></span></div>
       <div class="small">${esc(t.principle)}</div>
       <div class="small muted">장점: ${esc(t.pros)} · 한계: ${esc(t.cons)}</div>
@@ -48,8 +49,10 @@ async function lDetail() {
   if (!$("#l-col").value) return;
   const d = await api(`/api/collections/${$("#l-col").value}`);
   $("#l-idx").innerHTML = d.indexes.filter(i => i.status === "ready").map(i => `<option value="${i.id}">${esc(i.model_hf_id.split(/[\\/]/).pop())} · #${i.id}</option>`).join("") || '<option value="">인덱스 없음</option>';
+  applyCtx($("#l-idx"));
   const sets = (await api(`/api/collections/${d.id}/eval-sets`)).filter(s => s.status === "ready");
   $("#l-set").innerHTML = sets.map(s => `<option value="${s.id}">#${s.id} ${esc(s.name)} (${s.n_items}문항)</option>`).join("") || '<option value="">평가 세트 없음</option>';
+  applyCtx($("#l-set"));
 }
 $("#l-col").addEventListener("change", lDetail);
 
@@ -57,8 +60,8 @@ async function runJob(btn, path, body, box, render) {
   const job = await busy(btn, () => api(path, { method: "POST", body }));
   box.hidden = false; btn.disabled = true;
   try {
-    const done = await pollJob(job.id, j => { box.innerHTML = `<div class="progress"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>`; }, 1500);
-    if (done.status !== "done") { box.innerHTML = `<div class="errbox">${esc(done.error || done.status)}</div>`; return; }
+    const done = await pollJob(job.id, j => { box.innerHTML = ui.jobProgress(j); }, 1500);
+    if (done.status !== "done") { ui.error(box, done.status === "cancelled" ? "취소했습니다." : (done.error || done.status)); return; }
     box.hidden = true; render(done.result);
   } finally { btn.disabled = false; }
 }
@@ -103,7 +106,7 @@ function vRender(r) {
   $("#v-out").innerHTML = r.results.map(m => m.status !== "ok" ? `<div class="errbox">${esc(m.hf_id)}: ${esc(m.error)}</div>` : `
     <h3>${esc(m.hf_id)} <span class="small muted">${m.dim}차원 · 문서 ${fmtNum(m.n_corpus)} · 질문 ${m.n_queries}</span></h3>
     ${vChart(m.rows)}
-    <div class="table-wrap" style="max-height:520px"><table>
+    <div class="table-wrap scroll-lg"><table>
       <tr><th>조합</th><th class="num">nDCG@10 (95% 구간)</th><th>기준 대비</th><th class="num" title="기준 상위 10개 중 그대로 찾은 비율">기준 상위 10 유지</th>
         <th class="num">벡터당 메모리</th><th class="num" title="벡터 100만 개 · RAM / 디스크">100만 개</th><th class="num">질의당 검색</th><th class="num" title="이 가중치로 초당 인코딩한 글 수">인코딩</th></tr>
       ${m.rows.map(p => p.status !== "ok" ? `<tr><td class="small">${esc(p.weight)} ${esc(p.precision || "")}</td><td colspan="7"><div class="errbox">${esc(p.error)}</div></td></tr>` : `<tr>

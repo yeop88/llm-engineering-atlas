@@ -6,6 +6,68 @@ function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
 
+// 자동 이스케이프 HTML 템플릿: html`<b>${name}</b>` 은 name 을 이스케이프하고, html`` 결과 · raw() · 그 배열은 그대로 넣는다.
+// innerHTML 과 손으로 부르는 esc() 가 수백 곳이라 하나만 빠뜨려도 화면이 깨지거나 스크립트가 끼어들 수 있었다 — 새 코드는 이것으로.
+class SafeHtml { constructor(s) { this.s = s; } toString() { return this.s; } }
+const raw = s => new SafeHtml(String(s ?? ""));
+function _htmlPart(v) {
+  if (v == null || v === false) return "";
+  if (v instanceof SafeHtml) return v.s;
+  if (Array.isArray(v)) return v.map(_htmlPart).join("");
+  return esc(v);
+}
+function html(strings, ...vals) {
+  return new SafeHtml(strings.reduce((out, str, i) => out + str + (i < vals.length ? _htmlPart(vals[i]) : ""), ""));
+}
+
+// 상태 표시: 불러오는 중 · 빈 화면 · 오류 · 작업 진행 · 확인 창 — 화면마다 모양이 달라 '멈춘 건지 도는 건지' 알기 어려웠다
+const ui = {
+  loading(el, msg = "불러오는 중…") { el.innerHTML = html`<div class="loading" role="status">${msg}</div>`; },
+  empty(el, msg, action) {
+    el.innerHTML = html`<div class="empty">${msg}${action ? html`<div class="empty-act"><a class="btn" href="${action.href}">${action.label}</a></div>` : ""}</div>`;
+  },
+  error(el, e) { el.innerHTML = html`<div class="errbox" role="alert">${e?.message ?? e}</div>`; },
+  // 작업 진행 패널 HTML: 진행률 · 메시지 · 경과 시간 · 취소 (취소는 data-cancel-job 버튼 — 아래 문서 전체 클릭 처리)
+  jobProgress(j) {
+    const sec = Math.max(0, Math.round((Date.now() - new Date(j.created_at).getTime()) / 1000));
+    const el = sec >= 60 ? `${Math.floor(sec / 60)}분 ${sec % 60}초` : `${sec}초`;
+    const live = ["pending", "running"].includes(j.status);
+    return html`<div class="job-panel" role="status">
+      <div class="row between small"><span>${j.title || "작업"} · ${pct(j.progress)}%</span>
+        <span class="muted">${el}${live ? html` <button type="button" class="btn sm" data-cancel-job="${j.id}">취소</button>` : ""}</span></div>
+      <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct(j.progress)}"><div style="width:${pct(j.progress)}%"></div></div>
+      <div class="small muted">${j.message || (j.status === "pending" ? "대기 중" : "")}</div></div>`;
+  },
+  // 브라우저 기본 confirm() 대신: 무엇이 함께 지워지는지 적을 자리가 있고, 위험한 동작은 버튼 색으로 구분.
+  // choose: 선택지가 여럿일 때(예: 기록만 삭제 / 모델까지 삭제 / 취소). 고른 value, 취소 · Esc 면 null.
+  choose(message, buttons, { title = "확인" } = {}) {
+    const dlg = $("#confirm-dlg");
+    if (!dlg?.showModal) return Promise.resolve(window.confirm(message) ? buttons.at(-1).value : null);
+    $("#confirm-title").textContent = title;
+    $("#confirm-body").textContent = message;
+    const box = $("#confirm-btns");
+    box.innerHTML = html`<button type="button" class="btn" data-v="">취소</button>${buttons.map((b, i) =>
+      html`<button type="button" class="btn${i === buttons.length - 1 ? " primary" : ""}${b.danger ? " danger-fill" : ""}" data-v="${i + 1}">${b.label}</button>`)}`;
+    return new Promise(resolve => {
+      const done = v => { dlg.close(); dlg.oncancel = null; box.onclick = null; resolve(v); };
+      box.onclick = e => { const btn = e.target.closest("button[data-v]"); if (btn) done(btn.dataset.v ? buttons[+btn.dataset.v - 1].value : null); };
+      dlg.oncancel = e => { e.preventDefault(); done(null); };
+      dlg.showModal();
+      // 위험한 동작은 Enter 한 번으로 실행되지 않게 취소에 초점
+      $(buttons.some(b => b.danger) ? "button[data-v='']" : "button.primary", box).focus();
+    });
+  },
+  async confirm(message, { ok = "확인", danger = false, title = "확인" } = {}) {
+    return (await this.choose(message, [{ label: ok, value: true, danger }], { title })) === true;
+  },
+};
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-cancel-job]");
+  if (!b) return;
+  if (!(await ui.confirm("이 작업을 취소할까요? 지금까지 한 부분은 버려집니다.", { ok: "작업 취소", danger: true }))) return;
+  await api(`/api/jobs/${b.dataset.cancelJob}/cancel`, { method: "POST" }).catch(err => toast(err.message, "err"));
+});
+
 async function api(path, { method = "GET", body, form } = {}) {
   const opts = { method, headers: {} };
   if (form) opts.body = form;
@@ -160,46 +222,127 @@ window.addEventListener("hashchange", () => {
 function localGet(key) { try { return localStorage.getItem(key); } catch { return null; } }
 function localSet(key, value) { try { localStorage.setItem(key, value); } catch { /* 저장 안 해도 동작에 지장 없음 */ } }
 
-// 단계 설명 패널: 처음엔 펼쳐 보여 주고, 접으면 그 단계는 접힌 채로 기억
-document.querySelectorAll("details.stage-info").forEach(d => {
-  const key = "stage-info-" + d.dataset.stage;
-  d.open = localGet(key) !== "closed";
-  d.addEventListener("toggle", () => localSet(key, d.open ? "open" : "closed"));
-});
+// 작업 맥락: 컬렉션(col) · 청크 세트(cs) · 인덱스(idx) · 평가 세트(set) · LLM(provider · model).
+// 화면마다 같은 선택을 다시 해야 했다 → 한 번 고르면 모든 화면이 그 값으로 시작한다. 주소의 ?col= · ?idx= · ?set= 가 있으면 그것이 먼저
+// (링크로 같은 실험 설정을 공유 · 새로 고침해도 유지). 브라우저에만 저장하므로 없거나 막혀도 화면은 기본값으로 동작한다.
+const Ctx = (() => {
+  const KEY = "atlas-ctx", URL_KEYS = ["col", "cs", "idx", "set"];
+  let state = {};
+  try { state = JSON.parse(localGet(KEY) || "{}") || {}; } catch { state = {}; }
+  const q = new URLSearchParams(location.search);
+  URL_KEYS.forEach(k => { if (q.get(k)) state[k] = q.get(k); });
+  const subs = [];
+  return {
+    get: () => ({ ...state }),
+    // patch: { col: "3", colLabel: "근로 · 임대차 법률" } — 컬렉션을 바꾸면 그 컬렉션에 딸린 값은 비운다
+    // url: false — 주소에 쓰지 않는다(이미 주소가 대상을 가리키는 상세 화면: /rag/collections/3 에 ?col=3 이 붙지 않게)
+    set(patch, { url = true } = {}) {
+      if ("col" in patch && String(patch.col ?? "") !== String(state.col ?? "")) ["cs", "idx", "set", "csLabel", "idxLabel", "setLabel"].forEach(k => delete state[k]);
+      Object.entries(patch).forEach(([k, v]) => { if (v === "" || v == null) delete state[k]; else state[k] = String(v); });
+      localSet(KEY, JSON.stringify(state));
+      if (url) {
+        const u = new URL(location.href);
+        URL_KEYS.forEach(k => { if (u.searchParams.has(k) || k in patch) { if (state[k]) u.searchParams.set(k, state[k]); else u.searchParams.delete(k); } });
+        history.replaceState(history.state, "", u);
+      }
+      subs.forEach(f => f(this.get()));
+    },
+    clear() { state = {}; localSet(KEY, "{}"); subs.forEach(f => f({})); },
+    on(f) { subs.push(f); },
+    used: false,  // 이 화면이 맥락을 쓰는지 — 쓰는 화면에만 위쪽 맥락 줄을 보인다(lib/shell.js)
+  };
+})();
+
+// <select data-ctx="col"> · <input data-ctx="model"> 처럼 표시한 입력란: 맥락 값으로 시작하고, 바꾸면 맥락에 저장.
+// 옵션을 나중에 채우는 select 는 채운 뒤 applyCtx(el) 을 다시 부른다.
+function applyCtx(el) {
+  const k = el.dataset.ctx, c = Ctx.get(), v = c[k];
+  if (v == null) return;
+  if (el.tagName === "SELECT" && ![...el.options].some(o => o.value === v)) return;
+  el.value = v;
+  // 주소(?col=3)로만 들어와 이름을 모르면 맥락 줄에 '#3' 대신 이름이 보이게 채운다
+  if (el.tagName === "SELECT" && !c[k + "Label"]) Ctx.set({ [k + "Label"]: el.selectedOptions[0]?.textContent.trim() });
+}
+function bindCtx(root = document) {
+  $$("[data-ctx]", root).forEach(el => {
+    if (el.dataset.ctxBound) return;
+    el.dataset.ctxBound = "1";
+    Ctx.used = true;
+    applyCtx(el);
+    el.addEventListener("change", () => {
+      const k = el.dataset.ctx;
+      const label = el.tagName === "SELECT" ? el.selectedOptions[0]?.textContent.trim() : el.value;
+      Ctx.set({ [k]: el.value, [k + "Label"]: label });
+    });
+  });
+}
 
 // 컬렉션 → 인덱스 · 청크 세트 · 평가 세트 선택 묶음. 단계 화면마다 같은 선택이 반복돼 한 곳에 둔다.
-// o = { col, idx?, cs?, set?, key?, onDetail? } (select 요소들). 고른 컬렉션은 key 로 기억한다.
+// o = { col, idx?, cs?, set?, onDetail? } (select 요소들). 고른 값은 작업 맥락(Ctx)에 저장돼 다른 화면도 같은 값으로 시작한다.
 async function setupCollectionPickers(o) {
+  Ctx.used = true;
   const cols = await api("/api/collections");
-  o.col.innerHTML = cols.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("") || '<option value="">컬렉션 없음</option>';
-  const saved = o.key ? localGet(o.key) : null;
-  if (saved && cols.some(c => String(c.id) === saved)) o.col.value = saved;
+  o.col.innerHTML = cols.length ? html`${cols.map(c => html`<option value="${c.id}">${c.name}</option>`)}` : '<option value="">컬렉션 없음</option>';
+  const want = Ctx.get();
+  const remember = (k, sel) => sel?.value && Ctx.set({ [k]: sel.value, [k + "Label"]: sel.selectedOptions[0]?.textContent.trim() });
+  if (want.col && cols.some(c => String(c.id) === want.col)) { o.col.value = want.col; if (!want.colLabel) remember("col", o.col); }
   async function detail() {
     if (!o.col.value) return null;
     const d = await api(`/api/collections/${o.col.value}`);
-    if (o.idx) o.idx.innerHTML = d.indexes.filter(i => i.status === "ready").map(i => `<option value="${i.id}">${esc(i.model_hf_id.split(/[\/]/).pop())} · #${i.id}</option>`).join("") || '<option value="">준비된 인덱스 없음</option>';
-    if (o.cs) o.cs.innerHTML = d.chunk_sets.filter(c => c.status === "ready").map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("") || '<option value="">청크 세트 없음</option>';
+    const c = Ctx.get();
+    const fill = (sel, items, empty, key) => {
+      if (!sel) return;
+      sel.innerHTML = items.length ? html`${items}` : `<option value="">${empty}</option>`;
+      if (c[key] && [...sel.options].some(x => x.value === c[key])) sel.value = c[key];
+    };
+    fill(o.idx, d.indexes.filter(i => i.status === "ready").map(i => html`<option value="${i.id}">${i.model_hf_id.split(/[\/]/).pop()} · #${i.id}</option>`), "준비된 인덱스 없음", "idx");
+    fill(o.cs, d.chunk_sets.filter(x => x.status === "ready").map(x => html`<option value="${x.id}">${x.name}</option>`), "청크 세트 없음", "cs");
     if (o.set) {
       const sets = (await api(`/api/collections/${d.id}/eval-sets`)).filter(s => s.status === "ready");
-      o.set.innerHTML = sets.map(s => `<option value="${s.id}">#${s.id} ${esc(s.name)} (${s.n_items}문항)</option>`).join("") || '<option value="">평가 세트 없음</option>';
+      fill(o.set, sets.map(s => html`<option value="${s.id}">#${s.id} ${s.name} (${s.n_items}문항)</option>`), "평가 세트 없음", "set");
     }
     o.onDetail?.(d);
     return d;
   }
-  o.col.addEventListener("change", () => { if (o.key) localSet(o.key, o.col.value); detail(); });
+  if (!o.col.dataset.ctxBound) {
+    o.col.dataset.ctxBound = "1";
+    o.col.addEventListener("change", () => { remember("col", o.col); detail(); });
+    [["idx", o.idx], ["cs", o.cs], ["set", o.set]].forEach(([k, sel]) => sel?.addEventListener("change", () => remember(k, sel)));
+  }
+  if (o.col.value && !Ctx.get().col) remember("col", o.col);
   return detail();
 }
 
-// 작업 실행 → 진행률 표시 → 끝나면 render(result). 여러 단계 화면이 같은 모양으로 쓴다.
+// 작업 실행 → 진행 패널(진행률 · 경과 · 취소) → 끝나면 render(result). 여러 단계 화면이 같은 모양으로 쓴다.
 async function runJobInto(btn, path, body, box, render) {
   const job = await busy(btn, () => api(path, { method: "POST", body }));
   box.hidden = false; btn.disabled = true;
   try {
-    const done = await pollJob(job.id, j => { box.innerHTML = `<div class="progress"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>`; }, 1500);
-    if (done.status !== "done") { box.innerHTML = `<div class="errbox">${esc(done.error || done.status)}</div>`; return; }
+    const done = await pollJob(job.id, j => { box.innerHTML = ui.jobProgress(j); }, 1500);
+    if (done.status !== "done") { ui.error(box, done.status === "cancelled" ? "취소했습니다." : (done.error || done.status)); return; }
     box.hidden = true; render(done.result);
   } finally { btn.disabled = false; }
 }
+
+// 상세 화면이 위치 표시 끝에 대상 이름을 덧붙인다(예: 2 RAG › 컬렉션 › 근로 · 임대차 법률). 지금 화면 이름은 목록으로 가는 링크가 된다.
+function setCrumb(name, parentHref = location.pathname.replace(/\/[^/]+\/?$/, "")) {
+  let cur = $(".crumbs .here.detail");
+  if (!cur) {
+    const here = $("#crumb-here");
+    if (!here) return;
+    const a = document.createElement("a");
+    a.href = parentHref; a.textContent = here.textContent;
+    const sep = document.createElement("span");
+    sep.className = "sep"; sep.textContent = "›"; sep.setAttribute("aria-hidden", "true");
+    cur = document.createElement("span");
+    cur.className = "here detail"; cur.setAttribute("aria-current", "page");
+    here.replaceWith(a, sep, cur);
+    document.body.dataset.baseTitle = document.title;
+  }
+  cur.textContent = name;
+  document.title = `${name} · ${document.body.dataset.baseTitle}`;
+}
+
 // 답변의 조문 · 판례 번호 검사 결과 (rag/legal.py) — 번호가 없으면 아무것도 그리지 않는다
 const CITE_ST = { in_sources: ["근거에 있음", "ok"], in_collection: ["근거 밖 · 자료에 있음", "warn"], not_found: ["자료에 없음 (지어낸 번호?)", "err"], unchecked: ["확인 안 함", ""] };
 const citeBox = c => (c && c.n ? `<div class="small">조문 · 판례 번호: ${c.refs.map(r => `<span class="badge ${CITE_ST[r.status][1]}" title="${esc(CITE_ST[r.status][0])}">${esc(r.ref)}${r.source ? ` [${r.source}]` : ""} · ${esc(CITE_ST[r.status][0])}</span>`).join(" ")}</div>` : "");

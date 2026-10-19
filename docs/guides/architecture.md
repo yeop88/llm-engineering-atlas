@@ -39,10 +39,11 @@ app/
     search.py          run_search: 2 RAG 검색(+3 리랭킹)에 4 검색 향상을 끼움. 모든 검색 API 가 여기를 거침
     flow.py · api.py   연결 실행기(4 → 1 → 2 → 3 → 6 → 7·8 → 답변), 연결 비교(/api/flow/*)
     schemas.py         경로 · 연결 설정(FlowPath · FlowConfig · RoutingConfig · 라우터 평가 요청)
-  web/               화면
-    pages.py           페이지 라우터 (맵은 전용 화면 3개 + 공통 화면 /maps/<맵>)
-    templates/         base · dashboard · history · roadmap · stage + <영역>/<화면>.html, maps/
-    static/js/lib/     공용 스크립트(common.js · charts.js)
+  web/               화면 (자세히: guides/ui.md)
+    pages.py           라우트 · 사이드바 · 위치 표시 · 빠른 이동 색인 — 레지스트리의 Page 로 만든다. 단계 밖 화면만 COMMON_PAGES, 예전 주소 넘김(REDIRECTS)
+    templates/         base(사이드바 · 위쪽 바 · 서랍 · 대화상자) · dashboard · history · stage + <영역>/<화면>.html, maps/, settings/
+    templates/_ui/     공용 매크로(page_header · field · empty · flow_box)
+    static/js/lib/     공용 스크립트: common.js(api · html`` · ui.* · Ctx · 선택기) · shell.js(화면 뼈대 동작) · charts.js
     static/js/<영역>/<화면>.js   화면 스크립트 — 템플릿과 같은 구조(templates/rag/answer.html ↔ static/js/rag/answer.js)
 tests/               app/ 와 같은 구조: core/ · pipeline/ · web/ · stages/<단계>/, 공용 helpers.py · conftest.py,
                      구조 규칙 test_architecture.py · 문서 test_docs.py
@@ -55,6 +56,7 @@ tests/               app/ 와 같은 구조: core/ · pipeline/ · web/ · stage
 - 레지스트리는 데이터만 — 앱의 다른 모듈을 불러오지 않습니다(화면 · 문서 생성이 무거운 모델 코드를 끌고 오지 않게). `maps/` 의 모든 파일이 `MAP_MODULES` 에 있어야 합니다.
 - 화면 스크립트는 정적 파일로. 템플릿에는 서버 값 한 줄 설정(`const MODEL_ID = {{ model_id }};`)만 인라인으로 두고, `static/js/` 의 화면 파일은 짝이 되는 템플릿이 있어야 합니다(한 화면을 나누면 `<화면>_<부분>.js`).
 - 테스트는 `app/` 와 같은 구조. 최상위에는 `conftest.py` · `helpers.py` · `test_architecture.py` · `test_docs.py` 만.
+- 화면: 모든 화면은 `ui.page_header`, 이름표는 입력란과 연결, 삭제 확인은 `ui.confirm`(브라우저 `confirm()` 금지), 인라인 style · 손으로 부르는 `esc()` 는 늘리지 않음, 화면 링크는 새 주소로 — [화면 가이드](ui.md).
 
 ### 확장 체크리스트
 
@@ -62,14 +64,14 @@ tests/               app/ 와 같은 구조: core/ · pipeline/ · web/ · stage
 
 1. `app/stages/<단계>/` — 로직 모듈, `schemas.py`(요청 스키마), `api.py`(라우터, 블로킹 작업은 `def` 또는 `jobs.submit`)
 2. `app/main.py` 라우터 목록(흐름도 순서), DB 가 필요하면 `core/db.py` 모델 + Alembic 리비전
-3. 화면: `app/web/templates/<단계>/<화면>.html` + `app/web/static/js/<단계>/<화면>.js`, `pages.py` 의 `PAGES`
-4. 레지스트리: `app/stages/registry/maps/<맵>.py` 의 단계 항목(상태 · `pages` · 원리 · 왜 · 어떻게 · 할 일)
+3. 화면: `app/web/templates/<단계>/<화면>.html`(`ui.page_header`) + `app/web/static/js/<단계>/<화면>.js` — [화면 가이드](ui.md)
+4. 레지스트리: `app/stages/registry/maps/<맵>.py` 의 단계 항목(상태 · `pages` · 원리 · 왜 · 어떻게 · 할 일). `pages` 의 `Page(nav, 주소, 이름, 설명, 템플릿)` 한 줄로 라우트 · 사이드바 · 위치 표시 · 빠른 이동이 생깁니다
 5. 테스트: `tests/stages/<단계>/test_<주제>.py` (가짜 모델 · `tests/helpers.py` · 공용 픽스처 `scripted_llm` · `rag_collection`)
 6. 문서: `docs/stages/<맵>/<번호>-<이름>/<단계>.md` 상세 · 실측, `uv run python scripts/gen_docs.py`, `CHANGELOG.md`, `docs/guides/api.md`
 
 **새 맵** — 1. `app/stages/registry/maps/<맵>.py` 에 `MAP`(흐름 묶음 · 원칙 · 예시) + `STAGES` 2. `registry/__init__.py` 의 `MAP_MODULES` 에 한 줄 3. `uv run python scripts/gen_docs.py` (화면 `/maps/<맵>` · 개요 · 단계 문서가 생김). 전용 화면이 필요할 때만 `template` 을 지정하고 템플릿을 만듭니다.
 
-**새 화면만** — 템플릿 + 같은 경로의 화면 스크립트 + `PAGES` + 레지스트리 단계의 `pages`.
+**새 화면만** — 레지스트리 단계의 `pages` 에 `Page` 한 줄 + 템플릿 + 같은 경로의 화면 스크립트. 주소 규칙은 `/<단계>/<화면>`(화면이 하나면 `/<단계>`).
 
 ## 요청 흐름
 

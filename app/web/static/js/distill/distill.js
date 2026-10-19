@@ -10,8 +10,8 @@ let dCol = null;
   if (kure) $("#d-teacher").value = kure.id;
   if (small) $("#d-student").value = small.id;
 })();
-setupCollectionPickers({ col: $("#d-col"), cs: $("#d-cs"), set: $("#d-set"), key: "distill-col", onDetail: d => (dCol = d) });
-setupCollectionPickers({ col: $("#l-col"), cs: $("#l-cs"), idx: $("#l-idx"), key: "distill-col" });
+setupCollectionPickers({ col: $("#d-col"), cs: $("#d-cs"), set: $("#d-set"), onDetail: d => (dCol = d) });
+setupCollectionPickers({ col: $("#l-col"), cs: $("#l-cs"), idx: $("#l-idx") });
 
 $("#d-run").onclick = async e => {
   const body = {
@@ -21,7 +21,7 @@ $("#d-run").onclick = async e => {
   };
   const r = await busy(e.target, () => api("/api/distill", { method: "POST", body }));
   const box = $("#d-progress"); box.hidden = false;
-  const done = await pollJob(r.job.id, j => { box.innerHTML = `<div class="progress"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>`; }, 2000);
+  const done = await pollJob(r.job.id, j => { box.innerHTML = ui.jobProgress(j); }, 2000);
   box.innerHTML = done.status === "done" ? "" : `<div class="errbox">${esc(done.error || done.status)}</div>`;
   box.hidden = done.status === "done";
   loadRuns();

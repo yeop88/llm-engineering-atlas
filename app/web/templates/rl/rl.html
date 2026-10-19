@@ -1,45 +1,45 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}강화학습 테스트{% endblock %}
 {% block content %}
-<h1>강화학습 테스트</h1>
-<p class="lead">'좋은 답'의 기준을 <b>보상</b>으로 정하고, 그 보상으로 ① 답을 여러 개 만들어 가장 좋은 것을 고르고(Best-of-N, 학습 없이 바로 효과 측정) ② 좋은 답 / 나쁜 답 쌍을 모아 선호 학습(DPO) 데이터로 내보냅니다. LLM 가중치 학습은 GPU 환경(TRL 등)에서 이 데이터로 합니다.</p>
+{% call ui.page_header("강화학습 테스트") %}'좋은 답'의 기준을 <b>보상</b>으로 정하고, 그 보상으로 ① 답을 여러 개 만들어 가장 좋은 것을 고르고(Best-of-N, 학습 없이 바로 효과 측정) ② 좋은 답 / 나쁜 답 쌍을 모아 선호 학습(DPO) 데이터로 내보냅니다. LLM 가중치 학습은 GPU 환경(TRL 등)에서 이 데이터로 합니다.{% endcall %}
 
 <div class="card stack">
   <h2>보상 기준</h2>
   <div id="w-out" class="small"></div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>공통 설정</h2>
   <div class="row">
-    <div class="field"><label>컬렉션</label><select id="c-col"></select></div>
-    <div class="field"><label>벡터 인덱스</label><select id="c-idx"></select></div>
-    <div class="field grow"><label>평가 세트</label><select id="c-set"></select></div>
-    <div class="field"><label>LLM (비우면 기본)</label><input id="c-model" style="width:160px"></div>
+    <div class="field"><label for="c-col">컬렉션</label><select id="c-col"></select></div>
+    <div class="field"><label for="c-idx">벡터 인덱스</label><select id="c-idx"></select></div>
+    <div class="field grow"><label for="c-set">평가 세트</label><select id="c-set"></select></div>
+    <div class="field"><label for="c-model">LLM (비우면 기본)</label><input class="w-xl" id="c-model"></div>
   </div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>사람이 고르기 (선호 쌍 모으기)</h2>
-  <div class="row" style="flex-wrap:nowrap"><input id="h-q" placeholder="질문" style="flex:1"><button class="btn primary" id="h-run">답 두 개 만들기</button></div>
+  <div class="row nowrap-row"><input class="grow" id="h-q" placeholder="질문"><button class="btn primary" id="h-run">답 두 개 만들기</button></div>
   <div id="h-out"></div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>Best-of-N 평가 (평가 세트)</h2>
   <div class="row">
-    <div class="field"><label>후보 수 N</label><input id="e-n" type="number" value="4" min="2" max="8" style="width:60px"></div>
-    <div class="field"><label>온도</label><input id="e-t" type="number" value="0.9" step="0.1" min="0" max="2" style="width:70px"></div>
-    <div class="field"><label>자동 저장 최소 보상 차</label><input id="e-m" type="number" value="0.3" step="0.1" min="0" style="width:70px"></div>
-    <div class="field"><label>질문 수</label><input id="e-q" type="number" value="10" min="1" style="width:70px"></div>
-    <label class="row small" style="margin:0"><input type="checkbox" id="e-collect" checked> 보상 차가 큰 쌍을 선호 쌍으로 저장</label>
+    <div class="field"><label for="e-n">후보 수 N</label><input class="w-sm" id="e-n" type="number" value="4" min="2" max="8"></div>
+    <div class="field"><label for="e-t">온도</label><input class="w-sm" id="e-t" type="number" value="0.9" step="0.1" min="0" max="2"></div>
+    <div class="field"><label for="e-m">자동 저장 최소 보상 차</label><input class="w-sm" id="e-m" type="number" value="0.3" step="0.1" min="0"></div>
+    <div class="field"><label for="e-q">질문 수</label><input class="w-sm" id="e-q" type="number" value="10" min="1"></div>
+    <label class="row small m-0"><input type="checkbox" id="e-collect" checked> 보상 차가 큰 쌍을 선호 쌍으로 저장</label>
     <span class="spacer"></span><button class="btn primary" id="e-run">평가 실행</button>
   </div>
   <div id="e-progress" hidden></div>
   <div id="e-out"></div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <div class="row between"><h2>선호 쌍</h2><span><a class="btn sm" href="/api/rl/preferences/export">DPO 데이터 내려받기 (JSONL)</a></span></div>
   <div id="p-out"></div>
 </div>

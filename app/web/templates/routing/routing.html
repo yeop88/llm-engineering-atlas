@@ -1,67 +1,67 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}라우팅 테스트{% endblock %}
 {% block content %}
-<h1>라우팅 테스트</h1>
-<p class="lead">질문의 난이도를 먼저 판단해 쉬운 질문은 <b>빠른 경로</b>, 어려운 질문은 <b>전체 경로</b>로 보냅니다. 목표는 "항상 전체 경로"의 품질을 지키면서 비용(지연)을 줄이는 것입니다. 7 소형 모델 · 8 에이전트가 아직 없어, 지금은 두 경로가 같은 LLM 을 쓰고 검색 단계(향상 · 리랭커)가 다릅니다.</p>
+{% call ui.page_header("라우팅 테스트") %}질문의 난이도를 먼저 판단해 쉬운 질문은 <b>빠른 경로</b>, 어려운 질문은 <b>전체 경로</b>로 보냅니다. 목표는 "항상 전체 경로"의 품질을 지키면서 비용(지연)을 줄이는 것입니다. 7 소형 모델 · 8 에이전트가 아직 없어, 지금은 두 경로가 같은 LLM 을 쓰고 검색 단계(향상 · 리랭커)가 다릅니다.{% endcall %}
 
 <div class="card stack">
   <h2>경로 설정</h2>
   <div class="row">
-    <div class="field"><label>컬렉션</label><select id="r-col"></select></div>
-    <div class="field"><label>검색 방식</label><select id="r-mode"><option value="dense">의미</option><option value="hybrid">하이브리드</option><option value="bm25">BM25</option></select></div>
-    <div class="field" id="r-idx-wrap"><label>벡터 인덱스</label><select id="r-idx"></select></div>
-    <div class="field" id="r-cs-wrap" hidden><label>청크 세트</label><select id="r-cs"></select></div>
-    <div class="field"><label>답변 단계</label><select id="r-ans"><option value="1">켬 (품질 = 정답 근거 인용)</option><option value="0">끔 (품질 = nDCG@10)</option></select></div>
+    <div class="field"><label for="r-col">컬렉션</label><select id="r-col" data-ctx="col"></select></div>
+    <div class="field"><label for="r-mode">검색 방식</label><select id="r-mode"><option value="dense">의미</option><option value="hybrid">하이브리드</option><option value="bm25">BM25</option></select></div>
+    <div class="field" id="r-idx-wrap"><label for="r-idx">벡터 인덱스</label><select id="r-idx" data-ctx="idx"></select></div>
+    <div class="field" id="r-cs-wrap" hidden><label for="r-cs">청크 세트</label><select id="r-cs" data-ctx="cs"></select></div>
+    <div class="field"><label for="r-ans">답변 단계</label><select id="r-ans"><option value="1">켬 (품질 = 정답 근거 인용)</option><option value="0">끔 (품질 = nDCG@10)</option></select></div>
   </div>
   <div class="grid cols-2">
     <div class="stack"><b>빠른 경로 (쉬운 질문)</b><div class="small muted">1 임베딩 → 2 검색 → 답변. 향상 · 리랭커 없음.</div>
-      <div class="field"><label>답변 모델 (비우면 기본 LLM — 7 소형 모델이 생기면 여기에)</label><input id="r-easy-model" placeholder="예: gemma-4-e4b"></div></div>
+      <div class="field"><label for="r-easy-model">답변 모델 (비우면 기본 LLM — 7 소형 모델이 생기면 여기에)</label><input id="r-easy-model" placeholder="예: gemma-4-e4b"></div></div>
     <div class="stack"><b>전체 경로 (어려운 질문)</b>
       <div class="row">
-        <div class="field"><label>4 검색 향상</label><select id="r-enh"><option value="multi">다중 질의</option><option value="rewrite">질의 재작성</option><option value="hyde">HyDE</option><option value="none">끔</option></select></div>
-        <div class="field"><label>3 리랭커</label><select id="r-rr"><option value="">끔</option></select></div>
-        <div class="field"><label>재정렬 후보 수</label><input id="r-rtop" type="number" value="10" min="1" max="200" style="width:70px"></div>
-        <div class="field"><label>답변 방식</label><select id="r-hmode"><option value="rag">일반 RAG</option><option value="agent">8a 에이전트</option><option value="best">8b Best-of-4</option></select></div>
+        <div class="field"><label for="r-enh">4 검색 향상</label><select id="r-enh"><option value="multi">다중 질의</option><option value="rewrite">질의 재작성</option><option value="hyde">HyDE</option><option value="none">끔</option></select></div>
+        <div class="field"><label for="r-rr">3 리랭커</label><select id="r-rr"><option value="">끔</option></select></div>
+        <div class="field"><label for="r-rtop">재정렬 후보 수</label><input class="w-sm" id="r-rtop" type="number" value="10" min="1" max="200"></div>
+        <div class="field"><label for="r-hmode">답변 방식</label><select id="r-hmode"><option value="rag">일반 RAG</option><option value="agent">8a 에이전트</option><option value="best">8b Best-of-4</option></select></div>
       </div></div>
   </div>
   <div class="row">
     <span class="small muted">라우터:</span>
-    <label class="row small" style="margin:0"><input type="checkbox" name="r-router" value="rule" checked> 규칙 (질문 형태)</label>
-    <label class="row small" style="margin:0"><input type="checkbox" name="r-router" value="confidence" checked> 검색 확신도</label>
-    <label class="row small" style="margin:0"><input type="checkbox" name="r-router" value="llm" checked> LLM 판단</label>
-    <div class="field"><label>확신도 기준</label><input id="r-th" type="number" value="0.05" step="0.01" min="0" max="1" style="width:80px"></div>
-    <div class="field"><label>규칙: 최대 글자 수</label><input id="r-max" type="number" value="45" min="5" style="width:70px"></div>
+    <label class="row small m-0"><input type="checkbox" name="r-router" value="rule" checked> 규칙 (질문 형태)</label>
+    <label class="row small m-0"><input type="checkbox" name="r-router" value="confidence" checked> 검색 확신도</label>
+    <label class="row small m-0"><input type="checkbox" name="r-router" value="llm" checked> LLM 판단</label>
+    <div class="field"><label for="r-th">확신도 기준</label><input class="w-md" id="r-th" type="number" value="0.05" step="0.01" min="0" max="1"></div>
+    <div class="field"><label for="r-max">규칙: 최대 글자 수</label><input class="w-sm" id="r-max" type="number" value="45" min="5"></div>
   </div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>질문 하나 판단</h2>
-  <div class="row" style="flex-wrap:nowrap"><input id="q-text" placeholder="예: 구매대행업체가 등록하지 않으면 어떤 불이익이 있나요?" style="flex:1"><button class="btn primary" id="q-run">판단</button></div>
+  <div class="row nowrap-row"><input class="grow" id="q-text" placeholder="예: 구매대행업체가 등록하지 않으면 어떤 불이익이 있나요?"><button class="btn primary" id="q-run">판단</button></div>
   <div id="q-out"></div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>평가 세트로 라우터 비교</h2>
   <div class="small muted">질문마다 두 경로를 한 번씩 실행한 뒤, 각 라우터가 고른 경로의 결과로 품질 · 지연을 계산합니다(라우터마다 다시 실행하지 않음). 오라클 = 질문마다 실제로 나았던 경로를 고른 경우로, 라우팅으로 얻을 수 있는 상한입니다. 답변을 켜면 질문당 두 번 답하므로 로컬 LLM 으로 질문당 1분 안팎이 걸립니다.</div>
   <div class="row">
-    <div class="field grow"><label>평가 세트</label><select id="e-set"></select></div>
-    <div class="field"><label>질문 수</label><input id="e-n" type="number" value="10" min="1" style="width:80px"></div>
-    <div style="align-self:end"><button class="btn primary" id="e-run">비교 실행</button></div>
+    <div class="field grow"><label for="e-set">평가 세트</label><select id="e-set" data-ctx="set"></select></div>
+    <div class="field"><label for="e-n">질문 수</label><input class="w-md" id="e-n" type="number" value="10" min="1"></div>
+    <div class="self-end"><button class="btn primary" id="e-run">비교 실행</button></div>
   </div>
   <div id="e-progress" hidden></div>
   <div id="e-out"></div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>학습 라우터</h2>
   <div class="small muted">위 비교의 기록(질문마다 두 경로 결과)으로 '전체 경로가 실제로 나았던 질문'을 배웁니다. 입력 = 질문 임베딩 + 검색 확신도 + 질문 형태 신호, 모델 = 로지스틱 회귀. 채점은 교차검증(그 질문을 빼고 학습한 모델의 예측)이라 같은 기록의 다른 라우터와 공정하게 비교됩니다. 질문이 적으면(수십 개) 결과가 크게 흔들립니다.</div>
   <div class="row">
-    <div class="field grow"><label>라우팅 평가 기록</label><select id="l-run"></select></div>
-    <div class="field"><label>질문 임베딩 모델</label><select id="l-model"></select></div>
-    <div class="field"><label>margin</label><input id="l-margin" type="number" value="0" step="0.05" min="0" max="1" style="width:70px" title="전체 경로가 이만큼 넘게 나아야 '어려움' 라벨"></div>
-    <div class="field"><label>어려움 확률 기준</label><input id="l-th" type="number" value="0.5" step="0.05" min="0.05" max="0.95" style="width:70px"></div>
-    <label class="row small" style="margin:0"><input type="checkbox" id="l-save" checked> 저장</label>
-    <div style="align-self:end"><button class="btn primary" id="l-run-btn">학습 · 비교</button></div>
+    <div class="field grow"><label for="l-run">라우팅 평가 기록</label><select id="l-run"></select></div>
+    <div class="field"><label for="l-model">질문 임베딩 모델</label><select id="l-model"></select></div>
+    <div class="field"><label for="l-margin">margin</label><input class="w-sm" id="l-margin" type="number" value="0" step="0.05" min="0" max="1" title="전체 경로가 이만큼 넘게 나아야 '어려움' 라벨"></div>
+    <div class="field"><label for="l-th">어려움 확률 기준</label><input class="w-sm" id="l-th" type="number" value="0.5" step="0.05" min="0.05" max="0.95"></div>
+    <label class="row small m-0"><input type="checkbox" id="l-save" checked> 저장</label>
+    <div class="self-end"><button class="btn primary" id="l-run-btn">학습 · 비교</button></div>
   </div>
   <div id="l-progress" hidden></div>
   <div id="l-out"></div>

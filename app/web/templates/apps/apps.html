@@ -1,10 +1,10 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}응용{% endblock %}
 {% block content %}
-<h1>의미 기반 응용</h1>
-<p class="lead">임베딩(텍스트의 의미 벡터)으로 만들 수 있는 기능들입니다. 예시 데이터로 바로 해 보거나, 직접 입력·문서 검색 컬렉션의 문서를 그대로 쓸 수 있습니다. 같은 텍스트의 임베딩은 캐시되어 다시 계산하지 않습니다.</p>
+{% call ui.page_header("의미 기반 응용") %}임베딩(텍스트의 의미 벡터)으로 만들 수 있는 기능들입니다. 예시 데이터로 바로 해 보거나, 직접 입력·문서 검색 컬렉션의 문서를 그대로 쓸 수 있습니다. 같은 텍스트의 임베딩은 캐시되어 다시 계산하지 않습니다.{% endcall %}
 <div class="grid cols-3" id="apps"></div>
-<p class="small muted" style="margin-top:16px">시맨틱 검색은 <a href="/collections">문서 검색</a>, 유사도 행렬·임베딩 지도는 <a href="/playground">플레이그라운드</a>에 있습니다.</p>
+<p class="small muted mt-4">시맨틱 검색은 <a href="/rag/collections">문서 검색</a>, 유사도 행렬·임베딩 지도는 <a href="/embedding/playground">플레이그라운드</a>에 있습니다.</p>
 {% endblock %}
 {% block scripts %}
 <script>const AVAILABLE = {{ available|tojson }};</script>

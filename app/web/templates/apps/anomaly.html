@@ -1,9 +1,9 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}이상·신종 탐지{% endblock %}
 {% block content %}
 <a href="/apps" class="small">← 응용</a>
-<h1>이상·신종 탐지</h1>
-<p class="lead">정상 텍스트(와 이미 아는 이상 유형)로 '평소의 경계'를 배우고, 그 밖에 있는 텍스트를 찾습니다. 스팸·피싱 필터링, 해킹 징후 로그, 처음 보는 형태의 공격·사기 문구 감지에 씁니다.</p>
+{% call ui.page_header("이상·신종 탐지") %}정상 텍스트(와 이미 아는 이상 유형)로 '평소의 경계'를 배우고, 그 밖에 있는 텍스트를 찾습니다. 스팸·피싱 필터링, 해킹 징후 로그, 처음 보는 형태의 공격·사기 문구 감지에 씁니다.{% endcall %}
 
 <div class="tabs">
   <button data-tab="t-detect">탐지</button>
@@ -19,26 +19,26 @@
     </div>
     <div class="card stack">
       <h2>검사할 텍스트</h2>
-      <div><label>한 줄에 하나, 정답을 알면 <code>[라벨] 텍스트</code> — 비우면 학습 데이터 안에서 이상치를 찾습니다</label>
+      <div><label for="a-test">한 줄에 하나, 정답을 알면 <code>[라벨] 텍스트</code> — 비우면 학습 데이터 안에서 이상치를 찾습니다</label>
         <textarea id="a-test" rows="7" class="small"></textarea></div>
       <div class="row">
-        <div class="field grow"><label>임베딩 모델</label><select id="a-model"></select></div>
-        <div class="field"><label>차원</label><select id="a-dim"></select></div>
+        <div class="field grow"><label for="a-model">임베딩 모델</label><select id="a-model"></select></div>
+        <div class="field"><label for="a-dim">차원</label><select id="a-dim"></select></div>
       </div>
       <div class="row">
-        <div class="field grow"><label>방법</label><select id="a-method">
+        <div class="field grow"><label for="a-method">방법</label><select id="a-method">
           <option value="knn">kNN 거리 (권장)</option><option value="lof">LOF (국소 밀도)</option><option value="iforest">Isolation Forest</option><option value="centroid">중심점 거리</option></select></div>
-        <div class="field"><label>k</label><input id="a-k" type="number" value="5" min="1" max="50" style="width:70px"></div>
-        <div class="field"><label>정상 예시 중 경계 안</label><select id="a-q"><option value="0.8">80%</option><option value="0.9" selected>90%</option><option value="0.95">95%</option><option value="0.99">99%</option></select></div>
-        <div class="field"><label>정상 라벨</label><input id="a-normal" value="정상" style="width:90px"></div>
+        <div class="field"><label for="a-k">k</label><input class="w-sm" id="a-k" type="number" value="5" min="1" max="50"></div>
+        <div class="field"><label for="a-q">정상 예시 중 경계 안</label><select id="a-q"><option value="0.8">80%</option><option value="0.9" selected>90%</option><option value="0.95">95%</option><option value="0.99">99%</option></select></div>
+        <div class="field"><label for="a-normal">정상 라벨</label><input class="w-md" id="a-normal" value="정상"></div>
       </div>
       <div class="small muted">경계는 정상 예시를 5겹으로 나눠 자기 자신을 뺀 점수의 분위수로 정합니다. 90% 면 평소 텍스트의 약 10% 까지 이상으로 잘못 알릴 수 있다는 뜻입니다(높이면 오탐↓·놓침↑). 정상 예시가 수십 개뿐이면 90% 이하가 신종을 더 잘 잡습니다. 알려진 유형이 있으면 '정상 대 이상' 분류기도 함께 써서 처음 보는 유형을 잡습니다. 어느 그룹의 경계에도 들지 않으면 <b>신종</b>입니다.</div>
-      <div class="row"><label class="row" style="margin:0"><input type="checkbox" id="a-save"> 탐지기로 저장</label><div class="field grow"><input id="a-name" placeholder="이름 (예: 문자 스팸 v1)"></div></div>
+      <div class="row"><label class="row m-0"><input type="checkbox" id="a-save"> 탐지기로 저장</label><div class="field grow"><input id="a-name" placeholder="이름 (예: 문자 스팸 v1)"></div></div>
       <div class="row"><span class="spacer"></span><button class="btn primary" id="a-run">탐지</button></div>
     </div>
   </div>
-  <div class="card" id="a-progress" hidden style="margin-top:16px"></div>
-  <div id="a-out" style="margin-top:16px"></div>
+  <div class="card mt-4" id="a-progress" hidden></div>
+  <div class="mt-4" id="a-out"></div>
 </section>
 
 <section class="tab-panel" id="t-saved">
@@ -46,10 +46,10 @@
     <thead><tr><th>#</th><th>이름</th><th>그룹</th><th>방법 · 임베딩</th><th class="num">학습 수</th><th class="num">검사 정확도</th><th>만든 시각</th><th></th></tr></thead>
     <tbody id="sv-rows"></tbody>
   </table></div>
-  <div class="card stack" style="margin-top:16px">
+  <div class="card stack mt-4">
     <h2>판정해 보기</h2>
-    <div class="row"><div class="field grow"><label>탐지기</label><select id="sc-model"></select></div></div>
-    <div><label>텍스트 (한 줄에 하나)</label><textarea id="sc-text" rows="4">[CJ대한통운] 오늘 배송 예정입니다.
+    <div class="row"><div class="field grow"><label for="sc-model">탐지기</label><select id="sc-model"></select></div></div>
+    <div><label for="sc-text">텍스트 (한 줄에 하나)</label><textarea id="sc-text" rows="4">[CJ대한통운] 오늘 배송 예정입니다.
 엄마 나 폰 고장나서 친구 폰으로 연락해. 급하게 돈 좀 보내줄 수 있어?</textarea></div>
     <div class="row"><span class="spacer"></span><button class="btn primary" id="sc-run">판정</button></div>
     <div id="sc-out"></div>

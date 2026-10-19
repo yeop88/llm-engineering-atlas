@@ -18,12 +18,15 @@ const METHOD_HINT = {
   page: "PDF 쪽 또는 HWP 구역 단위로 나눕니다. 너무 길면 재귀 분할합니다. 쪽 번호 인용이 중요한 문서에 씁니다.",
 };
 
-const jobBar = j => j ? `<div class="progress" style="margin-top:4px"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>` : "";
+const jobBar = j => j ? `<div class="progress mt-1"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>` : "";
 const statusBadge = (s, err) => ({ ready: '<span class="badge ok">준비됨</span>', building: '<span class="badge warn">구축 중</span>', pending: '<span class="badge warn">대기</span>', error: `<span class="badge err" title="${esc(err)}">오류</span>` })[s] || esc(s);
 
 async function load() {
   [col, opts] = await Promise.all([api(`/api/collections/${COLLECTION_ID}`), opts ? Promise.resolve(opts) : api("/api/rag/options")]);
   $("#c-title").textContent = col.name;
+  setCrumb(col.name);
+  // 컬렉션을 열면 그 컬렉션이 작업 맥락이 된다 — 다른 단계 화면으로 옮겨도 같은 컬렉션으로 시작
+  if (Ctx.get().col !== String(col.id)) Ctx.set({ col: col.id, colLabel: col.name }, { url: false });
   $("#c-sub").textContent = `${DOMAIN_LABEL[col.domain] || col.domain}${col.description ? " · " + col.description : ""}`;
   $("#c-summary").innerHTML = `문서 ${col.documents.length} · 청크 세트 ${col.chunk_sets.length} · 인덱스 ${col.indexes.length}`;
   renderDocs(); renderChunkSets(); renderIndexes(); renderIndexForm(); renderConfigs();
@@ -48,7 +51,7 @@ function renderDocs() {
     <td class="small">${esc(d.title)}</td><td class="num">${fmtBytes(d.size_bytes)}</td><td class="num">${fmtNum(d.n_chars)}</td>
     <td class="num">${d.n_pages}${d.meta?.page_kind === "section" ? " 구역" : d.meta?.page_kind === "page" ? " 쪽" : d.meta?.page_kind === "media" ? (d.meta.media.kind === "video" ? " 프레임" : " 장") : ""}</td>
     <td class="small nowrap">${fmtDate(d.created_at)}</td>
-    <td class="right nowrap"><button class="btn sm" onclick="viewDoc(${d.id})">본문</button><button class="btn sm danger" onclick="delDoc(${d.id}, '${esc(d.filename)}')">삭제</button></td></tr>`).join("")
+    <td class="right nowrap"><button class="btn sm" onclick="viewDoc(${d.id})">본문</button><button class="btn sm danger" onclick="delDoc(${d.id})">삭제</button></td></tr>`).join("")
     || '<tr><td colspan="7" class="empty">문서가 없습니다</td></tr>';
 }
 async function upload(files) {
@@ -74,11 +77,13 @@ dz.addEventListener("drop", e => upload(e.dataTransfer.files));
 async function viewDoc(id) {
   const d = await api(`/api/documents/${id}`);
   $("#dlg-title").textContent = d.filename;
-  $("#dlg-body").innerHTML = `<div class="small muted" style="margin-bottom:8px">${esc(d.title)} · ${fmtNum(d.n_chars)}자${d.truncated ? " (앞부분만 표시)" : ""}</div><pre style="white-space:pre-wrap;max-height:70vh">${esc(d.text)}</pre>`;
+  $("#dlg-body").innerHTML = `<div class="small muted mb-2">${esc(d.title)} · ${fmtNum(d.n_chars)}자${d.truncated ? " (앞부분만 표시)" : ""}</div><pre class="pre scroll-lg">${esc(d.text)}</pre>`;
   $("#dlg").showModal();
 }
-async function delDoc(id, name) {
-  if (!confirm(`'${name}' 을(를) 삭제할까요? 이 문서의 청크와 모든 인덱스의 벡터도 함께 지워집니다.`)) return;
+// 파일 이름을 onclick 글자로 넘기면 작은따옴표가 든 이름(O'Reilly.pdf)에서 스크립트가 깨져, 목록에서 찾는다
+async function delDoc(id) {
+  const name = col.documents.find(d => d.id === id)?.filename ?? `#${id}`;
+  if (!(await ui.confirm(`'${name}' 을(를) 삭제할까요? 이 문서의 청크와 모든 인덱스의 벡터도 함께 지워집니다.`, { ok: "삭제", danger: true, title: "삭제" }))) return;
   await api(`/api/documents/${id}`, { method: "DELETE" }); toast("삭제했습니다", "ok"); load();
 }
 
@@ -105,10 +110,10 @@ $("#s-preview").onclick = async e => {
   const maxH = Math.max(...Object.values(st.hist || { x: 1 }));
   $("#s-preview-out").innerHTML = `<h3>미리보기 · 청크 ${fmtNum(st.count)}개</h3>
     <div class="small muted">평균 ${st.avg}자 · 중앙값 ${st.median} · p95 ${st.p95} · 최소 ${st.min} · 최대 ${st.max}</div>
-    <div style="margin:10px 0">${Object.entries(st.hist || {}).map(([k, n]) => `<div class="row small" style="flex-wrap:nowrap;gap:8px"><span class="mono" style="width:90px">${k}</span>
-      <div style="flex:1;background:var(--code);border-radius:4px"><div class="bar" style="width:${Math.max(2, n / maxH * 100)}%"></div></div><span class="mono" style="width:40px;text-align:right">${n}</span></div>`).join("")}</div>
-    <div class="stack" style="max-height:420px;overflow:auto">${r.samples.map(s => `<div class="rank-item"><div class="small muted">${esc(s.document)}${s.page ? ` · ${s.page}쪽` : ""}${s.heading ? ` · <b>${esc(s.heading)}</b>` : ""} · ${s.chars}자</div>
-      <div class="small" style="white-space:pre-wrap">${esc(s.text.slice(0, 400))}${s.text.length > 400 ? "…" : ""}</div></div>`).join("")}</div>`;
+    <div class="my-2">${Object.entries(st.hist || {}).map(([k, n]) => `<div class="row small nowrap-row gap-2"><span class="mono w-md">${k}</span>
+      <div class="grow bg-code"><div class="bar" style="width:${Math.max(2, n / maxH * 100)}%"></div></div><span class="mono w-xs text-right">${n}</span></div>`).join("")}</div>
+    <div class="stack scroll scroll-md">${r.samples.map(s => `<div class="rank-item"><div class="small muted">${esc(s.document)}${s.page ? ` · ${s.page}쪽` : ""}${s.heading ? ` · <b>${esc(s.heading)}</b>` : ""} · ${s.chars}자</div>
+      <div class="small pre">${esc(s.text.slice(0, 400))}${s.text.length > 400 ? "…" : ""}</div></div>`).join("")}</div>`;
 };
 $("#s-create").onclick = async e => {
   await busy(e.target, () => api(`/api/collections/${COLLECTION_ID}/chunk-sets`, { method: "POST", body: { name: $("#s-name").value, strategy: strategyFromForm() } }));
@@ -131,16 +136,16 @@ function renderChunkSets() {
 async function viewChunks(id, offset) {
   const r = await api(`/api/chunk-sets/${id}/chunks?offset=${offset}&limit=30`);
   $("#dlg-title").textContent = `청크 세트 #${id} · ${offset + 1}–${Math.min(offset + 30, r.total)} / ${fmtNum(r.total)}`;
-  $("#dlg-body").innerHTML = `<div class="stack" style="max-height:70vh;overflow:auto">${r.items.map(c => `<div class="rank-item">
+  $("#dlg-body").innerHTML = `<div class="stack scroll scroll-lg">${r.items.map(c => `<div class="rank-item">
       <div class="small muted">#${c.id} · ${esc(c.filename)}${c.page ? ` · ${c.page}쪽` : ""}${c.heading ? ` · <b>${esc(c.heading)}</b>` : ""} · ${c.chars}자</div>
-      <div class="small" style="white-space:pre-wrap">${esc(c.text)}</div>
+      <div class="small pre">${esc(c.text)}</div>
       <div class="small muted mono">BM25 토큰: ${esc(c.tokens.join(" "))}</div></div>`).join("")}</div>
-    <div class="row" style="margin-top:10px">${offset > 0 ? `<button class="btn sm" onclick="viewChunks(${id}, ${offset - 30})">← 이전</button>` : ""}<span class="spacer"></span>${offset + 30 < r.total ? `<button class="btn sm" onclick="viewChunks(${id}, ${offset + 30})">다음 →</button>` : ""}</div>`;
+    <div class="row mt-3">${offset > 0 ? `<button class="btn sm" onclick="viewChunks(${id}, ${offset - 30})">← 이전</button>` : ""}<span class="spacer"></span>${offset + 30 < r.total ? `<button class="btn sm" onclick="viewChunks(${id}, ${offset + 30})">다음 →</button>` : ""}</div>`;
   if (!$("#dlg").open) $("#dlg").showModal();
 }
 async function delChunkSet(id) {
   const n = col.indexes.filter(i => i.chunk_set_id === id).length;
-  if (!confirm(`청크 세트 #${id} 를 삭제할까요?${n ? ` 이 청크 세트로 만든 인덱스 ${n}개(벡터 DB 데이터)도 함께 삭제됩니다.` : ""}`)) return;
+  if (!(await ui.confirm(`청크 세트 #${id} 를 삭제할까요?${n ? ` 이 청크 세트로 만든 인덱스 ${n}개(벡터 DB 데이터)도 함께 삭제됩니다.` : ""}`, { ok: "삭제", danger: true, title: "삭제" }))) return;
   await api(`/api/chunk-sets/${id}`, { method: "DELETE" }); toast("삭제했습니다", "ok"); load();
 }
 
@@ -185,7 +190,7 @@ function renderIndexes() {
 }
 async function rebuild(id) { await api(`/api/indexes/${id}/rebuild`, { method: "POST" }); toast("다시 구축합니다", "ok"); load(); }
 async function delIndex(id) {
-  if (!confirm(`인덱스 #${id} 와 벡터 DB 의 데이터를 삭제할까요?`)) return;
+  if (!(await ui.confirm(`인덱스 #${id} 와 벡터 DB 의 데이터를 삭제할까요?`, { ok: "삭제", danger: true, title: "삭제" }))) return;
   await api(`/api/indexes/${id}`, { method: "DELETE" }); toast("삭제했습니다", "ok"); load();
 }
 
@@ -213,17 +218,17 @@ async function renderConfigs() {
   $("#cfgs").innerHTML = configs.map((c, n) => `<div class="card stack" style="padding:12px" data-n="${n}">
     <div class="row between"><input data-k="label" value="${esc(c.label || "")}" placeholder="설정 ${n + 1}" style="font-weight:600;flex:1">
       ${configs.length > 1 ? `<button class="btn sm" data-del="${n}" title="이 설정 빼기">✕</button>` : ""}</div>
-    <div class="row"><div class="field grow"><label>방식</label><select data-k="mode">
+    <div class="row"><div class="field grow"><label>방식</label><select aria-label="방식" data-k="mode">
       <option value="hybrid" ${sel(c.mode, "hybrid")}>하이브리드 (의미+BM25)</option><option value="dense" ${sel(c.mode, "dense")}>의미 검색만</option><option value="bm25" ${sel(c.mode, "bm25")}>BM25 만</option></select></div></div>
     ${c.mode === "bm25"
-      ? `<div><label>청크 세트</label><select data-k="chunk_set_id" data-num>${readyCs.map(x => `<option value="${x.id}" ${sel(c.chunk_set_id, x.id)}>#${x.id} ${esc(x.name)}</option>`).join("")}</select></div>`
-      : `<div><label>벡터 인덱스</label><select data-k="index_id" data-num>${readyIdx.map(x => `<option value="${x.id}" ${sel(c.index_id, x.id)}>#${x.id} ${esc(x.model_hf_id.split("/").pop())} · ${x.store}${x.truncate_dim ? " · " + x.truncate_dim + "d" : ""}</option>`).join("") || '<option value="">준비된 인덱스 없음</option>'}</select></div>`}
-    ${c.mode === "hybrid" ? `<div class="row"><div class="field grow"><label>합치기</label><select data-k="fusion"><option value="rrf" ${sel(c.fusion, "rrf")}>RRF (순위 기반, 권장)</option><option value="weighted" ${sel(c.fusion, "weighted")}>가중합</option></select></div>
-      ${c.fusion === "weighted" ? `<div class="field" style="min-width:90px"><label>의미 가중치</label><input data-k="alpha" data-num type="number" step="0.1" min="0" max="1" value="${c.alpha ?? 0.5}"></div>` : ""}</div>` : ""}
-    <div class="row"><div class="field grow"><label>리랭커</label><select data-k="reranker_id" data-num><option value="">사용 안 함</option>${rerankers.map(r => `<option value="${r.id}" ${sel(c.reranker_id, r.id)}>${esc(r.name)}${r.params ? ` (${esc(r.params)})` : ""}</option>`).join("")}</select></div>
-      ${c.reranker_id ? `<div class="field" style="min-width:80px"><label>재정렬 후보</label><input data-k="rerank_top" data-num type="number" min="1" max="200" value="${c.rerank_top ?? 30}"></div>` : ""}</div>
-    <div class="row"><div class="field"><label>결과 수</label><input data-k="top_k" data-num type="number" min="1" max="100" value="${c.top_k ?? 10}"></div>
-      <div class="field"><label>검색 후보</label><input data-k="candidates" data-num type="number" min="1" max="500" value="${c.candidates ?? 50}"></div></div>
+      ? `<div><label>청크 세트</label><select aria-label="청크 세트" data-k="chunk_set_id" data-num>${readyCs.map(x => `<option value="${x.id}" ${sel(c.chunk_set_id, x.id)}>#${x.id} ${esc(x.name)}</option>`).join("")}</select></div>`
+      : `<div><label>벡터 인덱스</label><select aria-label="벡터 인덱스" data-k="index_id" data-num>${readyIdx.map(x => `<option value="${x.id}" ${sel(c.index_id, x.id)}>#${x.id} ${esc(x.model_hf_id.split("/").pop())} · ${x.store}${x.truncate_dim ? " · " + x.truncate_dim + "d" : ""}</option>`).join("") || '<option value="">준비된 인덱스 없음</option>'}</select></div>`}
+    ${c.mode === "hybrid" ? `<div class="row"><div class="field grow"><label>합치기</label><select aria-label="합치기" data-k="fusion"><option value="rrf" ${sel(c.fusion, "rrf")}>RRF (순위 기반, 권장)</option><option value="weighted" ${sel(c.fusion, "weighted")}>가중합</option></select></div>
+      ${c.fusion === "weighted" ? `<div class="field" style="min-width:90px"><label>의미 가중치</label><input aria-label="의미 가중치" data-k="alpha" data-num type="number" step="0.1" min="0" max="1" value="${c.alpha ?? 0.5}"></div>` : ""}</div>` : ""}
+    <div class="row"><div class="field grow"><label>리랭커</label><select aria-label="리랭커" data-k="reranker_id" data-num><option value="">사용 안 함</option>${rerankers.map(r => `<option value="${r.id}" ${sel(c.reranker_id, r.id)}>${esc(r.name)}${r.params ? ` (${esc(r.params)})` : ""}</option>`).join("")}</select></div>
+      ${c.reranker_id ? `<div class="field" style="min-width:80px"><label>재정렬 후보</label><input aria-label="재정렬 후보" data-k="rerank_top" data-num type="number" min="1" max="200" value="${c.rerank_top ?? 30}"></div>` : ""}</div>
+    <div class="row"><div class="field"><label>결과 수</label><input aria-label="결과 수" data-k="top_k" data-num type="number" min="1" max="100" value="${c.top_k ?? 10}"></div>
+      <div class="field"><label>검색 후보</label><input aria-label="검색 후보" data-k="candidates" data-num type="number" min="1" max="500" value="${c.candidates ?? 50}"></div></div>
   </div>`).join("");
   $("#cfg-add").disabled = configs.length >= 4;
 }
@@ -273,10 +278,10 @@ $("#q-run").onclick = async e => {
       <div class="small muted">${esc(cfgSummary(c))}</div>
       <div class="small muted" style="margin:4px 0 8px">총 ${res.total_ms}ms — ${timing}</div>
       ${res.results.map(x => `<div class="rank-item">
-        <div class="row between small" style="flex-wrap:nowrap"><span><span class="badge ${x.rank === 1 ? "ok" : "muted"}">#${x.rank}</span> <b>${esc(x.filename)}</b>${x.page ? ` · ${x.page}쪽` : ""}${x.heading ? ` · ${esc(x.heading)}` : ""}</span><b class="mono">${x.score.toFixed(3)}</b></div>
-        <div class="small muted mono" style="margin:2px 0">${["dense", "bm25"].filter(k => x.ranks[k]).map(k => `${k === "dense" ? "의미" : "BM25"} #${x.ranks[k]} (${x.scores[k].toFixed(3)})`).join(" · ")}${x.ranks.before_rerank ? ` · 리랭크 전 #${x.ranks.before_rerank}` : ""}</div>
+        <div class="row between small nowrap-row"><span><span class="badge ${x.rank === 1 ? "ok" : "muted"}">#${x.rank}</span> <b>${esc(x.filename)}</b>${x.page ? ` · ${x.page}쪽` : ""}${x.heading ? ` · ${esc(x.heading)}` : ""}</span><b class="mono">${x.score.toFixed(3)}</b></div>
+        <div class="small muted mono my-1">${["dense", "bm25"].filter(k => x.ranks[k]).map(k => `${k === "dense" ? "의미" : "BM25"} #${x.ranks[k]} (${x.scores[k].toFixed(3)})`).join(" · ")}${x.ranks.before_rerank ? ` · 리랭크 전 #${x.ranks.before_rerank}` : ""}</div>
         ${x.media ? mediaThumb(x) : ""}
-        <div class="small" style="white-space:pre-wrap">${highlight(x.text.length > 500 ? x.text.slice(0, 500) + "…" : x.text, res.query_tokens)}</div></div>`).join("") || '<div class="empty">결과 없음</div>'}
+        <div class="small pre">${highlight(x.text.length > 500 ? x.text.slice(0, 500) + "…" : x.text, res.query_tokens)}</div></div>`).join("") || '<div class="empty">결과 없음</div>'}
     </div>`;
   }).join("");
 };

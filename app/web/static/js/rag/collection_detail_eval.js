@@ -91,7 +91,7 @@ $("#e-create").onclick = async e => {
 };
 
 async function evDelete(id) {
-  if (!confirm(`평가 세트 #${id} 를 삭제할까요?`)) return;
+  if (!(await ui.confirm(`평가 세트 #${id} 를 삭제할까요?`, { ok: "삭제", danger: true, title: "삭제" }))) return;
   await api(`/api/eval-sets/${id}`, { method: "DELETE" }); toast("삭제했습니다", "ok"); evLoad();
 }
 
@@ -102,15 +102,15 @@ async function evView(id) {
   const s = evEditing;
   const g = s.stats.generation;
   $("#dlg-title").textContent = `평가 세트 #${s.id} · ${s.name}`;
-  $("#dlg-body").innerHTML = `<div class="small muted" style="margin-bottom:8px">질문 ${s.n_items}개 · 문서 ${s.stats.documents}개 · 유형 ${Object.entries(s.stats.by_type || {}).map(([k, v]) => `${EV_TYPE[k] || k} ${v}`).join(", ")}
+  $("#dlg-body").innerHTML = `<div class="small muted mb-2">질문 ${s.n_items}개 · 문서 ${s.stats.documents}개 · 유형 ${Object.entries(s.stats.by_type || {}).map(([k, v]) => `${EV_TYPE[k] || k} ${v}`).join(", ")}
       ${g?.calls != null ? ` · LLM 호출 ${g.calls}회, 토큰 입력 ${fmtNum(g.input_tokens)} / 출력 ${fmtNum(g.output_tokens)}${g.empty ? `, 질문 없음 ${g.empty}` : ""}${g.evidence_fixed ? `, 근거 보정 ${g.evidence_fixed}` : ""}` : ""}</div>
-    <div class="table-wrap" style="max-height:60vh"><table>
+    <div class="table-wrap scroll-lg"><table>
       <tr><th><input type="checkbox" checked onchange="document.querySelectorAll('.ev-keep').forEach(c => c.checked = this.checked)" aria-label="전체"></th><th>질문</th><th>유형</th><th>정답 문서</th><th>근거 문장</th><th class="num">겹침</th></tr>
       ${s.items.map((it, i) => `<tr><td><input type="checkbox" class="ev-keep" data-i="${i}" checked></td><td>${esc(it.query)}</td><td class="small nowrap">${EV_TYPE[it.type] || esc(it.type || "")}</td>
         <td class="small">${esc(it.filename || it.doc_ids.join(","))}</td><td class="small muted">${esc((it.evidence || "").slice(0, 120))}${it.evidence_exact === false ? ' <span class="badge warn" title="LLM 이 적은 근거가 원문과 달라 가장 비슷한 원문 문장으로 바꿨습니다">보정</span>' : ""}</td>
         <td class="num mono small">${it.lexical_overlap ?? "-"}</td></tr>`).join("")}
     </table></div>
-    <div class="row" style="margin-top:10px"><span class="small muted">체크 해제한 질문을 빼고 저장합니다.</span><span class="spacer"></span><button class="btn primary" onclick="evSaveReview(this)">저장</button></div>`;
+    <div class="row mt-3"><span class="small muted">체크 해제한 질문을 빼고 저장합니다.</span><span class="spacer"></span><button class="btn primary" onclick="evSaveReview(this)">저장</button></div>`;
   $("#dlg").showModal();
 }
 async function evSaveReview(btn) {
@@ -144,20 +144,20 @@ async function evRenderRunner() {
   area.innerHTML = `<div class="card stack">
     <h2>조합 평가 <span class="small muted">청킹 × 임베딩 모델 × 검색 방식 × 리랭커</span></h2>
     <div class="row">
-      <div class="field grow"><label>평가 세트</label><select id="r-set">${ready.map(s => `<option value="${s.id}">#${s.id} ${esc(s.name)} (${s.n_items}문항)</option>`).join("")}</select></div>
-      <div class="field"><label>질문 수 제한</label><input id="r-max" type="number" min="1" placeholder="전체" style="width:90px"></div>
+      <div class="field grow"><label for="r-set">평가 세트</label><select id="r-set">${ready.map(s => `<option value="${s.id}">#${s.id} ${esc(s.name)} (${s.n_items}문항)</option>`).join("")}</select></div>
+      <div class="field"><label for="r-max">질문 수 제한</label><input class="w-md" id="r-max" type="number" min="1" placeholder="전체"></div>
     </div>
     <div class="grid cols-3">
-      <div><label>벡터 인덱스 (청크 세트 · 모델)</label>${idxs.map(i => `<label class="row small" style="margin:2px 0"><input type="checkbox" class="r-idx" value="${i.id}" checked> ${esc(csName(i.chunk_set_id))} · <span class="mono">${esc(i.model_hf_id.split("/").pop())}</span>${i.truncate_dim ? ` ${i.truncate_dim}d` : ""}</label>`).join("") || '<div class="small muted">준비된 인덱스가 없습니다 (BM25 만 가능)</div>'}</div>
-      <div><label>검색 방식</label>${Object.entries(EV_MODE).map(([k, v]) => `<label class="row small" style="margin:2px 0"><input type="checkbox" class="r-mode" value="${k}" ${k !== "dense" ? "checked" : ""}> ${v}</label>`).join("")}
+      <div><span class="field-label">벡터 인덱스 (청크 세트 · 모델)</span>${idxs.map(i => `<label class="row small my-1"><input type="checkbox" class="r-idx" value="${i.id}" checked> ${esc(csName(i.chunk_set_id))} · <span class="mono">${esc(i.model_hf_id.split("/").pop())}</span>${i.truncate_dim ? ` ${i.truncate_dim}d` : ""}</label>`).join("") || '<div class="small muted">준비된 인덱스가 없습니다 (BM25 만 가능)</div>'}</div>
+      <div><span class="field-label">검색 방식</span>${Object.entries(EV_MODE).map(([k, v]) => `<label class="row small my-1"><input type="checkbox" class="r-mode" value="${k}" ${k !== "dense" ? "checked" : ""}> ${v}</label>`).join("")}
         <div class="small muted">BM25 는 고른 인덱스들의 청크 세트마다 한 번씩 (인덱스를 고르지 않으면 모든 청크 세트).</div></div>
-      <div><label>리랭커 ('없음'은 항상 포함)</label>${evRerankers.map(r => `<label class="row small" style="margin:2px 0"><input type="checkbox" class="r-rr" value="${r.id}"> ${esc(r.name)}${r.cached ? "" : ' <span class="badge">미다운로드</span>'}</label>`).join("") || '<div class="small muted">카탈로그에 리랭커가 없습니다</div>'}</div>
+      <div><span class="field-label">리랭커 ('없음'은 항상 포함)</span>${evRerankers.map(r => `<label class="row small my-1"><input type="checkbox" class="r-rr" value="${r.id}"> ${esc(r.name)}${r.cached ? "" : ' <span class="badge">미다운로드</span>'}</label>`).join("") || '<div class="small muted">카탈로그에 리랭커가 없습니다</div>'}</div>
     </div>
     <div class="row"><span class="small muted" id="r-count"></span><span class="spacer"></span><button class="btn primary" id="r-run">평가 실행</button></div>
     <div id="r-progress" hidden></div>
     <div id="r-history"></div>
   </div>
-  <div id="r-out" style="margin-top:16px"></div>`;
+  <div class="mt-4" id="r-out"></div>`;
   if (prev) {
     if (ready.some(s => String(s.id) === prev.set)) $("#r-set").value = prev.set;
     area.querySelectorAll(".r-idx").forEach(x => (x.checked = prev.idx.includes(x.value)));
@@ -206,8 +206,8 @@ async function evRun(e) {
   const box = $("#r-progress");
   box.hidden = false; e.target.disabled = true;
   try {
-    const done = await pollJob(job.id, j => { box.innerHTML = `<div class="progress"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>`; }, 1000);
-    if (done.status !== "done") { box.innerHTML = `<div class="errbox">${esc(done.error || done.status)}</div>`; return; }
+    const done = await pollJob(job.id, j => { box.innerHTML = ui.jobProgress(j); }, 1000);
+    if (done.status !== "done") { ui.error(box, done.status === "cancelled" ? "취소했습니다." : (done.error || done.status)); return; }
     box.hidden = true; evRender(done.result); evHistory();
   } finally { e.target.disabled = false; }
 }
@@ -217,7 +217,7 @@ function ciBar(v, ci) {
   const whisker = ci ? `<div title="95% 구간 ${pct(ci[0])}–${pct(ci[1])}" style="position:absolute;top:6px;height:2px;left:${ci[0] * 100}%;width:${Math.max(0.5, (ci[1] - ci[0]) * 100)}%;background:var(--text)"></div>`
     + `<div style="position:absolute;top:3px;height:8px;width:2px;left:${ci[0] * 100}%;background:var(--text)"></div>`
     + `<div style="position:absolute;top:3px;height:8px;width:2px;left:calc(${ci[1] * 100}% - 2px);background:var(--text)"></div>` : "";
-  return `<div style="position:relative;height:14px;background:var(--code);border-radius:4px;min-width:120px;flex:1"><div class="bar" style="position:absolute;top:0;bottom:0;left:0;width:${v * 100}%;border-radius:4px"></div>${whisker}</div>`;
+  return `<div class="grow bg-code min-w-sm" style="position:relative;height:14px"><div class="bar" style="position:absolute;top:0;bottom:0;left:0;width:${v * 100}%;border-radius:4px"></div>${whisker}</div>`;
 }
 function rankCell(r, title) {
   const style = r === 1 ? "background:color-mix(in srgb, var(--ok) 18%, transparent)" : r == null ? "color:var(--status-critical);font-weight:700" : r > 5 ? "color:var(--status-critical)" : "";
@@ -235,7 +235,7 @@ function evRender(r) {
     <div class="table-wrap"><table>
       <tr><th>#</th><th>설정</th><th>nDCG@10 (95% 구간)</th><th class="num">Hit@1</th><th class="num">Hit@5</th><th class="num">Hit@10</th><th class="num">MRR@10</th><th class="num" title="정답 문서가 상위 5개 문서 안에 든 비율">문서 R@5</th><th class="num">지연 평균/p95</th><th>1위 대비</th></tr>
       ${ok.map((e, i) => `<tr><td>${i + 1}</td><td class="small"><b>${esc(e.label)}</b></td>
-        <td><div class="row" style="flex-wrap:nowrap;gap:8px"><span class="mono" style="width:44px">${pct(e.metrics["ndcg@10"])}</span>${ciBar(e.metrics["ndcg@10"], e.ci["ndcg@10"])}</div></td>
+        <td><div class="row nowrap-row gap-2"><span class="mono w-xs">${pct(e.metrics["ndcg@10"])}</span>${ciBar(e.metrics["ndcg@10"], e.ci["ndcg@10"])}</div></td>
         <td class="num">${pct(e.metrics["hit@1"])}</td><td class="num">${pct(e.metrics["hit@5"])}</td><td class="num">${pct(e.metrics["hit@10"])}</td><td class="num">${pct(e.metrics["mrr@10"])}</td><td class="num">${pct(e.metrics["doc_recall@5"])}</td>
         <td class="num small nowrap">${e.latency_ms.mean} / ${e.latency_ms.p95}ms</td><td class="small nowrap">${vs(e)}</td></tr>`).join("")}
       ${r.results.filter(e => e.status !== "ok").map(e => `<tr><td>-</td><td class="small">${esc(e.label)}</td><td colspan="8"><div class="errbox">${esc(e.error)}</div></td></tr>`).join("")}
@@ -243,8 +243,8 @@ function evRender(r) {
     <div class="small muted">Hit@k = 근거 문장을 담은 청크(근거가 없으면 정답 문서의 청크)가 상위 k개 안에 든 비율, 검색 지표는 % 단위. 검은 선 = 질문을 1,000번 다시 뽑아 구한 95% 구간. '차이 불확실'은 같은 질문들로 짝지어 비교했을 때 1위와의 차이가 우연일 수 있다는 뜻입니다.</div>
     ${types.length > 1 ? `<h3>질문 유형별 nDCG@10</h3><div class="table-wrap"><table><tr><th>설정</th>${types.map(t => `<th class="num">${EV_TYPE[t] || esc(t)} (${ok[0].by_type[t]?.n ?? 0})</th>`).join("")}</tr>
       ${ok.map(e => `<tr><td class="small">${esc(e.label)}</td>${types.map(t => `<td class="num">${e.by_type[t] ? pct(e.by_type[t]["ndcg@10"]) : "-"}</td>`).join("")}</tr>`).join("")}</table></div>` : ""}
-    <h3>질문별 정답 순위 <label class="small muted" style="font-weight:400"><input type="checkbox" id="r-diff" checked> 설정마다 결과가 다른 질문만</label></h3>
-    <div class="table-wrap" style="max-height:480px"><table id="r-qtable"></table></div>
+    <h3>질문별 정답 순위 <label class="small muted fw-normal"><input type="checkbox" id="r-diff" checked> 설정마다 결과가 다른 질문만</label></h3>
+    <div class="table-wrap scroll-md"><table id="r-qtable"></table></div>
     <div class="small muted">숫자 = 정답 청크의 순위(열 번호 = 위 표의 순위), ✗ = 상위 10개 밖. 칸에 마우스를 올리면 그 설정의 1위 결과가 보입니다.</div>
   </div>`;
   const qtable = () => {

@@ -1,15 +1,15 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}이력{% endblock %}
 {% block content %}
-<h1>테스트 이력</h1>
-<p class="lead">플레이그라운드·멀티모달·임베딩 지도·벤치마크 실행 기록입니다 (SQLite: <code>data/app.db</code>).</p>
-<div class="card row" style="margin-bottom:14px">
-  <div class="field"><label>종류</label>
+{% call ui.page_header("테스트 이력") %}플레이그라운드·멀티모달·임베딩 지도·벤치마크 실행 기록입니다 (SQLite: <code>data/app.db</code>).{% endcall %}
+<div class="card row mb-4">
+  <div class="field"><label for="kind">종류</label>
     <select id="kind"><option value="">전체</option><option value="benchmark">benchmark</option><option value="retrieval">retrieval</option>
       <option value="similarity">similarity</option><option value="embed">embed</option><option value="projection">projection</option><option value="multimodal">multimodal</option><option value="rag_eval">rag_eval</option><option value="flow">flow</option><option value="flow_eval">flow_eval</option></select></div>
-  <div class="small muted" id="summary" style="align-self:end"></div>
+  <div class="small muted self-end" id="summary"></div>
   <span class="spacer"></span>
-  <div class="row" style="align-self:end">
+  <div class="row self-end">
     <span class="small muted" id="sel-count">0개 선택</span>
     <button class="btn sm danger" id="btn-del-sel" disabled>선택 삭제</button>
     <button class="btn sm danger" id="btn-del-all">전체 삭제</button>
@@ -17,7 +17,7 @@
 </div>
 <div class="table-wrap"><table>
   <thead><tr><th><input type="checkbox" id="sel-all" aria-label="전체 선택"></th><th>#</th><th>종류</th><th>제목</th><th>모델</th><th class="num">소요</th><th>시간</th><th></th></tr></thead>
-  <tbody id="rows"></tbody>
+  <tbody id="rows"><tr><td colspan="8"><div class="loading">불러오는 중…</div></td></tr></tbody>
 </table></div>
 <dialog id="dlg"><div class="row between"><h2 id="dlg-title"></h2><button class="btn sm" onclick="$('#dlg').close()">닫기</button></div><pre id="dlg-body"></pre></dialog>
 {% endblock %}

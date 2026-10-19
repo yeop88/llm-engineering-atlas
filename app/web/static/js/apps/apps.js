@@ -8,4 +8,4 @@ const APPS = [
   { key: "keywords", title: "키워드·요약", use: "문서 태깅, 검색 색인어, 긴 문서 핵심 문장", how: "형태소 후보 중 문서 의미와 가까운 키워드를 고르고(MMR), 중심 문장으로 추출 요약합니다." },
 ];
 $("#apps").innerHTML = APPS.filter(a => AVAILABLE.includes(a.key)).map(a => `<a class="card stack" href="/apps/${a.key}" style="color:inherit;text-decoration:none">
-  <h2 style="margin:0">${a.title}</h2><div class="small"><b>활용</b> ${a.use}</div><div class="small muted">${a.how}</div></a>`).join("");
+  <h2 class="m-0">${a.title}</h2><div class="small"><b>활용</b> ${a.use}</div><div class="small muted">${a.how}</div></a>`).join("");

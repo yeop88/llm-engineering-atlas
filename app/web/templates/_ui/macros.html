@@ -1,0 +1,32 @@
+{#- 화면 공통 부품. 모든 화면이 같은 모양 · 같은 접근성으로 시작하게 한다 — 새 화면은 이것부터.
+    쓰는 법: {% import "_ui/macros.html" as ui %}
+      {% call ui.page_header("답변 생성") %}설명 한두 줄{% endcall %}          설명이 길면 두 줄로 접고 '더 보기'(lib/shell.js)
+      {{ ui.page_header("모델 카탈로그", actions=caller_html) }}                설명 없이
+      {{ ui.field("a-col", "컬렉션", '<select id="a-col" data-ctx="col"></select>') }}   이름표와 입력란을 for/id 로 연결
+-#}
+
+{% macro page_header(title, back=None, actions="", title_id=None, badge="", prefix="") -%}
+<header class="page-head">
+  {% if back %}<a class="back small" href="{{ back[1] }}">← {{ back[0] }}</a>{% endif %}
+  <div class="page-title">
+    <h1>{% if prefix %}<span class="stage-no">{{ prefix }}</span> {% endif %}<span{% if title_id %} id="{{ title_id }}"{% endif %}>{{ title }}</span>{% if badge %} {{ badge | safe }}{% endif %}</h1>
+    {% if actions %}<div class="page-actions">{{ actions | safe }}</div>{% endif %}
+  </div>
+  {% if caller %}<p class="lead">{{ caller() }}</p>{% endif %}
+</header>
+{%- endmacro %}
+
+{% macro field(id, label, control, cls="") -%}
+<div class="field{{ ' ' ~ cls if cls }}"><label for="{{ id }}">{{ label }}</label>{{ control | safe }}</div>
+{%- endmacro %}
+
+{% macro empty(message, href=None, action=None) -%}
+<div class="empty">{{ message }}{% if href %}<div class="empty-act"><a class="btn" href="{{ href }}">{{ action }}</a></div>{% endif %}</div>
+{%- endmacro %}
+
+{#- 맵 흐름의 단계 상자 (맵 화면 4개가 같은 매크로를 복사해 쓰던 것) — 상태 색 · 단계 소개 링크 -#}
+{% macro flow_box(key, text=None) -%}
+  {%- set s = registry.BY_KEY[key] -%}
+  <a class="flow-box {{ 'done' if s.status == 'done' else ('basic' if s.status == 'basic' else 'plan') }}" href="/stages/{{ key }}" title="{{ s.status_label }} · {{ s.summary }}">
+    <span class="stage-no">{{ s.no }}</span> {{ text or s.title }}</a>
+{%- endmacro %}

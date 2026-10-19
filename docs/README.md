@@ -2,7 +2,7 @@
 
 # 문서
 
-LLM Engineering Atlas 의 문서는 **맵 → 단계** 순서로 정리되어 있습니다. 맵 18개 · 단계 132개. 모든 맵이 같은 규칙을 따릅니다 — 맵 이름 하나를 화면 주소(`/maps/<맵>`, LLM 맵은 `/roadmap`) · 개요(`maps/<맵>.md`) · 단계 폴더(`stages/<맵>/`)에 같이 씁니다.
+LLM Engineering Atlas 의 문서는 **맵 → 단계** 순서로 정리되어 있습니다. 맵 18개 · 단계 132개. 모든 맵이 같은 규칙을 따릅니다 — 맵 이름 하나를 화면 주소(`/maps/<맵>`) · 개요(`maps/<맵>.md`) · 단계 폴더(`stages/<맵>/`)에 같이 씁니다.
 
 ## 구조
 
@@ -12,7 +12,7 @@ docs/
   maps/<맵>.md                            맵 개요 — 모든 맵에 같은 '단계' 표 (전용 화면이 있는 맵은 직접 쓴 개요 + 생성 표)
   stages/<맵>/<번호>-<이름>/README.md       단계 문서: 원리 · 왜 · 어떻게 · 화면 · 할 일 · 기반 단계 (생성)
   stages/<맵>/<번호>-<이름>/*.md            그 단계의 상세 문서 · 실측 기록 (직접 씀)
-  guides/                                 여러 단계에 걸친 가이드 (아키텍처 · API · 데이터 처리 · 배포 · LLM · 설치 · 문제 해결)
+  guides/                                 여러 단계에 걸친 가이드 (아키텍처 · API · 화면 · 데이터 처리 · 배포 · LLM · 설치 · 문제 해결)
   records/                                단계 밖의 실측 · 정정 기록
 ```
 
@@ -24,7 +24,7 @@ docs/
 
 | 맵 | 무엇을 | 단계 | 개요 | 화면 |
 |---|---|---|---|---|
-| **LLM 시스템 엔지니어링 맵** | 임베딩 → RAG 검색 → 리랭킹 → 라우팅 → 소형/대형 모델 · 에이전트 — 문서 지식을 싸고 빠르고 정확하게 서비스하는 흐름 | 12 — ✅ 12 | [llm.md](maps/llm.md) | `/roadmap` |
+| **LLM 시스템 엔지니어링 맵** | 임베딩 → RAG 검색 → 리랭킹 → 라우팅 → 소형/대형 모델 · 에이전트 — 문서 지식을 싸고 빠르고 정확하게 서비스하는 흐름 | 12 — ✅ 12 | [llm.md](maps/llm.md) | `/maps/llm` |
 | **지식 그래프 · GraphRAG 맵** | 온톨로지 설계 → 추출 · 융합 → 그래프 DB → GraphRAG — 개념과 관계를 구조로 저장해 다단계 · 집계 · 전체 요약 질문에 답하는 흐름 | 8 — ⬜ 8 | [knowledge-graph.md](maps/knowledge-graph.md) | `/maps/knowledge-graph` |
 | **멀티에이전트 · 멀티모달 맵** | 멀티모달 입력 · 검색 → 오케스트레이터가 전문가 에이전트(검색 · 분석 · 작성 · 검증)에게 분배 → 교차 검증 → 텍스트 · 차트 · 음성 출력 | 8 — 🟡 4 · ⬜ 4 | [multi-agent.md](maps/multi-agent.md) | `/maps/multi-agent` |
 | **평가 · 관측 (LLMOps) 맵** | 평가 세트 → 오프라인 평가 · 회귀 → 트레이싱 → 피드백 → 드리프트 감지 · A/B → 개선 반영 — 서비스가 지금 잘 되고 있는지 숫자로 아는 흐름 | 8 — 🟡 4 · ⬜ 4 | [evalops.md](maps/evalops.md) | `/maps/evalops` |
@@ -47,6 +47,7 @@ docs/
 
 - [아키텍처 — 코드 구조(core · stages · web)와 동작 방식](guides/architecture.md)
 - [REST API](guides/api.md)
+- [화면(UI) — 화면 뼈대 · 새 화면 만들기 · 부품 · 작업 맥락 · 스타일 · 접근성](guides/ui.md)
 - [데이터 처리 — 수집 · 전처리 · 평가 자료 기록과 유효하게 처리하는 법](guides/data-processing.md)
 - [배포 · 운영 — Docker, 접근 토큰, 작업 기록, 모델 호환성 점검, 새 모델 후보](guides/deploy.md)
 - [LLM 연결 — 로컬 llama.cpp · OpenAI 호환 · Claude, 소형 모델 비교](guides/llm.md)

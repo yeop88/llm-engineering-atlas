@@ -1,9 +1,9 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}키워드·요약{% endblock %}
 {% block content %}
 <a href="/apps" class="small">← 응용</a>
-<h1>키워드·요약</h1>
-<p class="lead">문서마다 의미를 대표하는 키워드를 뽑아 태그·검색 색인어로 쓰고, 긴 글에서 핵심 문장을 골라 추출 요약을 만듭니다. 생성형 모델 없이 임베딩만 쓰므로 원문에 없는 말을 지어내지 않습니다.</p>
+{% call ui.page_header("키워드·요약") %}문서마다 의미를 대표하는 키워드를 뽑아 태그·검색 색인어로 쓰고, 긴 글에서 핵심 문장을 골라 추출 요약을 만듭니다. 생성형 모델 없이 임베딩만 쓰므로 원문에 없는 말을 지어내지 않습니다.{% endcall %}
 
 <div class="tabs">
   <button data-tab="t-kw">키워드 추출</button>
@@ -16,21 +16,21 @@
     <div class="card stack">
       <h2>설정</h2>
       <div class="row">
-        <div class="field grow"><label>임베딩 모델</label><select id="k-model"></select></div>
-        <div class="field"><label>차원</label><select id="k-dim"></select></div>
+        <div class="field grow"><label for="k-model">임베딩 모델</label><select id="k-model"></select></div>
+        <div class="field"><label for="k-dim">차원</label><select id="k-dim"></select></div>
       </div>
       <div class="row">
-        <div class="field"><label>문서당 키워드</label><input id="k-n" type="number" value="8" min="1" max="50" style="width:80px"></div>
-        <div class="field"><label>최대 단어 수</label><select id="k-words"><option value="1">1 (명사)</option><option value="2">2</option><option value="3" selected>3</option></select></div>
-        <div class="field"><label>최소 등장 횟수</label><input id="k-freq" type="number" value="1" min="1" max="20" style="width:80px"></div>
+        <div class="field"><label for="k-n">문서당 키워드</label><input class="w-md" id="k-n" type="number" value="8" min="1" max="50"></div>
+        <div class="field"><label for="k-words">최대 단어 수</label><select id="k-words"><option value="1">1 (명사)</option><option value="2">2</option><option value="3" selected>3</option></select></div>
+        <div class="field"><label for="k-freq">최소 등장 횟수</label><input class="w-md" id="k-freq" type="number" value="1" min="1" max="20"></div>
       </div>
-      <div class="field"><label>다양성 <span class="mono" id="k-div-v"></span></label><input id="k-div" type="range" min="0" max="0.9" step="0.05" value="0.3"></div>
+      <div class="field"><label for="k-div">다양성 <span class="mono" id="k-div-v"></span></label><input id="k-div" type="range" min="0" max="0.9" step="0.05" value="0.3"></div>
       <div class="small muted">형태소 분석(Kiwi)으로 명사와 이어진 명사구("사내 문서 검색")를 후보로 뽑고, 문서 전체 벡터와 가장 가까운 후보를 고릅니다. 다양성을 높이면 서로 비슷한 키워드("검색"·"검색 시스템")가 함께 뽑히지 않습니다. 긴 문서는 600자 안팎 조각 벡터의 평균을 문서 벡터로 씁니다.</div>
       <div class="row"><span class="spacer"></span><button class="btn primary" id="k-run">키워드 추출</button></div>
     </div>
   </div>
-  <div class="card" id="k-progress" hidden style="margin-top:16px"></div>
-  <div id="k-out" style="margin-top:16px"></div>
+  <div class="card mt-4" id="k-progress" hidden></div>
+  <div class="mt-4" id="k-out"></div>
 </section>
 
 <section class="tab-panel" id="t-sum">
@@ -43,20 +43,20 @@
     <div class="card stack">
       <h2>설정</h2>
       <div class="row">
-        <div class="field grow"><label>임베딩 모델</label><select id="s-model"></select></div>
-        <div class="field"><label>차원</label><select id="s-dim"></select></div>
+        <div class="field grow"><label for="s-model">임베딩 모델</label><select id="s-model"></select></div>
+        <div class="field"><label for="s-dim">차원</label><select id="s-dim"></select></div>
       </div>
       <div class="row">
-        <div class="field"><label>요약 문장 수</label><input id="s-n" type="number" value="3" min="1" max="30" style="width:80px"></div>
-        <div class="field grow"><label>다양성 <span class="mono" id="s-div-v"></span></label><input id="s-div" type="range" min="0" max="0.9" step="0.05" value="0.3"></div>
+        <div class="field"><label for="s-n">요약 문장 수</label><input class="w-md" id="s-n" type="number" value="3" min="1" max="30"></div>
+        <div class="field grow"><label for="s-div">다양성 <span class="mono" id="s-div-v"></span></label><input id="s-div" type="range" min="0" max="0.9" step="0.05" value="0.3"></div>
       </div>
-      <label class="row" style="margin:0"><input type="checkbox" id="s-lead"> 앞 문장 가산 (기사·보도자료처럼 핵심이 앞에 오는 글)</label>
+      <label class="row m-0"><input type="checkbox" id="s-lead"> 앞 문장 가산 (기사·보도자료처럼 핵심이 앞에 오는 글)</label>
       <div class="small muted">문장끼리의 의미 유사도로 그래프를 만들고, 다른 문장들과 많이 닮은 <b>중심 문장</b>(LexRank 방식)부터 고릅니다. 이미 고른 문장과 겹치는 문장은 다양성만큼 감점합니다. 요약 문장은 원래 순서대로 보여 줍니다.</div>
       <div class="row"><span class="spacer"></span><button class="btn primary" id="s-run">요약</button></div>
     </div>
   </div>
-  <div class="card" id="s-progress" hidden style="margin-top:16px"></div>
-  <div id="s-out" style="margin-top:16px"></div>
+  <div class="card mt-4" id="s-progress" hidden></div>
+  <div class="mt-4" id="s-out"></div>
 </section>
 {% endblock %}
 {% block scripts %}

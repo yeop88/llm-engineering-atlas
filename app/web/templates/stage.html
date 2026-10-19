@@ -1,17 +1,14 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}{{ stage.title }}{% endblock %}
 {% block content %}
 {# 이전 · 다음 단계는 같은 맵의 흐름 안에서 (registry.map_flow) #}
 {% set flow = registry.map_flow(stage) %}
 {% set idx = (flow | map(attribute="key") | list).index(stage.key) if flow else -1 %}
-<a href="{{ stage.map_info.href }}" class="small">← {{ stage.map_info.title }}</a>
-<div class="row between" style="align-items:flex-end">
-  <h1><span class="stage-no">{{ stage.no }}</span> {{ stage.title }} <span class="muted" style="font-weight:400;font-size:18px">{{ stage.en }}</span></h1>
-  <span class="badge {{ 'ok' if stage.status == 'done' else ('warn' if stage.status == 'basic' else '') }}">{{ stage.status_label }}</span>
-</div>
-<p class="lead">{{ stage.summary }}</p>
+{% set badge %}<span class="badge {{ 'ok' if stage.status == 'done' else ('warn' if stage.status == 'basic' else '') }}">{{ stage.status_label }}</span>{% endset %}
+{% call ui.page_header(stage.title, back=(stage.map_info.title, stage.map_info.href), prefix=stage.no, badge=badge) %}<span class="muted">{{ stage.en }}</span> — {{ stage.summary }}{% endcall %}
 {% if stage.builds_on %}
-<div class="row small" style="margin:-4px 0 12px;gap:6px"><span class="muted">기반 단계 (이미 있는 것 위에 짓는다):</span>
+<div class="row small gap-2" style="margin:-4px 0 12px"><span class="muted">기반 단계 (이미 있는 것 위에 짓는다):</span>
   {% for k in stage.builds_on %}{% set b = registry.BY_KEY[k] %}<a class="flow-box sm {{ 'done' if b.status == 'done' else ('basic' if b.status == 'basic' else 'plan') }}" href="/stages/{{ k }}" title="{{ b.map_info.title }} · {{ b.status_label }}"><span class="stage-no">{{ b.no }}</span> {{ b.title }}</a>{% endfor %}
 </div>
 {% endif %}
@@ -22,17 +19,17 @@
   <div class="card stack"><h2>어떻게 (이 앱에서)</h2><ul>{% for h in stage.how %}<li>{{ h }}</li>{% endfor %}</ul></div>
 </div>
 
-<div class="grid cols-2" style="margin-top:16px">
+<div class="grid cols-2 mt-4">
   <div class="card stack">
     <h2>화면</h2>
     {% if stage.pages %}
-      {% for p in stage.pages %}<a class="card" href="{{ p.href }}" style="padding:10px;color:inherit"><b>{{ p.label }}</b> <span class="small muted">{{ p.desc }}</span></a>{% endfor %}
+      {% for p in stage.pages %}<a class="card p-2 inherit" href="{{ p.href }}"><b>{{ p.label }}</b> <span class="small muted">{{ p.desc }}</span></a>{% endfor %}
     {% else %}
       {# 자기 화면이 없어도 기반 단계의 화면에서 이미 있는 기능을 써 볼 수 있다 (멀티에이전트 · 멀티모달 맵의 '기초 있음' 단계) #}
       {% set base_pages = [] %}{% for k in stage.builds_on %}{% for p in registry.BY_KEY[k].pages %}{% set _ = base_pages.append(p) %}{% endfor %}{% endfor %}
       <div class="empty">아직 이 단계의 테스트 화면이 없습니다. 진행하면 여기에 생깁니다.</div>
       {% if base_pages %}<div class="small muted">지금 써 볼 수 있는 기반 단계의 화면</div>
-        {% for p in base_pages %}<a class="card" href="{{ p.href }}" style="padding:8px;color:inherit"><b>{{ p.label }}</b> <span class="small muted">{{ p.desc }}</span></a>{% endfor %}{% endif %}
+        {% for p in base_pages %}<a class="card p-2 inherit" href="{{ p.href }}"><b>{{ p.label }}</b> <span class="small muted">{{ p.desc }}</span></a>{% endfor %}{% endif %}
     {% endif %}
   </div>
   <div class="card stack">
@@ -43,7 +40,7 @@
 </div>
 
 {% if idx >= 0 %}
-<div class="row between" style="margin-top:20px">
+<div class="row between mt-5">
   {% if idx > 0 %}{% set p = flow[idx - 1] %}<a class="btn" href="/stages/{{ p.key }}">← {{ p.no }} {{ p.title }}</a>{% else %}<span></span>{% endif %}
   {% if idx < flow | length - 1 %}{% set n = flow[idx + 1] %}<a class="btn" href="/stages/{{ n.key }}">{{ n.no }} {{ n.title }} →</a>{% endif %}
 </div>

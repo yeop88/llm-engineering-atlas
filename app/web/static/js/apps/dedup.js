@@ -15,17 +15,17 @@ $("#d-run").onclick = async e => {
       <div class="stat"><div class="label">중복 그룹</div><div class="value">${r.n_groups}</div></div>
       <div class="stat"><div class="label">지울 수 있는 항목</div><div class="value">${r.n_remove}</div><div class="small muted">전체의 ${(r.summary.dedup_ratio * 100).toFixed(1)}%</div></div>
       <div class="stat"><div class="label">남는 항목</div><div class="value">${r.n_keep}</div></div>
-      <div class="stat"><div class="label">유형</div><div class="value" style="font-size:16px;margin-top:6px">완전 중복 ${r.kinds.copy || 0} · 의역 ${r.kinds.paraphrase || 0}</div></div>
+      <div class="stat"><div class="label">유형</div><div class="value text-lg mt-2">완전 중복 ${r.kinds.copy || 0} · 의역 ${r.kinds.paraphrase || 0}</div></div>
     </div>
     <details><summary>임계값 정하기 참고 — 가장 가까운 이웃 유사도 분포 (중앙값 ${r.nn_similarity.median}, 하위 10% ${r.nn_similarity.p10}, 상위 10% ${r.nn_similarity.p90})</summary>
-      <div class="small muted" style="margin:6px 0">각 텍스트와 가장 비슷한 다른 텍스트의 유사도입니다. 모델마다 분포가 크게 달라서(어떤 모델은 관계없는 문장끼리도 0.8 안팎) 같은 임계값이 모델마다 다른 의미가 됩니다. 중복이 거의 없는 데이터라면 중앙값보다 충분히 높은 값을 임계값으로 잡으세요. 막대 = 현재 임계값 이상.</div>
-      ${(() => { const mx = Math.max(1, ...r.nn_similarity.hist.map(h => h.n)); return r.nn_similarity.hist.map(h => `<div class="row small" style="flex-wrap:nowrap;gap:8px"><span class="mono" style="width:90px">${h.from.toFixed(2)}–${h.to.toFixed(2)}</span>
-        <div style="flex:1;background:var(--code);border-radius:4px"><div class="bar" style="width:${Math.max(h.n ? 2 : 0, h.n / mx * 100)}%;${h.from + 1e-9 >= r.threshold || h.to > r.threshold ? "" : "opacity:.35"}"></div></div><span class="mono" style="width:40px;text-align:right">${h.n}</span></div>`).join(""); })()}
+      <div class="small muted my-2">각 텍스트와 가장 비슷한 다른 텍스트의 유사도입니다. 모델마다 분포가 크게 달라서(어떤 모델은 관계없는 문장끼리도 0.8 안팎) 같은 임계값이 모델마다 다른 의미가 됩니다. 중복이 거의 없는 데이터라면 중앙값보다 충분히 높은 값을 임계값으로 잡으세요. 막대 = 현재 임계값 이상.</div>
+      ${(() => { const mx = Math.max(1, ...r.nn_similarity.hist.map(h => h.n)); return r.nn_similarity.hist.map(h => `<div class="row small nowrap-row gap-2"><span class="mono w-md">${h.from.toFixed(2)}–${h.to.toFixed(2)}</span>
+        <div class="grow bg-code"><div class="bar" style="width:${Math.max(h.n ? 2 : 0, h.n / mx * 100)}%;${h.from + 1e-9 >= r.threshold || h.to > r.threshold ? "" : "opacity:.35"}"></div></div><span class="mono w-xs text-right">${h.n}</span></div>`).join(""); })()}
     </details>
-    ${r.groups.map((g, n) => `<div class="card" style="padding:10px"><div class="small muted">그룹 ${n + 1} · ${g.size}개</div>
-      ${g.members.map(m => `<div class="row small" style="flex-wrap:nowrap;gap:8px;padding:3px 0">
+    ${r.groups.map((g, n) => `<div class="card p-2"><div class="small muted">그룹 ${n + 1} · ${g.size}개</div>
+      ${g.members.map(m => `<div class="row small nowrap-row gap-2" style="padding:3px 0">
         ${m.keep ? '<span class="badge ok">남김</span>' : `<span class="badge ${KIND[m.kind][1]}">${KIND[m.kind][0]}</span>`}
-        <span style="flex:1">${esc(m.text)}${m.filename ? ` <span class="muted">(${esc(m.filename)})</span>` : ""}</span>
+        <span class="grow">${esc(m.text)}${m.filename ? ` <span class="muted">(${esc(m.filename)})</span>` : ""}</span>
         ${m.keep ? "" : `<span class="mono muted nowrap">의미 ${m.similarity.toFixed(3)} · 글자 ${m.lexical.toFixed(2)}</span>`}</div>`).join("")}</div>`).join("") || '<div class="empty">이 임계값에서는 중복이 없습니다. 임계값을 낮춰 보세요.</div>'}
   </div>`;
 };

@@ -1,33 +1,33 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}리랭킹 테스트{% endblock %}
 {% block content %}
-<h1>리랭킹 테스트</h1>
-<p class="lead">같은 1단계 검색 결과를 리랭커 × 재정렬 후보 수 × (그대로 / 1단계 순위와 융합)로 다시 줄 세워, 품질과 지연을 함께 봅니다. 크로스 인코더는 쌍마다 따로 점수를 매기므로 가장 큰 후보 수에서 한 번만 매기고 작은 후보 수는 잘라서 계산합니다. LLM 목록형 리랭커는 후보를 한 번에 보여 주고 순서를 받습니다.</p>
+{% call ui.page_header("리랭킹 테스트") %}같은 1단계 검색 결과를 리랭커 × 재정렬 후보 수 × (그대로 / 1단계 순위와 융합)로 다시 줄 세워, 품질과 지연을 함께 봅니다. 크로스 인코더는 쌍마다 따로 점수를 매기므로 가장 큰 후보 수에서 한 번만 매기고 작은 후보 수는 잘라서 계산합니다. LLM 목록형 리랭커는 후보를 한 번에 보여 주고 순서를 받습니다.{% endcall %}
 
 <div class="card stack">
   <h2>설정</h2>
   <div class="row">
-    <div class="field"><label>컬렉션</label><select id="r-col"></select></div>
-    <div class="field"><label>1단계 검색</label><select id="r-mode"><option value="dense">의미</option><option value="hybrid">하이브리드</option><option value="bm25">BM25</option></select></div>
-    <div class="field" id="r-idx-wrap"><label>벡터 인덱스</label><select id="r-idx"></select></div>
-    <div class="field" id="r-cs-wrap" hidden><label>청크 세트</label><select id="r-cs"></select></div>
-    <div class="field grow"><label>평가 세트</label><select id="r-set"></select></div>
+    <div class="field"><label for="r-col">컬렉션</label><select id="r-col"></select></div>
+    <div class="field"><label for="r-mode">1단계 검색</label><select id="r-mode"><option value="dense">의미</option><option value="hybrid">하이브리드</option><option value="bm25">BM25</option></select></div>
+    <div class="field" id="r-idx-wrap"><label for="r-idx">벡터 인덱스</label><select id="r-idx"></select></div>
+    <div class="field" id="r-cs-wrap" hidden><label for="r-cs">청크 세트</label><select id="r-cs"></select></div>
+    <div class="field grow"><label for="r-set">평가 세트</label><select id="r-set"></select></div>
   </div>
   <div class="row">
-    <div class="field grow"><label>크로스 인코더 리랭커 (받아 둔 것, 최대 4개)</label><select id="r-rr" multiple size="3"></select></div>
-    <div class="field"><label>후보 수 (쉼표)</label><input id="r-ks" value="5, 10, 20" style="width:120px"></div>
-    <div class="field"><label>질문 수 (비우면 전부)</label><input id="r-n" type="number" min="1" style="width:90px"></div>
+    <div class="field grow"><label for="r-rr">크로스 인코더 리랭커 (받아 둔 것, 최대 4개)</label><select id="r-rr" multiple size="3"></select></div>
+    <div class="field"><label for="r-ks">후보 수 (쉼표)</label><input class="w-lg" id="r-ks" value="5, 10, 20"></div>
+    <div class="field"><label for="r-n">질문 수 (비우면 전부)</label><input class="w-md" id="r-n" type="number" min="1"></div>
   </div>
   <div class="row">
-    <label class="row small" style="margin:0"><input type="checkbox" id="r-llm"> LLM 목록형 리랭커도 (로컬 LLM, 질문당 1회 호출)</label>
-    <div class="field"><label>LLM 후보 수</label><input id="r-llm-top" type="number" value="10" min="2" max="30" style="width:70px"></div>
-    <div class="field"><label>모델 (비우면 기본)</label><input id="r-llm-model" style="width:160px"></div>
+    <label class="row small m-0"><input type="checkbox" id="r-llm"> LLM 목록형 리랭커도 (로컬 LLM, 질문당 1회 호출)</label>
+    <div class="field"><label for="r-llm-top">LLM 후보 수</label><input class="w-sm" id="r-llm-top" type="number" value="10" min="2" max="30"></div>
+    <div class="field"><label for="r-llm-model">모델 (비우면 기본)</label><input class="w-xl" id="r-llm-model"></div>
     <span class="spacer"></span><button class="btn primary" id="r-run">평가 실행</button>
   </div>
   <div id="r-progress" hidden></div>
   <div id="r-out"></div>
 </div>
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>검색 · 답변에서 쓰기</h2>
   <div class="small">검색 설정에 <code>"rerank_fusion": true</code>(크로스 인코더 순위와 1단계 순위 RRF) 또는 <code>"llm_rerank": {"top": 10, "fusion": false}</code>(LLM 목록형)를 넣으면 검색 비교 · 조합 평가 · 답변 · 연결 실행 어디서든 적용됩니다.</div>
 </div>

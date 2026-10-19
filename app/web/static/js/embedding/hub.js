@@ -11,7 +11,7 @@ async function search(btn) {
     <td class="num">${fmtNum(r.downloads)}</td><td class="num">${fmtNum(r.likes)}</td>
     <td class="nowrap">${(r.created_at || "").slice(0, 10)}</td><td class="small">${esc(r.library || "-")}</td><td class="small">${esc(r.license || "-")}</td>
     <td class="right nowrap"><button class="btn sm" onclick="info('${esc(r.hf_id)}', this)">상세</button>
-      ${r.registered_id ? `<a class="btn sm" href="/models/${r.registered_id}">등록됨 →</a>` : `<button class="btn sm primary" onclick="importModel('${esc(r.hf_id)}', this)">추가</button>`}</td>
+      ${r.registered_id ? `<a class="btn sm" href="/embedding/models/${r.registered_id}">등록됨 →</a>` : `<button class="btn sm primary" onclick="importModel('${esc(r.hf_id)}', this)">추가</button>`}</td>
   </tr>`).join("") || '<tr><td colspan="7" class="empty">결과 없음</td></tr>';
 }
 $("#d-go").onclick = async e => {
@@ -34,13 +34,13 @@ async function info(id, btn) {
     ["모달리티", m.modalities.join(", ")], ["trust_remote_code", m.trust_remote_code], ["gated", m.gated], ["저장소 크기", fmtBytes(m.size_bytes)],
     ["sentence-transformers", m.sentence_transformers], ["쿼리/문서 프롬프트", `${m.query_prompt || "-"} / ${m.document_prompt || "-"}`],
   ].map(([k, v]) => `<div>${k}</div><div>${esc(v ?? "-")}</div>`).join("")}</div>
-  ${prompts.length ? `<h3 style="margin-top:14px">정의된 프롬프트</h3><pre>${esc(prompts.map(([k, v]) => `${k}: ${v}`).join("\n"))}</pre>` : ""}`;
+  ${prompts.length ? `<h3 class="mt-4">정의된 프롬프트</h3><pre>${esc(prompts.map(([k, v]) => `${k}: ${v}`).join("\n"))}</pre>` : ""}`;
   $("#dlg").showModal();
 }
 async function importModel(id, btn) {
   const m = await busy(btn, () => api("/api/hub/import", { method: "POST", body: { hf_id: id } }));
   toast(`${m.hf_id} 추가됨`, "ok");
-  btn.outerHTML = `<a class="btn sm" href="/models/${m.id}">등록됨 →</a>`;
+  btn.outerHTML = `<a class="btn sm" href="/embedding/models/${m.id}">등록됨 →</a>`;
 }
 $("#go").onclick = e => search(e.target);
 $("#q").addEventListener("keydown", e => { if (e.key === "Enter") search($("#go")); });

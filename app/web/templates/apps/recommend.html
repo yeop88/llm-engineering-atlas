@@ -1,34 +1,34 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}콘텐츠 추천{% endblock %}
 {% block content %}
 <a href="/apps" class="small">← 응용</a>
-<h1>콘텐츠 추천</h1>
-<p class="lead">아이템에 👍/👎 를 누르거나 관심사를 적으면 취향 벡터를 만들어 추천합니다. "다양성"을 올리면 비슷한 것만 몰리지 않게 골고루 고릅니다(MMR).</p>
+{% call ui.page_header("콘텐츠 추천") %}아이템에 👍/👎 를 누르거나 관심사를 적으면 취향 벡터를 만들어 추천합니다. "다양성"을 올리면 비슷한 것만 몰리지 않게 골고루 고릅니다(MMR).{% endcall %}
 
 <div class="grid cols-2">
   <div class="card stack">
     <h2>① 추천 대상 아이템</h2>
     <div id="src"></div>
     <div class="row">
-      <div class="field grow"><label>임베딩 모델</label><select id="model"></select></div>
-      <div class="field"><label>차원</label><select id="dim"></select></div>
+      <div class="field grow"><label for="model">임베딩 모델</label><select id="model"></select></div>
+      <div class="field"><label for="dim">차원</label><select id="dim"></select></div>
     </div>
     <div class="row"><span class="spacer"></span><button class="btn" id="load">아이템 불러오기</button></div>
   </div>
   <div class="card stack">
     <h2>② 취향</h2>
-    <div><label>관심사 (선택)</label><input id="interest" placeholder="예: 인공지능 검색 기술과 보안"></div>
+    <div><label for="interest">관심사 (선택)</label><input id="interest" placeholder="예: 인공지능 검색 기술과 보안"></div>
     <div class="row">
-      <div class="field"><label>추천 수</label><input id="topk" type="number" value="8" min="1" max="100"></div>
-      <div class="field grow"><label>다양성 <span id="div-v" class="mono"></span></label><input id="diversity" type="range" min="0" max="1" step="0.05" value="0.15"></div>
+      <div class="field"><label for="topk">추천 수</label><input id="topk" type="number" value="8" min="1" max="100"></div>
+      <div class="field grow"><label for="diversity">다양성 <span id="div-v" class="mono"></span></label><input id="diversity" type="range" min="0" max="1" step="0.05" value="0.15"></div>
     </div>
     <div class="small muted" id="taste">👍 0 · 👎 0</div>
-    <div id="items" class="stack" style="max-height:420px;overflow:auto"><div class="empty">① 에서 아이템을 불러오세요</div></div>
+    <div id="items" class="stack scroll scroll-md"><div class="empty">① 에서 아이템을 불러오세요</div></div>
     <div class="row"><span class="spacer"></span><button class="btn primary" id="run">추천 받기</button></div>
   </div>
 </div>
-<div class="card" id="progress" hidden style="margin-top:16px"></div>
-<div class="card" id="out" style="margin-top:16px" hidden></div>
+<div class="card mt-4" id="progress" hidden></div>
+<div class="card mt-4" id="out" hidden></div>
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', path='js/apps/common.js') }}"></script>

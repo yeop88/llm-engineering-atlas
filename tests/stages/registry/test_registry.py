@@ -1,9 +1,9 @@
-"""단계 레지스트리: 내용 완결성 · 화면 연결 · 메뉴 · 단계 소개 · 상단 설명 패널."""
+"""단계 레지스트리: 내용 완결성 · 화면 연결 · 사이드바 · 단계 소개 · 단계 설명 서랍."""
 
 from markupsafe import escape
 
 from app.stages import registry
-from app.web.pages import PAGES, nav_items
+from app.web.pages import all_pages, sidebar
 
 
 def test_every_stage_is_described():
@@ -20,12 +20,13 @@ def test_every_stage_is_described():
 
 
 def test_stage_pages_point_to_real_routes():
-    routes = set(PAGES) | {"/apps"}
-    navs = {nav for _, nav in PAGES.values()} | {"apps"}
+    # 라우트는 레지스트리의 Page 로 만들어진다 — 화면은 템플릿을 가져야 하고, nav 키는 겹치지 않아야 한다
+    routes = {p.href for p in all_pages()}
+    navs = [p.nav for p in all_pages()]
+    assert len(navs) == len(set(navs))
     for s in registry.STAGES:
         for p in s.pages:
-            assert p.href in routes, p.href
-            assert p.nav in navs, p.nav
+            assert p.href in routes and p.template, p.href
             assert registry.stage_for_nav(p.nav) is s
     assert registry.stage_for_nav("stage_routing") is registry.BY_KEY["routing"]
     assert registry.stage_for_nav("history") is None
@@ -33,8 +34,9 @@ def test_stage_pages_point_to_real_routes():
 
 def test_nav_covers_every_stage():
     flat = []
-    for item in nav_items():
-        flat += item["keys"]
+    for sec in sidebar():
+        for item in sec["items"]:
+            flat += item["keys"] + [c["key"] for c in item["children"]]
     for s in registry.STAGES:
         assert any(k == f"stage_{s.key}" or k in [p.nav for p in s.pages] for k in flat), s.key
 
@@ -45,7 +47,7 @@ def test_stage_and_map_pages(client):
         # 화면은 Jinja 가 HTML 이스케이프한 글(따옴표 → &#39;)이라 같은 함수(markupsafe)로 바꿔 비교
         assert r.status_code == 200 and str(escape(s.principle[:20])) in r.text and s.status_label in r.text, s.key
     assert client.get("/stages/없음").status_code == 404
-    m = client.get("/roadmap").text
+    m = client.get("/maps/llm").text
     assert all(f"/stages/{s.key}" in m for s in registry.map_stages("llm")) and "부분 연결" in m and "전체 연결" in m
     # 두 번째 맵: 지식 그래프 · GraphRAG — 단계가 그 맵 화면에 모두 있고, LLM 맵 표에는 섞이지 않는다
     kg = client.get("/maps/knowledge-graph").text
@@ -57,10 +59,10 @@ def test_stage_and_map_pages(client):
     assert "기반 단계" in mr and 'href="/stages/multimodal"' in mr  # 이미 있는 기능으로 이어진다
     st = client.get("/stages/ontology").text
     assert 'href="/maps/knowledge-graph"' in st and "/stages/kg_extract" in st  # 같은 맵 안에서 다음 단계
-    # 단계에 속한 화면 위에는 그 단계의 원리 · 왜 · 어떻게 패널
+    # 단계에 속한 화면에는 그 단계의 원리 · 왜 · 어떻게 서랍(ⓘ 로 연다) — 단계 밖 화면에는 없다
     r = client.get("/finetune").text
-    assert 'class="stage-info" data-stage="finetune"' in r and registry.BY_KEY["finetune"].why[:20] in r
-    assert 'class="stage-info"' not in client.get("/history").text
+    assert 'id="stage-drawer"' in r and 'id="stage-btn"' in r and registry.BY_KEY["finetune"].why[:20] in r
+    assert 'id="stage-drawer"' not in client.get("/history").text
 
 
 def test_maps():
@@ -82,8 +84,8 @@ def test_maps():
     assert all(m.diagram for m in registry.MAPS)
     assert [s.no for s in registry.KG_FLOW] == [f"K{i}" for i in range(1, 9)]
     assert all(s.map == "llm" for s in registry.MAIN_FLOW + registry.EXTRA)  # 본선 · 곁가지는 LLM 맵
-    menu = next(i for i in nav_items() if i["label"] == "맵")
-    assert [x["href"] for x in menu["items"]] == [m.href for m in registry.MAPS]
+    maps = next(i for sec in sidebar() for i in sec["items"] if i.get("group") == "maps")
+    assert [x["href"] for x in maps["children"]] == [m.href for m in registry.MAPS]
 
 
 def test_every_map_page(client):

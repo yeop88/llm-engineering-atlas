@@ -1,3 +1,4 @@
+let lastTrend = null;  // 테마가 바뀌면 다시 그릴 추세 데이터
 let datasets = [];
 let current = null; // 화면에 표시 중인 결과 { res, runId }
 const histSelected = new Set();
@@ -54,7 +55,7 @@ function renderResult(res, runId) {
     <div id="b-charts"></div>`;
 
   if (groups.length) {
-    html += `<div class="card" style="margin-top:16px"><h2>언어/그룹별 ${primary}</h2><div class="table-wrap"><table>
+    html += `<div class="card mt-4"><h2>언어/그룹별 ${primary}</h2><div class="table-wrap"><table>
       <tr><th>모델</th>${groups.map(g => `<th class="num">${esc(g)} <span class="muted">(n=${ok[0].by_group[g]?.n ?? "?"})</span></th>`).join("")}</tr>
       ${ok.map(r => `<tr><td class="mono">${esc(r.hf_id)}</td>${groups.map(g => {
         const v = r.by_group[g]?.[primary]; const b = Math.max(...ok.map(x => x.by_group[g]?.[primary] ?? -1));
@@ -64,7 +65,7 @@ function renderResult(res, runId) {
 
   if (type === "retrieval" && ok.length) {
     const queries = ok[0].per_query.map(q => q.id);
-    html += `<div class="card" style="margin-top:16px"><h2>쿼리별 첫 정답 순위</h2>
+    html += `<div class="card mt-4"><h2>쿼리별 첫 정답 순위</h2>
       <p class="small muted">숫자 = 첫 번째 정답 문서의 순위 (1이 최상). 초록 칸 = 1위, 빨간 칸(굵게) = Top-3 밖. 칸에 마우스를 올리면 Top-5 문서가 보입니다.</p><div class="table-wrap"><table>
       <tr><th>쿼리</th>${ok.map(r => `<th class="num" title="${esc(r.hf_id)}">${esc(r.hf_id.split("/").pop())}</th>`).join("")}</tr>
       ${queries.map((qid, qi) => `<tr><td class="small"><span class="badge muted">${esc(ok[0].per_query[qi].lang || "")}</span> ${esc(ok[0].per_query[qi].text)}</td>
@@ -74,7 +75,7 @@ function renderResult(res, runId) {
       </table></div></div>`;
   }
   if (type === "sts" && ok.length) {
-    html += `<div class="card" style="margin-top:16px"><h2>문장쌍별 코사인 유사도</h2><div class="table-wrap"><table>
+    html += `<div class="card mt-4"><h2>문장쌍별 코사인 유사도</h2><div class="table-wrap"><table>
       <tr><th>문장 1</th><th>문장 2</th><th class="num">정답</th>${ok.map(r => `<th class="num">${esc(r.hf_id.split("/").pop())}</th>`).join("")}</tr>
       ${ok[0].per_pair.map((p, i) => `<tr><td class="small">${esc(p.s1)}</td><td class="small">${esc(p.s2)}</td><td class="num">${p.gold}</td>
         ${ok.map(r => `<td class="num">${r.per_pair[i].cosine.toFixed(3)}</td>`).join("")}</tr>`).join("")}
@@ -104,7 +105,7 @@ async function renderCharts(res) {
   const root = $("#b-charts");
   if (!root || typeof BenchCharts === "undefined") return;
   if (typeof Chart === "undefined") {
-    root.innerHTML = '<div class="warnbox" style="margin-top:16px">차트 라이브러리(Chart.js CDN)를 불러오지 못했습니다. 인터넷 연결을 확인하세요. 결과 표는 그대로 사용할 수 있습니다.</div>';
+    root.innerHTML = '<div class="warnbox mt-4">차트 라이브러리(Chart.js CDN)를 불러오지 못했습니다. 인터넷 연결을 확인하세요. 결과 표는 그대로 사용할 수 있습니다.</div>';
     return;
   }
   try {
@@ -142,7 +143,7 @@ function updateHistSelection() {
 async function refreshHistory() { await Promise.all([loadHistory(), loadTrend()]); }
 
 async function deleteRun(id, fromResult = false) {
-  if (!confirm(`벤치마크 결과 #${id} 을(를) 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  if (!(await ui.confirm(`벤치마크 결과 #${id} 을(를) 삭제할까요? 되돌릴 수 없습니다.`, { ok: "삭제", danger: true, title: "삭제" }))) return;
   await api(`/api/runs/${id}`, { method: "DELETE" });
   histSelected.delete(id);
   if (fromResult || current?.runId === id) { $("#b-result").innerHTML = ""; current = null; }
@@ -161,7 +162,7 @@ async function loadTrend() {
   $("#trend-empty").hidden = enough;
   $("#trend-sub").textContent = `${data.runs}회 실행의 모델별 ${data.primary_metric || "대표 지표"}입니다. 라이브러리·모델 업데이트 후 성능이 바뀌었는지 확인할 때 씁니다.`
     + (data.skipped_truncated ? ` 차원을 줄여 실행한 ${data.skipped_truncated}건은 비교할 수 없어 제외했습니다.` : "");
-  if (enough) BenchCharts.renderTrend($("#ch-trend"), data);
+  if (enough) { lastTrend = data; BenchCharts.renderTrend($("#ch-trend"), data); }
 }
 
 // ── 내보내기 ──
@@ -230,13 +231,9 @@ $("#b-run").onclick = async e => {
   box.hidden = false;
   e.target.disabled = true;
   try {
-    const done = await pollJob(job.id, j => {
-      box.innerHTML = `<div class="row between"><b>${esc(j.title)}</b><span class="row"><span class="badge warn">${j.status}</span>
-        <button class="btn sm danger" onclick="api('/api/jobs/${j.id}/cancel',{method:'POST'})">취소</button></span></div>
-        <div class="progress" style="margin:8px 0"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>`;
-    });
+    const done = await pollJob(job.id, j => { box.innerHTML = ui.jobProgress(j); });
     if (done.status === "done") { renderResult(done.result, done.result.run_id); box.hidden = true; toast("벤치마크 완료", "ok"); }
-    else box.innerHTML = `<div class="errbox">${esc(done.error || done.status)}</div>`;
+    else ui.error(box, done.status === "cancelled" ? "취소했습니다." : (done.error || done.status));
   } finally {
     e.target.disabled = false;
     refreshHistory(); getModels(true).then(() => fillModelSelect($("#b-models")));
@@ -256,7 +253,7 @@ $("#b-history").addEventListener("change", e => {
   updateHistSelection();
 });
 $("#h-del-sel").onclick = async e => {
-  if (!confirm(`선택한 ${histSelected.size}건의 벤치마크 결과를 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  if (!(await ui.confirm(`선택한 ${histSelected.size}건의 벤치마크 결과를 삭제할까요? 되돌릴 수 없습니다.`, { ok: "삭제", danger: true, title: "삭제" }))) return;
   const ids = [...histSelected];
   const r = await busy(e.target, () => api("/api/runs/bulk-delete", { method: "POST", body: { ids } }));
   if (current && ids.includes(current.runId)) { $("#b-result").innerHTML = ""; current = null; }
@@ -265,7 +262,7 @@ $("#h-del-sel").onclick = async e => {
 $("#h-del-all").onclick = async e => {
   const ds = historyDataset();
   const scope = ds ? `'${datasets.find(d => d.name === ds)?.title || ds}' 데이터셋의 벤치마크 이력을 모두` : "모든 벤치마크 이력을";
-  if (!confirm(`${scope} 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  if (!(await ui.confirm(`${scope} 삭제할까요? 되돌릴 수 없습니다.`, { ok: "삭제", danger: true, title: "삭제" }))) return;
   const r = await busy(e.target, () => api(`/api/runs?confirm=true&kind=benchmark${ds ? `&dataset=${encodeURIComponent(ds)}` : ""}`, { method: "DELETE" }));
   if (current?.runId) { $("#b-result").innerHTML = ""; current = null; }
   histSelected.clear(); toast(`${r.deleted}건 삭제`, "ok"); refreshHistory();
@@ -286,7 +283,7 @@ $("#b-upload").addEventListener("change", async e => {
 });
 $("#b-del-ds").onclick = async () => {
   const name = $("#b-dataset").value;
-  if (!confirm(`데이터셋 '${name}' 을 삭제할까요?`)) return;
+  if (!(await ui.confirm(`데이터셋 '${name}' 을 삭제할까요?`, { ok: "삭제", danger: true, title: "삭제" }))) return;
   try { await api(`/api/datasets/${name}`, { method: "DELETE" }); toast("삭제됨", "ok"); loadDatasets(); } catch (err) { toast(err.message, "err"); }
 };
 
@@ -319,3 +316,6 @@ async function importPublic(btn, key) {
   const runId = sessionStorage.getItem("run");  // 이력 화면에서 넘어온 경우
   if (runId) { sessionStorage.removeItem("run"); showRun(Number(runId)); }
 })();
+
+// 테마(◐ · OS)가 바뀌면 추세 차트도 새 색으로 (결과 차트는 lib/charts.js 가 직접 다시 그린다)
+window.addEventListener("themechange", () => { if (lastTrend) BenchCharts.renderTrend($("#ch-trend"), lastTrend); });

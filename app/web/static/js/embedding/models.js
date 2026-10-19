@@ -62,7 +62,7 @@ function row(m) {
   return `<tr>
     <td><input type="checkbox" class="sel" value="${m.id}" ${selected.has(m.id) ? "checked" : ""} aria-label="${esc(m.hf_id)} 선택"></td>
     <td><button class="btn sm" title="즐겨찾기" onclick="fav(${m.id}, ${!m.is_favorite})">${m.is_favorite ? "★" : "☆"}</button></td>
-    <td><a href="/models/${m.id}"><b>${esc(m.name)}</b></a><br>
+    <td><a href="/embedding/models/${m.id}"><b>${esc(m.name)}</b></a><br>
       <a class="small mono" href="https://huggingface.co/${esc(m.hf_id)}" target="_blank" rel="noopener">${esc(m.hf_id)}</a>
       <div class="small muted">${esc(m.provider)}</div></td>
     <td class="nowrap">${esc(m.release_date)}</td>
@@ -77,7 +77,7 @@ function row(m) {
       ${loaded ? `<button class="btn sm" onclick="act(${m.id}, 'unload', this)">언로드</button>`
                : `<button class="btn sm" onclick="act(${m.id}, 'load', this)">로드</button>`}
       ${m.cached ? `<button class="btn sm danger" onclick="removeCache(${m.id}, '${esc(m.hf_id)}', this)">캐시 삭제</button>` : ""}
-      ${m.kind === "reranker" ? "" : `<a class="btn sm" href="/playground?model=${m.id}">테스트</a>`}
+      ${m.kind === "reranker" ? "" : `<a class="btn sm" href="/embedding/playground?model=${m.id}">테스트</a>`}
       <button class="btn sm danger" title="카탈로그에서 삭제" onclick="openDelete([${m.id}])">삭제</button>
     </td>
   </tr>`;
@@ -94,7 +94,7 @@ async function act(id, action, btn) {
   load();
 }
 async function removeCache(id, hfId, btn) {
-  if (!confirm(`${hfId} 의 로컬 캐시를 삭제할까요?`)) return;
+  if (!(await ui.confirm(`${hfId} 의 로컬 캐시를 삭제할까요?`, { ok: "삭제", danger: true, title: "삭제" }))) return;
   const r = await busy(btn, () => api(`/api/models/${id}/cache`, { method: "DELETE" }));
   toast(`${fmtBytes(r.freed_bytes)} 확보`, "ok");
   load();
@@ -111,7 +111,7 @@ $("#add-go").onclick = async e => {
   const m = await busy(e.target, () => api("/api/hub/import", { method: "POST", body: { hf_id: id } }));
   $("#dlg-add").close();
   toast(`${m.hf_id} 추가됨`, "ok");
-  location.href = `/models/${m.id}`;
+  location.href = `/embedding/models/${m.id}`;
 };
 
 $("#rows").addEventListener("change", e => {
@@ -127,7 +127,7 @@ $("#sel-all").addEventListener("change", e => {
 });
 $("#btn-bulk-delete").onclick = () => openDelete([...selected]);
 $("#btn-restore").onclick = async e => {
-  if (!confirm("삭제했던 기본 카탈로그 모델을 모두 다시 등록할까요? (카탈로그 기본 설정으로 등록됩니다)")) return;
+  if (!(await ui.confirm("삭제했던 기본 카탈로그 모델을 모두 다시 등록할까요? (카탈로그 기본 설정으로 등록됩니다)", { ok: "다시 등록" }))) return;
   const r = await busy(e.target, () => api("/api/catalog/restore", { method: "POST" }));
   toast(`${r.added}개 모델 복원`, "ok");
   load();

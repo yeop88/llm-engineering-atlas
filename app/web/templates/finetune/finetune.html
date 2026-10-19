@@ -1,57 +1,57 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}파인튜닝 테스트{% endblock %}
 {% block content %}
-<h1>파인튜닝 테스트</h1>
-<p class="lead">범용 임베딩 모델을 내 문서 분야에 맞게 추가 학습합니다. 컬렉션의 지문으로 (질문, 정답 지문) 쌍을 만들어 대조 학습하고, 같은 평가 세트로 <b>학습 전후 검색 성능을 짝지어 비교</b>합니다. 원리와 기록은 <code>docs/stages/llm/5-finetune/finetune.md</code> 에 있습니다.</p>
+{% call ui.page_header("파인튜닝 테스트") %}범용 임베딩 모델을 내 문서 분야에 맞게 추가 학습합니다. 컬렉션의 지문으로 (질문, 정답 지문) 쌍을 만들어 대조 학습하고, 같은 평가 세트로 <b>학습 전후 검색 성능을 짝지어 비교</b>합니다. 원리와 기록은 <code>docs/stages/llm/5-finetune/finetune.md</code> 에 있습니다.{% endcall %}
 
 <div class="grid cols-2">
   <div class="card stack">
     <h2>1. 무엇을 학습할까</h2>
-    <div class="field"><label>원래 모델 (텍스트 임베딩, ● 로드됨 · ○ 다운로드됨)</label><select id="f-base"></select></div>
+    <div class="field"><label for="f-base">원래 모델 (텍스트 임베딩, ● 로드됨 · ○ 다운로드됨)</label><select id="f-base"></select></div>
     <div class="row">
-      <div class="field grow"><label>컬렉션</label><select id="f-col"></select></div>
-      <div class="field grow"><label>학습 지문을 뽑을 청크 세트</label><select id="f-cs"></select></div>
+      <div class="field grow"><label for="f-col">컬렉션</label><select id="f-col" data-ctx="col"></select></div>
+      <div class="field grow"><label for="f-cs">학습 지문을 뽑을 청크 세트</label><select id="f-cs" data-ctx="cs"></select></div>
     </div>
     <div class="row">
-      <div class="field grow"><label>학습 데이터 만들기</label><select id="f-method"><option value="llm">LLM 질문 생성 (권장)</option><option value="ict">ICT — 지문 속 한 문장을 질문으로 (LLM 없음)</option></select></div>
-      <div class="field"><label>지문 수</label><input id="f-n" type="number" value="200" min="8" max="20000" style="width:90px"></div>
+      <div class="field grow"><label for="f-method">학습 데이터 만들기</label><select id="f-method"><option value="llm">LLM 질문 생성 (권장)</option><option value="ict">ICT — 지문 속 한 문장을 질문으로 (LLM 없음)</option></select></div>
+      <div class="field"><label for="f-n">지문 수</label><input class="w-md" id="f-n" type="number" value="200" min="8" max="20000"></div>
     </div>
     <div id="f-llm-opts" class="row small">
-      <label class="row" style="margin:0"><input type="checkbox" name="f-style" value="fact" checked> 사실 확인</label>
-      <label class="row" style="margin:0"><input type="checkbox" name="f-style" value="paraphrase" checked> 다른 표현</label>
-      <label class="row" style="margin:0"><input type="checkbox" name="f-style" value="situation" checked> 상황 설명형</label>
+      <label class="row m-0"><input type="checkbox" name="f-style" value="fact" checked> 사실 확인</label>
+      <label class="row m-0"><input type="checkbox" name="f-style" value="paraphrase" checked> 다른 표현</label>
+      <label class="row m-0"><input type="checkbox" name="f-style" value="situation" checked> 상황 설명형</label>
       <span class="muted" id="f-llm-status"></span>
     </div>
-    <div class="field"><label>학습 후 비교할 평가 세트 (이 세트의 근거가 든 지문은 학습에서 자동 제외)</label><select id="f-eval"></select></div>
+    <div class="field"><label for="f-eval">학습 후 비교할 평가 세트 (이 세트의 근거가 든 지문은 학습에서 자동 제외)</label><select id="f-eval" data-ctx="set"></select></div>
     <div class="small muted" id="f-hint"></div>
   </div>
   <div class="card stack">
     <h2>2. 어떻게 학습할까</h2>
     <div class="row">
-      <div class="field"><label>에폭</label><input id="f-epochs" type="number" value="1" min="1" max="20" style="width:70px"></div>
-      <div class="field"><label>배치</label><input id="f-batch" type="number" value="16" min="2" max="512" style="width:70px"></div>
-      <div class="field"><label>학습률</label><input id="f-lr" value="2e-5" style="width:80px"></div>
-      <div class="field"><label>최대 길이(토큰)</label><input id="f-seq" type="number" value="512" min="32" max="8192" style="width:90px"></div>
+      <div class="field"><label for="f-epochs">에폭</label><input class="w-sm" id="f-epochs" type="number" value="1" min="1" max="20"></div>
+      <div class="field"><label for="f-batch">배치</label><input class="w-sm" id="f-batch" type="number" value="16" min="2" max="512"></div>
+      <div class="field"><label for="f-lr">학습률</label><input class="w-md" id="f-lr" value="2e-5"></div>
+      <div class="field"><label for="f-seq">최대 길이(토큰)</label><input class="w-md" id="f-seq" type="number" value="512" min="32" max="8192"></div>
     </div>
     <div class="row">
-      <div class="field"><label>Cached 묶음 크기 (메모리 절약)</label><input id="f-mini" type="number" min="1" max="128" placeholder="사용 안 함" style="width:120px"></div>
-      <div class="field"><label>검증용 비율</label><input id="f-evr" type="number" value="0" min="0" max="0.3" step="0.05" style="width:80px"></div>
-      <label class="row small" style="margin:0;align-self:end"><input type="checkbox" id="f-mrl"> Matryoshka 손실 (모델이 지원하는 차원)</label>
+      <div class="field"><label for="f-mini">Cached 묶음 크기 (메모리 절약)</label><input class="w-lg" id="f-mini" type="number" min="1" max="128" placeholder="사용 안 함"></div>
+      <div class="field"><label for="f-evr">검증용 비율</label><input class="w-md" id="f-evr" type="number" value="0" min="0" max="0.3" step="0.05"></div>
+      <label class="row small m-0 self-end"><input type="checkbox" id="f-mrl"> Matryoshka 손실 (모델이 지원하는 차원)</label>
     </div>
     <div class="small muted">배치가 클수록 한 질문이 더 많은 '오답 지문'과 비교되어 효과가 좋지만 메모리를 더 씁니다. Cached 묶음을 지정하면 큰 배치를 작은 묶음으로 나눠 계산합니다. CPU 에서는 0.5B 모델·지문 200개·1에폭에 수 분~수십 분이 걸립니다.</div>
-    <div class="field"><label>이름 (선택)</label><input id="f-name" placeholder="비우면 '모델 × 컬렉션'"></div>
+    <div class="field"><label for="f-name">이름 (선택)</label><input id="f-name" placeholder="비우면 '모델 × 컬렉션'"></div>
     <div class="row"><span class="spacer"></span><button class="btn primary" id="f-run">학습 시작</button></div>
   </div>
 </div>
 
-<div class="card" style="margin-top:16px">
+<div class="card mt-4">
   <div class="row between"><h2>실행 기록</h2><button class="btn sm" id="f-refresh">새로고침</button></div>
   <div class="table-wrap"><table>
     <thead><tr><th>#</th><th>이름</th><th>원래 모델</th><th>상태</th><th class="num">학습 쌍</th><th>손실</th><th>의미 검색 nDCG@10 전 → 후</th><th>만든 시각</th><th></th></tr></thead>
     <tbody id="f-rows"></tbody>
   </table></div>
 </div>
-<div id="f-detail" style="margin-top:16px"></div>
+<div class="mt-4" id="f-detail"></div>
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', path='js/finetune/finetune.js') }}"></script>

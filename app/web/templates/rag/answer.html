@@ -1,44 +1,44 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}답변 생성{% endblock %}
 {% block content %}
-<h1>답변 생성</h1>
-<p class="lead">질문 → 문서 검색 → 검색된 근거만으로 LLM 이 답변하고, 문장마다 근거 번호를 인용합니다. 답변 뒤에는 각 문장이 인용한 근거에 실제로 있는 내용인지 검증합니다(환각 확인).</p>
+{% call ui.page_header("답변 생성") %}질문 → 문서 검색 → 검색된 근거만으로 LLM 이 답변하고, 문장마다 근거 번호를 인용합니다. 답변 뒤에는 각 문장이 인용한 근거에 실제로 있는 내용인지 검증합니다(환각 확인).{% endcall %}
 
 <div class="ans-layout">
   <aside class="card stack">
     <h2>설정</h2>
-    <div class="field"><label>컬렉션</label><select id="a-col"></select></div>
-    <div class="field"><label>검색 방식</label><select id="a-mode"><option value="hybrid">하이브리드</option><option value="dense">의미</option><option value="bm25">BM25</option></select></div>
-    <div class="field" id="a-idx-wrap"><label>벡터 인덱스</label><select id="a-idx"></select></div>
-    <div class="field" id="a-cs-wrap" hidden><label>청크 세트</label><select id="a-cs"></select></div>
-    <div class="field"><label>리랭커</label><select id="a-rr"><option value="">사용 안 함</option></select></div>
+    <div class="field"><label for="a-col">컬렉션</label><select id="a-col" data-ctx="col"></select></div>
+    <div class="field"><label for="a-mode">검색 방식</label><select id="a-mode"><option value="hybrid">하이브리드</option><option value="dense">의미</option><option value="bm25">BM25</option></select></div>
+    <div class="field" id="a-idx-wrap"><label for="a-idx">벡터 인덱스</label><select id="a-idx" data-ctx="idx"></select></div>
+    <div class="field" id="a-cs-wrap" hidden><label for="a-cs">청크 세트</label><select id="a-cs" data-ctx="cs"></select></div>
+    <div class="field"><label for="a-rr">리랭커</label><select id="a-rr"><option value="">사용 안 함</option></select></div>
     <div class="row">
-      <div class="field"><label>근거 수</label><input id="a-top" type="number" value="5" min="1" max="20" style="width:70px"></div>
-      <div class="field"><label>최대 출력 토큰</label><input id="a-max" type="number" value="700" min="50" max="8000" style="width:90px"></div>
+      <div class="field"><label for="a-top">근거 수</label><input class="w-sm" id="a-top" type="number" value="5" min="1" max="20"></div>
+      <div class="field"><label for="a-max">최대 출력 토큰</label><input class="w-md" id="a-max" type="number" value="700" min="50" max="8000"></div>
     </div>
-    <div class="field"><label>LLM</label><select id="a-provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
-    <div class="field"><label>모델 (비우면 설정값)</label><input id="a-model" list="a-model-list"><datalist id="a-model-list"></datalist></div>
-    <label class="row small" style="margin:0"><input type="checkbox" id="a-judge"> LLM 으로 문장별 근거 판정도 하기 (느림)</label>
-    <label class="row small" style="margin:0" title="근거 청크마다 질문과 관련된 문장 3개만 넣어 읽는 시간을 줄임"><input type="checkbox" id="a-compress"> 근거 압축 (청크마다 관련 문장 3개)</label>
-    <label class="row small" style="margin:0" title="근거 중 이미지 · 영상 장면을 그림으로 LLM 에 첨부 — 비전 모델(llama-server --mmproj 등)이 필요"><input type="checkbox" id="a-images"> 그림 근거 첨부 (비전 LLM)</label>
+    <div class="field"><label for="a-provider">LLM</label><select id="a-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field"><label for="a-model">모델 (비우면 설정값)</label><input id="a-model" data-ctx="model" list="a-model-list"><datalist id="a-model-list"></datalist></div>
+    <label class="row small m-0"><input type="checkbox" id="a-judge"> LLM 으로 문장별 근거 판정도 하기 (느림)</label>
+    <label class="row small m-0" title="근거 청크마다 질문과 관련된 문장 3개만 넣어 읽는 시간을 줄임"><input type="checkbox" id="a-compress"> 근거 압축 (청크마다 관련 문장 3개)</label>
+    <label class="row small m-0" title="근거 중 이미지 · 영상 장면을 그림으로 LLM 에 첨부 — 비전 모델(llama-server --mmproj 등)이 필요"><input type="checkbox" id="a-images"> 그림 근거 첨부 (비전 LLM)</label>
     <div class="small muted" id="a-llm"></div>
   </aside>
   <section class="stack">
     <div id="a-thread" class="stack"><div class="empty">질문을 입력하세요. 평가 세트가 있으면 아래에 예시 질문이 나옵니다.</div></div>
-    <div id="a-examples" class="row small" style="flex-wrap:wrap;gap:6px"></div>
-    <div class="card row" style="align-items:flex-end;flex-wrap:nowrap">
-      <textarea id="a-q" rows="2" placeholder="예: 구매대행업체가 등록하지 않으면 어떤 처벌을 받나요? (Ctrl+Enter 로 보내기)" style="flex:1"></textarea>
+    <div id="a-examples" class="row small wrap-row gap-2"></div>
+    <div class="card row items-end nowrap-row">
+      <textarea class="grow" id="a-q" rows="2" placeholder="예: 구매대행업체가 등록하지 않으면 어떤 처벌을 받나요? (Ctrl+Enter 로 보내기)"></textarea>
       <button class="btn primary" id="a-send">보내기</button>
     </div>
   </section>
 </div>
 
-<div class="card stack" style="margin-top:20px">
+<div class="card stack mt-5">
   <h2>평가 세트로 답변 평가 <span class="small muted">왼쪽 설정(검색 방식 · LLM)을 그대로 씁니다</span></h2>
   <div class="row">
-    <div class="field grow"><label>평가 세트</label><select id="e-set"></select></div>
-    <div class="field"><label>질문 수</label><input id="e-n" type="number" value="10" min="1" style="width:80px"></div>
-    <div style="align-self:end"><button class="btn primary" id="e-run">평가 실행</button></div>
+    <div class="field grow"><label for="e-set">평가 세트</label><select id="e-set" data-ctx="set"></select></div>
+    <div class="field"><label for="e-n">질문 수</label><input class="w-md" id="e-n" type="number" value="10" min="1"></div>
+    <div class="self-end"><button class="btn primary" id="e-run">평가 실행</button></div>
   </div>
   <div class="small muted">질문마다 검색 → 답변 → 검증을 차례로 실행합니다. 로컬 LLM 은 질문당 수십 초가 걸릴 수 있습니다. 근거 문장이 있는 질문은 "근거를 담은 청크가 검색됐는지"와 "답변이 그 청크를 인용했는지"를 나눠 셉니다.</div>
   <div id="e-progress" hidden></div>

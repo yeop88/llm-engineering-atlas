@@ -1,44 +1,44 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}검색 향상 테스트{% endblock %}
 {% block content %}
-<h1>검색 향상 테스트</h1>
-<p class="lead">같은 검색 설정에서 질의만 LLM 으로 다듬어(질의 재작성 · HyDE · 다중 질의) 결과를 나란히 비교하고, 평가 세트로 효과를 숫자로 확인합니다. 기법을 끈 결과가 기준선입니다.</p>
+{% call ui.page_header("검색 향상 테스트") %}같은 검색 설정에서 질의만 LLM 으로 다듬어(질의 재작성 · HyDE · 다중 질의) 결과를 나란히 비교하고, 평가 세트로 효과를 숫자로 확인합니다. 기법을 끈 결과가 기준선입니다.{% endcall %}
 
 <div class="card stack">
   <h2>공통 검색 설정</h2>
   <div class="row">
-    <div class="field"><label>컬렉션</label><select id="s-col"></select></div>
-    <div class="field"><label>검색 방식</label><select id="s-mode"><option value="hybrid">하이브리드</option><option value="dense">의미</option><option value="bm25">BM25</option></select></div>
-    <div class="field" id="s-idx-wrap"><label>벡터 인덱스</label><select id="s-idx"></select></div>
-    <div class="field" id="s-cs-wrap" hidden><label>청크 세트</label><select id="s-cs"></select></div>
-    <div class="field"><label>리랭커</label><select id="s-rr"><option value="">사용 안 함</option></select></div>
+    <div class="field"><label for="s-col">컬렉션</label><select id="s-col" data-ctx="col"></select></div>
+    <div class="field"><label for="s-mode">검색 방식</label><select id="s-mode"><option value="hybrid">하이브리드</option><option value="dense">의미</option><option value="bm25">BM25</option></select></div>
+    <div class="field" id="s-idx-wrap"><label for="s-idx">벡터 인덱스</label><select id="s-idx" data-ctx="idx"></select></div>
+    <div class="field" id="s-cs-wrap" hidden><label for="s-cs">청크 세트</label><select id="s-cs" data-ctx="cs"></select></div>
+    <div class="field"><label for="s-rr">리랭커</label><select id="s-rr"><option value="">사용 안 함</option></select></div>
   </div>
   <div class="row">
-    <label class="row small" style="margin:0"><input type="checkbox" id="s-keep" checked> 원 질의 검색도 함께 합치기 (RRF)</label>
-    <div class="field"><label>다중 질의 수</label><input id="s-n" type="number" value="3" min="1" max="5" style="width:70px"></div>
-    <div class="field"><label>LLM</label><select id="s-provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
-    <div class="field grow"><label>모델 (비우면 설정값)</label><input id="s-model"></div>
+    <label class="row small m-0"><input type="checkbox" id="s-keep" checked> 원 질의 검색도 함께 합치기 (RRF)</label>
+    <div class="field"><label for="s-n">다중 질의 수</label><input class="w-sm" id="s-n" type="number" value="3" min="1" max="5"></div>
+    <div class="field"><label for="s-provider">LLM</label><select id="s-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="s-model">모델 (비우면 설정값)</label><input id="s-model" data-ctx="model"></div>
   </div>
   <div class="small muted" id="s-llm"></div>
   <div class="row" id="s-techs"></div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>질문 하나로 비교</h2>
-  <div class="row" style="flex-wrap:nowrap;align-items:flex-end">
-    <textarea id="q-text" rows="2" style="flex:1" placeholder="예: 빨래 기계 물이 안 빠져요 (구어체 · 상황 설명형 질문일수록 차이가 큽니다)"></textarea>
+  <div class="row nowrap-row items-end">
+    <textarea class="grow" id="q-text" rows="2" placeholder="예: 빨래 기계 물이 안 빠져요 (구어체 · 상황 설명형 질문일수록 차이가 큽니다)"></textarea>
     <button class="btn primary" id="q-run">비교</button>
   </div>
-  <div id="q-examples" class="row small" style="flex-wrap:wrap;gap:6px"></div>
+  <div id="q-examples" class="row small wrap-row gap-2"></div>
   <div id="q-out" class="grid cols-2"></div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>평가 세트로 비교</h2>
   <div class="row">
-    <div class="field grow"><label>평가 세트</label><select id="e-set"></select></div>
-    <div class="field"><label>질문 수 (비우면 전부)</label><input id="e-n" type="number" min="1" style="width:90px"></div>
-    <div style="align-self:end"><button class="btn primary" id="e-run">평가 실행</button></div>
+    <div class="field grow"><label for="e-set">평가 세트</label><select id="e-set" data-ctx="set"></select></div>
+    <div class="field"><label for="e-n">질문 수 (비우면 전부)</label><input class="w-md" id="e-n" type="number" min="1"></div>
+    <div class="self-end"><button class="btn primary" id="e-run">평가 실행</button></div>
   </div>
   <div class="small muted">위에서 고른 기법마다 같은 질문들을 검색해 nDCG@10 · Hit@k 와 지연을 비교합니다. LLM 변형은 질문마다 한 번만 만들고 캐시하므로, 같은 질문을 다시 평가할 때는 LLM 을 부르지 않습니다. 로컬 LLM 은 질문당 수 초가 걸립니다.</div>
   <div id="e-progress" hidden></div>

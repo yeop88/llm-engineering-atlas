@@ -1,31 +1,31 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}클러스터링{% endblock %}
 {% block content %}
 <a href="/apps" class="small">← 응용</a>
-<h1>클러스터링</h1>
-<p class="lead">비슷한 의미의 텍스트끼리 묶어 주제를 찾습니다. 고객 문의·리뷰·VOC 의 주제 발굴, 문서 군집화, 같은 이슈 묶기에 씁니다. 입력에 라벨(<code>[라벨] 텍스트</code>)이 있으면 군집이 라벨과 얼마나 맞는지도 계산합니다.</p>
+{% call ui.page_header("클러스터링") %}비슷한 의미의 텍스트끼리 묶어 주제를 찾습니다. 고객 문의·리뷰·VOC 의 주제 발굴, 문서 군집화, 같은 이슈 묶기에 씁니다. 입력에 라벨(<code>[라벨] 텍스트</code>)이 있으면 군집이 라벨과 얼마나 맞는지도 계산합니다.{% endcall %}
 
 <div class="grid cols-2">
   <div class="card stack"><h2>텍스트</h2><div id="src"></div></div>
   <div class="card stack">
     <h2>설정</h2>
     <div class="row">
-      <div class="field grow"><label>임베딩 모델</label><select id="model"></select></div>
-      <div class="field"><label>차원</label><select id="dim"></select></div>
+      <div class="field grow"><label for="model">임베딩 모델</label><select id="model"></select></div>
+      <div class="field"><label for="dim">차원</label><select id="dim"></select></div>
     </div>
     <div class="row">
-      <div class="field grow"><label>방법</label>
+      <div class="field grow"><label for="method">방법</label>
         <select id="method"><option value="kmeans">K-means</option><option value="agglomerative">계층 (평균 연결)</option><option value="hdbscan">HDBSCAN (밀도 기반, 노이즈 분리)</option></select></div>
-      <div class="field" data-k><label>군집 수</label><input id="k" type="number" min="2" max="200" placeholder="자동"></div>
-      <div class="field" data-k><label>자동일 때 최대</label><input id="kmax" type="number" min="2" max="50" value="10"></div>
-      <div class="field" data-h hidden><label>최소 군집 크기</label><input id="mcs" type="number" min="2" max="500" value="5"></div>
+      <div class="field" data-k><label for="k">군집 수</label><input id="k" type="number" min="2" max="200" placeholder="자동"></div>
+      <div class="field" data-k><label for="kmax">자동일 때 최대</label><input id="kmax" type="number" min="2" max="50" value="10"></div>
+      <div class="field" data-h hidden><label for="mcs">최소 군집 크기</label><input id="mcs" type="number" min="2" max="500" value="5"></div>
     </div>
     <div class="small muted" id="method-hint"></div>
     <div class="row"><span class="spacer"></span><button class="btn primary" id="run">군집화</button></div>
   </div>
 </div>
-<div class="card" id="progress" hidden style="margin-top:16px"></div>
-<div id="out" style="margin-top:16px"></div>
+<div class="card mt-4" id="progress" hidden></div>
+<div class="mt-4" id="out"></div>
 {% endblock %}
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"

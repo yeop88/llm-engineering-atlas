@@ -685,11 +685,13 @@ const BenchCharts = (() => {
     }
   }
 
-  // OS 다크/라이트 전환 시 새 색으로 다시 그리기
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  // 테마가 바뀌면 새 색으로 다시 그리기: OS 다크/라이트 전환과 위쪽 바의 ◐ 전환(themechange, lib/shell.js) 둘 다
+  function redraw() {
     if (last) render(last.root, last.res, last.opts);
     if (lastProjection) renderProjection(lastProjection.root, lastProjection.res, lastProjection.opts);
-  });
+  }
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+  window.addEventListener("themechange", redraw);
 
   return { render, renderProjection, renderTrend, renderMemory, renderLatestBench, resetDashboard, cardToCanvas, paramsM };
 })();

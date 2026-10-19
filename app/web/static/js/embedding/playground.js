@@ -26,8 +26,8 @@ $("#r-run").onclick = async e => {
   const top1 = r.results.filter(x => x.ranking).map(x => x.ranking[0].index);
   const agree = top1.length > 1 && top1.every(i => i === top1[0]);
   $("#r-out").innerHTML = r.results.map(res => `
-    <div class="card result-col" style="flex:1">
-      <h3 class="mono" style="word-break:break-all">${esc(res.hf_id)}</h3>
+    <div class="card result-col grow">
+      <h3 class="mono break-all">${esc(res.hf_id)}</h3>
       ${res.error ? `<div class="errbox">${esc(res.error)}</div>` : `
       <div class="small muted">${res.dim}차원 · ${res.seconds}s</div>
       <div class="small muted">Q: ${appliedInfo(res.applied.query)}<br>D: ${appliedInfo(res.applied.document)}</div>
@@ -45,7 +45,7 @@ $("#s-run").onclick = async e => {
   const body = { model_id: Number($("#s-model").value), texts, role: $("#s-role").value, truncate_dim: dimVal($("#s-dim")) };
   const r = await busy(e.target, () => api("/api/similarity", { method: "POST", body }));
   const short = t => (t.length > 22 ? t.slice(0, 22) + "…" : t);
-  $("#s-out").innerHTML = `<div class="small muted" style="margin-bottom:8px">${esc(r.hf_id)} · ${r.dim}차원 · ${r.seconds}s · ${appliedInfo(r.applied)}</div>${warningsHtml(r.warnings)}
+  $("#s-out").innerHTML = `<div class="small muted mb-2">${esc(r.hf_id)} · ${r.dim}차원 · ${r.seconds}s · ${appliedInfo(r.applied)}</div>${warningsHtml(r.warnings)}
     <table class="heatmap"><tr><th></th>${r.texts.map((t, i) => `<th title="${esc(t)}">${i + 1}</th>`).join("")}</tr>
     ${r.matrix.map((row, i) => `<tr><th title="${esc(r.texts[i])}">${i + 1}. ${esc(short(r.texts[i]))}</th>${row.map((v, j) =>
       `<td style="background:${heatColor(v)}" title="${esc(r.texts[i])}\n↔ ${esc(r.texts[j])}">${v.toFixed(3)}</td>`).join("")}</tr>`).join("")}</table>`;
@@ -55,8 +55,8 @@ $("#s-run").onclick = async e => {
 $("#e-run").onclick = async e => {
   const body = { model_id: Number($("#e-model").value), texts: lines($("#e-texts")), role: $("#e-role").value, truncate_dim: dimVal($("#e-dim")), normalize: $("#e-norm").checked, preview: Number($("#e-preview").value) };
   const r = await busy(e.target, () => api("/api/embed", { method: "POST", body }));
-  $("#e-out").innerHTML = `<div class="row small muted" style="margin-bottom:8px"><span>${esc(r.hf_id)}</span><span>· ${r.dim}차원</span><span>· ${r.seconds}s</span><span>· ${r.texts_per_second ?? "-"} texts/s</span></div>
-    <div class="small" style="margin-bottom:8px">적용: ${appliedInfo(r.applied)}${r.applied.prompt_text ? ` → <code>${esc(r.applied.prompt_text)}</code>` : ""}</div>${warningsHtml(r.warnings)}
+  $("#e-out").innerHTML = `<div class="row small muted mb-2"><span>${esc(r.hf_id)}</span><span>· ${r.dim}차원</span><span>· ${r.seconds}s</span><span>· ${r.texts_per_second ?? "-"} texts/s</span></div>
+    <div class="small mb-2">적용: ${appliedInfo(r.applied)}${r.applied.prompt_text ? ` → <code>${esc(r.applied.prompt_text)}</code>` : ""}</div>${warningsHtml(r.warnings)}
     <table><tr><th>텍스트</th><th class="num">norm</th><th class="num">mean</th><th class="num">std</th><th>앞부분 값</th></tr>
     ${r.items.map(it => `<tr><td>${esc(it.text)}</td><td class="num">${it.norm}</td><td class="num">${it.stats.mean}</td><td class="num">${it.stats.std}</td>
       <td><code class="small">[${it.preview.join(", ")}${it.preview.length < r.dim ? ", …" : ""}]</code></td></tr>`).join("")}</table>`;

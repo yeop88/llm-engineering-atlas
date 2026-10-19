@@ -21,8 +21,7 @@ const PATH = { easy: '<span class="badge ok">쉬움 → 빠른 경로</span>', h
 async function rLoad() {
   const cols = await api("/api/collections");
   $("#r-col").innerHTML = cols.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("") || '<option value="">컬렉션 없음</option>';
-  const saved = localGet("routing-col");
-  if (saved && cols.some(c => String(c.id) === saved)) $("#r-col").value = saved;
+  applyCtx($("#r-col"));
   const rr = (await getModels()).filter(m => m.kind === "reranker" && m.cached);
   $("#r-rr").innerHTML += rr.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join("");
   if (rr.length) $("#r-rr").value = String(rr[0].id);
@@ -33,14 +32,17 @@ async function rDetail() {
   rCol = await api(`/api/collections/${$("#r-col").value}`);
   const idx = rCol.indexes.filter(i => i.status === "ready");
   $("#r-idx").innerHTML = idx.map(i => `<option value="${i.id}">${esc(i.model_hf_id.split(/[\\/]/).pop())} · #${i.id}</option>`).join("") || '<option value="">준비된 인덱스 없음</option>';
+  applyCtx($("#r-idx"));
   $("#r-cs").innerHTML = rCol.chunk_sets.filter(c => c.status === "ready").map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  applyCtx($("#r-cs"));
   if (!idx.length) $("#r-mode").value = "bm25";
   rMode();
   const sets = (await api(`/api/collections/${rCol.id}/eval-sets`)).filter(s => s.status === "ready");
   $("#e-set").innerHTML = sets.map(s => `<option value="${s.id}">#${s.id} ${esc(s.name)} (${s.n_items}문항)</option>`).join("") || '<option value="">평가 세트 없음</option>';
+  applyCtx($("#e-set"));
 }
 function rMode() { const b = $("#r-mode").value === "bm25"; $("#r-idx-wrap").hidden = b; $("#r-cs-wrap").hidden = !b; }
-$("#r-col").addEventListener("change", () => { localSet("routing-col", $("#r-col").value); rDetail(); });
+$("#r-col").addEventListener("change", () => { rDetail(); });
 $("#r-mode").addEventListener("change", rMode);
 
 function rPaths() {
@@ -73,8 +75,8 @@ $("#e-run").onclick = async e => {
   const job = await busy(e.target, () => api("/api/routing/evaluate", { method: "POST", body }));
   const box = $("#e-progress"); box.hidden = false; e.target.disabled = true;
   try {
-    const done = await pollJob(job.id, j => { box.innerHTML = `<div class="progress"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>`; }, 1500);
-    if (done.status !== "done") { box.innerHTML = `<div class="errbox">${esc(done.error || done.status)}</div>`; return; }
+    const done = await pollJob(job.id, j => { box.innerHTML = ui.jobProgress(j); }, 1500);
+    if (done.status !== "done") { ui.error(box, done.status === "cancelled" ? "취소했습니다." : (done.error || done.status)); return; }
     box.hidden = true; rRender(done.result);
   } finally { e.target.disabled = false; }
 };
@@ -136,7 +138,7 @@ function rRender(r, box = $("#e-out")) {
     ${rChart(r)}
     <div class="small muted">확신도 라우터의 지연에는 '어려움'으로 판단해 버린 첫 검색이, LLM 판단 라우터에는 판단 호출 시간이 들어 있습니다. 오라클은 정답을 보고 고른 상한이라 실제로는 만들 수 없습니다.</div>
     <h3>질문별 판단</h3>
-    <div class="table-wrap" style="max-height:420px"><table><tr><th>질문</th><th class="num">빠른</th><th class="num">전체</th><th class="num">확신도</th>${Object.keys(r.per_query[0]?.routes || {}).map(k => `<th>${esc(R_LABEL[k])}</th>`).join("")}</tr>
+    <div class="table-wrap scroll-md"><table><tr><th>질문</th><th class="num">빠른</th><th class="num">전체</th><th class="num">확신도</th>${Object.keys(r.per_query[0]?.routes || {}).map(k => `<th>${esc(R_LABEL[k])}</th>`).join("")}</tr>
       ${r.per_query.map(q => `<tr><td class="small">${esc(q.query)}</td><td class="num">${pct(q.easy_q)}</td><td class="num">${pct(q.hard_q)}</td><td class="num small">${q.confidence != null ? q.confidence.toFixed(3) : "-"}</td>
         ${Object.entries(q.routes).map(([k, p]) => `<td class="small" title="${esc(k === "rule" ? q.rule_reason : k === "llm" ? q.llm_reason || "" : "")}">${p === "hard" ? "어려움" : "쉬움"}</td>`).join("")}</tr>`).join("")}
     </table></div>

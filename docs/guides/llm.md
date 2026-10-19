@@ -114,4 +114,4 @@ llama-server.exe -m C:\Users\<사용자>\llm-models\gemma-4-E4B_q4_0-it.gguf --m
 | GET | `/api/llm/models` | OpenAI 호환 서버에 올라온 모델 이름 (`/v1/models`) |
 | POST | `/api/llm/test` | 연결 시험 `{"provider"?, "model"?, "prompt"?}` → `{"text", "usage", "seconds", "tokens_per_second", "config"}` |
 
-화면: **RAG 테스트 → LLM 연결**(`/llm`) 에서 설정 상태 · 서버의 모델 목록 · 연결 시험을 볼 수 있습니다.
+화면: **기록 · 설정 → LLM 연결**(`/settings/llm`) 에서 설정 상태 · 서버의 모델 목록 · 연결 시험을 볼 수 있습니다.

@@ -5,51 +5,101 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ app_name }}{% endblock %} · {{ app_name }}</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1l7 7-7 7-7-7z' fill='%233b5bdb'/%3E%3C/svg%3E">
+  {# 고른 테마를 그리기 전에 적용(깜박임 방지) — lib/shell.js 의 테마 전환과 같은 저장 키 #}
+  <script>try { const t = localStorage.getItem("atlas-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch { }</script>
   <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body>
-  <header class="topbar">
+{% set st = stage_for_nav(nav) %}
+{% set show_stage = st and nav != "stage_" ~ st.key %}
+<div class="app">
+  {# 사이드바: app/web/pages.py sidebar() — 레지스트리의 단계 · 화면 · 맵으로 만든다 #}
+  <aside class="sidebar" id="sidebar" aria-label="메뉴">
     <a class="brand" href="/">◆ {{ app_name }}</a>
-    <nav>
-      {# 메뉴는 단계 레지스트리(app/stages/registry/)에서 만든다 — 흐름도 순서 #}
-      {% for item in nav_items %}
-        {% if item.href %}
-          <a href="{{ item.href }}" class="{{ 'active' if nav in item['keys'] }}">{{ item.label }}</a>
-        {% else %}
-          <div class="nav-group">
-            <button type="button" class="{{ 'active' if nav in item['keys'] }}" aria-haspopup="true">{{ item.label }} ▾</button>
-            <div class="nav-menu" role="menu">
-              {% for sub in item['items'] %}
-                <a href="{{ sub.href }}" role="menuitem" class="{{ 'active' if nav == sub.key }}"><b>{{ sub.label }}</b><span>{{ sub.desc }}</span></a>
-              {% endfor %}
+    {% for sec in sidebar %}
+      {% if sec.title %}<div class="side-title">{{ sec.title }}</div>{% endif %}
+      {% for it in sec["items"] %}
+        {% set active = nav in it["keys"] %}
+        {% set dot %}{% if it.status %}<span class="side-dot {{ it.status }}" title="{{ registry.STATUS_LABEL[it.status] }}"></span>{% endif %}{% endset %}
+        {% if it.children %}
+          <details class="side-group{{ ' active' if active }}" data-group="{{ it.group or it.href }}"{{ ' open' if active }}>
+            <summary><span class="side-no">{{ it.no or it.icon }}</span>{{ it.label }}{{ dot }}</summary>
+            <div class="side-sub">
+              {% for c in it.children %}<a class="side-link{{ ' active' if nav == c.key }}" href="{{ c.href }}"{{ ' aria-current="page"' | safe if nav == c.key }}>{{ c.label }}</a>{% endfor %}
             </div>
-          </div>
+          </details>
+        {% else %}
+          <a class="side-link{{ ' active' if active }}" href="{{ it.href }}"{{ ' aria-current="page"' | safe if active }}{{ ' target="_blank" rel="noopener"' | safe if it.external }}><span class="side-no">{{ it.no or it.icon }}</span>{{ it.label }}{{ dot }}</a>
         {% endif %}
       {% endfor %}
-      <a href="/docs" target="_blank">API</a>
-    </nav>
-    <span class="badge muted" title="카탈로그 기준">카탈로그 {{ catalog_version }}</span>
-    {% if auth_enabled() %}<a class="small" href="/logout" title="접근 토큰 로그인 해제">로그아웃</a>{% endif %}
-  </header>
-  <main class="container">
-    {% set st = stage_for_nav(nav) %}
-    {% if st and nav != "stage_" ~ st.key %}
-    {# 이 화면이 흐름도의 어느 단계인지, 그 단계의 원리 · 왜 · 어떻게 #}
-    <details class="stage-info" data-stage="{{ st.key }}">
-      <summary><span class="stage-no">{{ st.no }}</span> <b>{{ st.title }}</b> <span class="muted">{{ st.en }}</span> — {{ st.summary }}
-        <span class="badge {{ 'ok' if st.status == 'done' else ('warn' if st.status == 'basic' else '') }}">{{ st.status_label }}</span></summary>
-      <div class="stage-grid">
-        <div><h4>원리</h4><p>{{ st.principle }}</p></div>
-        <div><h4>왜 하는가</h4><p>{{ st.why }}</p></div>
-        <div><h4>어떻게 (이 앱에서)</h4><ul>{% for h in st.how %}<li>{{ h }}</li>{% endfor %}</ul></div>
+    {% endfor %}
+    <div class="side-foot">카탈로그 {{ catalog_version }}{% if auth_enabled() %} · <a href="/logout" title="접근 토큰 로그인 해제">로그아웃</a>{% endif %}</div>
+  </aside>
+
+  <div class="main">
+    <header class="appbar">
+      <button type="button" class="icon-btn menu-btn" id="menu-btn" aria-label="메뉴 열기" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <nav class="crumbs" aria-label="현재 위치">
+        {% for label, href in crumbs(nav) %}{% if not loop.first %}<span class="sep" aria-hidden="true">›</span>{% endif %}{% if href and not loop.last %}<a href="{{ href }}">{{ label }}</a>{% else %}<span{% if loop.last %} class="here" id="crumb-here" aria-current="page"{% endif %}>{{ label }}</span>{% endif %}{% endfor %}
+      </nav>
+      <div class="tools">
+        {% if show_stage %}<button type="button" class="icon-btn" id="stage-btn" aria-controls="stage-drawer" aria-expanded="false" title="이 화면이 속한 단계의 원리 · 왜 · 어떻게">ⓘ <span class="label">단계 원리</span></button>{% endif %}
+        <button type="button" class="icon-btn" id="jobs-btn" aria-haspopup="true" aria-expanded="false" title="백그라운드 작업">⏳ <span class="label">작업</span> <span id="jobs-n">0</span></button>
+        <button type="button" class="icon-btn" id="palette-btn" title="화면 · 단계 · 맵 · 컬렉션으로 빠르게 이동">⌕ <span class="label">이동</span> <kbd>Ctrl K</kbd></button>
+        <button type="button" class="icon-btn" id="theme-btn" aria-label="테마 바꾸기">◐</button>
+        <div class="jobs-pop" id="jobs-pop" role="dialog" aria-label="작업" hidden></div>
       </div>
-      <div class="small"><a href="/stages/{{ st.key }}">단계 소개</a> · <a href="{{ st.map_info.href }}">맵에서 보기</a> · <a href="{{ doc_url(st.readme) }}" target="_blank" rel="noopener">단계 문서</a>{% for title, path in st.docs %} · <a href="{{ doc_url(path) }}" target="_blank" rel="noopener">{{ title }}</a>{% endfor %}</div>
-    </details>
-    {% endif %}
-    {% block content %}{% endblock %}
-  </main>
-  <div id="toasts"></div>
-  <script src="{{ url_for('static', path='js/lib/common.js') }}"></script>
-  {% block scripts %}{% endblock %}
+    </header>
+    {# 작업 맥락 줄: 컬렉션 · 인덱스 · 평가 세트 · LLM 을 쓰는 화면에서만 보인다 (lib/shell.js Ctx) #}
+    <div class="ctxbar" id="ctxbar" hidden></div>
+    <main class="container" id="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+{% if show_stage %}
+{# 단계 설명 서랍: 예전엔 모든 화면 위에 펼쳐져 도구를 밀어냈다 — ⓘ 로 연다 #}
+<aside class="drawer" id="stage-drawer" aria-label="단계 설명" aria-hidden="true">
+  <div class="row between"><div><span class="stage-no">{{ st.no }}</span> <b>{{ st.title }}</b> <span class="badge {{ 'ok' if st.status == 'done' else ('warn' if st.status == 'basic' else '') }}">{{ st.status_label }}</span></div>
+    <button type="button" class="icon-btn" data-close aria-label="닫기">✕</button></div>
+  <div class="small muted mt-1">{{ st.en }} — {{ st.summary }}</div>
+  <h4>원리</h4><p>{{ st.principle }}</p>
+  <h4>왜 하는가</h4><p>{{ st.why }}</p>
+  <h4>어떻게 (이 앱에서)</h4><ul>{% for h in st.how %}<li>{{ h }}</li>{% endfor %}</ul>
+  <h4>더 보기</h4>
+  <div class="small"><a href="/stages/{{ st.key }}">단계 소개</a> · <a href="{{ st.map_info.href }}">맵에서 보기</a> · <a href="{{ doc_url(st.readme) }}" target="_blank" rel="noopener">단계 문서</a>{% for title, path in st.docs %} · <a href="{{ doc_url(path) }}" target="_blank" rel="noopener">{{ title }}</a>{% endfor %}</div>
+</aside>
+{% endif %}
+
+<dialog class="palette" id="palette" aria-label="빠른 이동">
+  <input id="palette-q" type="search" placeholder="화면 · 단계 · 맵 · 컬렉션 이름" autocomplete="off" aria-label="찾을 이름" aria-controls="palette-list">
+  <ul id="palette-list" role="listbox"></ul>
+  <div class="hint">↑↓ 고르기 · Enter 이동 · Esc 닫기</div>
+</dialog>
+
+<dialog id="ctx-dlg" aria-labelledby="ctx-dlg-title">
+  <h2 id="ctx-dlg-title">작업 맥락</h2>
+  <p class="small muted">여기서 고른 컬렉션 · 인덱스 · 평가 세트 · LLM 으로 모든 화면이 시작합니다. 각 화면에서 바꿔도 여기에 기억됩니다.</p>
+  <div class="grid cols-2">
+    <div class="field"><label for="ctx-col">컬렉션</label><select id="ctx-col"></select></div>
+    <div class="field"><label for="ctx-idx">벡터 인덱스</label><select id="ctx-idx"></select></div>
+    <div class="field"><label for="ctx-set">평가 세트</label><select id="ctx-set"></select></div>
+    <div class="field"><label for="ctx-provider">LLM 제공자</label><select id="ctx-provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field"><label for="ctx-model">LLM 모델 (비우면 기본)</label><input id="ctx-model" placeholder="예: gemma-4-e4b"></div>
+  </div>
+  <div class="row mt-4 justify-end"><button type="button" class="btn" data-close>취소</button><button type="button" class="btn" id="ctx-clear">비우기</button><button type="button" class="btn primary" id="ctx-save">적용</button></div>
+</dialog>
+
+<dialog id="confirm-dlg" aria-labelledby="confirm-title">
+  <h2 id="confirm-title">확인</h2>
+  <div id="confirm-body" class="pre"></div>
+  <div class="row mt-4 justify-end" id="confirm-btns"></div>
+</dialog>
+
+<div id="toasts" role="status" aria-live="polite"></div>
+<script src="{{ url_for('static', path='js/lib/common.js') }}"></script>
+<script src="{{ url_for('static', path='js/lib/shell.js') }}"></script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

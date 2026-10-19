@@ -7,8 +7,7 @@ const STATUS = {
 async function loadCols() {
   cols = await api("/api/collections");
   $("#a-col").innerHTML = cols.map(c => `<option value="${c.id}">${esc(c.name)} (문서 ${c.n_documents})</option>`).join("") || '<option value="">컬렉션 없음</option>';
-  const saved = localGet("ans-col");
-  if (saved && cols.some(c => String(c.id) === saved)) $("#a-col").value = saved;
+  applyCtx($("#a-col"));
   await loadDetail();
 }
 async function loadDetail() {
@@ -17,11 +16,14 @@ async function loadDetail() {
   const idx = detail.indexes.filter(i => i.status === "ready");
   const csName = id => detail.chunk_sets.find(c => c.id === id)?.name || `#${id}`;
   $("#a-idx").innerHTML = idx.map(i => `<option value="${i.id}">${esc(i.model_hf_id.split("/").pop())} · ${esc(csName(i.chunk_set_id))}</option>`).join("") || '<option value="">준비된 인덱스 없음</option>';
+  applyCtx($("#a-idx"));
   $("#a-cs").innerHTML = detail.chunk_sets.filter(c => c.status === "ready").map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  applyCtx($("#a-cs"));
   if (!idx.length) $("#a-mode").value = "bm25";
   modeChanged();
   const all = (await api(`/api/collections/${detail.id}/eval-sets`)).filter(s => s.status === "ready");
   $("#e-set").innerHTML = all.map(s => `<option value="${s.id}">#${s.id} ${esc(s.name)} (${s.n_items}문항)</option>`).join("") || '<option value="">평가 세트 없음 (컬렉션 ⑤ 평가 탭에서 만드세요)</option>';
+  applyCtx($("#e-set"));
   // 평가 세트 질문을 예시로
   const sets = all.filter(s => s.method !== "sentence");
   $("#a-examples").innerHTML = "";
@@ -35,12 +37,12 @@ function modeChanged() {
   const bm25 = $("#a-mode").value === "bm25";
   $("#a-idx-wrap").hidden = bm25; $("#a-cs-wrap").hidden = !bm25;
 }
-$("#a-col").addEventListener("change", () => { localSet("ans-col", $("#a-col").value); loadDetail(); });
+$("#a-col").addEventListener("change", () => { loadDetail(); });
 $("#a-mode").addEventListener("change", modeChanged);
 
 async function loadLlm() {
   const s = await api("/api/llm/status");
-  $("#a-llm").innerHTML = s.default.error ? `<span class="badge warn">LLM 미설정</span> <a href="/llm">LLM 연결</a>에서 확인하세요.` : `기본: <span class="mono">${esc(s.default.model)}</span>`;
+  $("#a-llm").innerHTML = s.default.error ? `<span class="badge warn">LLM 미설정</span> <a href="/settings/llm">LLM 연결</a>에서 확인하세요.` : `기본: <span class="mono">${esc(s.default.model)}</span>`;
   try { const m = await api("/api/llm/models"); $("#a-model-list").innerHTML = m.models.map(x => `<option value="${esc(x)}">`).join(""); } catch { /* 로컬 서버가 꺼져 있으면 목록 없음 */ }
   const rr = (await getModels()).filter(m => m.kind === "reranker" && m.cached);
   $("#a-rr").innerHTML += rr.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join("");
@@ -78,7 +80,7 @@ async function send() {
     <div class="small muted" data-status>검색 중…</div>
     <div class="answer" data-answer></div>
     <div data-verify></div>
-    <details data-sources><summary class="small">근거 <span data-nsrc></span></summary><div data-srclist class="stack" style="margin-top:6px"></div></details>
+    <details data-sources><summary class="small">근거 <span data-nsrc></span></summary><div data-srclist class="stack mt-2"></div></details>
     <div class="small muted" data-meta></div></div>`);
   const turn = document.getElementById(turnId), $t = s => turn.querySelector(s);
   turn.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -111,7 +113,7 @@ async function send() {
           const cnt = {};
           ev.sentences.forEach(s => (cnt[s.status] = (cnt[s.status] || 0) + 1));
           $t("[data-answer]").innerHTML = ev.sentences.map(s => `<span class="sent sent-${s.status}${s.off_topic ? " sent-offtopic" : ""}" title="${STATUS[s.status][1]} · 인용 근거와 글자 겹침 ${Math.round(s.support * 100)}%${s.best_source ? ` (가장 비슷한 근거 [${s.best_source}] ${Math.round(s.best_support * 100)}%)` : ""}${s.relevance != null ? ` · 질문 관련성 ${Math.round(s.relevance * 100)}%${s.off_topic ? " — 질문과 관련 낮음" : ""}` : ""}">${renderAnswer(s.text, turnId, sources.length)}</span>`).join(" ");
-          $t("[data-verify]").innerHTML = `<div class="row small" style="gap:6px">${Object.entries(cnt).map(([k, v]) => `<span class="badge ${STATUS[k][0]}">${STATUS[k][1]} ${v}</span>`).join("")}
+          $t("[data-verify]").innerHTML = `<div class="row small gap-2">${Object.entries(cnt).map(([k, v]) => `<span class="badge ${STATUS[k][0]}">${STATUS[k][1]} ${v}</span>`).join("")}
             ${ev.invalid_citations.length ? `<span class="badge err">없는 근거 번호 ${ev.invalid_citations.join(", ")}</span>` : ""}
             ${ev.off_topic ? `<span class="badge warn" title="근거에 있어도 질문과 상관없는 문장은 틀린 답입니다 (질문-문장 유사도 < ${ev.relevance_threshold})">질문과 관련 낮음 ${ev.off_topic}</span>` : ""}
             <span class="muted">문장에 마우스를 올리면 근거와의 겹침 · 질문 관련성이 보입니다. 점선 밑줄 = 질문과 관련 낮음.</span></div>${citeBox(ev.citations)}`;
@@ -149,8 +151,8 @@ $("#e-run").onclick = async e => {
   const job = await busy(e.target, () => api(`/api/eval-sets/${$("#e-set").value}/answer-eval`, { method: "POST", body }));
   const box = $("#e-progress"); box.hidden = false; e.target.disabled = true;
   try {
-    const done = await pollJob(job.id, j => { box.innerHTML = `<div class="progress"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>`; }, 1500);
-    if (done.status !== "done") { box.innerHTML = `<div class="errbox">${esc(done.error || done.status)}</div>`; return; }
+    const done = await pollJob(job.id, j => { box.innerHTML = ui.jobProgress(j); }, 1500);
+    if (done.status !== "done") { ui.error(box, done.status === "cancelled" ? "취소했습니다." : (done.error || done.status)); return; }
     box.hidden = true; renderEval(done.result);
   } finally { e.target.disabled = false; }
 };
@@ -167,7 +169,7 @@ function renderEval(r) {
       ${stat("문장 근거율", p(s.sentence_support), `잘못된 인용 ${p(s.invalid_citation_rate)} · 지나친 거절 ${p(s.false_refusal)}`)}
       ${s.relevant_ratio != null ? stat("질문 관련 문장", p(s.relevant_ratio), `관련 없는 문장이 섞인 답 ${p(s.off_topic_rate)}`) : ""}
     </div>
-    <div class="table-wrap" style="max-height:520px"><table><tr><th>질문</th><th>답변</th><th>근거 검색</th><th>근거 인용</th><th class="num">문장 근거</th><th class="num">시간</th></tr>
+    <div class="table-wrap scroll-lg"><table><tr><th>질문</th><th>답변</th><th>근거 검색</th><th>근거 인용</th><th class="num">문장 근거</th><th class="num">시간</th></tr>
     ${r.rows.map(x => `<tr><td class="small">${esc(x.query)}</td><td class="small">${esc(x.answer)}${x.invalid_citations.length ? ` <span class="badge err">없는 번호 ${x.invalid_citations.join(",")}</span>` : ""}</td>
       <td>${yes(x.evidence_retrieved)}</td><td>${yes(x.evidence_cited)}</td><td class="num">${p(x.supported_ratio)}</td><td class="num small">${x.seconds}s</td></tr>`).join("")}</table></div>`;
 }

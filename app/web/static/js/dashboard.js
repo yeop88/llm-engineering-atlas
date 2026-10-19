@@ -1,119 +1,107 @@
-// dashboard.html 화면 스크립트 (템플릿에서 옮김 — 화면 JS 는 static/js/<영역>/<화면>.js)
-let latestBenchId = null;
-async function refreshCharts() {
-  if (typeof Chart === "undefined") return; // CDN 실패 시 차트만 생략
-  const [metrics, runs] = await Promise.all([api("/api/system/metrics"), api("/api/runs?kind=benchmark&limit=1")]);
-  if (metrics.samples.length) {
-    const s = metrics.samples[metrics.samples.length - 1];
-    $("#mem-now").textContent = `프로세스 ${s.process_gb.toFixed(2)} GB · 시스템 ${s.used_gb} / ${s.total_gb} GB`;
-    BenchCharts.renderMemory($("#ch-mem"), metrics.samples);
+// 대시보드: 연결 상태 · 다음에 할 일 · 최근 실험 · 작업 · 로드된 모델 · 메모리
+const KIND_LABEL = {
+  rag_answer: "답변", rag_answer_eval: "답변 평가", rag_eval: "검색 평가", rag_search: "검색 비교", flow: "연결 실행", flow_eval: "연결 비교",
+  benchmark: "벤치마크", rerank_eval: "리랭킹", routing_eval: "라우팅", quant_llm: "양자화(LLM)", quant_vectors: "양자화(벡터)", rl_eval: "강화학습",
+  distill_llm_data: "증류 데이터", agent: "에이전트", verify_agreement: "검증 보정", multimodal: "멀티모달", similarity: "유사도", embed: "임베딩",
+  retrieval: "검색", projection: "임베딩 지도", compat: "호환성 점검",
+};
+const kindLabel = k => KIND_LABEL[k] || (k.startsWith("app_") ? `의미 응용 · ${k.slice(4)}` : k);
+const firstLine = s => String(s || "").split("\n")[0].slice(0, 140);
+
+let llmOk = null;
+async function health() {
+  const [llm, stores, sys, models] = await Promise.all([
+    api("/api/llm/status"), api("/api/vector-stores").catch(() => []), api("/api/system"), getModels(true),
+  ]);
+  // LLM: 설정만 보면 서버가 꺼져 있어도 '정상'으로 보이므로, 모델 목록을 실제로 받아 본다
+  if (llm.default.error) { llmOk = false; $("#h-llm").innerHTML = html`<span class="badge warn">미설정</span>`; $("#h-llm-sub").innerHTML = html`${llm.default.error} · <a href="/settings/llm">LLM 연결</a>`; }
+  else {
+    llmOk = await api("/api/llm/models").then(() => true, () => false);
+    $("#h-llm").innerHTML = llmOk ? html`<span class="badge ok">연결됨</span>` : html`<span class="badge err">응답 없음</span>`;
+    $("#h-llm-sub").innerHTML = llmOk ? html`<span class="mono">${llm.default.model}</span>`
+      : html`${llm.default.base_url || llm.default.provider} 에 닿지 않습니다 — 로컬 서버(llama-server)를 켜거나 <a href="/settings/llm">LLM 연결</a>을 확인하세요.`;
   }
-  const run = runs[0];
-  if (!run) { latestBenchId = null; $("#bench-box").hidden = true; $("#bench-sub").textContent = "아직 실행한 벤치마크가 없습니다."; return; }
-  if (run.id === latestBenchId) return; // 바뀐 경우에만 다시 그림
-  latestBenchId = run.id;
-  const detail = await api(`/api/runs/${run.id}`);
-  const res = detail.result;
-  $("#bench-sub").textContent = `${res.dataset.title || res.dataset.name} · run #${run.id} · ${fmtDate(run.created_at)} · ${res.primary_metric}${res.truncate_dim ? ` · ${res.truncate_dim}차원` : ""}`;
-  $("#bench-link").onclick = () => sessionStorage.setItem("run", run.id);
-  $("#bench-box").hidden = false;
-  BenchCharts.renderLatestBench($("#ch-bench"), res);
-}
-
-async function refresh() {
-  refreshCharts().catch(() => {});
-  const [models, sys, jobs, runs] = await Promise.all([getModels(true), api("/api/system"), api("/api/jobs"), api("/api/runs?limit=6")]);
-  $("#st-total").textContent = models.length;
+  const okStores = stores.filter(s => s.ok), def = stores.find(s => s.default);
+  $("#h-vs").innerHTML = def?.ok ? html`<span class="badge ok">${def.label}</span>` : html`<span class="badge err">${def?.label || "없음"} 꺼짐</span>`;
+  $("#h-vs-sub").textContent = `${okStores.length}/${stores.length} 사용 가능` + (stores.some(s => !s.ok) ? ` · 꺼진 것: ${stores.filter(s => !s.ok).map(s => s.label).join(", ")} (docker compose up)` : "");
   const cached = models.filter(m => m.cached);
-  $("#st-cached").textContent = cached.length;
-  $("#st-cache-size").textContent = fmtBytes(cached.reduce((s, m) => s + m.cache_size_bytes, 0));
-  $("#st-loaded").textContent = sys.loaded.length;
-  $("#st-max").textContent = `최대 ${sys.max_loaded_models}개 (LRU)`;
-  $("#st-device").textContent = sys.device.toUpperCase();
-  $("#st-dtype").textContent = `dtype ${sys.dtype}` + (sys.cuda ? ` · ${sys.cuda.name}` : "");
+  $("#h-models").textContent = `${sys.loaded.length} / ${cached.length}`;
+  $("#h-models-sub").innerHTML = html`로드됨 / 받아 둠 · 카탈로그 ${models.length}개 · <a href="/embedding/models">모델 →</a>`;
+  $("#h-device").textContent = sys.device.toUpperCase();
+  $("#h-device-sub").textContent = `${sys.dtype}${sys.cuda ? ` · ${sys.cuda.name}` : ""} · 메모리 ${sys.memory ? `${sys.memory.available_gb}/${sys.memory.total_gb} GB 여유` : "-"}`;
 
-  renderRecommendations(models);
-
-  $("#loaded").innerHTML = sys.loaded.length ? `<table><tr><th>모델</th><th>프로필</th><th class="num">차원</th><th class="num">로드</th><th></th></tr>` +
-    sys.loaded.map(l => `<tr><td>${esc(l.hf_id)}</td><td>${l.profile}</td><td class="num">${l.dim}</td><td class="num">${l.load_seconds}s</td>
-      <td class="right"><button class="btn sm" onclick="unload(${l.model_id})">언로드</button></td></tr>`).join("") + "</table>"
-    : '<div class="empty">로드된 모델이 없습니다</div>';
-
-  $("#jobs").innerHTML = jobs.slice(0, 6).map(j => `
-    <div class="row between small" style="padding:4px 0">
-      <span>${esc(j.title)}</span>
-      <span class="row"><span class="badge ${j.status === "done" ? "ok" : j.status === "error" ? "err" : "warn"}">${({ pending: "대기", running: "실행 중", done: "완료", error: "오류", cancelled: "취소", interrupted: "중단됨(재시작)" })[j.status] || j.status}</span>
-      ${["pending", "running"].includes(j.status) ? `<div class="progress"><div style="width:${pct(j.progress)}%"></div></div>` : ""}</span>
-    </div>${j.error ? `<div class="errbox">${esc(j.error)}</div>` : j.message ? `<div class="small muted">${esc(j.message)}</div>` : ""}`).join("") || '<div class="empty">작업 없음</div>';
-
-  $("#runs").innerHTML = runs.map(r => `<div class="small" style="padding:3px 0"><span class="badge muted">${r.kind}</span> ${esc(r.title)} <span class="muted">· ${fmtDate(r.created_at)}</span></div>`).join("") || '<div class="empty">아직 없음</div>';
-
+  $("#loaded").innerHTML = sys.loaded.length
+    ? html`<table><tr><th>모델</th><th>프로필</th><th class="num">차원</th><th class="num">로드</th><th></th></tr>${sys.loaded.map(l => html`<tr><td>${l.hf_id}</td><td>${l.profile}</td><td class="num">${l.dim}</td><td class="num">${l.load_seconds}s</td>
+      <td class="right"><button class="btn sm" data-unload="${l.model_id}">언로드</button></td></tr>`)}</table>`
+    : html`<div class="empty">로드된 모델이 없습니다</div>`;
   const mem = sys.memory ? `${sys.memory.available_gb} / ${sys.memory.total_gb} GB 사용 가능 · 프로세스 ${sys.memory.process_gb} GB` : "-";
-  $("#system").innerHTML = [
+  $("#system").innerHTML = html`${[
     ["Python", sys.python], ["플랫폼", sys.platform], ["CPU 코어", `${sys.cpu_count} (torch threads ${sys.torch_threads})`], ["메모리", mem],
-    ["HF_TOKEN", sys.hf_token_set ? "설정됨" : "미설정 (gated 모델 다운로드 불가)"],
-    ...Object.entries(sys.packages),
-  ].map(([k, v]) => `<div>${esc(k)}</div><div class="mono">${esc(v)}</div>`).join("");
-}
-// 용도별 추천: 카탈로그 태그/메타데이터로 동적으로 분류하므로 모델을 추가해도 자동 반영된다.
-const byDateDesc = (a, b) => (b.release_date || "").localeCompare(a.release_date || "");
-const ready = m => (m.loaded_profiles.length ? 2 : m.cached ? 1 : 0);
-const paramsB = m => { const x = /([\d.]+)\s*B\b/.exec(m.params || ""); return x ? Number(x[1]) : 0; };  // "8.0B" → 8, "568M" → 0
-const REC_GROUPS = [
-  { key: "ready", label: "바로 사용", desc: "이미 다운로드·로드되어 바로 테스트할 수 있는 모델입니다.",
-    pick: ms => ms.filter(m => m.cached || m.loaded_profiles.length).sort((a, b) => ready(b) - ready(a) || byDateDesc(a, b)), more: "/models?status=cached" },
-  { key: "recent", label: "최근 공개", desc: `공개일 기준 최근 ${RECENT_DAYS}일 이내 모델입니다.`,
-    pick: ms => ms.filter(m => isRecent(m)).sort(byDateDesc), more: "/models?sort=release_date" },
-  { key: "light", label: "경량 · CPU", desc: "CPU·노트북에서도 빠르게 돌아가는 작은 모델입니다. 동작 확인용으로 먼저 써 보세요.",
-    pick: ms => ms.filter(m => m.tags.some(t => ["tiny", "on-device", "baseline"].includes(t))).sort(byDateDesc), more: "/models?tag=tiny" },
-  { key: "korean", label: "한국어", desc: "한국어 특화 모델과 한국어 검색 품질이 검증된 다국어 모델입니다.",
-    pick: ms => ms.filter(m => m.tags.includes("korean") || /\bko\b/.test(m.languages) || ["google/embeddinggemma-2", "Qwen/Qwen3-Embedding-0.6B", "BAAI/bge-m3"].includes(m.hf_id)).sort((a, b) => Number(b.tags.includes("korean")) - Number(a.tags.includes("korean")) || byDateDesc(a, b)), more: "/models?tag=korean" },
-  { key: "multimodal", label: "멀티모달", desc: "텍스트와 이미지(일부는 오디오·비디오)를 같은 벡터 공간에 임베딩합니다.",
-    pick: ms => ms.filter(m => m.modalities.some(x => x !== "text")).sort(byDateDesc), more: "/models?modality=image" },
-  { key: "top", label: "고성능 · GPU", desc: "리더보드 상위권 대형 모델입니다. CPU에서는 매우 느리고 RAM을 많이 씁니다.",
-    pick: ms => ms.filter(m => m.tags.some(t => t.startsWith("top-")) && paramsB(m) >= 1).sort(byDateDesc), more: "/models?sort=downloads" },
-  { key: "reranker", label: "리랭커", desc: "검색 후보를 질의와 함께 다시 읽어 순위를 매기는 모델입니다. 문서 검색 화면에서 하이브리드 검색 뒤에 붙여 씁니다.",
-    pick: ms => ms.filter(m => m.kind === "reranker").sort((a, b) => ready(b) - ready(a) || paramsB(a) - paramsB(b)), more: "/models?kind=reranker" },
-];
-let recKey = (() => { try { return localStorage.getItem("rec-tab"); } catch { return null; } })() || "ready";
-
-function recAction(m) {
-  if (m.loaded_profiles.length) return `<a class="btn sm primary" href="/playground?model=${m.id}">테스트</a>`;
-  if (m.download_job) return `<span class="badge warn">다운로드 ${pct(m.download_job.progress)}%</span>`;
-  if (m.cached) return `<button class="btn sm" onclick="recDo(${m.id}, 'load', this)">로드</button>`;
-  return `<button class="btn sm" onclick="recDo(${m.id}, 'download', this)">다운로드</button>`;
-}
-async function recDo(id, action, btn) {
-  await busy(btn, () => api(`/api/models/${id}/${action}`, { method: "POST" }));
-  toast(action === "load" ? "로드 완료" : "다운로드를 시작했습니다", "ok");
-  refresh();
+    ["HF_TOKEN", sys.hf_token_set ? "설정됨" : "미설정 (gated 모델 다운로드 불가)"], ...Object.entries(sys.packages),
+  ].map(([k, v]) => html`<div>${k}</div><div class="mono">${v}</div>`)}`;
+  return { cached, sys };
 }
 
-function renderRecommendations(all) {
-  const models = all.filter(m => m.kind !== "reranker");
-  const groups = REC_GROUPS.map(g => ({ ...g, items: g.key === "reranker" ? g.pick(all) : g.pick(models) }));
-  if (!groups.find(g => g.key === recKey)?.items.length) recKey = groups.find(g => g.items.length)?.key || "light";
-  $("#rec-tabs").innerHTML = groups.map(g =>
-    `<button data-key="${g.key}" class="${g.key === recKey ? "active" : ""}">${g.label} <span class="muted small">${g.items.length}</span></button>`).join("");
-  const g = groups.find(x => x.key === recKey);
-  $("#rec-desc").textContent = g.desc;
-  $("#rec-more").href = g.more;
-  $("#rec-list").innerHTML = g.items.slice(0, 8).map(m => `
-    <div class="row between" style="flex-wrap:nowrap">
-      <div style="min-width:0"><a href="/models/${m.id}"><b>${esc(m.name)}</b></a> ${modelBadges(m)}<br>
-        <span class="small muted">${esc(m.provider)} · ${esc(m.release_date)} · ${esc(m.params)} · ${m.dim ?? "?"}d · ${esc(m.license)} · ${esc(m.languages)}</span></div>
-      <div class="nowrap">${recAction(m)}</div>
-    </div>`).join("") || '<div class="empty">해당 모델이 없습니다</div>';
+// 다음에 할 일: 처음 쓰는 순서(README '처음 써보기')를 지금 상태로 체크 — 끝난 단계는 접히듯 흐리게
+async function todo({ cached }) {
+  const [cols, summary] = await Promise.all([api("/api/collections"), api("/api/runs/summary")]);
+  const k = summary.by_kind;
+  const steps = [
+    [cached.length > 0, "임베딩 모델 받기", "카탈로그에서 한국어 모델(예: KURE)을 받아 로드", "/embedding/models"],
+    [llmOk === true, "LLM 연결", "로컬 llama-server 또는 Claude API — 답변 · 평가 질문 생성에 필요", "/settings/llm"],
+    [cols.length > 0, "컬렉션 만들기", "문서를 올리거나 공개 자료(법령 · 판례) 가져오기", "/rag/collections"],
+    [cols.some(c => c.n_indexes > 0), "벡터 인덱스 만들기", "컬렉션 › ② 청크 세트 · ③ 벡터 인덱스", cols[0] ? `/rag/collections/${cols[0].id}#t-index` : "/rag/collections"],
+    [(k.rag_eval || 0) > 0, "검색 평가", "평가 세트를 만들고 검색 조합을 숫자로 비교", cols[0] ? `/rag/collections/${cols[0].id}#t-eval` : "/rag/collections"],
+    [(k.rag_answer || 0) + (k.rag_answer_eval || 0) > 0, "답변 생성", "근거 인용 답변 · 문장별 검증", "/rag/answer"],
+    [(k.flow_eval || 0) > 0, "연결 비교", "단계를 이어 붙인 경로끼리 품질 · 지연 비교", "/maps/llm#flow"],
+  ];
+  const done = steps.filter(s => s[0]).length;
+  $("#todo-sum").textContent = `${done} / ${steps.length} 완료`;
+  const next = steps.findIndex(s => !s[0]);
+  $("#todo").innerHTML = html`${steps.map(([ok, title, desc, href], i) => html`<li class="${ok ? "done" : i === next ? "next" : ""}">
+    <a href="${href}"><b>${title}</b></a> ${ok ? html`<span class="badge ok">완료</span>` : i === next ? html`<span class="badge">다음</span>` : ""}
+    <div class="small muted">${desc}</div></li>`)}`;
 }
-$("#rec-tabs").addEventListener("click", e => {
-  const btn = e.target.closest("button[data-key]");
-  if (!btn) return;
-  recKey = btn.dataset.key;
-  try { localStorage.setItem("rec-tab", recKey); } catch {}
-  renderRecommendations(_modelsCache);
+
+async function activity() {
+  const [runs, jobs] = await Promise.all([api("/api/runs?limit=8"), api("/api/jobs?limit=6")]);
+  $("#runs").innerHTML = runs.length
+    ? html`<table><tr><th>종류</th><th>실험</th><th>시각</th></tr>${runs.map(r => html`<tr><td class="nowrap"><span class="badge muted">${kindLabel(r.kind)}</span></td>
+        <td><a href="/history#run-${r.id}">${r.title}</a></td><td class="nowrap small muted">${fmtDate(r.created_at)}</td></tr>`)}</table>`
+    : html`<div class="empty">아직 실험이 없습니다<div class="empty-act"><a class="btn" href="/rag/answer">답변 생성 해 보기</a></div></div>`;
+  const ST = { pending: ["대기", "warn"], running: ["실행 중", "warn"], done: ["완료", "ok"], error: ["오류", "err"], cancelled: ["취소", "muted"], interrupted: ["중단됨(재시작)", "muted"] };
+  $("#jobs").innerHTML = jobs.length
+    ? html`${jobs.map(j => ["pending", "running"].includes(j.status) ? html`<div class="job-row">${ui.jobProgress(j)}</div>` : html`<div class="job-row">
+        <div class="row between small"><span>${j.title}</span><span class="badge ${ST[j.status]?.[1] ?? ""}">${ST[j.status]?.[0] ?? j.status}</span></div>
+        ${j.error ? html`<details class="small"><summary class="errline">${firstLine(j.error)}</summary><pre class="pre">${j.error}</pre></details>` : ""}</div>`)}`
+    : html`<div class="empty">작업 없음</div>`;
+}
+
+let lastMem = null;
+async function memory() {
+  if (typeof Chart === "undefined") return; // CDN 실패 시 차트만 생략
+  const metrics = await api("/api/system/metrics");
+  lastMem = metrics.samples;
+  if (!lastMem.length) return;
+  const s = lastMem[lastMem.length - 1];
+  $("#mem-now").textContent = `프로세스 ${s.process_gb.toFixed(2)} GB · 시스템 ${s.used_gb} / ${s.total_gb} GB`;
+  BenchCharts.renderMemory($("#ch-mem"), lastMem);
+}
+window.addEventListener("themechange", () => { if (lastMem?.length) BenchCharts.renderMemory($("#ch-mem"), lastMem); });
+
+async function refresh(first = false) {
+  memory().catch(() => {});
+  activity().catch(e => ui.error($("#runs"), e));
+  const st = await health().catch(e => { toast(e.message, "err"); return null; });
+  if (st && first) todo(st).catch(e => ui.error($("#todo"), e));
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-unload]");
+  if (b) { await busy(b, () => api(`/api/models/${b.dataset.unload}/unload`, { method: "POST" })); refresh(); }
 });
-
-async function unload(id) { await api(`/api/models/${id}/unload`, { method: "POST" }); refresh(); }
-$("#unload-all").onclick = async () => { await api("/api/loaded/unload-all", { method: "POST" }); refresh(); };
-refresh();
-setInterval(refresh, 5000);
+$("#unload-all").onclick = async e => {
+  if (!(await ui.confirm("메모리에 올린 모델을 모두 내립니다. 다음에 쓸 때 다시 로드합니다.", { ok: "모두 언로드" }))) return;
+  await busy(e.target, () => api("/api/loaded/unload-all", { method: "POST" })); refresh();
+};
+refresh(true);
+setInterval(refresh, 10000);

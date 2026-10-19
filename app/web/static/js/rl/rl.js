@@ -1,6 +1,6 @@
 // rl/rl.html 화면 스크립트 (템플릿에서 옮김 — 화면 JS 는 static/js/<영역>/<화면>.js)
 let colId = null, sampleRes = null;
-setupCollectionPickers({ col: $("#c-col"), idx: $("#c-idx"), set: $("#c-set"), key: "rl-col", onDetail: d => (colId = d.id) });
+setupCollectionPickers({ col: $("#c-col"), idx: $("#c-idx"), set: $("#c-set"), onDetail: d => (colId = d.id) });
 const cfg = () => ({ mode: "dense", index_id: +$("#c-idx").value });
 const model = () => $("#c-model").value.trim() || null;
 const PART = { support: "근거 있는 문장", evidence_cited: "정답 근거 인용", invalid_citation: "없는 근거 인용", false_refusal: "근거 있는데 거절", honest_refusal: "정직한 거절", too_long: "너무 김", hallucination: "답 없는데 지어냄" };
@@ -8,7 +8,7 @@ const PART = { support: "근거 있는 문장", evidence_cited: "정답 근거 �
 (async () => {
   const w = await api("/api/rl/reward-weights");
   $("#w-out").innerHTML = `<div>보상 = ${Object.entries(w.weights).map(([k, v]) => `<span class="badge ${v < 0 ? "err" : "ok"}">${esc(PART[k] || k)} ${v > 0 ? "+" : ""}${v}</span>`).join(" ")}</div>
-    <div class="muted" style="margin-top:6px">근거 있는 문장 = 문장 근거율(0~1) × 가중치. 정답 근거 인용 · 거절 판정은 평가 세트처럼 정답 근거 문장을 알 때만. ${w.max_chars}자를 넘으면 '너무 김'. 설명 가능한 단순 합으로 둔 이유: 학습된 보상 모델은 판단 근거를 알기 어렵고, 점수만 올리는 답(보상 해킹)을 찾기도 어렵습니다.</div>`;
+    <div class="muted mt-2">근거 있는 문장 = 문장 근거율(0~1) × 가중치. 정답 근거 인용 · 거절 판정은 평가 세트처럼 정답 근거 문장을 알 때만. ${w.max_chars}자를 넘으면 '너무 김'. 설명 가능한 단순 합으로 둔 이유: 학습된 보상 모델은 판단 근거를 알기 어렵고, 점수만 올리는 답(보상 해킹)을 찾기도 어렵습니다.</div>`;
   loadPairs();
 })();
 
@@ -18,7 +18,7 @@ $("#h-run").onclick = async e => {
   sampleRes = await busy(e.target, () => api("/api/rl/sample", { method: "POST", body: { question: q, collection_id: colId, config: cfg(), n: 2, model: model() } }));
   const c = sampleRes.candidates;
   $("#h-out").innerHTML = `<div class="grid cols-2">${c.map((x, i) => `<div class="card stack"><div class="row between"><b>답 ${i + 1}</b><span class="small muted">온도 ${x.temperature} · 보상 ${x.reward}</span></div>
-      <div style="white-space:pre-wrap" class="small">${esc(x.text)}</div><div class="small muted">${Object.entries(x.parts).map(([k, v]) => `${esc(PART[k] || k)} ${v}`).join(" · ") || "-"}</div>
+      <div class="small pre">${esc(x.text)}</div><div class="small muted">${Object.entries(x.parts).map(([k, v]) => `${esc(PART[k] || k)} ${v}`).join(" · ") || "-"}</div>
       <button class="btn" onclick="choose(${i})">이 답이 더 좋다</button></div>`).join("")}</div>`;
 };
 async function choose(i) {
@@ -44,7 +44,7 @@ $("#e-run").onclick = e => {
 
 async function loadPairs() {
   const r = await api("/api/rl/preferences?limit=50");
-  $("#p-out").innerHTML = `<div class="small muted">자동 ${r.counts.auto || 0}개 · 사람 ${r.counts.human || 0}개</div>` + (r.items.length ? `<div class="table-wrap" style="max-height:360px"><table><tr><th>질문</th><th>좋은 답</th><th>나쁜 답</th><th class="num">보상</th><th></th></tr>
+  $("#p-out").innerHTML = `<div class="small muted">자동 ${r.counts.auto || 0}개 · 사람 ${r.counts.human || 0}개</div>` + (r.items.length ? `<div class="table-wrap scroll-md"><table><tr><th>질문</th><th>좋은 답</th><th>나쁜 답</th><th class="num">보상</th><th></th></tr>
     ${r.items.map(p => `<tr><td class="small">${esc(p.question)} <span class="badge">${p.source === "human" ? "사람" : "자동"}</span></td><td class="small">${esc(p.chosen.slice(0, 140))}</td><td class="small muted">${esc(p.rejected.slice(0, 140))}</td>
       <td class="num small">${p.chosen_reward ?? "-"} / ${p.rejected_reward ?? "-"}</td><td><button class="btn sm danger" onclick="delPair(${p.id})">삭제</button></td></tr>`).join("")}</table></div>` : '<div class="empty">아직 없습니다</div>');
 }

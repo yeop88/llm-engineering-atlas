@@ -7,13 +7,13 @@ function metricsHtml(m, labels) {
   return `<div class="grid cols-2">
     <div><h3>라벨별 성능</h3><div class="table-wrap"><table><tr><th>라벨</th><th class="num">정밀도</th><th class="num">재현율</th><th class="num">F1</th><th class="num">개수</th></tr>
       ${m.per_class.map(c => `<tr><td>${esc(c.label)}</td><td class="num">${pctf(c.precision)}</td><td class="num">${pctf(c.recall)}</td><td class="num ${c.f1 < 0.7 ? "rank-bad" : ""}">${pctf(c.f1)}</td><td class="num">${c.support}</td></tr>`).join("")}</table></div></div>
-    <div><h3>혼동행렬 <span class="small muted">행 = 정답, 열 = 예측</span></h3><div style="overflow:auto"><table class="heatmap"><tr><th></th>${labels.map(l => `<th title="${esc(l)}">${esc(l)}</th>`).join("")}</tr>
+    <div><h3>혼동행렬 <span class="small muted">행 = 정답, 열 = 예측</span></h3><div class="scroll"><table class="heatmap"><tr><th></th>${labels.map(l => `<th title="${esc(l)}">${esc(l)}</th>`).join("")}</tr>
       ${m.confusion.map((row, i) => `<tr><th>${esc(labels[i])}</th>${row.map((v, j) => `<td style="background:${v ? `color-mix(in srgb, ${i === j ? "var(--series-1)" : "var(--status-critical)"} ${Math.round(15 + 70 * v / max)}%, transparent)` : "transparent"}" title="정답 ${esc(labels[i])} → 예측 ${esc(labels[j])}">${v || ""}</td>`).join("")}</tr>`).join("")}</table></div></div>
   </div>`;
 }
 function errorsHtml(errs) {
   if (!errs?.length) return "";
-  return `<details style="margin-top:12px"><summary>틀린 예시 ${errs.length}개</summary><div class="table-wrap" style="margin-top:8px"><table><tr><th>텍스트</th><th>정답</th><th>예측</th></tr>
+  return `<details class="mt-3"><summary>틀린 예시 ${errs.length}개</summary><div class="table-wrap mt-2"><table><tr><th>텍스트</th><th>정답</th><th>예측</th></tr>
     ${errs.map(e => `<tr><td class="small">${esc(e.text)}</td><td><span class="badge muted">${esc(e.gold)}</span></td><td><span class="badge err">${esc(e.pred)}</span></td></tr>`).join("")}</table></div></details>`;
 }
 
@@ -51,7 +51,7 @@ $("#zs-run").onclick = async e => {
   const m = r.metrics;
   $("#zs-out").innerHTML = `<div class="card stack"><div class="row between"><h2>제로샷 결과</h2><span class="small muted">${r.n_items}개 · ${r.seconds}s</span></div>
     ${m ? `<div class="grid cols-2"><div class="stat"><div class="label">정확도</div><div class="value">${pctf(m.accuracy)}</div></div><div class="stat"><div class="label">Macro F1</div><div class="value">${pctf(m.macro_f1)}</div></div></div>${metricsHtml(m, r.labels)}${errorsHtml(r.errors)}` : ""}
-    <details ${m ? "" : "open"}><summary>항목별 예측</summary><div class="table-wrap" style="margin-top:8px"><table><tr><th>텍스트</th><th>예측</th><th class="num">확신도</th><th>다른 후보</th></tr>
+    <details ${m ? "" : "open"}><summary>항목별 예측</summary><div class="table-wrap mt-2"><table><tr><th>텍스트</th><th>예측</th><th class="num">확신도</th><th>다른 후보</th></tr>
       ${r.items.map(it => `<tr><td class="small">${esc(it.text)}</td><td><span class="badge ${it.label && it.label !== it.top[0].label ? "err" : "ok"}">${esc(it.top[0].label)}</span></td><td class="num">${pctf(it.confidence)}</td>
         <td class="small muted">${it.top.slice(1).map(t => `${esc(t.label)} ${pctf(t.p)}`).join(" · ")}</td></tr>`).join("")}</table></div></details></div>`;
 };
@@ -72,7 +72,7 @@ function updateApi() {
 }
 $("#pd-model").addEventListener("change", updateApi);
 async function delSaved(id) {
-  if (!confirm(`분류기 #${id} 를 삭제할까요?`)) return;
+  if (!(await ui.confirm(`분류기 #${id} 를 삭제할까요?`, { ok: "삭제", danger: true, title: "삭제" }))) return;
   await api(`/api/apps/models/${id}`, { method: "DELETE" }); toast("삭제했습니다", "ok"); loadSaved();
 }
 $("#pd-run").onclick = async e => {

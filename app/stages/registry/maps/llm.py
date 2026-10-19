@@ -5,7 +5,7 @@
 
 from app.stages.registry.model import DONE, Map, Page, Stage
 
-MAP = Map("llm", "LLM 시스템 엔지니어링 맵", "/roadmap", "docs/maps/llm.md", template="roadmap.html", summary=
+MAP = Map("llm", "LLM 시스템 엔지니어링 맵", "/maps/llm", "docs/maps/llm.md", template="maps/llm.html", summary=
         "임베딩 → RAG 검색 → 리랭킹 → 라우팅 → 소형/대형 모델 · 에이전트 — 문서 지식을 싸고 빠르고 정확하게 서비스하는 흐름",
         diagram="[데이터 임베딩] → [RAG 검색] → [리랭킹 (정밀 필터링)]\n"
         "                                        ↓\n"
@@ -30,10 +30,10 @@ STAGES: list[Stage] = [
             "벤치마크(내장 · 공개 한국어 · 내 데이터셋)로 점수와 95% 신뢰구간을 보고 고르기",
         ],
         pages=[
-            Page("models", "/models", "모델", "카탈로그 · 다운로드 · 로드"),
-            Page("hub", "/hub", "Hub 검색", "새 모델 찾아 가져오기"),
-            Page("playground", "/playground", "플레이그라운드", "임베딩 · 유사도 · 검색 · 지도"),
-            Page("benchmark", "/benchmark", "벤치마크", "데이터셋 · 공개 벤치마크 · 신뢰구간"),
+            Page("models", "/embedding/models", "모델", "카탈로그 · 다운로드 · 로드", "embedding/models.html"),
+            Page("hub", "/embedding/hub", "Hub 검색", "새 모델 찾아 가져오기", "embedding/hub.html"),
+            Page("playground", "/embedding/playground", "플레이그라운드", "임베딩 · 유사도 · 검색 · 지도", "embedding/playground.html"),
+            Page("benchmark", "/embedding/benchmark", "벤치마크", "데이터셋 · 공개 벤치마크 · 신뢰구간", "embedding/benchmark.html"),
         ],
         docs=[
             ("모델 카탈로그", "docs/stages/llm/1-embedding/models.md"),
@@ -58,10 +58,15 @@ STAGES: list[Stage] = [
             "답변 생성: 질문에 대한 답 + 관련된 부가 설명만, 근거 번호 인용 · 문장별 근거 일치와 질문 관련성 검증 · 평가 세트로 답변 일괄 평가",
         ],
         pages=[
-            Page("rag", "/collections", "컬렉션", "문서 · 청킹 · 인덱스 · 검색 비교 · 평가"),
-            Page("rag_answer", "/rag/answer", "답변 생성", "근거 인용 답변 · 환각 검증"),
-            Page("rag_verify", "/rag/verify", "검증 보정", "사람 판정(근거 일치 · 질문 관련성)으로 검증 방식과 기준 고르기"),
-            Page("llm", "/llm", "LLM 연결", "로컬 · OpenAI 호환 · Claude"),
+            Page("rag", "/rag/collections", "컬렉션", "문서 · 청킹 · 인덱스 · 검색 비교 · 평가", "rag/collections.html"),
+            Page("rag_answer", "/rag/answer", "답변 생성", "근거 인용 답변 · 환각 검증", "rag/answer.html"),
+            Page(
+                "rag_verify",
+                "/rag/verify",
+                "검증 보정",
+                "사람 판정(근거 일치 · 질문 관련성)으로 검증 방식과 기준 고르기",
+                "rag/verify.html",
+            ),
         ],
         plans=[
             "비슷한 문서가 많은 자료(판례)에서 답 없는 질문 거절 개선 — 법률 재측정에서 13개 중 1개만 거절",
@@ -83,7 +88,7 @@ STAGES: list[Stage] = [
             "리랭크 융합: 리랭커 순위와 1단계 순위를 RRF 로 합쳐 한쪽의 실수를 다른 쪽이 메움",
             "평가: 리랭커 × 후보 수 × 융합의 품질-지연 — 크로스 인코더 점수는 가장 큰 후보 수에서 한 번만 매기고 잘라 계산",
         ],
-        pages=[Page("rerank", "/rerank", "리랭킹 테스트", "리랭커 · 후보 수 · 융합 · LLM 리랭커 비교")],
+        pages=[Page("rerank", "/rerank", "리랭킹 테스트", "리랭커 · 후보 수 · 융합 · LLM 리랭커 비교", "rerank/rerank.html")],
         plans=["리랭커 int8 · ONNX 로 CPU 지연 줄이기(7b 와 연결)", "질문 유형별로 리랭킹을 켜고 끄는 라우팅"],
         docs=[("리랭킹: 방법 · 실측", "docs/stages/llm/3-rerank/rerank.md"), ("전체 맵", "docs/maps/llm.md")],
     ),
@@ -102,7 +107,7 @@ STAGES: list[Stage] = [
             "LLM 변형은 temperature 0 · 질문별 캐시 — 재현 가능하고 설정 비교에 LLM 무작위성이 섞이지 않음",
             "기법별 지표 · 95% 구간 · 1위 대비 유의성 · LLM 지연을 함께 기록 — 실측 #1(24문항)은 유의한 향상 없음, 재작성은 BM25 에서 유의하게 나빠짐",
         ],
-        pages=[Page("search_lab", "/search-lab", "검색 향상 테스트", "기법별 나란히 비교 · 평가 세트 비교")],
+        pages=[Page("search_lab", "/search-lab", "검색 향상 테스트", "기법별 나란히 비교 · 평가 세트 비교", "search_lab/search_lab.html")],
         plans=[
             "재작성 프롬프트 개선(고유명사 · 숫자 · 인용 표현 보존) 후 재측정, 구어체 · 상황 설명형 질문 세트로 재측정",
             "문맥 청크(contextual chunk) 색인 — 청크 앞에 문서 맥락 요약을 붙여 색인",
@@ -124,7 +129,7 @@ STAGES: list[Stage] = [
             "학습 → 카탈로그 자동 등록 → 같은 평가 세트로 전후 짝지은 비교",
             "실행마다 기록(모델 카드 README.md) — 실측 3건은 모두 '차이 불확실'",
         ],
-        pages=[Page("finetune", "/finetune", "파인튜닝 테스트", "학습 쌍 · 학습 · 전후 비교 · 기록")],
+        pages=[Page("finetune", "/finetune", "파인튜닝 테스트", "학습 쌍 · 학습 · 전후 비교 · 기록", "finetune/finetune.html")],
         plans=["거짓 오답을 거르는 GISTEmbed 손실, 같은 문서 지문을 한 배치에 넣지 않는 샘플링", "학습 쌍 수천 개 규모 · 낮은 학습률 실험"],
         docs=[("파인튜닝: 왜 · 어떻게 · 실행 기록", "docs/stages/llm/5-finetune/finetune.md")],
     ),
@@ -143,7 +148,7 @@ STAGES: list[Stage] = [
             "연결 실행(맵)에서도 라우팅을 켤 수 있음 — 확신도 라우터는 먼저 한 검색을 쉬운 경로에서 재사용",
             "학습 라우터: 평가 기록의 오라클 판단을 라벨로 질문 임베딩 + 확신도 + 질문 형태를 로지스틱 회귀로 학습, 교차검증으로 같은 기록의 다른 라우터와 비교",
         ],
-        pages=[Page("routing", "/routing", "라우팅 테스트", "라우터 판단 · 평가 세트 비용-품질 비교")],
+        pages=[Page("routing", "/routing", "라우팅 테스트", "라우터 판단 · 평가 세트 비용-품질 비교", "routing/routing.html")],
         plans=[
             "학습 라우터를 질문 수백 개 기록으로 다시 학습 · 측정 (법률 40문항에서 '어려움' 라벨 5개뿐)",
             "규칙 라우터 글자 수 기준을 자료의 질문 길이 분포에 맞추기 (법률 질문에선 92.5% 를 어려움으로 보냄)",
@@ -165,7 +170,7 @@ STAGES: list[Stage] = [
             "LLM 증류 데이터: 컬렉션 지문으로 새 질문 → 교사 LLM 이 서비스와 같은 형식으로 답 → 검증 통과한 답만 대화형 JSONL (학습은 GPU 환경)",
             "평가 세트 근거가 든 지문은 학습에서 제외(누수 방지), 실행 기록은 파인튜닝과 함께 관리",
         ],
-        pages=[Page("distill", "/distill", "지식 증류 테스트", "임베딩 증류 · LLM 증류 데이터")],
+        pages=[Page("distill", "/distill", "지식 증류 테스트", "임베딩 증류 · LLM 증류 데이터", "distill/distill.html")],
         plans=["증류한 소형 LLM 을 라우팅의 빠른 경로 모델로 연결", "리랭커 → 임베딩 증류 실측"],
         docs=[("지식 증류: 방법 · 실측", "docs/stages/llm/7a-distill/distill.md"), ("전체 맵", "docs/maps/llm.md")],
     ),
@@ -183,7 +188,7 @@ STAGES: list[Stage] = [
             "여러 양자화를 동시에: 가중치 × 차원 × 벡터 정밀도의 모든 조합을 공개 벤치마크로 채점, 기준과 짝지은 비교 · 기준 상위 10 유지율 · 메모리, 파레토 최적 표시",
             "LLM: GGUF 가중치 × KV 캐시 양자화를 함께 적용한 서버 명령을 만들고, 같은 질문 · 같은 근거로 근거 인용 · 속도 비교 (모델별 서버 주소 OPENAI_MODEL_URLS)",
         ],
-        pages=[Page("quant", "/quant", "양자화 테스트", "벡터 정밀도 · LLM 비트 수 비교")],
+        pages=[Page("quant", "/quant", "양자화 테스트", "벡터 정밀도 · LLM 비트 수 비교", "quant/quant.html")],
         plans=[
             "ONNX · OpenVINO int8 실행(추가 의존성)",
             "리랭커 int8(CPU 리랭킹 지연 22초 줄이기)",
@@ -207,7 +212,7 @@ STAGES: list[Stage] = [
             "연결 실행 · 라우팅의 어려운 경로에 '에이전트로 답하기'를 켜서 일반 RAG 와 같은 질문으로 비교",
             "법률 자료용 번호 조회 도구(조문 · 사건번호로 바로 찾기)와 답변의 번호 검사(근거에 있음 · 자료에만 있음 · 자료에 없음)",
         ],
-        pages=[Page("agent", "/agent", "에이전트 테스트", "도구를 여러 번 쓰는 다단계 RAG")],
+        pages=[Page("agent", "/agent", "에이전트 테스트", "도구를 여러 번 쓰는 다단계 RAG", "agent/agent.html")],
         plans=[
             "질문 분해(병렬 하위 검색)",
             "날짜 · 기간 계산 같은 구조화 도구",
@@ -230,7 +235,7 @@ STAGES: list[Stage] = [
             "Best-of-N: 평소 답(후보 0)과 다양한 후보 중 보상 최고 — 학습 없이 효과 측정, 연결 실행 경로 옵션으로도 사용",
             "선호 쌍: 보상 차가 큰 쌍 자동 저장 + 사람이 두 답 중 고르기, DPO 형식 JSONL 내보내기 (학습은 GPU 환경)",
         ],
-        pages=[Page("rl", "/rl", "강화학습 테스트", "보상 · Best-of-N · 선호 쌍 · DPO 데이터")],
+        pages=[Page("rl", "/rl", "강화학습 테스트", "보상 · Best-of-N · 선호 쌍 · DPO 데이터", "rl/rl.html")],
         plans=["DPO 로 학습한 소형 LLM 을 연결해 전후 비교", "사람 선호와 보상의 일치율로 보상 함수 고치기"],
         docs=[("강화학습: 보상 · 방법 · 실측", "docs/stages/llm/8b-rl/rl.md"), ("전체 맵", "docs/maps/llm.md")],
     ),
@@ -249,7 +254,7 @@ STAGES: list[Stage] = [
             "멀티모달 모델로 인덱스를 만들면 그림으로 인코딩 → 검색 비교 · 평가 세트 · 검색 향상을 그대로 사용",
             "결과 썸네일, 영상은 그 장면 시각부터 재생 — 실측: EmbeddingGemma 2 nDCG 100 vs CLIP 67.4(한국어 단일 정답 5문항 모두 실패)",
         ],
-        pages=[Page("multimodal", "/multimodal", "이미지 · 영상", "즉석 교차 검색 · 컬렉션 갤러리 검색")],
+        pages=[Page("multimodal", "/multimodal", "이미지 · 영상", "즉석 교차 검색 · 컬렉션 갤러리 검색", "multimodal/multimodal.html")],
         plans=[
             "이미지로 이미지 찾기(질의 이미지 업로드)",
             "실제 영상(움직임 · 자막)과 대량 이미지로 재측정, GPU 색인",
@@ -271,7 +276,15 @@ STAGES: list[Stage] = [
             "추천(MMR) · 분류(제로샷 · 학습) · 군집 · 중복/표절 · 이상/신종 탐지 · 키워드/요약",
             "학습한 분류기 · 탐지기를 저장해 API 로 사용",
         ],
-        pages=[Page("apps", "/apps", "의미 응용", "추천 · 분류 · 군집 · 중복 · 이상 · 키워드")],
+        pages=[
+            Page("apps", "/apps", "응용 목록", "추천 · 분류 · 군집 · 중복 · 이상 · 키워드", "apps/apps.html"),
+            Page("apps_recommend", "/apps/recommend", "콘텐츠 추천", "취향 벡터 · 다양성(MMR)", "apps/recommend.html"),
+            Page("apps_classify", "/apps/classify", "텍스트 분류", "제로샷 · 학습 분류기", "apps/classify.html"),
+            Page("apps_cluster", "/apps/cluster", "클러스터링", "주제 묶기 · 군집 이름", "apps/cluster.html"),
+            Page("apps_dedup", "/apps/dedup", "중복·표절 검사", "중복 정리 · 문장 대조", "apps/dedup.html"),
+            Page("apps_anomaly", "/apps/anomaly", "이상·신종 탐지", "평소의 경계 밖 찾기", "apps/anomaly.html"),
+            Page("apps_keywords", "/apps/keywords", "키워드·요약", "대표 키워드 · 추출 요약", "apps/keywords.html"),
+        ],
         docs=[("의미 응용", "docs/stages/llm/a-apps/apps.md")],
     ),
 ]

@@ -1,17 +1,17 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}Hub 검색{% endblock %}
 {% block content %}
-<h1>Hugging Face Hub 검색</h1>
-<p class="lead"><code>sentence-similarity</code> / <code>feature-extraction</code> 태그의 모델을 실시간으로 검색해 카탈로그에 추가합니다.</p>
+{% call ui.page_header("Hugging Face Hub 검색") %}<code>sentence-similarity</code> / <code>feature-extraction</code> 태그의 모델을 실시간으로 검색해 카탈로그에 추가합니다.{% endcall %}
 
-<div class="card row" style="margin-bottom:14px">
-  <div class="field grow"><label>검색어</label><input id="q" placeholder="예: embedding, ko, bge, qwen3, gemma" value="embedding"></div>
-  <div class="field"><label>정렬</label>
+<div class="card row mb-4">
+  <div class="field grow"><label for="q">검색어</label><input id="q" placeholder="예: embedding, ko, bge, qwen3, gemma" value="embedding"></div>
+  <div class="field"><label for="sort">정렬</label>
     <select id="sort"><option value="downloads">다운로드</option><option value="likes">좋아요</option><option value="created_at">최신 생성</option><option value="last_modified">최근 수정</option></select></div>
-  <div class="field"><label>파이프라인</label>
+  <div class="field"><label for="pipe">파이프라인</label>
     <select id="pipe"><option value="">둘 다</option><option value="sentence-similarity">sentence-similarity</option><option value="feature-extraction">feature-extraction</option></select></div>
-  <div class="field"><label>개수</label><select id="limit"><option>20</option><option selected>40</option><option>100</option></select></div>
-  <div style="align-self:end"><button class="btn primary" id="go">검색</button></div>
+  <div class="field"><label for="limit">개수</label><select id="limit"><option>20</option><option selected>40</option><option>100</option></select></div>
+  <div class="self-end"><button class="btn primary" id="go">검색</button></div>
 </div>
 
 <div class="table-wrap">
@@ -21,13 +21,13 @@
   </table>
 </div>
 
-<details class="card stack" id="disc" style="margin-top:16px">
+<details class="card stack mt-4" id="disc">
   <summary class="row between"><b>카탈로그에 없는 새 모델 후보</b><span class="small muted">최근 인기 급상승 · 한국어 우선</span></summary>
   <div class="small muted">Hub 에서 최근 공개되고 반응이 있는 임베딩 · 리랭커 중 아직 카탈로그에 없는 것을 찾습니다. 자동으로 추가하지 않습니다 — '상세'로 프롬프트 · 차원 · 라이선스를 확인하고 추가하세요. GGUF · ONNX 같은 변환본은 뺍니다.</div>
   <div class="row">
-    <div class="field"><label>최근 며칠</label><input id="d-days" type="number" value="180" min="7" max="1095" style="width:80px"></div>
-    <div class="field"><label>좋아요 이상</label><input id="d-likes" type="number" value="10" min="0" style="width:80px"></div>
-    <div style="align-self:end"><button class="btn" id="d-go">후보 찾기</button></div>
+    <div class="field"><label for="d-days">최근 며칠</label><input class="w-md" id="d-days" type="number" value="180" min="7" max="1095"></div>
+    <div class="field"><label for="d-likes">좋아요 이상</label><input class="w-md" id="d-likes" type="number" value="10" min="0"></div>
+    <div class="self-end"><button class="btn" id="d-go">후보 찾기</button></div>
   </div>
   <div class="table-wrap"><table><thead><tr><th>모델</th><th>찾은 곳</th><th class="num">좋아요</th><th class="num">공개 후(일)</th><th>라이선스</th><th class="num">점수</th><th class="right"></th></tr></thead>
     <tbody id="d-rows"><tr><td colspan="7" class="empty">'후보 찾기'를 누르세요</td></tr></tbody></table></div>

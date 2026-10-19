@@ -3,13 +3,12 @@
 const TECHS = { none: "기법 없음 (기준선)", rewrite: "질의 재작성", hyde: "HyDE (가상 문서)", multi: "다중 질의" };
 let detail = null;
 
-$("#s-techs").innerHTML = Object.entries(TECHS).map(([k, v]) => `<label class="row small" style="margin:0"><input type="checkbox" value="${k}" checked> ${esc(v)}</label>`).join("");
+$("#s-techs").innerHTML = Object.entries(TECHS).map(([k, v]) => `<label class="row small m-0"><input type="checkbox" value="${k}" checked> ${esc(v)}</label>`).join("");
 
 async function loadCols() {
   const cols = await api("/api/collections");
   $("#s-col").innerHTML = cols.map(c => `<option value="${c.id}">${esc(c.name)} (문서 ${c.n_documents})</option>`).join("") || '<option value="">컬렉션 없음</option>';
-  const saved = localGet("slab-col");
-  if (saved && cols.some(c => String(c.id) === saved)) $("#s-col").value = saved;
+  applyCtx($("#s-col"));
   await loadDetail();
 }
 async function loadDetail() {
@@ -18,11 +17,14 @@ async function loadDetail() {
   const idx = detail.indexes.filter(i => i.status === "ready");
   const csName = id => detail.chunk_sets.find(c => c.id === id)?.name || `#${id}`;
   $("#s-idx").innerHTML = idx.map(i => `<option value="${i.id}">${esc(i.model_hf_id.split("/").pop())} · ${esc(csName(i.chunk_set_id))}</option>`).join("") || '<option value="">준비된 인덱스 없음</option>';
+  applyCtx($("#s-idx"));
   $("#s-cs").innerHTML = detail.chunk_sets.filter(c => c.status === "ready").map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  applyCtx($("#s-cs"));
   if (!idx.length) $("#s-mode").value = "bm25";
   modeChanged();
   const sets = (await api(`/api/collections/${detail.id}/eval-sets`)).filter(s => s.status === "ready");
   $("#e-set").innerHTML = sets.map(s => `<option value="${s.id}">#${s.id} ${esc(s.name)} (${s.n_items}문항)</option>`).join("") || '<option value="">평가 세트 없음 (컬렉션 ⑤ 평가 탭에서 만드세요)</option>';
+  applyCtx($("#e-set"));
   $("#q-examples").innerHTML = "";
   // 문장 추출형 세트는 질문이 문서 문장 그대로라 향상 효과를 보기 어렵다 — 직접 · LLM 질문을 예시로 쓴다
   const ex = sets.find(s => s.method !== "sentence");
@@ -36,12 +38,12 @@ function modeChanged() {
   const bm25 = $("#s-mode").value === "bm25";
   $("#s-idx-wrap").hidden = bm25; $("#s-cs-wrap").hidden = !bm25;
 }
-$("#s-col").addEventListener("change", () => { localSet("slab-col", $("#s-col").value); loadDetail(); });
+$("#s-col").addEventListener("change", () => { loadDetail(); });
 $("#s-mode").addEventListener("change", modeChanged);
 
 async function loadLlm() {
   const s = await api("/api/llm/status");
-  $("#s-llm").innerHTML = s.default.error ? `<span class="badge warn">LLM 미설정</span> 기준선만 동작합니다. <a href="/llm">LLM 연결</a>에서 확인하세요.` : `LLM 기본: <span class="mono">${esc(s.default.model)}</span>`;
+  $("#s-llm").innerHTML = s.default.error ? `<span class="badge warn">LLM 미설정</span> 기준선만 동작합니다. <a href="/settings/llm">LLM 연결</a>에서 확인하세요.` : `LLM 기본: <span class="mono">${esc(s.default.model)}</span>`;
   const rr = (await getModels()).filter(m => m.kind === "reranker" && m.cached);
   $("#s-rr").innerHTML += rr.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join("");
 }
@@ -67,10 +69,10 @@ $("#q-run").onclick = async e => {
   $("#q-out").innerHTML = r.results.map(o => {
     if (o.error) return `<div class="card stack"><b>${esc(o.config.label)}</b><div class="errbox">${esc(o.error)}</div></div>`;
     const en = o.enhance;
-    const vars = en ? `<div class="small stack" style="gap:4px">${en.variants.map(v => `<div><span class="badge">${esc(v.name)}${v.role === "document" ? " · 문서로 인코딩" : ""}</span> ${esc(v.text)}</div>`).join("")}</div>
+    const vars = en ? `<div class="small stack gap-1">${en.variants.map(v => `<div><span class="badge">${esc(v.name)}${v.role === "document" ? " · 문서로 인코딩" : ""}</span> ${esc(v.text)}</div>`).join("")}</div>
       <div class="small muted">LLM ${en.cached ? "캐시 사용" : `${en.llm_seconds}s`} · 검색 ${en.variants.length}회</div>` : "";
     return `<div class="card stack"><div class="row between"><b>${esc(o.config.label)}</b><span class="small muted">${o.total_ms}ms</span></div>${vars}
-      <ol class="small" style="margin:0;padding-left:20px">${o.results.slice(0, 5).map(x => `<li>${en && !baseIds.has(x.chunk_id) ? '<span class="badge ok">새로 찾음</span> ' : ""}<b>${esc(x.filename)}</b>${x.page ? ` p.${x.page}` : ""} <span class="muted">${esc(x.text.slice(0, 120))}</span></li>`).join("") || "<li>결과 없음</li>"}</ol></div>`;
+      <ol class="small m-0" style="padding-left:20px">${o.results.slice(0, 5).map(x => `<li>${en && !baseIds.has(x.chunk_id) ? '<span class="badge ok">새로 찾음</span> ' : ""}<b>${esc(x.filename)}</b>${x.page ? ` p.${x.page}` : ""} <span class="muted">${esc(x.text.slice(0, 120))}</span></li>`).join("") || "<li>결과 없음</li>"}</ol></div>`;
   }).join("");
 };
 
@@ -81,8 +83,8 @@ $("#e-run").onclick = async e => {
   const job = await busy(e.target, () => api(`/api/eval-sets/${$("#e-set").value}/evaluate`, { method: "POST", body: { configs: cfgs, max_queries: +$("#e-n").value || null } }));
   const box = $("#e-progress"); box.hidden = false; e.target.disabled = true;
   try {
-    const done = await pollJob(job.id, j => { box.innerHTML = `<div class="progress"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>`; }, 1500);
-    if (done.status !== "done") { box.innerHTML = `<div class="errbox">${esc(done.error || done.status)}</div>`; return; }
+    const done = await pollJob(job.id, j => { box.innerHTML = ui.jobProgress(j); }, 1500);
+    if (done.status !== "done") { ui.error(box, done.status === "cancelled" ? "취소했습니다." : (done.error || done.status)); return; }
     box.hidden = true; renderEval(done.result);
   } finally { e.target.disabled = false; }
 };

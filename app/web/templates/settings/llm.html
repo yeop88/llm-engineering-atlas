@@ -1,8 +1,8 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}LLM 연결{% endblock %}
 {% block content %}
-<h1>LLM 연결</h1>
-<p class="lead">평가 질문 생성, 답변 생성, 질의 재작성처럼 LLM 이 필요한 기능이 쓰는 연결입니다. 로컬 서버(llama.cpp · Ollama 등 OpenAI 호환)와 Claude API 를 지원합니다. 설정은 <code>.env</code> 에서 바꿉니다.</p>
+{% call ui.page_header("LLM 연결") %}평가 질문 생성, 답변 생성, 질의 재작성처럼 LLM 이 필요한 기능이 쓰는 연결입니다. 로컬 서버(llama.cpp · Ollama 등 OpenAI 호환)와 Claude API 를 지원합니다. 설정은 <code>.env</code> 에서 바꿉니다.{% endcall %}
 
 <div class="grid cols-2">
   <div class="card stack">
@@ -15,18 +15,18 @@
   </div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>연결 시험</h2>
   <div class="row">
-    <div class="field"><label>제공자</label><select id="t-provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
-    <div class="field grow"><label>모델 (비우면 설정값)</label><input id="t-model" list="t-model-list"><datalist id="t-model-list"></datalist></div>
+    <div class="field"><label for="t-provider">제공자</label><select id="t-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="t-model">모델 (비우면 설정값)</label><input id="t-model" data-ctx="model" list="t-model-list"><datalist id="t-model-list"></datalist></div>
   </div>
-  <div><label>프롬프트</label><textarea id="t-prompt" rows="3">임베딩 모델과 리랭커의 차이를 두 문장으로 설명해 주세요.</textarea></div>
+  <div><label for="t-prompt">프롬프트</label><textarea id="t-prompt" rows="3">임베딩 모델과 리랭커의 차이를 두 문장으로 설명해 주세요.</textarea></div>
   <div class="row"><span class="spacer"></span><button class="btn primary" id="t-run">보내기</button></div>
   <div id="t-out"></div>
 </div>
 
-<div class="card stack" style="margin-top:16px">
+<div class="card stack mt-4">
   <h2>로컬 LLM 서버 실행</h2>
   <div class="small">가장 가벼운 방법은 <a href="https://github.com/ggml-org/llama.cpp/releases" target="_blank" rel="noopener">llama.cpp</a> 의 <code>llama-server</code> 입니다. 설치 없이 압축만 풀면 되고 OpenAI 호환 API 를 제공합니다. 내장 GPU(AMD·Intel)는 Vulkan 빌드, NVIDIA 는 CUDA 빌드를 받으세요. 자세한 내용과 모델 비교는 <code>docs/guides/llm.md</code> 에 있습니다.</div>
   <pre class="small">llama-server.exe -m 모델경로\gemma-4-E4B_q4_0-it.gguf --host 127.0.0.1 --port 8081 -c 16384 -ngl 99 -np 2 --alias gemma-4-e4b</pre>
@@ -36,5 +36,5 @@ OPENAI_MODEL=gemma-4-e4b</pre>
 </div>
 {% endblock %}
 {% block scripts %}
-<script src="{{ url_for('static', path='js/rag/llm.js') }}"></script>
+<script src="{{ url_for('static', path='js/settings/llm.js') }}"></script>
 {% endblock %}

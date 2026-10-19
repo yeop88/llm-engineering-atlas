@@ -1,55 +1,67 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{# 대시보드: 앱 전체 상태판. 예전엔 Embedding Lab 시절 구성(임베딩 카탈로그 중심)이라 LLM 시스템 전체 상태를 볼 수 없었다.
+   용도별 추천 모델은 1 임베딩 › 모델 화면으로 옮겼다. #}
 {% block title %}대시보드{% endblock %}
 {% block content %}
-<h1>대시보드</h1>
-<p class="lead">{{ catalog_version }} 기준 오픈소스 임베딩 모델 카탈로그를 관리하고, 다운로드 · 로드 · 테스트 · 벤치마크할 수 있습니다.</p>
+{% call ui.page_header("대시보드") %}LLM 시스템 실험실의 지금 상태 — 연결 · 다음에 할 일 · 맵 진행 · 최근 실험 · 작업.{% endcall %}
 
-<div class="grid cols-4">
-  <div class="card stat"><div class="label">등록 모델</div><div class="value" id="st-total">-</div></div>
-  <div class="card stat"><div class="label">다운로드됨 (로컬 캐시)</div><div class="value" id="st-cached">-</div><div class="small muted" id="st-cache-size"></div></div>
-  <div class="card stat"><div class="label">메모리에 로드됨</div><div class="value" id="st-loaded">-</div><div class="small muted" id="st-max"></div></div>
-  <div class="card stat"><div class="label">실행 디바이스</div><div class="value" id="st-device">-</div><div class="small muted" id="st-dtype"></div></div>
+<h2 class="sr-only">연결 상태</h2>
+<div class="grid cols-4" id="health" aria-live="polite">
+  <div class="card stat"><div class="label">LLM 서버</div><div class="value" id="h-llm">…</div><div class="small muted" id="h-llm-sub"></div></div>
+  <div class="card stat"><div class="label">벡터 DB</div><div class="value" id="h-vs">…</div><div class="small muted" id="h-vs-sub"></div></div>
+  <div class="card stat"><div class="label">임베딩 모델</div><div class="value" id="h-models">…</div><div class="small muted" id="h-models-sub"></div></div>
+  <div class="card stat"><div class="label">실행 장치 · 메모리</div><div class="value" id="h-device">…</div><div class="small muted" id="h-device-sub"></div></div>
 </div>
 
-<div class="grid cols-2" style="margin-top:16px">
+<div class="grid cols-2 mt-4">
+  <div class="card stack">
+    <div class="row between"><h2 class="m-0">다음에 할 일</h2><span class="small muted" id="todo-sum"></span></div>
+    <ol class="todo" id="todo"><li class="loading">확인하는 중…</li></ol>
+  </div>
+  <div class="card stack">
+    <div class="row between"><h2 class="m-0">LLM 시스템 맵 진행</h2><a href="/maps/llm">맵 보기 →</a></div>
+    <div class="row gap-1">
+      {% for s in registry.MAIN_FLOW + registry.EXTRA %}{{ ui.flow_box(s.key, s.menu) }}{% endfor %}
+    </div>
+    {% set all = registry.STAGES %}
+    {% set n_done = all | selectattr("status", "equalto", "done") | list | length %}
+    {% set n_basic = all | selectattr("status", "equalto", "basic") | list | length %}
+    <div class="small muted">맵 {{ registry.MAPS | length }}개 · 단계 {{ all | length }}개 — 구현됨 {{ n_done }} · 기초 있음 {{ n_basic }} · 예정 {{ all | length - n_done - n_basic }}</div>
+    <div class="stackbar" role="img" aria-label="전체 단계 상태">
+      <span style="flex:{{ n_done }};background:var(--ok)"></span><span style="flex:{{ n_basic }};background:var(--warn)"></span><span style="flex:{{ all | length - n_done - n_basic }};background:var(--chart-axis)"></span>
+    </div>
+    <div class="small"><a href="/maps">모든 맵 →</a></div>
+  </div>
+</div>
+
+<div class="grid cols-2 mt-4">
+  <div class="card">
+    <div class="row between"><h2>최근 실험</h2><a href="/history">이력 →</a></div>
+    <div id="runs"><div class="loading">불러오는 중…</div></div>
+  </div>
+  <div class="stack">
+    <div class="card">
+      <h2>작업</h2>
+      <div id="jobs"><div class="loading">불러오는 중…</div></div>
+    </div>
+    <div class="card">
+      <div class="row between"><h2>로드된 모델</h2><button class="btn sm danger" id="unload-all">모두 언로드</button></div>
+      <div id="loaded"></div>
+    </div>
+  </div>
+</div>
+
+<div class="grid cols-2 mt-4">
   <div class="card chart-card">
     <div class="row between"><h3>메모리 사용량 (최근 10분)</h3><span class="small muted" id="mem-now"></span></div>
     <p class="chart-sub">5초마다 기록합니다. 모델을 로드하면 "이 앱 프로세스" 선이 올라갑니다.</p>
     <div class="chart-box h-sm"><canvas id="ch-mem" role="img" aria-label="메모리 사용량 추이"></canvas></div>
   </div>
-  <div class="card chart-card">
-    <div class="row between"><h3>최근 벤치마크</h3><a id="bench-link" href="/benchmark">결과 보기 →</a></div>
-    <p class="chart-sub" id="bench-sub">아직 실행한 벤치마크가 없습니다.</p>
-    <div class="chart-box h-sm" id="bench-box" hidden><canvas id="ch-bench" role="img" aria-label="최근 벤치마크 모델별 대표 지표"></canvas></div>
-  </div>
-</div>
-
-<div class="grid cols-2" style="margin-top:16px">
-  <div class="card">
-    <div class="row between"><h2>용도별 추천 모델</h2><a id="rec-more" href="/models">전체 보기 →</a></div>
-    <div class="tabs" id="rec-tabs"></div>
-    <p class="small muted" id="rec-desc" style="margin:0 0 10px"></p>
-    <div id="rec-list" class="stack"></div>
-  </div>
-  <div class="stack">
-    <div class="card">
-      <div class="row between"><h2>로드된 모델</h2><button class="btn sm danger" id="unload-all">모두 언로드</button></div>
-      <div id="loaded"></div>
-    </div>
-    <div class="card">
-      <h2>진행 중/최근 작업</h2>
-      <div id="jobs"></div>
-    </div>
-    <div class="card">
-      <div class="row between"><h2>최근 테스트</h2><a href="/history">이력 →</a></div>
-      <div id="runs"></div>
-    </div>
-  </div>
-</div>
-
-<div class="card" style="margin-top:16px">
-  <h2>시스템</h2>
-  <div id="system" class="kv"></div>
+  <details class="card">
+    <summary><b>시스템 정보</b> <span class="small muted">Python · 패키지 버전 · HF 토큰</span></summary>
+    <div id="system" class="kv mt-3"></div>
+  </details>
 </div>
 {% endblock %}
 {% block scripts %}

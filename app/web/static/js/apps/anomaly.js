@@ -10,12 +10,12 @@ function histHtml(hist) {
   const cats = [...new Set(hist.flatMap(h => Object.keys(h.by)))];
   const named = cats.some(c => c);
   const mx = Math.max(1, ...hist.map(h => h.n));
-  const legend = named ? `<div class="row small" style="gap:12px">${cats.map(c => `<span class="row" style="gap:4px;margin:0"><span style="width:10px;height:10px;border-radius:2px;background:${(CAT[c] || CAT["정상"])[1]}"></span>${esc(c)}</span>`).join("")}</div>` : "";
-  return legend + hist.map(h => `<div class="row small" style="flex-wrap:nowrap;gap:8px">
-    <span class="mono" style="width:90px">${h.from.toFixed(2)}${h.to == null ? " 이상" : "–" + h.to.toFixed(2)}</span>
+  const legend = named ? `<div class="row small" style="gap:12px">${cats.map(c => `<span class="row gap-1 m-0"><span style="width:10px;height:10px;border-radius:2px;background:${(CAT[c] || CAT["정상"])[1]}"></span>${esc(c)}</span>`).join("")}</div>` : "";
+  return legend + hist.map(h => `<div class="row small nowrap-row gap-2">
+    <span class="mono w-md">${h.from.toFixed(2)}${h.to == null ? " 이상" : "–" + h.to.toFixed(2)}</span>
     <div style="flex:1;background:var(--code);border-radius:4px;display:flex;gap:2px;${h.from >= 1 ? "outline:1px dashed var(--border)" : ""}">
       ${cats.map(c => h.by[c] ? `<div title="${esc(c || "개수")} ${h.by[c]}" style="height:12px;border-radius:4px;width:${h.by[c] / mx * 100}%;background:${named ? (CAT[c] || CAT["정상"])[1] : "var(--accent)"}"></div>` : "").join("")}
-    </div><span class="mono" style="width:40px;text-align:right">${h.n}</span></div>`).join("");
+    </div><span class="mono w-xs text-right">${h.n}</span></div>`).join("");
 }
 
 $("#a-run").onclick = async e => {
@@ -86,7 +86,7 @@ function updateApi() {
 }
 $("#sc-model").addEventListener("change", updateApi);
 async function delSaved(id) {
-  if (!confirm(`탐지기 #${id} 를 삭제할까요?`)) return;
+  if (!(await ui.confirm(`탐지기 #${id} 를 삭제할까요?`, { ok: "삭제", danger: true, title: "삭제" }))) return;
   await api(`/api/apps/models/${id}`, { method: "DELETE" }); toast("삭제했습니다", "ok"); loadSaved();
 }
 $("#sc-run").onclick = async e => {

@@ -36,10 +36,14 @@ class Map:
 
 @dataclass(frozen=True)
 class Page:
-    nav: str  # 화면의 nav 키 (메뉴 강조 · 상단 설명 연결)
-    href: str
+    """단계의 화면 하나. 주소 · 템플릿 · 메뉴 이름이 여기 한 곳에 있어 라우트 · 사이드바 · 빠른 이동 · 위치 표시가 모두 이것으로 만들어진다
+    (예전에는 web/pages.py 의 PAGES · 의미 응용 목록 · 메뉴 코드를 따로 고쳐야 했다)."""
+
+    nav: str  # 화면의 nav 키 (메뉴 강조 · 단계 설명 연결)
+    href: str  # 주소 규칙: 화면이 여럿인 단계는 /<단계>/<화면>, 하나인 단계는 /<단계>
     label: str
     desc: str = ""
+    template: str = ""  # web/templates 아래 경로. 비우면 라우트를 만들지 않음(상세 화면처럼 web/pages.py 가 직접 만드는 경우)
 
 
 @dataclass(frozen=True)

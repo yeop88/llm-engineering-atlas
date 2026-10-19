@@ -1,22 +1,22 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}에이전트 테스트{% endblock %}
 {% block content %}
-<h1>에이전트 테스트</h1>
-<p class="lead">LLM 이 도구를 여러 번 써서 답합니다: <b>search</b>(다른 표현 · 하위 질문으로 다시 검색), <b>read</b>(찾은 지문의 앞뒤 읽기), <b>calc</b>(계산), <b>finish</b>(근거를 인용해 답하기). 단계마다 생각 · 행동 · 관찰과 시간을 기록하고, 마지막 답은 RAG 답변과 같은 방식으로 문장별 근거를 검증합니다. 평가는 맵의 <a href="/roadmap#flow">연결 실행</a>에서 에이전트 경로와 일반 RAG 를 같은 질문으로 비교하세요.</p>
+{% call ui.page_header("에이전트 테스트") %}LLM 이 도구를 여러 번 써서 답합니다: <b>search</b>(다른 표현 · 하위 질문으로 다시 검색), <b>read</b>(찾은 지문의 앞뒤 읽기), <b>calc</b>(계산), <b>finish</b>(근거를 인용해 답하기). 단계마다 생각 · 행동 · 관찰과 시간을 기록하고, 마지막 답은 RAG 답변과 같은 방식으로 문장별 근거를 검증합니다. 평가는 맵의 <a href="/maps/llm#flow">연결 실행</a>에서 에이전트 경로와 일반 RAG 를 같은 질문으로 비교하세요.{% endcall %}
 
 <div class="card stack">
   <div class="row">
-    <div class="field"><label>컬렉션</label><select id="a-col"></select></div>
-    <div class="field"><label>벡터 인덱스</label><select id="a-idx"></select></div>
-    <div class="field"><label>검색 방식</label><select id="a-mode"><option value="dense">의미</option><option value="hybrid">하이브리드</option></select></div>
-    <div class="field"><label>최대 단계</label><input id="a-steps" type="number" value="5" min="1" max="12" style="width:60px"></div>
-    <div class="field"><label>검색당 지문</label><input id="a-k" type="number" value="4" min="1" max="10" style="width:60px"></div>
-    <div class="field"><label>LLM (비우면 기본)</label><input id="a-model" style="width:160px"></div>
-    <label class="row small" style="margin:0" title="법령 조문 · 판례를 번호로 바로 찾는 도구와, 답변에 나온 번호가 자료에 실제로 있는지 검사"><input type="checkbox" id="a-lookup"> 법률 번호 조회</label>
+    <div class="field"><label for="a-col">컬렉션</label><select id="a-col"></select></div>
+    <div class="field"><label for="a-idx">벡터 인덱스</label><select id="a-idx"></select></div>
+    <div class="field"><label for="a-mode">검색 방식</label><select id="a-mode"><option value="dense">의미</option><option value="hybrid">하이브리드</option></select></div>
+    <div class="field"><label for="a-steps">최대 단계</label><input class="w-sm" id="a-steps" type="number" value="5" min="1" max="12"></div>
+    <div class="field"><label for="a-k">검색당 지문</label><input class="w-sm" id="a-k" type="number" value="4" min="1" max="10"></div>
+    <div class="field"><label for="a-model">LLM (비우면 기본)</label><input class="w-xl" id="a-model"></div>
+    <label class="row small m-0" title="법령 조문 · 판례를 번호로 바로 찾는 도구와, 답변에 나온 번호가 자료에 실제로 있는지 검사"><input type="checkbox" id="a-lookup"> 법률 번호 조회</label>
   </div>
-  <div class="row" style="flex-wrap:nowrap"><textarea id="a-q" rows="2" style="flex:1" placeholder="예: 구매대행업체가 등록하지 않으면 어떤 처벌을 받고, 등록 기준 매출은 얼마인가요?"></textarea><button class="btn primary" id="a-run">실행</button></div>
+  <div class="row nowrap-row"><textarea class="grow" id="a-q" rows="2" placeholder="예: 구매대행업체가 등록하지 않으면 어떤 처벌을 받고, 등록 기준 매출은 얼마인가요?"></textarea><button class="btn primary" id="a-run">실행</button></div>
 </div>
-<div id="a-steps-out" class="stack" style="margin-top:12px"></div>
+<div id="a-steps-out" class="stack mt-3"></div>
 <div id="a-final"></div>
 {% endblock %}
 {% block scripts %}

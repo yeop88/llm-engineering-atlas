@@ -1,9 +1,9 @@
 {% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
 {% block title %}중복·표절 검사{% endblock %}
 {% block content %}
 <a href="/apps" class="small">← 응용</a>
-<h1>중복·표절 검사</h1>
-<p class="lead">의미가 거의 같은 텍스트를 찾아 중복 데이터를 정리하고, 글을 문장 단위로 참고 문서와 대조해 그대로 베낀 부분과 표현만 바꾼 부분을 찾습니다.</p>
+{% call ui.page_header("중복·표절 검사") %}의미가 거의 같은 텍스트를 찾아 중복 데이터를 정리하고, 글을 문장 단위로 참고 문서와 대조해 그대로 베낀 부분과 표현만 바꾼 부분을 찾습니다.{% endcall %}
 
 <div class="tabs">
   <button data-tab="t-dedup">중복 제거</button>
@@ -16,19 +16,19 @@
     <div class="card stack">
       <h2>설정</h2>
       <div class="row">
-        <div class="field grow"><label>임베딩 모델</label><select id="d-model"></select></div>
-        <div class="field"><label>차원</label><select id="d-dim"></select></div>
+        <div class="field grow"><label for="d-model">임베딩 모델</label><select id="d-model"></select></div>
+        <div class="field"><label for="d-dim">차원</label><select id="d-dim"></select></div>
       </div>
       <div class="row">
-        <div class="field grow"><label>중복으로 볼 유사도 <span class="mono" id="d-th-v"></span></label><input id="d-th" type="range" min="0.75" max="0.99" step="0.01" value="0.92"></div>
-        <div class="field"><label>그룹에서 남길 것</label><select id="d-keep"><option value="first">먼저 나온 것</option><option value="longest">가장 긴 것</option></select></div>
+        <div class="field grow"><label for="d-th">중복으로 볼 유사도 <span class="mono" id="d-th-v"></span></label><input id="d-th" type="range" min="0.75" max="0.99" step="0.01" value="0.92"></div>
+        <div class="field"><label for="d-keep">그룹에서 남길 것</label><select id="d-keep"><option value="first">먼저 나온 것</option><option value="longest">가장 긴 것</option></select></div>
       </div>
       <div class="small muted">모델마다 유사도 분포가 다릅니다. 결과를 보며 임계값을 조정하세요(높이면 확실한 중복만, 낮추면 비슷한 의미까지). 같은 그룹 안에서 글자까지 거의 같으면 <b>완전 중복</b>, 의미만 같으면 <b>의역</b>으로 표시합니다.</div>
       <div class="row"><span class="spacer"></span><button class="btn primary" id="d-run">중복 찾기</button></div>
     </div>
   </div>
-  <div class="card" id="d-progress" hidden style="margin-top:16px"></div>
-  <div id="d-out" style="margin-top:16px"></div>
+  <div class="card mt-4" id="d-progress" hidden></div>
+  <div class="mt-4" id="d-out"></div>
 </section>
 
 <section class="tab-panel" id="t-plag">
@@ -37,19 +37,19 @@
       <h2>검사할 글</h2>
       <textarea id="p-suspect" rows="12" placeholder="보고서·과제·기사 본문을 붙여 넣으세요"></textarea>
       <div class="row">
-        <div class="field grow"><label>임베딩 모델</label><select id="p-model"></select></div>
-        <div class="field"><label>차원</label><select id="p-dim"></select></div>
+        <div class="field grow"><label for="p-model">임베딩 모델</label><select id="p-model"></select></div>
+        <div class="field"><label for="p-dim">차원</label><select id="p-dim"></select></div>
       </div>
       <div class="row">
-        <div class="field grow"><label>의역으로 볼 의미 유사도 <span class="mono" id="p-th-v"></span></label><input id="p-th" type="range" min="0.6" max="0.99" step="0.01" value="0.85"></div>
-        <div class="field grow"><label>복사로 볼 글자 일치도 <span class="mono" id="p-cl-v"></span></label><input id="p-cl" type="range" min="0.2" max="1" step="0.05" value="0.6"></div>
+        <div class="field grow"><label for="p-th">의역으로 볼 의미 유사도 <span class="mono" id="p-th-v"></span></label><input id="p-th" type="range" min="0.6" max="0.99" step="0.01" value="0.85"></div>
+        <div class="field grow"><label for="p-cl">복사로 볼 글자 일치도 <span class="mono" id="p-cl-v"></span></label><input id="p-cl" type="range" min="0.2" max="1" step="0.05" value="0.6"></div>
       </div>
       <div class="row"><span class="spacer"></span><button class="btn primary" id="p-run">표절 검사</button></div>
     </div>
     <div class="card stack"><h2>참고 문서 (원문 후보)</h2><div id="p-src"></div><div class="small muted">문서 검색 컬렉션을 고르면 그 안의 문서 전체와 대조합니다(문장 2만 개까지).</div></div>
   </div>
-  <div class="card" id="p-progress" hidden style="margin-top:16px"></div>
-  <div id="p-out" style="margin-top:16px"></div>
+  <div class="card mt-4" id="p-progress" hidden></div>
+  <div class="mt-4" id="p-out"></div>
 </section>
 {% endblock %}
 {% block scripts %}

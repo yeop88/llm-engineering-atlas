@@ -1,7 +1,7 @@
 // rag/verify.html 화면 스크립트 (템플릿에서 옮김 — 화면 JS 는 static/js/<영역>/<화면>.js)
 // queue: 판정할 문장들. collection_id 는 문장을 만든 작업 결과에서 가져온다 — 화면의 선택값에 기대면 라벨이 컬렉션 없이 저장되던 문제가 있었다
 let queue = [], queueCol = null;
-setupCollectionPickers({ col: $("#v-col"), idx: $("#v-idx"), set: $("#v-set"), key: "verify-col" });
+setupCollectionPickers({ col: $("#v-col"), idx: $("#v-idx"), set: $("#v-set") });
 const MNAME = { lexical: "글자 겹침", semantic: "의미 유사도", hybrid: "글자 또는 의미", llm: "LLM 판정" };
 
 (async () => {
@@ -22,9 +22,9 @@ function showQueue() {
   $("#l-out").innerHTML = queue.length ? queue.map((x, i) => `<div class="card stack" style="padding:10px" id="q${i}">
       <div class="small muted">질문: ${esc(x.question)}</div>
       <div><b>${esc(x.sentence)}</b></div>
-      <details><summary class="small">인용한 근거 보기</summary><pre class="small" style="white-space:pre-wrap;max-height:260px;overflow:auto">${esc(x.sources)}</pre></details>
-      <div class="row small"><span style="width:76px">근거 일치</span>${pick(i, "label", true, "근거 있음")}${pick(i, "label", false, "근거 없음")}${pick(i, "label", null, "모르겠음")}</div>
-      <div class="row small"><span style="width:76px">질문 관련성</span>${pick(i, "relevant", true, "관련 있음")}${pick(i, "relevant", false, "관련 없음")}${pick(i, "relevant", null, "모르겠음")}</div></div>`).join("")
+      <details><summary class="small">인용한 근거 보기</summary><pre class="small pre scroll scroll-sm">${esc(x.sources)}</pre></details>
+      <div class="row small"><span class="w-md">근거 일치</span>${pick(i, "label", true, "근거 있음")}${pick(i, "label", false, "근거 없음")}${pick(i, "label", null, "모르겠음")}</div>
+      <div class="row small"><span class="w-md">질문 관련성</span>${pick(i, "relevant", true, "관련 있음")}${pick(i, "relevant", false, "관련 없음")}${pick(i, "relevant", null, "모르겠음")}</div></div>`).join("")
     + `<div class="row"><span class="spacer"></span><button class="btn primary" onclick="saveMarks()">판정 저장</button></div>` : '<div class="empty">1 에서 판정할 문장을 만드세요</div>';
 }
 function mark(i, key, v) {

@@ -1,4 +1,4 @@
-"""맵과 단계 레지스트리 — 메뉴 · 화면 상단 설명 · 단계 소개 · 맵 화면 · 문서가 모두 여기서 만들어진다.
+"""맵과 단계 레지스트리 — 사이드바 · 화면 라우트 · 단계 설명 서랍 · 단계 소개 · 맵 화면 · 빠른 이동 · 문서가 모두 여기서 만들어진다.
 
 구조 (한 파일 2,900줄을 나눴다 — 맵을 고치거나 더할 때 그 맵 파일만 보면 되게)
 - model.py            데이터 구조(Map · Page · Stage)와 경로 규칙
@@ -56,7 +56,7 @@ def map_flow(stage: Stage) -> list[Stage]:
 
 
 def stage_for_nav(nav: str | None) -> Stage | None:
-    """화면의 nav 키 → 그 화면이 속한 단계 (상단 설명 패널용)."""
+    """화면의 nav 키 → 그 화면이 속한 단계 (단계 설명 서랍 · 위치 표시용)."""
     if not nav:
         return None
     if nav.startswith("stage_"):

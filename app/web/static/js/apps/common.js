@@ -13,21 +13,21 @@ const Apps = (() => {
   async function sourcePicker(root, opts = {}) {
     const id = Math.random().toString(36).slice(2, 7);
     root.innerHTML = `
-      <div class="row" style="margin-bottom:8px">
-        <label class="row" style="margin:0"><input type="radio" name="src-${id}" value="texts" checked> 직접 입력</label>
-        <label class="row" style="margin:0"><input type="radio" name="src-${id}" value="collection"> 문서 검색 컬렉션</label>
+      <div class="row mb-2">
+        <label class="row m-0"><input type="radio" name="src-${id}" value="texts" checked> 직접 입력</label>
+        <label class="row m-0"><input type="radio" name="src-${id}" value="collection"> 문서 검색 컬렉션</label>
       </div>
       <div data-pane="texts" class="stack">
-        <div class="row"><div class="field grow"><label>예시 데이터</label><select data-preset><option value="">— 직접 입력 —</option></select></div></div>
-        <div><label>텍스트 (한 줄에 하나${opts.labels !== "none" ? ", 라벨은 <code>[라벨] 텍스트</code>" : ""})</label>
-          <textarea data-text rows="10" class="small" placeholder="${esc(opts.placeholder || "")}"></textarea></div>
+        <div class="row"><div class="field grow"><label for="${id}-preset">예시 데이터</label><select id="${id}-preset" data-preset><option value="">— 직접 입력 —</option></select></div></div>
+        <div><label for="${id}-text">텍스트 (한 줄에 하나${opts.labels !== "none" ? ", 라벨은 <code>[라벨] 텍스트</code>" : ""})</label>
+          <textarea id="${id}-text" data-text rows="10" class="small" placeholder="${esc(opts.placeholder || "")}"></textarea></div>
         <div class="small muted" data-count></div>
       </div>
       <div data-pane="collection" class="stack" hidden>
         <div class="row">
-          <div class="field grow"><label>컬렉션</label><select data-col></select></div>
-          <div class="field"><label>단위</label><select data-unit><option value="document">문서</option><option value="chunk">청크</option></select></div>
-          <div class="field grow" data-cs-wrap hidden><label>청크 세트</label><select data-cs></select></div>
+          <div class="field grow"><label for="${id}-col">컬렉션</label><select id="${id}-col" data-col></select></div>
+          <div class="field"><label for="${id}-unit">단위</label><select id="${id}-unit" data-unit><option value="document">문서</option><option value="chunk">청크</option></select></div>
+          <div class="field grow" data-cs-wrap hidden><label for="${id}-cs">청크 세트</label><select id="${id}-cs" data-cs></select></div>
         </div>
         <div class="small muted">문서 단위는 제목 + 앞부분 2,000자를 씁니다. 청크가 많으면 처음 한 번은 임베딩에 시간이 걸립니다(이후 캐시).</div>
       </div>`;
@@ -55,6 +55,9 @@ const Apps = (() => {
     // 컬렉션
     const cols = await api("/api/collections");
     $r("[data-col]").innerHTML = cols.map(c => `<option value="${c.id}">${esc(c.name)} (문서 ${c.n_documents})</option>`).join("") || '<option value="">컬렉션 없음</option>';
+    // 작업 맥락의 컬렉션을 기본으로 (이 화면들은 직접 입력이 기본이라 맥락 줄은 띄우지 않는다)
+    const ctxCol = Ctx.get().col;
+    if (ctxCol && cols.some(c => String(c.id) === ctxCol)) $r("[data-col]").value = ctxCol;
     const loadSets = async () => {
       const cid = $r("[data-col]").value;
       if (!cid) return;
@@ -91,11 +94,8 @@ const Apps = (() => {
     box.hidden = false;
     btn.disabled = true;
     try {
-      const done = await pollJob(job.id, j => {
-        box.innerHTML = `<div class="row between small"><span>${esc(j.title)}</span><span class="badge warn">${j.status}</span></div>
-          <div class="progress" style="margin:6px 0"><div style="width:${pct(j.progress)}%"></div></div><div class="small muted">${esc(j.message)}</div>`;
-      }, 700);
-      if (done.status !== "done") { box.innerHTML = `<div class="errbox">${esc(done.error || done.status)}</div>`; return null; }
+      const done = await pollJob(job.id, j => { box.innerHTML = ui.jobProgress(j); }, 700);
+      if (done.status !== "done") { ui.error(box, done.status === "cancelled" ? "취소했습니다." : (done.error || done.status)); return null; }
       box.hidden = true;
       return done.result;
     } finally { btn.disabled = false; }

@@ -33,6 +33,7 @@ async function load() {
   const loaded = await api("/api/loaded");
   loadedInfo = loaded.filter(l => l.model_id === MODEL_ID);
   $("#title").textContent = model.name;
+  setCrumb(model.name);
   $("#hf-link").textContent = model.hf_id;
   $("#hf-link").href = `https://huggingface.co/${model.hf_id}`;
   $("#badges").innerHTML = modelBadges(model);
@@ -56,7 +57,7 @@ async function load() {
   ].map(([k, v]) => `<div>${k}</div><div>${v}</div>`).join("");
 
   const job = model.download_job;
-  $("#dl-progress").innerHTML = job ? `<div class="row"><div class="progress" style="flex:1"><div style="width:${pct(job.progress)}%"></div></div><span class="small muted">${esc(job.message)}</span></div>` : "";
+  $("#dl-progress").innerHTML = job ? `<div class="row"><div class="progress grow"><div style="width:${pct(job.progress)}%"></div></div><span class="small muted">${esc(job.message)}</span></div>` : "";
   if (job) setTimeout(load, 1500);
 }
 
@@ -80,10 +81,12 @@ $("#b-load-mm").onclick = async e => {
 };
 $("#b-unload").onclick = async e => { await busy(e.target, () => api(`/api/models/${MODEL_ID}/unload`, { method: "POST" })); load(); };
 $("#b-delete").onclick = async e => {
-  if (!confirm(`${model.hf_id} 을(를) 카탈로그에서 삭제할까요?`)) return;
-  const cache = model.cached && confirm("로컬 캐시 파일도 함께 삭제할까요?");
+  if (!(await ui.confirm(`${model.hf_id} 을(를) 카탈로그에서 삭제할까요?`, { ok: "삭제", danger: true, title: "삭제" }))) return;
+  // 캐시까지 지울지 따로 묻는다 — 캐시를 남기면 다시 등록할 때 내려받지 않아도 된다
+  const cache = model.cached && (await ui.choose("로컬 캐시 파일(내려받은 모델 파일)도 함께 삭제할까요?",
+    [{ label: "카탈로그에서만", value: false }, { label: "캐시도 삭제", value: true, danger: true }])) === true;
   await busy(e.target, () => api(`/api/models/${MODEL_ID}?delete_cache=${cache}`, { method: "DELETE" }));
-  location.href = "/models";
+  location.href = "/embedding/models";
 };
 
 $("#qt-run").onclick = async e => {
