@@ -18,10 +18,10 @@ def nav_items() -> list[dict]:
     maps = [
         {"label": m.title, "href": m.href, "desc": m.summary, "key": "roadmap" if m.key == "llm" else f"map_{m.key}"} for m in registry.MAPS
     ]
-    kg_keys = [f"stage_{s.key}" for s in registry.KG_FLOW]
+    other_keys = [f"stage_{s.key}" for s in registry.OTHER_MAP_STAGES]
     items: list[dict] = [
         {"label": "대시보드", "href": "/", "keys": ["dashboard"]},
-        {"label": "맵", "items": maps, "keys": [x["key"] for x in maps] + kg_keys},
+        {"label": "맵", "items": maps, "keys": [x["key"] for x in maps] + other_keys},
     ]
     later: list[dict] = []
     for s in registry.MAIN_FLOW:
@@ -74,6 +74,7 @@ PAGES = {
     "/rl": ("rl/rl.html", "rl"),
     "/roadmap": ("roadmap.html", "roadmap"),
     "/maps/knowledge-graph": ("maps/knowledge_graph.html", "map_kg"),
+    "/maps/multi-agent": ("maps/multi_agent.html", "map_agents"),
 }
 
 

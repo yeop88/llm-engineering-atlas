@@ -32,6 +32,13 @@
 - [지식 그래프 · GraphRAG 맵](../../../kg-map.md)
 - [LLM 맵 · 2 RAG 검색](../../2-rag/rag.md)
 
+## 기반 단계
+
+이미 있는 단계 위에 짓습니다.
+
+- [2 RAG 검색](../../2-rag/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
+- [3 리랭킹](../../3-rerank/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
+
 ---
 
 ← [K6 Text2Cypher](../k6-text2cypher/README.md) · [전체 맵](../../../kg-map.md) · [K8 글로벌 커뮤니티 요약](../k8-community-summary/README.md) →

@@ -51,6 +51,10 @@ def test_stage_and_map_pages(client):
     kg = client.get("/maps/knowledge-graph").text
     assert all(f"/stages/{s.key}" in kg for s in registry.map_stages("kg")) and "Text2Cypher" in kg
     assert "K1" not in m.split("단계별 상태")[1].split("연결 실행")[0]
+    ag = client.get("/maps/multi-agent").text
+    assert all(f"/stages/{s.key}" in ag for s in registry.map_stages("agents")) and "오케스트레이터" in ag
+    mr = client.get("/stages/mm_rag").text
+    assert "기반 단계" in mr and 'href="/stages/multimodal"' in mr  # 이미 있는 기능으로 이어진다
     st = client.get("/stages/ontology").text
     assert 'href="/maps/knowledge-graph"' in st and "/stages/kg_extract" in st  # 같은 맵 안에서 다음 단계
     # 단계에 속한 화면 위에는 그 단계의 원리 · 왜 · 어떻게 패널
@@ -60,9 +64,16 @@ def test_stage_and_map_pages(client):
 
 
 def test_maps():
-    assert [m.key for m in registry.MAPS] == ["llm", "kg"]
-    assert {s.map for s in registry.STAGES} == {"llm", "kg"}
+    assert [m.key for m in registry.MAPS] == ["llm", "kg", "agents"]
+    assert {s.map for s in registry.STAGES} == {"llm", "kg", "agents"}
+    assert [s.no for s in registry.AGENTS_FLOW] == [f"MA{i}" for i in range(1, 9)]
+    # 기반 단계는 실제 단계여야 하고, 구현됨 · 기초 있음 단계는 기반이 있어야 한다(이미 있는 것을 보여 주려고)
+    for s in registry.OTHER_MAP_STAGES:
+        assert all(k in registry.BY_KEY and k != s.key for k in s.builds_on), s.key
+        assert s.status == registry.PLANNED or s.builds_on, s.key
+        assert registry.map_flow(s) == registry.map_stages(s.map)
+    assert all(m.diagram for m in registry.MAPS)
     assert [s.no for s in registry.KG_FLOW] == [f"K{i}" for i in range(1, 9)]
     assert all(s.map == "llm" for s in registry.MAIN_FLOW + registry.EXTRA)  # 본선 · 곁가지는 LLM 맵
     menu = next(i for i in nav_items() if i["label"] == "맵")
-    assert [x["href"] for x in menu["items"]] == ["/roadmap", "/maps/knowledge-graph"]
+    assert [x["href"] for x in menu["items"]] == ["/roadmap", "/maps/knowledge-graph", "/maps/multi-agent"]

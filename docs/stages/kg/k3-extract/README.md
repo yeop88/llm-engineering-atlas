@@ -31,6 +31,12 @@
 
 - [지식 그래프 · GraphRAG 맵](../../../kg-map.md)
 
+## 기반 단계
+
+이미 있는 단계 위에 짓습니다.
+
+- [2 RAG 검색](../../2-rag/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
+
 ---
 
 ← [K2 온톨로지 설계](../k2-ontology/README.md) · [전체 맵](../../../kg-map.md) · [K4 지식 융합 · 정제](../k4-fusion/README.md) →

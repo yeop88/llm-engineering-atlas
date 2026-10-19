@@ -7,7 +7,7 @@
   <a class="flow-box {{ 'done' if s.status == 'done' else ('basic' if s.status == 'basic' else 'plan') }}" href="/stages/{{ key }}" title="{{ s.status_label }} · {{ s.summary }}">
     <span class="stage-no">{{ s.no }}</span> {{ text or s.title }}</a>
 {%- endmacro %}
-<div class="row between"><h1>지식 그래프 · GraphRAG 맵</h1><a class="small" href="/roadmap">← LLM 시스템 엔지니어링 맵</a></div>
+<div class="row between"><h1>지식 그래프 · GraphRAG 맵</h1><span class="small"><a href="/roadmap">LLM 시스템 엔지니어링 맵</a> · <a href="/maps/multi-agent">멀티에이전트 · 멀티모달 맵</a></span></div>
 <p class="lead">문서를 조각(청크)으로만 다루는 벡터 RAG 와 달리, 지식 그래프는 <b>개념과 관계</b>를 구조로 저장합니다. 온톨로지(설계도)로 범위와 규칙을 정하고, 정형 · 비정형 데이터에서 [주어-관계-목적어]를 뽑아 하나로 정리해 그래프 DB 에 담은 뒤, LLM 과 결합(GraphRAG)해 <b>다단계 추론 · 정확한 집계 · 전체 요약</b> 질문에 답합니다. 상자를 누르면 그 단계의 원리 · 왜 · 어떻게를 볼 수 있습니다.</p>
 
 <div class="card stack">
@@ -57,11 +57,12 @@ RETURN j.사건번호, collect(other.법령 + " " + other.번호) AS 함께_인�
 <div class="card stack" style="margin-top:16px">
   <h2>단계별 상태</h2>
   <div class="table-wrap"><table>
-    <tr><th>단계</th><th>상태</th><th>무엇을</th><th>앞으로 할 일</th></tr>
+    <tr><th>단계</th><th>상태</th><th>무엇을</th><th>기반 단계</th><th>앞으로 할 일</th></tr>
     {% for s in registry.map_stages('kg') %}
     <tr><td class="nowrap"><span class="stage-no">{{ s.no }}</span> <a href="/stages/{{ s.key }}"><b>{{ s.title }}</b></a> <span class="small muted">{{ s.en }}</span></td>
       <td><span class="badge {{ 'ok' if s.status == 'done' else ('warn' if s.status == 'basic' else '') }}">{{ s.status_label }}</span></td>
       <td class="small">{{ s.summary }}</td>
+      <td class="small nowrap">{% for k in s.builds_on %}{% set b = registry.BY_KEY[k] %}<a href="/stages/{{ k }}">{{ b.no }} {{ b.menu }}</a>{{ " · " if not loop.last }}{% else %}<span class="muted">—</span>{% endfor %}</td>
       <td class="small">{{ s.plans | join(" · ") }}</td></tr>
     {% endfor %}
   </table></div>

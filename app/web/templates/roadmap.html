@@ -7,7 +7,7 @@
   <a class="flow-box {{ 'done' if s.status == 'done' else ('basic' if s.status == 'basic' else 'plan') }}" href="/stages/{{ key }}" title="{{ s.status_label }} · {{ s.summary }}">
     <span class="stage-no">{{ s.no }}</span> {{ text or s.title }}</a>
 {%- endmacro %}
-<div class="row between"><h1>LLM 시스템 엔지니어링 맵</h1><a class="small" href="/maps/knowledge-graph">다른 맵: 지식 그래프 · GraphRAG →</a></div>
+<div class="row between"><h1>LLM 시스템 엔지니어링 맵</h1><span class="small">다른 맵: <a href="/maps/knowledge-graph">지식 그래프 · GraphRAG</a> · <a href="/maps/multi-agent">멀티에이전트 · 멀티모달</a></span></div>
 <p class="lead">데이터가 들어와 서비스가 되기까지의 흐름입니다. 임베딩 · RAG · 파인튜닝이 모델의 <b>지식</b>(파라미터에 담긴 기억과 외부 문서 기억)을 다룬다면, 리랭킹 · 라우팅 · 증류 · 양자화 · 에이전트는 이를 실제 서비스에서 <b>싸고 빠르고 정확하게</b> 돌리는 시스템 구성 요소입니다. 상자를 누르면 그 단계의 원리 · 왜 · 어떻게를 볼 수 있습니다.</p>
 
 <div class="card stack">

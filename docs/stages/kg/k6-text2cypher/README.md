@@ -31,6 +31,12 @@ LLM 에 그래프 스키마(온톨로지)와 질문을 주고 Cypher 쿼리를 �
 
 - [지식 그래프 · GraphRAG 맵](../../../kg-map.md)
 
+## 기반 단계
+
+이미 있는 단계 위에 짓습니다.
+
+- [8a 에이전틱 AI](../../8a-agent/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
+
 ---
 
 ← [K5 그래프 DB](../k5-graph-db/README.md) · [전체 맵](../../../kg-map.md) · [K7 그래프 하이브리드 검색](../k7-graph-hybrid/README.md) →

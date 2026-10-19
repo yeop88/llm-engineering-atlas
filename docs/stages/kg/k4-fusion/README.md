@@ -31,6 +31,13 @@
 
 - [지식 그래프 · GraphRAG 맵](../../../kg-map.md)
 
+## 기반 단계
+
+이미 있는 단계 위에 짓습니다.
+
+- [2 RAG 검색](../../2-rag/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
+- [A 의미 응용](../../apps/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
+
 ---
 
 ← [K3 데이터 추출](../k3-extract/README.md) · [전체 맵](../../../kg-map.md) · [K5 그래프 DB](../k5-graph-db/README.md) →

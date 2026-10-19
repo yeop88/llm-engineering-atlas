@@ -1,6 +1,8 @@
 """맵과 단계 정의 — 메뉴 · 화면 상단 설명 · 단계 소개 페이지 · 맵 화면 · 문서가 모두 여기서 만들어진다.
 
-맵은 여러 개다: ① LLM 시스템 엔지니어링 맵(임베딩 → RAG → … → 에이전트) ② 지식 그래프 · GraphRAG 맵(온톨로지 → 그래프 DB → GraphRAG).
+맵은 여러 개다: ① LLM 시스템 엔지니어링 맵(임베딩 → RAG → … → 에이전트) ② 지식 그래프 · GraphRAG 맵(온톨로지 → 그래프 DB → GraphRAG)
+③ 멀티에이전트 · 멀티모달 맵(오케스트레이터와 전문가 에이전트, 텍스트 밖의 입력 · 출력).
+다른 맵의 단계는 builds_on 으로 LLM 맵의 어느 단계 위에 짓는지 적는다 — 이미 구현된 것과 새로 만들 것을 나눠 보이려고.
 단계는 하나의 목록(STAGES)에 두고 map 으로 나눈다 — 단계 소개 페이지 · 문서 생성 · 메뉴 강조를 맵마다 따로 만들지 않으려고.
 새 단계를 추가하거나 상태가 바뀌면 이 목록만 고치면 된다(화면 문구가 여러 곳에서 어긋나지 않게).
 """
@@ -18,13 +20,34 @@ class Map:
     href: str
     doc: str  # 맵 개요 문서 (저장소 내 경로)
     summary: str
+    diagram: str = ""  # 문서 색인에 넣는 글자 흐름도
 
 
 MAPS: list[Map] = [
     Map("llm", "LLM 시스템 엔지니어링 맵", "/roadmap", "docs/map.md",
-        "임베딩 → RAG 검색 → 리랭킹 → 라우팅 → 소형/대형 모델 · 에이전트 — 문서 지식을 싸고 빠르고 정확하게 서비스하는 흐름"),
+        "임베딩 → RAG 검색 → 리랭킹 → 라우팅 → 소형/대형 모델 · 에이전트 — 문서 지식을 싸고 빠르고 정확하게 서비스하는 흐름",
+        "[데이터 임베딩] → [RAG 검색] → [리랭킹 (정밀 필터링)]\n"
+        "                                        ↓\n"
+        "[라우팅 (난이도 분류)] → 쉬운 질문:  [지식 증류 · 양자화된 소형 모델]\n"
+        "                       → 어려운 질문: [파인튜닝 · 강화학습된 에이전트 LLM]"),
     Map("kg", "지식 그래프 · GraphRAG 맵", "/maps/knowledge-graph", "docs/kg-map.md",
-        "온톨로지 설계 → 추출 · 융합 → 그래프 DB → GraphRAG — 개념과 관계를 구조로 저장해 다단계 · 집계 · 전체 요약 질문에 답하는 흐름"),
+        "온톨로지 설계 → 추출 · 융합 → 그래프 DB → GraphRAG — 개념과 관계를 구조로 저장해 다단계 · 집계 · 전체 요약 질문에 답하는 흐름",
+        "[요구사항 정의] → [온톨로지 설계] → [데이터 추출 (ETL · LLM)] → [지식 융합 · 정제]\n"
+        "                                        ↓\n"
+        "                              [그래프 DB (Neo4j)]\n"
+        "                                        ↓\n"
+        "  GraphRAG: [Text2Cypher] · [그래프 하이브리드 검색] · [글로벌 커뮤니티 요약]"),
+    Map("agents", "멀티에이전트 · 멀티모달 맵", "/maps/multi-agent", "docs/agents-map.md",
+        "멀티모달 입력 · 검색 → 오케스트레이터가 전문가 에이전트(검색 · 분석 · 작성 · 검증)에게 분배 → 교차 검증 → 텍스트 · 차트 · 음성 출력",
+        "[멀티모달 입력 (텍스트 · 이미지 · 음성 · 문서)] → [멀티모달 임베딩]\n"
+        "                                        ↓\n"
+        "                     [오케스트레이터 에이전트 (작업 분해 · 분배)]\n"
+        "          ↓                             ↓                              ↓\n"
+        "  [검색 전문가 (멀티모달 RAG)]   [분석 · 코딩 (표 · 코드 · 차트)]   [보고서 작성 (sLLM / LLM)]\n"
+        "                                        ↓\n"
+        "                     [품질 검증 (Critic) · 교차 검증]\n"
+        "                                        ↓\n"
+        "                [멀티모달 출력 (텍스트 + 차트 + 음성)]"),
 ]  # fmt: skip
 MAP_BY_KEY = {m.key: m for m in MAPS}
 
@@ -54,6 +77,7 @@ class Stage:
     flow: str = "main"  # main = 흐름도 본선, extra = 곁가지(멀티모달 · 의미 응용), kg = 지식 그래프 맵
     short: str = ""  # 메뉴용 짧은 이름 (비우면 title)
     map: str = "llm"  # 속한 맵 (MAPS)
+    builds_on: list[str] = field(default_factory=list)  # 이 단계가 위에 짓는 다른 단계(주로 LLM 맵의 구현된 단계) 키
 
     @property
     def status_label(self) -> str:
@@ -63,8 +87,8 @@ class Stage:
     def doc_dir(self) -> str:
         """이 단계 문서 폴더 (docs/stages/<번호-단계>/). README.md 는 scripts/gen_docs.py 가 이 레지스트리로 만든다."""
         name = self.key.replace("_", "-")
-        if self.map == "kg":
-            return f"docs/stages/kg/{self.no.lower()}-{name.removeprefix('kg-')}"
+        if self.map != "llm":
+            return f"docs/stages/{self.map}/{self.no.lower()}-{name.removeprefix(self.map + '-')}"
         return f"docs/stages/{self.no}-{name}" if self.flow == "main" else f"docs/stages/{name}"
 
     @property
@@ -346,7 +370,7 @@ STAGES: list[Stage] = [
         pages=[Page("apps", "/apps", "의미 응용", "추천 · 분류 · 군집 · 중복 · 이상 · 키워드")],
         docs=[("의미 응용", "docs/stages/apps/apps.md")],
     ),
-    # ── 지식 그래프 · GraphRAG 맵 ─────────────────────────────────────────────
+    # ── 지식 그래프 · GraphRAG 맵 (K1~K8) ─────────────────────────────────────
     # 구축은 탑다운(요구사항 → 온톨로지, 스키마 먼저)과 바텀업(데이터에서 추출, 데이터 먼저)을 섞는다. 첫 적용 도메인은 이미 있는
     # 법률 공개 자료(법령 6 · 판례 164): 판례마다 참조조문이 있어 '판례 -인용-> 조문' 관계를 추출 없이 바로 만들 수 있다.
     Stage(
@@ -396,6 +420,7 @@ STAGES: list[Stage] = [
     ),
     Stage(
         key="kg_extract",
+        builds_on=["rag"],
         no="K3",
         title="데이터 추출",
         short="추출",
@@ -418,6 +443,7 @@ STAGES: list[Stage] = [
     ),
     Stage(
         key="kg_fusion",
+        builds_on=["rag", "apps"],
         no="K4",
         title="지식 융합 · 정제",
         short="융합 · 정제",
@@ -440,6 +466,7 @@ STAGES: list[Stage] = [
     ),
     Stage(
         key="graph_db",
+        builds_on=["rag"],
         no="K5",
         title="그래프 DB",
         short="그래프 DB",
@@ -463,6 +490,7 @@ STAGES: list[Stage] = [
     ),
     Stage(
         key="text2cypher",
+        builds_on=["agent"],
         no="K6",
         title="Text2Cypher",
         en="Natural language to graph query",
@@ -484,6 +512,7 @@ STAGES: list[Stage] = [
     ),
     Stage(
         key="graph_hybrid",
+        builds_on=["rag", "rerank"],
         no="K7",
         title="그래프 하이브리드 검색",
         short="하이브리드 검색",
@@ -506,6 +535,7 @@ STAGES: list[Stage] = [
     ),
     Stage(
         key="community_summary",
+        builds_on=["apps"],
         no="K8",
         title="글로벌 커뮤니티 요약",
         short="커뮤니티 요약",
@@ -526,15 +556,200 @@ STAGES: list[Stage] = [
         plans=["법률 그래프 커뮤니티 탐지 · 요약", "전체 요약 질문 평가 세트와 비용 측정"],
         docs=[("지식 그래프 · GraphRAG 맵", "docs/kg-map.md")],
     ),
+    # ── 멀티에이전트 · 멀티모달 맵 (MA1~MA8) ────────────────────────────────────
+    # 멀티모달 = 처리하는 데이터의 종류를 넓힘(앞단 입력 · 검색, 뒷단 출력), 멀티에이전트 = 처리 과정을 전문가 협업으로 넓힘(라우터 자리를 오케스트레이터가).
+    # 이미 있는 것(멀티모달 임베딩 · 이미지 컬렉션 · 그림 근거 답변, 에이전트 도구, 라우팅 · 소형 모델, 답변 검증)을 상태에 그대로 반영한다.
+    Stage(
+        key="mm_input",
+        no="MA1",
+        title="멀티모달 입력 · 임베딩",
+        short="멀티모달 임베딩",
+        en="Multimodal input & embedding",
+        status=BASIC,
+        flow="agents",
+        map="agents",
+        builds_on=["multimodal", "embedding"],
+        summary="텍스트 · 이미지 · 음성 · 문서를 공통 벡터 공간에 놓아, 사진으로 매뉴얼을 찾는 식의 교차 검색을 한다",
+        principle="멀티모달 임베딩 모델(CLIP · SigLIP · ImageBind · 멀티모달 EmbeddingGemma 등)은 이미지와 텍스트(모델에 따라 음성까지)를 같은 벡터 공간에 놓습니다. "
+        "그래서 이미지 자체를 질의로 써서 비슷한 텍스트 · 이미지를 찾을 수 있습니다(예: 제품 사진 → 관련 매뉴얼).",
+        why="고객 · AS 문의는 '이 에러 화면' · '이 부품' 처럼 사진으로 들어오는 경우가 많습니다. 사진을 글로 옮겨 적게 하면 정보가 빠지고 사용자가 불편합니다.",
+        how=[
+            "(있음) LLM 맵 M 멀티모달: 이미지 · 영상 장면을 텍스트와 같은 공간에서 검색 — 한국어 질의는 EmbeddingGemma 2 가 CLIP 보다 크게 나음(실측 nDCG 100 vs 67.4)",
+            "(예정) 이미지로 이미지 · 문서 찾기(질의 이미지 업로드), 사진 + 질문을 함께 넣는 질의",
+            "(예정) 음성 입력: 음성 인식(STT)으로 글로 바꾼 뒤 같은 파이프라인, 오디오 임베딩은 의존성 해결 후",
+        ],
+        plans=["질의 이미지 업로드 검색", "음성 입력(STT) 연결"],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md"), ("LLM 맵 · 멀티모달", "docs/stages/multimodal/multimodal.md")],
+    ),
+    Stage(
+        key="mm_rag",
+        no="MA2",
+        title="멀티모달 RAG",
+        en="Multimodal RAG",
+        status=BASIC,
+        flow="agents",
+        map="agents",
+        builds_on=["rag", "multimodal", "rerank"],
+        summary="표 · 그래프 · 설계도를 글로 바꾸지 않고 이미지 청크 그대로 저장 · 검색하고, 멀티모달로 다시 순위를 매긴다",
+        principle="PDF 안의 복잡한 표 · 그래프 · 설계도는 글로 뽑으면 구조가 깨집니다. 페이지나 그림 영역을 이미지 청크로 그대로 저장해 멀티모달 임베딩으로 찾고, "
+        "찾은 이미지는 비전 LLM 이 직접 읽어 답합니다.",
+        why="사내 문서의 핵심 정보가 표 · 도면에 있는 경우가 많고, 텍스트 추출만으로는 '이 그래프의 추세'나 '도면의 부품 번호'를 답할 수 없습니다.",
+        how=[
+            "(있음) 이미지 · 영상 프레임을 RAG 컬렉션 문서로 올려 이미지 1장 = 청크 1개로 색인 · 검색, 근거 중 그림 청크를 비전 LLM(Gemma 4 + mmproj)에 첨부해 번호로 인용",
+            "(예정) PDF 페이지 · 그림 영역을 이미지 청크로 함께 저장(텍스트 청크와 같은 문서에 묶어)",
+            "(예정) 멀티모달 리랭킹: 질문과 이미지 후보를 함께 보는 리랭커 · 비전 LLM 목록형 재정렬",
+        ],
+        plans=["PDF 표 · 그림을 이미지 청크로", "멀티모달 리랭킹 실측"],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md"), ("LLM 연결 · 그림 근거 답변", "docs/guides/llm.md")],
+    ),
+    Stage(
+        key="orchestrator",
+        no="MA3",
+        title="오케스트레이터 에이전트",
+        short="오케스트레이터",
+        en="Orchestrator agent",
+        status=PLANNED,
+        flow="agents",
+        map="agents",
+        builds_on=["routing", "agent"],
+        summary="복잡한 요청을 작업으로 쪼개(Task Decomposition) 전문가 에이전트에게 나눠 주고 결과를 모은다 — 라우터 자리의 진화",
+        principle="오케스트레이터는 '작년 분기별 매출 그래프를 분석해 보고서를 쓰고 요약해 줘' 같은 요청을 검색 → 분석 → 작성 → 검증 작업으로 나누고, "
+        "작업마다 맞는 전문가 에이전트를 부르며, 중간 결과를 다음 작업에 넘깁니다. LLM 맵의 라우터가 '어느 경로로 보낼까'만 정했다면, 오케스트레이터는 '어떤 순서로 누구에게 무엇을' 정합니다.",
+        why="하나의 모델이 검색 · 계산 · 글쓰기 · 검증을 다 하면 프롬프트가 길고 실패 지점이 섞여 어디서 틀렸는지 알 수 없습니다. 역할을 나누면 에이전트마다 작은 모델 · 도구 · 검증을 따로 고를 수 있습니다. "
+        "다만 이 PC 의 실측에서 작은 로컬 모델은 여러 단계를 거친 답에서 근거 밖 문장이 늘었습니다(에이전트 문장 근거율 50% vs RAG 91%) — 단계를 늘릴수록 단계마다 검증이 필요합니다.",
+        how=[
+            "(있음) LLM 맵 6 라우팅(규칙 · 확신도 · LLM · 학습 라우터)과 8a 에이전트(ReAct · 도구)가 출발점",
+            "(예정) 작업 계획을 JSON(작업 · 담당 에이전트 · 입력 · 의존)으로 받아 실행 · 기록, 단순한 질문은 지금처럼 RAG 한 번으로(계획 비용을 아끼게)",
+            "(예정) 평가: 같은 질문을 단일 에이전트 · 멀티에이전트로 풀어 품질 · 시간 · 호출 수 비교",
+        ],
+        plans=["작업 계획(JSON) · 실행기 · 단계 기록", "단일 vs 멀티에이전트 실측"],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md"), ("LLM 맵 · 에이전트 실측", "docs/stages/8a-agent/agent.md")],
+    ),
+    Stage(
+        key="retrieval_agent",
+        no="MA4",
+        title="검색 전문가 에이전트",
+        short="검색 에이전트",
+        en="Retrieval agent (Self-RAG)",
+        status=BASIC,
+        flow="agents",
+        map="agents",
+        builds_on=["agent", "search_lab", "rag"],
+        summary="사내 문서 · 이미지 · 웹 검색만 맡고, 결과가 부실하면 스스로 질의를 고쳐 다시 찾는다(Self-RAG)",
+        principle="검색 에이전트는 '정보 모으기'만 전담합니다. 찾은 결과가 질문에 충분한지 스스로 판단하고, 부족하면 질의를 바꾸거나 하위 질문으로 나눠 다시 검색합니다. "
+        "모은 근거는 번호를 붙여 다음 에이전트에게 넘깁니다.",
+        why="검색이 부실하면 뒤의 분석 · 작성이 아무리 좋아도 답이 틀립니다. 검색만 따로 두면 검색 품질을 기존 평가 세트(nDCG · 근거 검색률)로 따로 잴 수 있습니다.",
+        how=[
+            "(있음) 8a 에이전트의 search · read · lookup(조문 · 사건번호) 도구, 4 검색 향상(질의 재작성 · HyDE · 다중 질의), 2 RAG 하이브리드 검색",
+            "(예정) 결과 충분성 판단 → 재검색 루프(상한), 이미지 · 웹 검색 도구 추가",
+            "(예정) 평가: 재검색 전후 근거 검색률 · 질문당 검색 횟수",
+        ],
+        plans=["충분성 판단 · 재검색 루프", "이미지 · 웹 검색 도구"],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md")],
+    ),
+    Stage(
+        key="analysis_agent",
+        no="MA5",
+        title="분석 · 코딩 에이전트",
+        short="분석 에이전트",
+        en="Analysis / code agent",
+        status=PLANNED,
+        flow="agents",
+        map="agents",
+        builds_on=["agent"],
+        summary="검색된 표 · 수치를 파이썬 코드로 계산 · 검증하고 결과 차트를 만든다",
+        principle="LLM 이 계산을 머릿속으로 하면 틀립니다. 분석 에이전트는 표 · 그래프 데이터를 파싱해 코드를 만들고, 격리된 실행기(코드 인터프리터)에서 실행한 결과로 통계 · 무결성 검증 · 차트를 냅니다.",
+        why="'분기별 매출 증감률', '보증금 반환 금액 계산' 같은 질문은 숫자를 정확히 계산해야 합니다. 실행 결과를 근거로 쓰면 계산 과정을 재현 · 검증할 수 있습니다.",
+        how=[
+            "(있음) 8a 에이전트의 calc 도구 — 산술식만 계산(eval 없이, LLM 이 만든 코드를 실행하지 않음)",
+            "(예정) 격리된 코드 실행기(시간 · 메모리 · 네트워크 제한, 허용 라이브러리만) — 임의 코드 실행 위험 때문에 격리가 먼저",
+            "(예정) 표 파싱(PDF 표 · 이미지 표 → DataFrame), 결과 차트 생성(차트 색 규칙 · 색각이상 검증 그대로)",
+        ],
+        plans=["격리된 코드 실행기", "표 파싱 · 차트 생성"],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md")],
+    ),
+    Stage(
+        key="report_agent",
+        no="MA6",
+        title="보고서 작성 에이전트",
+        short="작성 에이전트",
+        en="Writer agent (sLLM / LLM routing)",
+        status=PLANNED,
+        flow="agents",
+        map="agents",
+        builds_on=["routing", "distill", "quant"],
+        summary="모은 근거 · 분석 결과로 정해진 형식의 답 · 보고서를 쓴다 — 쉬운 작성은 소형 모델, 어려운 작성은 큰 모델",
+        principle="작성 에이전트는 근거와 분석 결과를 받아 템플릿(보고서 · 안내문 · 요약)에 맞춰 씁니다. 짧은 요약 · 정형 안내는 소형 모델(sLLM)로, 긴 종합 · 추론은 큰 모델로 보냅니다.",
+        why="같은 품질이면 싼 모델을 써야 하지만, 작은 모델로 바꾸면 품질이 떨어질 수 있습니다. 이 PC 실측에서 Gemma 4 E2B 는 E4B 보다 지연 −21% 대신 품질 −13(유의)이라, 작성 난이도에 따라 나눠 써야 합니다.",
+        how=[
+            "(있음) 6 라우팅의 경로별 답변 모델 지정, 7b 양자화 · 7a 증류 실측(소형 모델 후보), 답변 원칙(질문에 대한 답 + 관련된 부가 설명만)",
+            "(예정) 출력 템플릿(보고서 · AS 안내 · 요약)과 템플릿별 검증 규칙",
+            "(예정) 작성 난이도 라우팅: 템플릿 · 근거 길이 · 요구 형식으로 sLLM / LLM 선택, 품질 · 비용 실측",
+        ],
+        plans=["출력 템플릿", "작성 난이도별 모델 라우팅 실측"],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md"), ("LLM 맵 · 소형 모델 실측", "docs/stages/7b-quant/quant.md")],
+    ),
+    Stage(
+        key="critic_agent",
+        no="MA7",
+        title="품질 검증 에이전트",
+        short="검증 에이전트",
+        en="Critic / reviewer agent",
+        status=BASIC,
+        flow="agents",
+        map="agents",
+        builds_on=["rag", "rl"],
+        summary="최종 답이 원문과 맞는지(환각) · 질문에 답하는지 · 보안 규정을 어기지 않는지 검사해 반려하거나 통과시킨다",
+        principle="검증 에이전트는 답을 만들지 않고 검사만 합니다. 문장마다 근거 일치 · 질문 관련성 · 인용 번호를 확인하고, 규정(개인정보 · 내부 정보 노출 등)을 점검해 "
+        "통과 / 수정 요청 / 반려를 정합니다. 반려되면 작성 에이전트가 이유를 받아 다시 씁니다(교차 검증).",
+        why="에이전트가 많아질수록 앞 단계의 실수가 뒤로 전달됩니다. 마지막에 독립된 검사가 있어야 서비스로 내보낼 수 있습니다. "
+        "다만 이 PC 의 사람 판정에서 작은 LLM 판정은 근거 일치를 28개 모두 통과시켰습니다 — 검증 에이전트는 LLM 판단만이 아니라 측정으로 보정된 점수를 함께 써야 합니다.",
+        how=[
+            "(있음) 답변 검증(근거 일치 · 질문 관련성 · 조문 · 판례 번호 검사), 사람 판정으로 보정(검증 보정 화면), 8b 보상 함수 · Best-of-N 으로 후보 고르기",
+            "(예정) 검사 결과로 통과 / 수정 요청 / 반려 결정 → 작성 에이전트 재작성 루프(횟수 제한)",
+            "(예정) 보안 규정 검사(개인정보 · 금지어 · 내부 문서 등급)",
+        ],
+        plans=["반려 · 재작성 루프", "보안 규정 검사"],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md"), ("LLM 맵 · 답변 원칙과 검증", "docs/stages/2-rag/rag.md")],
+    ),
+    Stage(
+        key="mm_output",
+        no="MA8",
+        title="멀티모달 출력",
+        en="Multimodal output",
+        status=PLANNED,
+        flow="agents",
+        map="agents",
+        builds_on=["multimodal"],
+        summary="텍스트 답에 더해 차트 · 이미지 · 음성으로 결과를 낸다",
+        principle="수집한 이미지 · 표 근거와 분석 결과를 함께 써서, 글 답변 외에 새 차트 · 요약 이미지 · 음성(TTS) 안내를 만듭니다. 출력도 근거 번호와 검증을 따릅니다.",
+        why="'그래프로 보여 줘', '현장에서 들을 수 있게' 같은 요구는 글만으로 채울 수 없습니다. AS 수리 안내는 단계별 그림 · 음성이 더 쓸모 있습니다.",
+        how=[
+            "(있음) 그림 근거를 읽고 글로 답하기(비전 입력) — 출력은 아직 글만",
+            "(예정) 분석 에이전트(MA5) 결과로 차트 출력, 음성 안내(TTS)",
+            "(예정) 출력물에도 근거 번호를 달고 검증 에이전트(MA7)를 거침",
+        ],
+        plans=["차트 출력", "음성 안내(TTS)"],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md")],
+    ),
 ]
 BY_KEY = {s.key: s for s in STAGES}
 MAIN_FLOW = [s for s in STAGES if s.flow == "main"]
 EXTRA = [s for s in STAGES if s.flow == "extra"]
 KG_FLOW = [s for s in STAGES if s.map == "kg"]
+AGENTS_FLOW = [s for s in STAGES if s.map == "agents"]
+OTHER_MAP_STAGES = [s for s in STAGES if s.map != "llm"]
 
 
 def map_stages(key: str) -> list[Stage]:
     return [s for s in STAGES if s.map == key]
+
+
+def map_flow(stage: Stage) -> list[Stage]:
+    """이전 · 다음 단계를 잇는 흐름. LLM 맵은 본선만(곁가지 없음), 다른 맵은 그 맵의 단계 순서."""
+    if stage.map == "llm":
+        return MAIN_FLOW if stage.flow == "main" else []
+    return map_stages(stage.map)
 
 
 def stage_for_nav(nav: str | None) -> Stage | None:
