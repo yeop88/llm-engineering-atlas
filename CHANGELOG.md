@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-20
+
 ### 호환이 깨지는 변경
 - **화면 주소 규칙**: 화면이 여럿인 단계는 `/<단계>/<화면>`, 하나인 단계는 `/<단계>`, 맵은 `/maps/<맵>`, 설정은 `/settings/*`.
   `/models` → `/embedding/models`(상세 `/embedding/models/<번호>`) · `/hub` → `/embedding/hub` · `/playground` → `/embedding/playground` · `/benchmark` → `/embedding/benchmark` ·
@@ -244,7 +246,8 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.7.1...v1.0.0
 [0.7.1]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.5.0...v0.6.0
