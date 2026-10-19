@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-19
+
 ### 추가
 - **질문 관련성 검증**: 답변 문장마다 질문-문장 의미 유사도(`VERIFY_MODEL`)로 '질문과 관련 낮음'을 근거 일치와 따로 표시(`answer.verify(..., question=)`). 답변 평가 · 연결 비교에 관련 문장 비율 · 관련 없는 문장이 섞인 답 비율, 보상(8b)에 관련 없는 문장 감점, LLM 증류 데이터에서 관련 없는 문장이 섞인 교사 답 제외. 설정 `ANSWER_RELEVANCE` · `VERIFY_RELEVANCE_OK`(잠정 0.68)
 - 검증 보정 화면이 **근거 일치 · 질문 관련성을 따로** 판정받고 각각 일치도를 계산(관련성은 AUC · 기준값 탐색). 마이그레이션 0009 `verify_labels.relevant`
@@ -182,7 +184,8 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.2.0...v0.3.0
