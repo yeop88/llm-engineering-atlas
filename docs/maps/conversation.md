@@ -20,14 +20,14 @@
 
 ## 단계
 
-| # | 단계 | 상태 | 무엇을 | 기반 단계 |
-|---|---|---|---|---|
-| C1 | [대화 맥락 질의 재작성](../stages/conversation/c1-cv-rewrite/README.md) | ⬜ 예정 | '그거 말고 다른 모델은요?' 처럼 앞 대화를 가리키는 질문을 혼자 읽혀도 되는 질문으로 바꿔 검색한다 | [4 검색 향상](../stages/4-search-lab/README.md) |
-| C2 | [되묻기 (모호한 질문)](../stages/conversation/c2-cv-clarify/README.md) | ⬜ 예정 | 질문이 모호하거나 정보가 모자라면 답하기 전에 필요한 것을 되묻는다 | [6 라우팅](../stages/6-routing/README.md) |
-| C3 | [대화 요약 메모리](../stages/conversation/c3-cv-memory/README.md) | ⬜ 예정 | 대화가 길어져도 중요한 사실(제품 · 증상 · 이미 해 본 조치)을 요약해 기억한다 | [2 RAG](../stages/2-rag/README.md) |
-| C4 | [사용자 · 제품 프로필](../stages/conversation/c4-cv-profile/README.md) | ⬜ 예정 | 고객의 보유 제품 · 이전 문의 · 선호를 프로필로 두고 검색 · 답변에 쓴다 | [A 의미 응용](../stages/apps/README.md) |
-| C5 | [긴 대화 압축](../stages/conversation/c5-cv-compress/README.md) | ⬜ 예정 | 긴 대화 · 긴 근거를 품질을 지키며 줄여 문맥 한도 안에 넣는다 | [2 RAG](../stages/2-rag/README.md) |
-| C6 | [상담원 이관 · 인계 요약](../stages/conversation/c6-cv-handoff/README.md) | ⬜ 예정 | 자동으로 풀 수 없거나 위험한 문의는 대화 요약과 함께 사람에게 넘긴다 | [A 의미 응용](../stages/apps/README.md) · [6 라우팅](../stages/6-routing/README.md) |
+| # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
+|---|---|---|---|---|---|
+| C1 | [대화 맥락 질의 재작성](../stages/conversation/c1-rewrite/README.md) | ⬜ 예정 | '그거 말고 다른 모델은요?' 처럼 앞 대화를 가리키는 질문을 혼자 읽혀도 되는 질문으로 바꿔 검색한다 | [4 검색 향상](../stages/llm/4-search-lab/README.md) | — |
+| C2 | [되묻기 (모호한 질문)](../stages/conversation/c2-clarify/README.md) | ⬜ 예정 | 질문이 모호하거나 정보가 모자라면 답하기 전에 필요한 것을 되묻는다 | [6 라우팅](../stages/llm/6-routing/README.md) | — |
+| C3 | [대화 요약 메모리](../stages/conversation/c3-memory/README.md) | ⬜ 예정 | 대화가 길어져도 중요한 사실(제품 · 증상 · 이미 해 본 조치)을 요약해 기억한다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
+| C4 | [사용자 · 제품 프로필](../stages/conversation/c4-profile/README.md) | ⬜ 예정 | 고객의 보유 제품 · 이전 문의 · 선호를 프로필로 두고 검색 · 답변에 쓴다 | [A 의미 응용](../stages/llm/a-apps/README.md) | — |
+| C5 | [긴 대화 압축](../stages/conversation/c5-compress/README.md) | ⬜ 예정 | 긴 대화 · 긴 근거를 품질을 지키며 줄여 문맥 한도 안에 넣는다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
+| C6 | [상담원 이관 · 인계 요약](../stages/conversation/c6-handoff/README.md) | ⬜ 예정 | 자동으로 풀 수 없거나 위험한 문의는 대화 요약과 함께 사람에게 넘긴다 | [A 의미 응용](../stages/llm/a-apps/README.md) · [6 라우팅](../stages/llm/6-routing/README.md) | — |
 
 ## 설계 원칙
 
@@ -42,4 +42,4 @@
 
 ---
 
-다른 맵: [LLM 시스템 엔지니어링 맵](../map.md) · [지식 그래프 · GraphRAG 맵](../kg-map.md) · [멀티에이전트 · 멀티모달 맵](../agents-map.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)
+다른 맵: [LLM 시스템 엔지니어링 맵](llm.md) · [지식 그래프 · GraphRAG 맵](knowledge-graph.md) · [멀티에이전트 · 멀티모달 맵](multi-agent.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)

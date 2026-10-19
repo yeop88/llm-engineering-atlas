@@ -20,14 +20,14 @@ RLVR(검증 가능한 보상의 강화학습)은 정답을 자동으로 확인�
 
 ## 단계
 
-| # | 단계 | 상태 | 무엇을 | 기반 단계 |
-|---|---|---|---|---|
-| RV1 | [검증 가능한 과제 설계](../stages/rlvr/rv1-rv-tasks/README.md) | 🟡 기초 있음 | 정답을 자동으로 확인할 수 있는 과제(조문 조회 · 계산 · 쿼리 결과)를 모아 학습 과제로 만든다 | [E1 평가 세트](../stages/evalops/e1-ev-sets/README.md) · [8a 에이전틱 AI](../stages/8a-agent/README.md) |
-| RV2 | [환경 · 도구 시뮬레이터](../stages/rlvr/rv2-rv-env/README.md) | ⬜ 예정 | 학습 중 에이전트가 쓸 도구 · 자료 환경을 실제와 같게, 빠르고 재현 가능하게 만든다 | [8a 에이전틱 AI](../stages/8a-agent/README.md) · [IO1 MCP 도구](../stages/interop/io1-io-tools/README.md) |
-| RV3 | [보상 설계](../stages/rlvr/rv3-rv-reward/README.md) | 🟡 기초 있음 | 정답 확인 · 근거 일치 · 질문 관련성 · 비용을 합친 보상을 설명 가능하게 설계한다 | [8b 강화학습](../stages/8b-rl/README.md) |
-| RV4 | [보상 해킹 감시](../stages/rlvr/rv4-rv-hacking/README.md) | 🟡 기초 있음 | 보상은 오르는데 실제 품질 · 사람 판정은 그대로인 경우를 찾아낸다 | [8b 강화학습](../stages/8b-rl/README.md) · [E5 피드백](../stages/evalops/e5-ev-feedback/README.md) |
-| RV5 | [정책 학습 (GRPO · PPO)](../stages/rlvr/rv5-rv-policy/README.md) | ⬜ 예정 | 같은 과제에 여러 답을 만들어 보상을 비교하며 모델이 더 나은 행동을 하도록 학습한다 | [P4 선호 학습](../stages/posttrain/p4-pt-pref/README.md) |
-| RV6 | [일반화 · 안전성 평가](../stages/rlvr/rv6-rv-eval/README.md) | ⬜ 예정 | 학습에 없던 유형 · 자료에서도 나아졌는지, 안전성이 나빠지지 않았는지 확인한다 | [P6 후학습 평가](../stages/posttrain/p6-pt-eval/README.md) · [G7 레드팀](../stages/guardrails/g7-gr-redteam/README.md) |
+| # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
+|---|---|---|---|---|---|
+| RV1 | [검증 가능한 과제 설계](../stages/rlvr/rv1-tasks/README.md) | 🟡 기초 있음 | 정답을 자동으로 확인할 수 있는 과제(조문 조회 · 계산 · 쿼리 결과)를 모아 학습 과제로 만든다 | [E1 평가 세트](../stages/evalops/e1-sets/README.md) · [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | — |
+| RV2 | [환경 · 도구 시뮬레이터](../stages/rlvr/rv2-env/README.md) | ⬜ 예정 | 학습 중 에이전트가 쓸 도구 · 자료 환경을 실제와 같게, 빠르고 재현 가능하게 만든다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) · [IO1 MCP 도구](../stages/interop/io1-tools/README.md) | — |
+| RV3 | [보상 설계](../stages/rlvr/rv3-reward/README.md) | 🟡 기초 있음 | 정답 확인 · 근거 일치 · 질문 관련성 · 비용을 합친 보상을 설명 가능하게 설계한다 | [8b 강화학습](../stages/llm/8b-rl/README.md) | — |
+| RV4 | [보상 해킹 감시](../stages/rlvr/rv4-hacking/README.md) | 🟡 기초 있음 | 보상은 오르는데 실제 품질 · 사람 판정은 그대로인 경우를 찾아낸다 | [8b 강화학습](../stages/llm/8b-rl/README.md) · [E5 피드백](../stages/evalops/e5-feedback/README.md) | — |
+| RV5 | [정책 학습 (GRPO · PPO)](../stages/rlvr/rv5-policy/README.md) | ⬜ 예정 | 같은 과제에 여러 답을 만들어 보상을 비교하며 모델이 더 나은 행동을 하도록 학습한다 | [P4 선호 학습](../stages/posttrain/p4-pref/README.md) | — |
+| RV6 | [일반화 · 안전성 평가](../stages/rlvr/rv6-eval/README.md) | ⬜ 예정 | 학습에 없던 유형 · 자료에서도 나아졌는지, 안전성이 나빠지지 않았는지 확인한다 | [P6 후학습 평가](../stages/posttrain/p6-eval/README.md) · [G7 레드팀](../stages/guardrails/g7-redteam/README.md) | — |
 
 ## 설계 원칙
 
@@ -42,4 +42,4 @@ RLVR(검증 가능한 보상의 강화학습)은 정답을 자동으로 확인�
 
 ---
 
-다른 맵: [LLM 시스템 엔지니어링 맵](../map.md) · [지식 그래프 · GraphRAG 맵](../kg-map.md) · [멀티에이전트 · 멀티모달 맵](../agents-map.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [온디바이스 · 엣지 맵](edge.md)
+다른 맵: [LLM 시스템 엔지니어링 맵](llm.md) · [지식 그래프 · GraphRAG 맵](knowledge-graph.md) · [멀티에이전트 · 멀티모달 맵](multi-agent.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [온디바이스 · 엣지 맵](edge.md)

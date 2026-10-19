@@ -20,15 +20,15 @@
 
 ## 단계
 
-| # | 단계 | 상태 | 무엇을 | 기반 단계 |
-|---|---|---|---|---|
-| LR1 | [목표 분해 · 계획](../stages/longrun/lr1-lr-goal/README.md) | ⬜ 예정 | 큰 목표를 하위 작업 · 의존 관계 · 완료 조건이 있는 계획으로 나눈다 | [MA3 오케스트레이터](../stages/agents/ma3-orchestrator/README.md) |
-| LR2 | [실행 · 재계획](../stages/longrun/lr2-lr-replan/README.md) | ⬜ 예정 | 계획대로 실행하다 막히면 상황을 보고 계획을 고친다 | [8a 에이전틱 AI](../stages/8a-agent/README.md) |
-| LR3 | [상태 저장 · 체크포인트](../stages/longrun/lr3-lr-state/README.md) | ⬜ 예정 | 작업마다 상태 · 중간 결과를 저장해 서버가 재시작돼도 마지막 체크포인트부터 이어 간다 | [MA3 오케스트레이터](../stages/agents/ma3-orchestrator/README.md) |
-| LR4 | [사람 승인 지점](../stages/longrun/lr4-lr-approval/README.md) | ⬜ 예정 | 되돌릴 수 없는 행동(발송 · 결제 · 삭제) 전에 사람의 승인을 받고, 기다리는 동안 상태를 유지한다 | [MA7 검증 에이전트](../stages/agents/ma7-critic-agent/README.md) |
-| LR5 | [실패 복구 · 되돌리기](../stages/longrun/lr5-lr-recovery/README.md) | ⬜ 예정 | 실패한 작업을 재시도 · 대체 · 되돌리기 중에서 고르고, 이미 한 행동의 부작용을 정리한다 | [IO4 장기 작업](../stages/interop/io4-io-longtask/README.md) |
-| LR6 | [결과 검증 · 완료 판정](../stages/longrun/lr6-lr-verify/README.md) | 🟡 기초 있음 | 작업 결과를 완료 조건 · 근거 · 형식으로 검사해 '정말 끝났는지' 판정한다 | [MA7 검증 에이전트](../stages/agents/ma7-critic-agent/README.md) · [E2 회귀 평가](../stages/evalops/e2-ev-offline/README.md) |
-| LR7 | [권한 · 비용 상한](../stages/longrun/lr7-lr-limits/README.md) | ⬜ 예정 | 작업이 쓸 수 있는 권한 · 자료 · 비용 · 기간을 미리 정하고 넘으면 멈춘다 | [IO5 호출 상한](../stages/interop/io5-io-limits/README.md) · [G3 권한별 검색](../stages/guardrails/g3-gr-acl/README.md) |
+| # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
+|---|---|---|---|---|---|
+| LR1 | [목표 분해 · 계획](../stages/longrun/lr1-goal/README.md) | ⬜ 예정 | 큰 목표를 하위 작업 · 의존 관계 · 완료 조건이 있는 계획으로 나눈다 | [MA3 오케스트레이터](../stages/multi-agent/ma3-orchestrator/README.md) | — |
+| LR2 | [실행 · 재계획](../stages/longrun/lr2-replan/README.md) | ⬜ 예정 | 계획대로 실행하다 막히면 상황을 보고 계획을 고친다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | — |
+| LR3 | [상태 저장 · 체크포인트](../stages/longrun/lr3-state/README.md) | ⬜ 예정 | 작업마다 상태 · 중간 결과를 저장해 서버가 재시작돼도 마지막 체크포인트부터 이어 간다 | [MA3 오케스트레이터](../stages/multi-agent/ma3-orchestrator/README.md) | — |
+| LR4 | [사람 승인 지점](../stages/longrun/lr4-approval/README.md) | ⬜ 예정 | 되돌릴 수 없는 행동(발송 · 결제 · 삭제) 전에 사람의 승인을 받고, 기다리는 동안 상태를 유지한다 | [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) | — |
+| LR5 | [실패 복구 · 되돌리기](../stages/longrun/lr5-recovery/README.md) | ⬜ 예정 | 실패한 작업을 재시도 · 대체 · 되돌리기 중에서 고르고, 이미 한 행동의 부작용을 정리한다 | [IO4 장기 작업](../stages/interop/io4-longtask/README.md) | — |
+| LR6 | [결과 검증 · 완료 판정](../stages/longrun/lr6-verify/README.md) | 🟡 기초 있음 | 작업 결과를 완료 조건 · 근거 · 형식으로 검사해 '정말 끝났는지' 판정한다 | [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) · [E2 회귀 평가](../stages/evalops/e2-offline/README.md) | — |
+| LR7 | [권한 · 비용 상한](../stages/longrun/lr7-limits/README.md) | ⬜ 예정 | 작업이 쓸 수 있는 권한 · 자료 · 비용 · 기간을 미리 정하고 넘으면 멈춘다 | [IO5 호출 상한](../stages/interop/io5-limits/README.md) · [G3 권한별 검색](../stages/guardrails/g3-acl/README.md) | — |
 
 ## 설계 원칙
 
@@ -43,4 +43,4 @@
 
 ---
 
-다른 맵: [LLM 시스템 엔지니어링 맵](../map.md) · [지식 그래프 · GraphRAG 맵](../kg-map.md) · [멀티에이전트 · 멀티모달 맵](../agents-map.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)
+다른 맵: [LLM 시스템 엔지니어링 맵](llm.md) · [지식 그래프 · GraphRAG 맵](knowledge-graph.md) · [멀티에이전트 · 멀티모달 맵](multi-agent.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)

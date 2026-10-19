@@ -20,15 +20,15 @@ RAG 의 품질은 검색 모델보다 먼저 '자료를 제대로 읽었는가'�
 
 ## 단계
 
-| # | 단계 | 상태 | 무엇을 | 기반 단계 |
-|---|---|---|---|---|
-| D1 | [수집 · 연결](../stages/docintel/d1-doc-ingest/README.md) | 🟡 기초 있음 | 파일 업로드 · 공개 데이터 · 사내 시스템에서 원본을 가져오고 출처를 남긴다 | [2 RAG](../stages/2-rag/README.md) |
-| D2 | [파싱 (HWP · PDF · DOCX · OCR)](../stages/docintel/d2-doc-parse/README.md) | 🟡 기초 있음 | 형식마다 맞는 파서로 글 · 구조를 뽑고, 스캔 문서는 OCR 로 읽는다 | [2 RAG](../stages/2-rag/README.md) |
-| D3 | [레이아웃 · 표 · 그림 추출](../stages/docintel/d3-doc-layout/README.md) | ⬜ 예정 | 제목 · 단락 · 표 · 그림 영역을 나눠, 표는 구조로 · 그림은 이미지 청크로 남긴다 | [M 멀티모달](../stages/multimodal/README.md) · [MA2 멀티모달 RAG](../stages/agents/ma2-mm-rag/README.md) |
-| D4 | [정제 · 중복 · 버전](../stages/docintel/d4-doc-clean/README.md) | 🟡 기초 있음 | 머리말 · 반복 행 같은 잡음을 걷고, 거의 같은 문서 · 개정판을 정리한다 | [2 RAG](../stages/2-rag/README.md) · [A 의미 응용](../stages/apps/README.md) |
-| D5 | [청킹](../stages/docintel/d5-doc-chunk/README.md) | 🟡 기초 있음 | 문서를 검색 단위로 자르되 근거 문장이 경계에서 잘리지 않게 한다 | [2 RAG](../stages/2-rag/README.md) |
-| D6 | [메타데이터 · 증분 갱신](../stages/docintel/d6-doc-meta/README.md) | ⬜ 예정 | 문서 날짜 · 종류 · 권한 메타데이터를 붙이고, 바뀐 문서만 다시 색인한다 | [2 RAG](../stages/2-rag/README.md) |
-| D7 | [데이터 품질 점검](../stages/docintel/d7-doc-quality/README.md) | 🟡 기초 있음 | 처리 단계별 건수 · 길이 분포 · 근거 보존을 점검하고 처리 기록을 남긴다 | [2 RAG](../stages/2-rag/README.md) · [E1 평가 세트](../stages/evalops/e1-ev-sets/README.md) |
+| # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
+|---|---|---|---|---|---|
+| D1 | [수집 · 연결](../stages/docintel/d1-ingest/README.md) | 🟡 기초 있음 | 파일 업로드 · 공개 데이터 · 사내 시스템에서 원본을 가져오고 출처를 남긴다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
+| D2 | [파싱 (HWP · PDF · DOCX · OCR)](../stages/docintel/d2-parse/README.md) | 🟡 기초 있음 | 형식마다 맞는 파서로 글 · 구조를 뽑고, 스캔 문서는 OCR 로 읽는다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
+| D3 | [레이아웃 · 표 · 그림 추출](../stages/docintel/d3-layout/README.md) | ⬜ 예정 | 제목 · 단락 · 표 · 그림 영역을 나눠, 표는 구조로 · 그림은 이미지 청크로 남긴다 | [M 멀티모달](../stages/llm/m-multimodal/README.md) · [MA2 멀티모달 RAG](../stages/multi-agent/ma2-rag/README.md) | — |
+| D4 | [정제 · 중복 · 버전](../stages/docintel/d4-clean/README.md) | 🟡 기초 있음 | 머리말 · 반복 행 같은 잡음을 걷고, 거의 같은 문서 · 개정판을 정리한다 | [2 RAG](../stages/llm/2-rag/README.md) · [A 의미 응용](../stages/llm/a-apps/README.md) | — |
+| D5 | [청킹](../stages/docintel/d5-chunk/README.md) | 🟡 기초 있음 | 문서를 검색 단위로 자르되 근거 문장이 경계에서 잘리지 않게 한다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
+| D6 | [메타데이터 · 증분 갱신](../stages/docintel/d6-meta/README.md) | ⬜ 예정 | 문서 날짜 · 종류 · 권한 메타데이터를 붙이고, 바뀐 문서만 다시 색인한다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
+| D7 | [데이터 품질 점검](../stages/docintel/d7-quality/README.md) | 🟡 기초 있음 | 처리 단계별 건수 · 길이 분포 · 근거 보존을 점검하고 처리 기록을 남긴다 | [2 RAG](../stages/llm/2-rag/README.md) · [E1 평가 세트](../stages/evalops/e1-sets/README.md) | — |
 
 ## 설계 원칙
 
@@ -43,4 +43,4 @@ RAG 의 품질은 검색 모델보다 먼저 '자료를 제대로 읽었는가'�
 
 ---
 
-다른 맵: [LLM 시스템 엔지니어링 맵](../map.md) · [지식 그래프 · GraphRAG 맵](../kg-map.md) · [멀티에이전트 · 멀티모달 맵](../agents-map.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)
+다른 맵: [LLM 시스템 엔지니어링 맵](llm.md) · [지식 그래프 · GraphRAG 맵](knowledge-graph.md) · [멀티에이전트 · 멀티모달 맵](multi-agent.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)

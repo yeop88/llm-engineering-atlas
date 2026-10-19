@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### 변경
+- **문서 구조 통일** — 모든 맵이 같은 규칙: 맵 개요 `docs/maps/<맵>.md`(LLM 맵 `docs/map.md` → `docs/maps/llm.md`, `kg-map.md` → `maps/knowledge-graph.md`, `agents-map.md` → `maps/multi-agent.md`), 단계 `docs/stages/<맵>/<번호>-<이름>/`(LLM 맵 단계도 `docs/stages/llm/` 아래로, 단계 폴더 이름에서 반복되던 접두어 제거 — `as1-as-intake` → `as1-intake`). 맵 이름 하나를 화면 주소 · 개요 · 단계 폴더에 같이 씀
+- 문서 색인(`docs/README.md`)은 구조 설명 · 맵 18개 표 · 가이드 · 기록으로 짧게, 단계 표는 맵 개요마다 같은 모양(번호 · 단계 · 상태 · 무엇을 · 기반 단계 · 상세 문서)으로 — 직접 쓴 개요는 표시 사이만 생성
+- 문서 구조 규칙을 테스트로 검사(최상위 문서 · 맵 폴더 · 단계 폴더 이름 · 단계 표)
+
 ## [0.7.0] - 2026-10-19
 
 ### 추가

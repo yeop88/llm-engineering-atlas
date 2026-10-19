@@ -67,7 +67,7 @@
 - 미니 데이터셋이라 상위 모델은 만점 가까이 나와 **차이가 작습니다**. 순위보다는 "어디서 무너지는가"를 보세요. mE5-instruct와 Harrier-270M은 **한국어 쿼리 → 영어 문서** 교차 검색이 약했습니다.
 - 검색과 STS 순위가 다릅니다. EmbeddingGemma 2와 Qwen3는 검색용 프롬프트에서 강하고, STS(프롬프트 없이 문장 비교)에서는 BGE-M3·KURE·Jina v5가 강했습니다. 용도에 맞는 데이터로 평가해야 합니다.
 - 속도는 CPU 기준입니다. Granite 97M이 가장 빠르고(103 texts/s), Qwen3-0.6B는 디코더 기반이라 가장 느렸습니다.
-- 멀티모달 실측은 [multimodal.md](../stages/multimodal/multimodal.md)에 있습니다.
+- 멀티모달 실측은 [multimodal.md](../stages/llm/m-multimodal/multimodal.md)에 있습니다.
 
 ## 결론 (메모의 요약 수정판)
 

@@ -28,8 +28,8 @@ GUIDES = [
 ]
 RECORDS = [
     ("records/model-verification.md", "대체 모델 정보 검증과 실측 벤치마크"),
-    ("stages/5-finetune/finetune.md#실행-기록", "파인튜닝 실행 기록 (#1~#3)"),
-    ("stages/2-rag/rag.md#검색-정확도-정책-정확-검색--근사-검색", "벡터 검색 재현율 문제와 정정 기록"),
+    ("stages/llm/5-finetune/finetune.md#실행-기록", "파인튜닝 실행 기록 (#1~#3)"),
+    ("stages/llm/2-rag/rag.md#검색-정확도-정책-정확-검색--근사-검색", "벡터 검색 재현율 문제와 정정 기록"),
 ]
 STATUS_MARK = {registry.DONE: "✅", registry.BASIC: "🟡", registry.PLANNED: "⬜"}
 
@@ -90,46 +90,67 @@ def stage_readme(s: registry.Stage) -> str:
     return "\n".join(lines) + "\n"
 
 
+MARK_START = "<!-- 단계 표: scripts/gen_docs.py 가 레지스트리로 채웁니다. 이 표시 사이는 고치지 마세요. -->"
+MARK_END = "<!-- /단계 표 -->"
+TREE = [
+    "```",
+    "docs/",
+    "  README.md                               이 색인 (생성)",
+    "  maps/<맵>.md                            맵 개요 — 모든 맵에 같은 '단계' 표 (전용 화면이 있는 맵은 직접 쓴 개요 + 생성 표)",
+    "  stages/<맵>/<번호>-<이름>/README.md       단계 문서: 원리 · 왜 · 어떻게 · 화면 · 할 일 · 기반 단계 (생성)",
+    "  stages/<맵>/<번호>-<이름>/*.md            그 단계의 상세 문서 · 실측 기록 (직접 씀)",
+    "  guides/                                 여러 단계에 걸친 가이드 (아키텍처 · API · 데이터 처리 · 배포 · LLM · 설치 · 문제 해결)",
+    "  records/                                단계 밖의 실측 · 정정 기록",
+    "```",
+]
+
+
+def stage_table(me: str, key: str) -> list[str]:
+    """모든 맵 개요에 같은 모양으로 들어가는 단계 표 — 맵마다 표 모양이 달라 찾기 어려웠던 것을 맞춘다."""
+    maps = {m.doc for m in registry.MAPS}  # 맵 개요 문서는 상세 문서 열에서 뺀다(이미 그 문서 안)
+    rows = []
+    for s in registry.map_stages(key):
+        base = " · ".join(f"[{registry.BY_KEY[k].no} {registry.BY_KEY[k].menu}]({rel(me, registry.BY_KEY[k].readme)})" for k in s.builds_on)
+        detail = " · ".join(f"[{t}]({rel(me, p)})" for t, p in s.docs if p.split("#")[0] not in maps)
+        rows.append(
+            f"| {s.no} | [{s.title}]({rel(me, s.readme)}) | {STATUS_MARK[s.status]} {s.status_label} | {s.summary} | {base or '—'} | {detail or '—'} |"
+        )
+    return ["| # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |", "|---|---|---|---|---|---|", *rows]
+
+
+def counts(key: str) -> str:
+    st = [s.status for s in registry.map_stages(key)]
+    return " · ".join(f"{STATUS_MARK[c]} {st.count(c)}" for c in (registry.DONE, registry.BASIC, registry.PLANNED) if st.count(c))
+
+
 def index() -> str:
     me = "docs/README.md"
-
-    def rows(key: str) -> list[str]:
-        maps = {m.doc for m in registry.MAPS}  # 맵 개요 문서는 표 위에 따로 걸므로 행마다 반복하지 않는다
-        return [
-            f"| {s.no} | [{s.title}]({rel(me, s.readme)}) | {STATUS_MARK[s.status]} {s.status_label} | {s.summary} | "
-            + (" · ".join(f"[{t}]({rel(me, p)})" for t, p in s.docs if p not in maps) or "—")
-            + " |"
-            for s in registry.map_stages(key)
-        ]
-
     return "\n".join(
         [
             GENERATED,
             "",
             "# 문서",
             "",
-            "LLM Engineering Atlas 의 문서는 맵의 단계 순서로 정리되어 있습니다. 맵은 "
-            + " · ".join(f"[{m.title}]({rel(me, m.doc)})" for m in registry.MAPS)
-            + " 입니다. 각 단계 폴더의 `README.md` 에 그 단계의 **원리 · 왜 하는가 · 어떻게(이 앱에서)** 가 있고, 같은 폴더에 상세 문서가 있습니다.",
+            f"LLM Engineering Atlas 의 문서는 **맵 → 단계** 순서로 정리되어 있습니다. 맵 {len(registry.MAPS)}개 · 단계 {len(registry.STAGES)}개. "
+            "모든 맵이 같은 규칙을 따릅니다 — 맵 이름 하나를 화면 주소(`/maps/<맵>`, LLM 맵은 `/roadmap`) · 개요(`maps/<맵>.md`) · 단계 폴더(`stages/<맵>/`)에 같이 씁니다.",
             "",
+            "## 구조",
+            "",
+            *TREE,
+            "",
+            "- 단계 폴더 이름 = `<번호>-<이름>` (번호는 소문자, 이름은 레지스트리 키에서 맵 접두어를 뺀 것 — 예: `as1-intake`, `k1-requirements`, `m-multimodal`)",
+            "- 생성 문서(색인 · 단계 README · 공통 맵 개요 · 맵 개요의 단계 표)는 레지스트리(`app/stages/registry.py`)를 고친 뒤 `uv run python scripts/gen_docs.py` 로 다시 만듭니다.",
+            "- 상태: ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정",
+            "",
+            "## 맵",
+            "",
+            "| 맵 | 무엇을 | 단계 | 개요 | 화면 |",
+            "|---|---|---|---|---|",
             *[
-                line
+                f"| **{m.title}** | {m.summary} | {len(registry.map_stages(m.key))} — {counts(m.key)} | [{m.slug}.md]({rel(me, m.doc)}) | `{m.href}` |"
                 for m in registry.MAPS
-                for line in (
-                    f"## {m.title}",
-                    "",
-                    m.summary,
-                    "",
-                    "```",
-                    *m.diagram.splitlines(),
-                    "```",
-                    "",
-                    "| # | 단계 | 상태 | 무엇을 | 상세 문서 |",
-                    "|---|---|---|---|---|",
-                    *rows(m.key),
-                    "",
-                )
-            ],  # fmt: skip
+            ],
+            "",
             "## 가이드",
             "",
             *[f"- [{d}]({p})" for p, d in GUIDES],
@@ -143,19 +164,15 @@ def index() -> str:
 
 
 def map_doc(m: registry.Map) -> str:
-    """공통 화면 맵의 개요 문서(docs/maps/<key>.md). 지식 그래프 · 멀티에이전트 맵은 손으로 쓴 개요가 따로 있다."""
+    """공통 화면 맵의 개요 문서(docs/maps/<slug>.md)."""
     me = m.doc
-    stages = registry.map_stages(m.key)
     others = [o for o in registry.MAPS if o.key != m.key]
     lines = [
         GENERATED, "", f"# {m.title}", "", m.summary, "", m.lead, "",
         f"앱의 **맵 → {m.title}**(`{m.href}`)과 단계 소개(`/stages/<단계>`)에 같은 내용이 있습니다. "
         "**기초 있음** = 기능은 다른 맵에 있고(기반 단계), 이 맵의 관점으로 묶은 화면 · 측정은 아직인 단계입니다.", "",
         "## 전체 흐름", "", "```", *m.diagram.splitlines(), "```", "",
-        "## 단계", "", "| # | 단계 | 상태 | 무엇을 | 기반 단계 |", "|---|---|---|---|---|",
-        *[f"| {s.no} | [{s.title}]({rel(me, s.readme)}) | {STATUS_MARK[s.status]} {s.status_label} | {s.summary} | "
-          + (" · ".join(f"[{registry.BY_KEY[k].no} {registry.BY_KEY[k].menu}]({rel(me, registry.BY_KEY[k].readme)})" for k in s.builds_on) or "—")
-          + " |" for s in stages],
+        "## 단계", "", *stage_table(me, m.key),
         "", "## 설계 원칙", "", *[f"- {p}" for p in m.principles],
         "", "## 예시", "", m.example,
         "", "---", "", "다른 맵: " + " · ".join(f"[{o.title}]({rel(me, o.doc)})" for o in others),
@@ -163,11 +180,20 @@ def map_doc(m: registry.Map) -> str:
     return "\n".join(lines) + "\n"
 
 
+def fill_stage_table(m: registry.Map) -> str:
+    """직접 쓴 맵 개요(LLM · 지식 그래프 · 멀티에이전트)의 표시 사이에 단계 표만 채운다 — 나머지 글은 손으로 쓴 그대로."""
+    text = (ROOT / m.doc).read_text(encoding="utf-8")
+    if MARK_START not in text or MARK_END not in text:
+        raise SystemExit(f"{m.doc} 에 단계 표 표시({MARK_START} … {MARK_END})가 없습니다.")
+    head, rest = text.split(MARK_START, 1)
+    _, tail = rest.split(MARK_END, 1)
+    return head + MARK_START + "\n" + "\n".join(stage_table(m.doc, m.key)) + "\n" + MARK_END + tail
+
+
 def outputs() -> dict[str, str]:
     out = {"docs/README.md": index()}
     for m in registry.MAPS:
-        if m.generated_doc:
-            out[m.doc] = map_doc(m)
+        out[m.doc] = map_doc(m) if m.generated_doc else fill_stage_table(m)
     for s in registry.STAGES:
         out[s.readme] = stage_readme(s)
     return out

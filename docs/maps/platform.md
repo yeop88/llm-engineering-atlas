@@ -20,15 +20,15 @@
 
 ## 단계
 
-| # | 단계 | 상태 | 무엇을 | 기반 단계 |
-|---|---|---|---|---|
-| PF1 | [API 게이트웨이](../stages/platform/pf1-pf-gateway/README.md) | 🟡 기초 있음 | 모든 요청이 들어오는 입구에서 인증 · 테넌트 구분 · 속도 제한 · 사용량 기록을 한다 | [G5 감사 로그](../stages/guardrails/g5-gr-audit/README.md) |
-| PF2 | [멀티테넌트 격리](../stages/platform/pf2-pf-tenancy/README.md) | ⬜ 예정 | 부서 · 고객사마다 자료 · 색인 · 설정 · 로그를 분리해 서로 보이지 않게 한다 | [G3 권한별 검색](../stages/guardrails/g3-gr-acl/README.md) |
-| PF3 | [모델 · 프롬프트 레지스트리 · 버전](../stages/platform/pf3-pf-registry/README.md) | 🟡 기초 있음 | 모델 · 프롬프트 · 검색 설정을 버전으로 저장하고, 어느 답이 어느 버전에서 나왔는지 남긴다 | [1 임베딩](../stages/1-embedding/README.md) |
-| PF4 | [설정 · 기능 플래그](../stages/platform/pf4-pf-config/README.md) | ⬜ 예정 | 테넌트 · 사용자 묶음별로 다른 설정을 켜고 끄며, 코드 배포 없이 동작을 바꾼다 | [6 라우팅](../stages/6-routing/README.md) |
-| PF5 | [배포 · 단계적 출시](../stages/platform/pf5-pf-deploy/README.md) | 🟡 기초 있음 | 컨테이너로 배포하고, 버전 · 마이그레이션 · 릴리스 노트 규칙을 지킨다 | [S4 추론 서버](../stages/serving/s4-sv-server/README.md) |
-| PF6 | [장애 대응 · 대체 모델](../stages/platform/pf6-pf-resilience/README.md) | ⬜ 예정 | 모델 서버 · 벡터 DB · 외부 API 가 멈추면 대체 경로로 넘어가고, 품질 차이를 알린다 | [S4 추론 서버](../stages/serving/s4-sv-server/README.md) · [6 라우팅](../stages/6-routing/README.md) |
-| PF7 | [비용 배분 · 사용량 보고](../stages/platform/pf7-pf-chargeback/README.md) | ⬜ 예정 | 테넌트 · 기능별 사용량과 비용을 집계해 배분하고, 예산을 넘기 전에 알린다 | [E4 비용 · 지연](../stages/evalops/e4-ev-cost/README.md) |
+| # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
+|---|---|---|---|---|---|
+| PF1 | [API 게이트웨이](../stages/platform/pf1-gateway/README.md) | 🟡 기초 있음 | 모든 요청이 들어오는 입구에서 인증 · 테넌트 구분 · 속도 제한 · 사용량 기록을 한다 | [G5 감사 로그](../stages/guardrails/g5-audit/README.md) | — |
+| PF2 | [멀티테넌트 격리](../stages/platform/pf2-tenancy/README.md) | ⬜ 예정 | 부서 · 고객사마다 자료 · 색인 · 설정 · 로그를 분리해 서로 보이지 않게 한다 | [G3 권한별 검색](../stages/guardrails/g3-acl/README.md) | — |
+| PF3 | [모델 · 프롬프트 레지스트리 · 버전](../stages/platform/pf3-registry/README.md) | 🟡 기초 있음 | 모델 · 프롬프트 · 검색 설정을 버전으로 저장하고, 어느 답이 어느 버전에서 나왔는지 남긴다 | [1 임베딩](../stages/llm/1-embedding/README.md) | — |
+| PF4 | [설정 · 기능 플래그](../stages/platform/pf4-config/README.md) | ⬜ 예정 | 테넌트 · 사용자 묶음별로 다른 설정을 켜고 끄며, 코드 배포 없이 동작을 바꾼다 | [6 라우팅](../stages/llm/6-routing/README.md) | — |
+| PF5 | [배포 · 단계적 출시](../stages/platform/pf5-deploy/README.md) | 🟡 기초 있음 | 컨테이너로 배포하고, 버전 · 마이그레이션 · 릴리스 노트 규칙을 지킨다 | [S4 추론 서버](../stages/serving/s4-server/README.md) | — |
+| PF6 | [장애 대응 · 대체 모델](../stages/platform/pf6-resilience/README.md) | ⬜ 예정 | 모델 서버 · 벡터 DB · 외부 API 가 멈추면 대체 경로로 넘어가고, 품질 차이를 알린다 | [S4 추론 서버](../stages/serving/s4-server/README.md) · [6 라우팅](../stages/llm/6-routing/README.md) | — |
+| PF7 | [비용 배분 · 사용량 보고](../stages/platform/pf7-chargeback/README.md) | ⬜ 예정 | 테넌트 · 기능별 사용량과 비용을 집계해 배분하고, 예산을 넘기 전에 알린다 | [E4 비용 · 지연](../stages/evalops/e4-cost/README.md) | — |
 
 ## 설계 원칙
 
@@ -43,4 +43,4 @@
 
 ---
 
-다른 맵: [LLM 시스템 엔지니어링 맵](../map.md) · [지식 그래프 · GraphRAG 맵](../kg-map.md) · [멀티에이전트 · 멀티모달 맵](../agents-map.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)
+다른 맵: [LLM 시스템 엔지니어링 맵](llm.md) · [지식 그래프 · GraphRAG 맵](knowledge-graph.md) · [멀티에이전트 · 멀티모달 맵](multi-agent.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)

@@ -20,14 +20,14 @@
 
 ## 단계
 
-| # | 단계 | 상태 | 무엇을 | 기반 단계 |
-|---|---|---|---|---|
-| IO1 | [도구 정의 · 검색 (MCP 서버)](../stages/interop/io1-io-tools/README.md) | ⬜ 예정 | 검색 · 조회 · 계산 같은 도구를 MCP 서버로 표준화해 어느 에이전트 · 앱에서나 쓰게 한다 | [8a 에이전틱 AI](../stages/8a-agent/README.md) |
-| IO2 | [권한 · 샌드박스](../stages/interop/io2-io-sandbox/README.md) | ⬜ 예정 | 도구마다 할 수 있는 일(읽기 · 쓰기 · 네트워크)을 제한하고, 실행형 도구는 격리된 곳에서 돌린다 | [MA5 분석 에이전트](../stages/agents/ma5-analysis-agent/README.md) · [G1 입력 방어](../stages/guardrails/g1-gr-injection/README.md) |
-| IO3 | [에이전트 간 위임 (A2A)](../stages/interop/io3-io-a2a/README.md) | ⬜ 예정 | 다른 팀 · 다른 회사의 에이전트에게 작업을 맡기고 결과를 받아 검증한다 | [MA3 오케스트레이터](../stages/agents/ma3-orchestrator/README.md) |
-| IO4 | [장기 작업 · 재시도 · 복구](../stages/interop/io4-io-longtask/README.md) | ⬜ 예정 | 오래 걸리는 도구 · 위임 작업을 비동기로 돌리고, 끊기면 재시도 · 이어 하기를 한다 | [MA3 오케스트레이터](../stages/agents/ma3-orchestrator/README.md) |
-| IO5 | [호출 · 비용 상한](../stages/interop/io5-io-limits/README.md) | ⬜ 예정 | 요청 하나가 쓸 수 있는 도구 호출 수 · 시간 · 비용에 상한을 두고, 넘으면 멈추고 알린다 | [S7 예산](../stages/serving/s7-sv-budget/README.md) |
-| IO6 | [감사 추적 · 신뢰 경계](../stages/interop/io6-io-audit/README.md) | ⬜ 예정 | 어느 도구 · 에이전트가 무엇을 받아 무엇을 했는지 추적 id 로 남기고, 신뢰 경계를 넘은 입력을 표시한다 | [G5 감사 로그](../stages/guardrails/g5-gr-audit/README.md) · [E3 트레이싱](../stages/evalops/e3-ev-tracing/README.md) |
+| # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
+|---|---|---|---|---|---|
+| IO1 | [도구 정의 · 검색 (MCP 서버)](../stages/interop/io1-tools/README.md) | ⬜ 예정 | 검색 · 조회 · 계산 같은 도구를 MCP 서버로 표준화해 어느 에이전트 · 앱에서나 쓰게 한다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | — |
+| IO2 | [권한 · 샌드박스](../stages/interop/io2-sandbox/README.md) | ⬜ 예정 | 도구마다 할 수 있는 일(읽기 · 쓰기 · 네트워크)을 제한하고, 실행형 도구는 격리된 곳에서 돌린다 | [MA5 분석 에이전트](../stages/multi-agent/ma5-analysis-agent/README.md) · [G1 입력 방어](../stages/guardrails/g1-injection/README.md) | — |
+| IO3 | [에이전트 간 위임 (A2A)](../stages/interop/io3-a2a/README.md) | ⬜ 예정 | 다른 팀 · 다른 회사의 에이전트에게 작업을 맡기고 결과를 받아 검증한다 | [MA3 오케스트레이터](../stages/multi-agent/ma3-orchestrator/README.md) | — |
+| IO4 | [장기 작업 · 재시도 · 복구](../stages/interop/io4-longtask/README.md) | ⬜ 예정 | 오래 걸리는 도구 · 위임 작업을 비동기로 돌리고, 끊기면 재시도 · 이어 하기를 한다 | [MA3 오케스트레이터](../stages/multi-agent/ma3-orchestrator/README.md) | — |
+| IO5 | [호출 · 비용 상한](../stages/interop/io5-limits/README.md) | ⬜ 예정 | 요청 하나가 쓸 수 있는 도구 호출 수 · 시간 · 비용에 상한을 두고, 넘으면 멈추고 알린다 | [S7 예산](../stages/serving/s7-budget/README.md) | — |
+| IO6 | [감사 추적 · 신뢰 경계](../stages/interop/io6-audit/README.md) | ⬜ 예정 | 어느 도구 · 에이전트가 무엇을 받아 무엇을 했는지 추적 id 로 남기고, 신뢰 경계를 넘은 입력을 표시한다 | [G5 감사 로그](../stages/guardrails/g5-audit/README.md) · [E3 트레이싱](../stages/evalops/e3-tracing/README.md) | — |
 
 ## 설계 원칙
 
@@ -42,4 +42,4 @@
 
 ---
 
-다른 맵: [LLM 시스템 엔지니어링 맵](../map.md) · [지식 그래프 · GraphRAG 맵](../kg-map.md) · [멀티에이전트 · 멀티모달 맵](../agents-map.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)
+다른 맵: [LLM 시스템 엔지니어링 맵](llm.md) · [지식 그래프 · GraphRAG 맵](knowledge-graph.md) · [멀티에이전트 · 멀티모달 맵](multi-agent.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)

@@ -20,15 +20,15 @@
 
 ## 단계
 
-| # | 단계 | 상태 | 무엇을 | 기반 단계 |
-|---|---|---|---|---|
-| VC1 | [스트리밍 음성 인식](../stages/voice/vc1-vc-stt/README.md) | ⬜ 예정 | 통화 음성을 말하는 도중에 글로 옮겨, 끝나기 전에 처리를 시작한다 | [MA1 멀티모달 임베딩](../stages/agents/ma1-mm-input/README.md) |
-| VC2 | [말 끊기 · 끼어들기 (턴 관리)](../stages/voice/vc2-vc-turn/README.md) | ⬜ 예정 | 고객이 말을 끊거나 끼어들면 즉시 멈추고 듣고, 말이 끝나면 바로 응답한다 | [C2 되묻기](../stages/conversation/c2-cv-clarify/README.md) |
-| VC3 | [짧은 지연 RAG](../stages/voice/vc3-vc-fastrag/README.md) | ⬜ 예정 | 음성에 맞게 1초 안팎으로 근거를 찾고 첫 문장을 낸다 — 캐시 · 짧은 근거 · 스트리밍 | [S1 캐시](../stages/serving/s1-sv-cache/README.md) · [S2 근거 길이](../stages/serving/s2-sv-context/README.md) · [2 RAG](../stages/2-rag/README.md) |
-| VC4 | [스트리밍 음성 합성](../stages/voice/vc4-vc-tts/README.md) | ⬜ 예정 | 생성되는 글을 문장 단위로 바로 음성으로 바꿔 들려준다 | [MA8 멀티모달 출력](../stages/agents/ma8-mm-output/README.md) |
-| VC5 | [감정 · 불만 감지](../stages/voice/vc5-vc-emotion/README.md) | ⬜ 예정 | 목소리와 말에서 불만 · 격앙을 감지해 말투를 바꾸거나 상담원에게 넘긴다 | [A 의미 응용](../stages/apps/README.md) |
-| VC6 | [상담원 실시간 보조](../stages/voice/vc6-vc-assist/README.md) | ⬜ 예정 | 자동 응답 대신 상담원 화면에 근거 · 추천 답 · 다음 질문을 실시간으로 띄운다 | [AS3 FAQ 답변](../stages/as-service/as3-as-faq/README.md) · [C6 상담원 이관](../stages/conversation/c6-cv-handoff/README.md) |
-| VC7 | [통화 요약 · 후처리](../stages/voice/vc7-vc-summary/README.md) | ⬜ 예정 | 통화가 끝나면 요약 · 조치 · 다음 할 일을 정리해 티켓 · 고객 기록에 남긴다 | [C3 대화 메모리](../stages/conversation/c3-cv-memory/README.md) · [AS7 티켓 · 이관](../stages/as-service/as7-as-ticket/README.md) |
+| # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
+|---|---|---|---|---|---|
+| VC1 | [스트리밍 음성 인식](../stages/voice/vc1-stt/README.md) | ⬜ 예정 | 통화 음성을 말하는 도중에 글로 옮겨, 끝나기 전에 처리를 시작한다 | [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) | — |
+| VC2 | [말 끊기 · 끼어들기 (턴 관리)](../stages/voice/vc2-turn/README.md) | ⬜ 예정 | 고객이 말을 끊거나 끼어들면 즉시 멈추고 듣고, 말이 끝나면 바로 응답한다 | [C2 되묻기](../stages/conversation/c2-clarify/README.md) | — |
+| VC3 | [짧은 지연 RAG](../stages/voice/vc3-fastrag/README.md) | ⬜ 예정 | 음성에 맞게 1초 안팎으로 근거를 찾고 첫 문장을 낸다 — 캐시 · 짧은 근거 · 스트리밍 | [S1 캐시](../stages/serving/s1-cache/README.md) · [S2 근거 길이](../stages/serving/s2-context/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | — |
+| VC4 | [스트리밍 음성 합성](../stages/voice/vc4-tts/README.md) | ⬜ 예정 | 생성되는 글을 문장 단위로 바로 음성으로 바꿔 들려준다 | [MA8 멀티모달 출력](../stages/multi-agent/ma8-output/README.md) | — |
+| VC5 | [감정 · 불만 감지](../stages/voice/vc5-emotion/README.md) | ⬜ 예정 | 목소리와 말에서 불만 · 격앙을 감지해 말투를 바꾸거나 상담원에게 넘긴다 | [A 의미 응용](../stages/llm/a-apps/README.md) | — |
+| VC6 | [상담원 실시간 보조](../stages/voice/vc6-assist/README.md) | ⬜ 예정 | 자동 응답 대신 상담원 화면에 근거 · 추천 답 · 다음 질문을 실시간으로 띄운다 | [AS3 FAQ 답변](../stages/as-service/as3-faq/README.md) · [C6 상담원 이관](../stages/conversation/c6-handoff/README.md) | — |
+| VC7 | [통화 요약 · 후처리](../stages/voice/vc7-summary/README.md) | ⬜ 예정 | 통화가 끝나면 요약 · 조치 · 다음 할 일을 정리해 티켓 · 고객 기록에 남긴다 | [C3 대화 메모리](../stages/conversation/c3-memory/README.md) · [AS7 티켓 · 이관](../stages/as-service/as7-ticket/README.md) | — |
 
 ## 설계 원칙
 
@@ -43,4 +43,4 @@
 
 ---
 
-다른 맵: [LLM 시스템 엔지니어링 맵](../map.md) · [지식 그래프 · GraphRAG 맵](../kg-map.md) · [멀티에이전트 · 멀티모달 맵](../agents-map.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)
+다른 맵: [LLM 시스템 엔지니어링 맵](llm.md) · [지식 그래프 · GraphRAG 맵](knowledge-graph.md) · [멀티에이전트 · 멀티모달 맵](multi-agent.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)

@@ -29,25 +29,31 @@ class Map:
     template: str = ""  # 따로 만든 화면이 있으면 그 템플릿, 비우면 공통 화면
 
     @property
+    def slug(self) -> str:
+        """맵 이름 하나를 화면 주소 · 개요 문서 · 단계 문서 폴더에 같이 쓴다(docs/maps/<slug>.md, docs/stages/<slug>/)."""
+        return self.doc.rsplit("/", 1)[-1].removesuffix(".md")
+
+    @property
     def generated_doc(self) -> bool:
-        return self.doc.startswith("docs/maps/")
+        """전용 화면이 있는 맵(LLM · 지식 그래프 · 멀티에이전트)은 개요도 손으로 쓰고, 단계 표만 생성한다."""
+        return not self.template
 
 
 MAPS: list[Map] = [
-    Map("llm", "LLM 시스템 엔지니어링 맵", "/roadmap", "docs/map.md", template="roadmap.html", summary=
+    Map("llm", "LLM 시스템 엔지니어링 맵", "/roadmap", "docs/maps/llm.md", template="roadmap.html", summary=
         "임베딩 → RAG 검색 → 리랭킹 → 라우팅 → 소형/대형 모델 · 에이전트 — 문서 지식을 싸고 빠르고 정확하게 서비스하는 흐름",
         diagram="[데이터 임베딩] → [RAG 검색] → [리랭킹 (정밀 필터링)]\n"
         "                                        ↓\n"
         "[라우팅 (난이도 분류)] → 쉬운 질문:  [지식 증류 · 양자화된 소형 모델]\n"
         "                       → 어려운 질문: [파인튜닝 · 강화학습된 에이전트 LLM]"),
-    Map("kg", "지식 그래프 · GraphRAG 맵", "/maps/knowledge-graph", "docs/kg-map.md", template="maps/knowledge_graph.html", summary=
+    Map("kg", "지식 그래프 · GraphRAG 맵", "/maps/knowledge-graph", "docs/maps/knowledge-graph.md", template="maps/knowledge_graph.html", summary=
         "온톨로지 설계 → 추출 · 융합 → 그래프 DB → GraphRAG — 개념과 관계를 구조로 저장해 다단계 · 집계 · 전체 요약 질문에 답하는 흐름",
         diagram="[요구사항 정의] → [온톨로지 설계] → [데이터 추출 (ETL · LLM)] → [지식 융합 · 정제]\n"
         "                                        ↓\n"
         "                              [그래프 DB (Neo4j)]\n"
         "                                        ↓\n"
         "  GraphRAG: [Text2Cypher] · [그래프 하이브리드 검색] · [글로벌 커뮤니티 요약]"),
-    Map("agents", "멀티에이전트 · 멀티모달 맵", "/maps/multi-agent", "docs/agents-map.md", template="maps/multi_agent.html", summary=
+    Map("agents", "멀티에이전트 · 멀티모달 맵", "/maps/multi-agent", "docs/maps/multi-agent.md", template="maps/multi_agent.html", summary=
         "멀티모달 입력 · 검색 → 오케스트레이터가 전문가 에이전트(검색 · 분석 · 작성 · 검증)에게 분배 → 교차 검증 → 텍스트 · 차트 · 음성 출력",
         diagram="[멀티모달 입력 (텍스트 · 이미지 · 음성 · 문서)] → [멀티모달 임베딩]\n"
         "                                        ↓\n"
@@ -274,12 +280,11 @@ class Stage:
 
     @property
     def doc_dir(self) -> str:
-        """이 단계 문서 폴더 (docs/stages/<번호-단계>/). README.md 는 scripts/gen_docs.py 가 이 레지스트리로 만든다."""
-        name = self.key.replace("_", "-")
-        if self.map != "llm":
-            folder = self.map.replace("_", "-")  # 문서 경로는 하이픈 (화면 주소 /maps/as-service 와 같게)
-            return f"docs/stages/{folder}/{self.no.lower()}-{name.removeprefix(folder + '-')}"
-        return f"docs/stages/{self.no}-{name}" if self.flow == "main" else f"docs/stages/{name}"
+        """이 단계 문서 폴더: docs/stages/<맵>/<번호>-<이름>/ — 모든 맵이 같은 규칙. README.md 는 scripts/gen_docs.py 가 만든다.
+        이름은 키에서 맵 접두어(3글자 이하, 예: as_ · rc_ · kg_)를 뺀 것 — 번호에 이미 맵이 드러나 'as1-as-intake' 처럼 반복되지 않게."""
+        head, _, rest = self.key.partition("_")
+        name = (rest if rest and len(head) <= 3 else self.key).replace("_", "-")
+        return f"docs/stages/{self.map_info.slug}/{self.no.lower()}-{name}"
 
     @property
     def readme(self) -> str:
@@ -322,9 +327,9 @@ STAGES: list[Stage] = [
             Page("benchmark", "/benchmark", "벤치마크", "데이터셋 · 공개 벤치마크 · 신뢰구간"),
         ],
         docs=[
-            ("모델 카탈로그", "docs/stages/1-embedding/models.md"),
-            ("벤치마크", "docs/stages/1-embedding/benchmarks.md"),
-            ("시각화", "docs/stages/1-embedding/visualization.md"),
+            ("모델 카탈로그", "docs/stages/llm/1-embedding/models.md"),
+            ("벤치마크", "docs/stages/llm/1-embedding/benchmarks.md"),
+            ("시각화", "docs/stages/llm/1-embedding/visualization.md"),
         ],
     ),
     Stage(
@@ -353,7 +358,7 @@ STAGES: list[Stage] = [
             "비슷한 문서가 많은 자료(판례)에서 답 없는 질문 거절 개선 — 법률 재측정에서 13개 중 1개만 거절",
             "여러 문서 질문을 늘린 평가 세트(관련 지문 쌍이 적어 9문항뿐)",
         ],  # fmt: skip
-        docs=[("문서 검색(RAG)", "docs/stages/2-rag/rag.md"), ("LLM 연결", "docs/guides/llm.md")],
+        docs=[("문서 검색(RAG)", "docs/stages/llm/2-rag/rag.md"), ("LLM 연결", "docs/guides/llm.md")],
     ),
     Stage(
         key="rerank",
@@ -371,7 +376,7 @@ STAGES: list[Stage] = [
         ],
         pages=[Page("rerank", "/rerank", "리랭킹 테스트", "리랭커 · 후보 수 · 융합 · LLM 리랭커 비교")],
         plans=["리랭커 int8 · ONNX 로 CPU 지연 줄이기(7b 와 연결)", "질문 유형별로 리랭킹을 켜고 끄는 라우팅"],
-        docs=[("리랭킹: 방법 · 실측", "docs/stages/3-rerank/rerank.md"), ("전체 맵", "docs/map.md")],
+        docs=[("리랭킹: 방법 · 실측", "docs/stages/llm/3-rerank/rerank.md"), ("전체 맵", "docs/maps/llm.md")],
     ),
     Stage(
         key="search_lab",
@@ -394,7 +399,7 @@ STAGES: list[Stage] = [
             "문맥 청크(contextual chunk) 색인 — 청크 앞에 문서 맥락 요약을 붙여 색인",
             "질문 유형별로 기법을 고르는 적응형 적용(라우팅과 연결)",
         ],
-        docs=[("검색 향상: 기법 · 측정 기록", "docs/stages/4-search-lab/search-lab.md"), ("전체 맵", "docs/map.md")],
+        docs=[("검색 향상: 기법 · 측정 기록", "docs/stages/llm/4-search-lab/search-lab.md"), ("전체 맵", "docs/maps/llm.md")],
     ),
     Stage(
         key="finetune",
@@ -412,7 +417,7 @@ STAGES: list[Stage] = [
         ],
         pages=[Page("finetune", "/finetune", "파인튜닝 테스트", "학습 쌍 · 학습 · 전후 비교 · 기록")],
         plans=["거짓 오답을 거르는 GISTEmbed 손실, 같은 문서 지문을 한 배치에 넣지 않는 샘플링", "학습 쌍 수천 개 규모 · 낮은 학습률 실험"],
-        docs=[("파인튜닝: 왜 · 어떻게 · 실행 기록", "docs/stages/5-finetune/finetune.md")],
+        docs=[("파인튜닝: 왜 · 어떻게 · 실행 기록", "docs/stages/llm/5-finetune/finetune.md")],
     ),
     Stage(
         key="routing",
@@ -435,7 +440,7 @@ STAGES: list[Stage] = [
             "규칙 라우터 글자 수 기준을 자료의 질문 길이 분포에 맞추기 (법률 질문에선 92.5% 를 어려움으로 보냄)",
             "빠른 경로 모델: E2B 는 품질 −13 유의라 부적합 — 증류한 소형 모델로 다시",
         ],
-        docs=[("라우팅: 라우터 · 평가 방법 · 실측", "docs/stages/6-routing/routing.md"), ("전체 맵", "docs/map.md")],
+        docs=[("라우팅: 라우터 · 평가 방법 · 실측", "docs/stages/llm/6-routing/routing.md"), ("전체 맵", "docs/maps/llm.md")],
     ),
     Stage(
         key="distill",
@@ -453,7 +458,7 @@ STAGES: list[Stage] = [
         ],
         pages=[Page("distill", "/distill", "지식 증류 테스트", "임베딩 증류 · LLM 증류 데이터")],
         plans=["증류한 소형 LLM 을 라우팅의 빠른 경로 모델로 연결", "리랭커 → 임베딩 증류 실측"],
-        docs=[("지식 증류: 방법 · 실측", "docs/stages/7a-distill/distill.md"), ("전체 맵", "docs/map.md")],
+        docs=[("지식 증류: 방법 · 실측", "docs/stages/llm/7a-distill/distill.md"), ("전체 맵", "docs/maps/llm.md")],
     ),
     Stage(
         key="quant",
@@ -476,7 +481,7 @@ STAGES: list[Stage] = [
             "벡터 DB 내장 양자화(Qdrant scalar · binary · product, pgvector halfvec · bit)로 실제 검색 지연",
             "RaBitQ 실행",
         ],
-        docs=[("양자화: 방법 · 실측", "docs/stages/7b-quant/quant.md"), ("전체 맵", "docs/map.md")],
+        docs=[("양자화: 방법 · 실측", "docs/stages/llm/7b-quant/quant.md"), ("전체 맵", "docs/maps/llm.md")],
     ),
     Stage(
         key="agent",
@@ -500,7 +505,7 @@ STAGES: list[Stage] = [
             "판례 질문에서 근거 밖 문장을 줄이기(문장 근거율 50% vs RAG 91%)",
             "질문에 번호가 있으면 에이전트, 없으면 RAG 로 보내는 규칙 라우팅",
         ],
-        docs=[("에이전트: 방법 · 실측", "docs/stages/8a-agent/agent.md"), ("전체 맵", "docs/map.md")],
+        docs=[("에이전트: 방법 · 실측", "docs/stages/llm/8a-agent/agent.md"), ("전체 맵", "docs/maps/llm.md")],
     ),
     Stage(
         key="rl",
@@ -518,7 +523,7 @@ STAGES: list[Stage] = [
         ],
         pages=[Page("rl", "/rl", "강화학습 테스트", "보상 · Best-of-N · 선호 쌍 · DPO 데이터")],
         plans=["DPO 로 학습한 소형 LLM 을 연결해 전후 비교", "사람 선호와 보상의 일치율로 보상 함수 고치기"],
-        docs=[("강화학습: 보상 · 방법 · 실측", "docs/stages/8b-rl/rl.md"), ("전체 맵", "docs/map.md")],
+        docs=[("강화학습: 보상 · 방법 · 실측", "docs/stages/llm/8b-rl/rl.md"), ("전체 맵", "docs/maps/llm.md")],
     ),
     Stage(
         key="multimodal",
@@ -541,7 +546,7 @@ STAGES: list[Stage] = [
             "실제 영상(움직임 · 자막)과 대량 이미지로 재측정, GPU 색인",
             "오디오 임베딩(의존성 해결 후)",
         ],
-        docs=[("멀티모달: 모델 · 이미지 · 영상 컬렉션 · 실측", "docs/stages/multimodal/multimodal.md")],
+        docs=[("멀티모달: 모델 · 이미지 · 영상 컬렉션 · 실측", "docs/stages/llm/m-multimodal/multimodal.md")],
     ),
     Stage(
         key="apps",
@@ -558,7 +563,7 @@ STAGES: list[Stage] = [
             "학습한 분류기 · 탐지기를 저장해 API 로 사용",
         ],
         pages=[Page("apps", "/apps", "의미 응용", "추천 · 분류 · 군집 · 중복 · 이상 · 키워드")],
-        docs=[("의미 응용", "docs/stages/apps/apps.md")],
+        docs=[("의미 응용", "docs/stages/llm/a-apps/apps.md")],
     ),
     # ── 지식 그래프 · GraphRAG 맵 (K1~K8) ─────────────────────────────────────
     # 구축은 탑다운(요구사항 → 온톨로지, 스키마 먼저)과 바텀업(데이터에서 추출, 데이터 먼저)을 섞는다. 첫 적용 도메인은 이미 있는
@@ -583,7 +588,7 @@ STAGES: list[Stage] = [
             "(예정) 벡터 RAG 로 답하기 어려운 질문(다단계 · 집계 · 전체 요약)을 따로 표시 — GraphRAG(K6~K8)의 효과를 잴 대상",
         ],
         plans=["법률 자료로 역량 질문 15개 작성(판례-조문 인용 · 쟁점별 집계 · 법령 간 위임 관계)", "질문 → 기대 Cypher · 기대 답 기록"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/kg-map.md")],
+        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
     ),
     Stage(
         key="ontology",
@@ -606,7 +611,7 @@ STAGES: list[Stage] = [
             "(예정) 설계를 YAML(또는 OWL · SHACL)로 저장하고, 추출 프롬프트 · 그래프 DB 제약 조건 · Text2Cypher 스키마 설명을 모두 여기서 만든다",
         ],
         plans=["법률 온톨로지 v1 (클래스 6 · 관계 6 안팎)", "검증 규칙(관계 방향 · 필수 속성)으로 추출 결과 거르기"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/kg-map.md")],
+        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
     ),
     Stage(
         key="kg_extract",
@@ -629,7 +634,7 @@ STAGES: list[Stage] = [
             "(예정) 추출 정확도를 사람 판정 표본으로 측정(트리플 정밀도 · 재현율) — 답변 검증 보정과 같은 방식",
         ],
         plans=["정형 매핑으로 판례-조문 그래프 먼저 (LLM 없이)", "LLM 트리플 추출 + 검증 규칙 + 사람 판정 표본"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/kg-map.md")],
+        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
     ),
     Stage(
         key="kg_fusion",
@@ -652,7 +657,7 @@ STAGES: list[Stage] = [
             "(예정) 정제 결과를 역량 질문(K1)으로 점검 — 합치기 전후 답이 달라지는 질문을 확인",
         ],
         plans=["조문 · 사건번호 정규화(파서 재사용)", "개체 연결 후보의 정밀도를 사람 판정으로 측정"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/kg-map.md")],
+        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
     ),
     Stage(
         key="graph_db",
@@ -676,7 +681,7 @@ STAGES: list[Stage] = [
             "(예정) Cypher 실습 화면: 역량 질문(K1)의 기대 쿼리를 실행해 결과 · 시간 확인",
         ],
         plans=["Neo4j docker 프로필 · 연결 설정 · 상태 확인", "법률 그래프 적재와 다단계 질의 실측(관계형 대비 시간)"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/kg-map.md")],
+        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
     ),
     Stage(
         key="text2cypher",
@@ -698,7 +703,7 @@ STAGES: list[Stage] = [
             "(예정) 평가: 역량 질문의 기대 결과와 실행 결과 비교(정확 일치 · 집합 일치), 작은 로컬 LLM 과 큰 모델 비교",
         ],
         plans=["읽기 전용 Text2Cypher + 재시도", "역량 질문으로 쿼리 정확도 측정, LLM 크기별 비교"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/kg-map.md")],
+        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
     ),
     Stage(
         key="graph_hybrid",
@@ -721,7 +726,7 @@ STAGES: list[Stage] = [
             "(예정) 평가: 여러 문서 질문 · 다단계 질문에서 벡터 RAG 와 짝지어 비교 — LLM 맵의 연결 비교에 경로로 추가",
         ],
         plans=["법률 그래프로 '검색 + 1단계 이웃 확장' 경로", "여러 문서 질문에서 벡터 RAG 대비 실측"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/kg-map.md"), ("LLM 맵 · 2 RAG 검색", "docs/stages/2-rag/rag.md")],
+        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md"), ("LLM 맵 · 2 RAG 검색", "docs/stages/llm/2-rag/rag.md")],
     ),
     Stage(
         key="community_summary",
@@ -744,7 +749,7 @@ STAGES: list[Stage] = [
             "(예정) 평가: '전체 요약' 질문을 따로 만들어 벡터 RAG 와 비교, 요약 생성 비용(시간 · 토큰) 기록",
         ],
         plans=["법률 그래프 커뮤니티 탐지 · 요약", "전체 요약 질문 평가 세트와 비용 측정"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/kg-map.md")],
+        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
     ),
     # ── 멀티에이전트 · 멀티모달 맵 (MA1~MA8) ────────────────────────────────────
     # 멀티모달 = 처리하는 데이터의 종류를 넓힘(앞단 입력 · 검색, 뒷단 출력), 멀티에이전트 = 처리 과정을 전문가 협업으로 넓힘(라우터 자리를 오케스트레이터가).
@@ -769,7 +774,10 @@ STAGES: list[Stage] = [
             "(예정) 음성 입력: 음성 인식(STT)으로 글로 바꾼 뒤 같은 파이프라인, 오디오 임베딩은 의존성 해결 후",
         ],
         plans=["질의 이미지 업로드 검색", "음성 입력(STT) 연결"],
-        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md"), ("LLM 맵 · 멀티모달", "docs/stages/multimodal/multimodal.md")],
+        docs=[
+            ("멀티에이전트 · 멀티모달 맵", "docs/maps/multi-agent.md"),
+            ("LLM 맵 · 멀티모달", "docs/stages/llm/m-multimodal/multimodal.md"),
+        ],
     ),
     Stage(
         key="mm_rag",
@@ -790,7 +798,7 @@ STAGES: list[Stage] = [
             "(예정) 멀티모달 리랭킹: 질문과 이미지 후보를 함께 보는 리랭커 · 비전 LLM 목록형 재정렬",
         ],
         plans=["PDF 표 · 그림을 이미지 청크로", "멀티모달 리랭킹 실측"],
-        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md"), ("LLM 연결 · 그림 근거 답변", "docs/guides/llm.md")],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/maps/multi-agent.md"), ("LLM 연결 · 그림 근거 답변", "docs/guides/llm.md")],
     ),
     Stage(
         key="orchestrator",
@@ -813,7 +821,7 @@ STAGES: list[Stage] = [
             "(예정) 평가: 같은 질문을 단일 에이전트 · 멀티에이전트로 풀어 품질 · 시간 · 호출 수 비교",
         ],
         plans=["작업 계획(JSON) · 실행기 · 단계 기록", "단일 vs 멀티에이전트 실측"],
-        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md"), ("LLM 맵 · 에이전트 실측", "docs/stages/8a-agent/agent.md")],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/maps/multi-agent.md"), ("LLM 맵 · 에이전트 실측", "docs/stages/llm/8a-agent/agent.md")],
     ),
     Stage(
         key="retrieval_agent",
@@ -835,7 +843,7 @@ STAGES: list[Stage] = [
             "(예정) 평가: 재검색 전후 근거 검색률 · 질문당 검색 횟수",
         ],
         plans=["충분성 판단 · 재검색 루프", "이미지 · 웹 검색 도구"],
-        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md")],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/maps/multi-agent.md")],
     ),
     Stage(
         key="analysis_agent",
@@ -856,7 +864,7 @@ STAGES: list[Stage] = [
             "(예정) 표 파싱(PDF 표 · 이미지 표 → DataFrame), 결과 차트 생성(차트 색 규칙 · 색각이상 검증 그대로)",
         ],
         plans=["격리된 코드 실행기", "표 파싱 · 차트 생성"],
-        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md")],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/maps/multi-agent.md")],
     ),
     Stage(
         key="report_agent",
@@ -877,7 +885,7 @@ STAGES: list[Stage] = [
             "(예정) 작성 난이도 라우팅: 템플릿 · 근거 길이 · 요구 형식으로 sLLM / LLM 선택, 품질 · 비용 실측",
         ],
         plans=["출력 템플릿", "작성 난이도별 모델 라우팅 실측"],
-        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md"), ("LLM 맵 · 소형 모델 실측", "docs/stages/7b-quant/quant.md")],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/maps/multi-agent.md"), ("LLM 맵 · 소형 모델 실측", "docs/stages/llm/7b-quant/quant.md")],
     ),
     Stage(
         key="critic_agent",
@@ -900,7 +908,7 @@ STAGES: list[Stage] = [
             "(예정) 보안 규정 검사(개인정보 · 금지어 · 내부 문서 등급)",
         ],
         plans=["반려 · 재작성 루프", "보안 규정 검사"],
-        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md"), ("LLM 맵 · 답변 원칙과 검증", "docs/stages/2-rag/rag.md")],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/maps/multi-agent.md"), ("LLM 맵 · 답변 원칙과 검증", "docs/stages/llm/2-rag/rag.md")],
     ),
     Stage(
         key="mm_output",
@@ -920,7 +928,7 @@ STAGES: list[Stage] = [
             "(예정) 출력물에도 근거 번호를 달고 검증 에이전트(MA7)를 거침",
         ],
         plans=["차트 출력", "음성 안내(TTS)"],
-        docs=[("멀티에이전트 · 멀티모달 맵", "docs/agents-map.md")],
+        docs=[("멀티에이전트 · 멀티모달 맵", "docs/maps/multi-agent.md")],
     ),  # ── 평가 · 관측 (LLMOps) 맵 ──
     Stage(
         key="ev_sets",

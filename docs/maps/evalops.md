@@ -20,16 +20,16 @@
 
 ## 단계
 
-| # | 단계 | 상태 | 무엇을 | 기반 단계 |
-|---|---|---|---|---|
-| E1 | [평가 세트 · 정답 관리](../stages/evalops/e1-ev-sets/README.md) | 🟡 기초 있음 | 질문 · 정답 근거 · 질문 유형을 세트로 관리하고, 생성 · 보정 · 보충 기록을 남긴다 | [2 RAG](../stages/2-rag/README.md) |
-| E2 | [오프라인 평가 · 회귀](../stages/evalops/e2-ev-offline/README.md) | 🟡 기초 있음 | 설정 · 모델 · 라이브러리를 바꿀 때마다 고정 세트로 다시 재서 기준선보다 나빠졌는지 확인한다 | [2 RAG](../stages/2-rag/README.md) · [6 라우팅](../stages/6-routing/README.md) |
-| E3 | [트레이싱](../stages/evalops/e3-ev-tracing/README.md) | 🟡 기초 있음 | 질문마다 단계 · 시간 · 토큰 · 결정(라우팅 · 도구)을 기록해 한 요청을 끝까지 따라가 본다 | [2 RAG](../stages/2-rag/README.md) · [8a 에이전틱 AI](../stages/8a-agent/README.md) |
-| E4 | [비용 · 지연 대시보드](../stages/evalops/e4-ev-cost/README.md) | ⬜ 예정 | 질문당 토큰 · 시간 · 비용을 모아 단계별 · 경로별로 보여 준다 | [7b 양자화](../stages/7b-quant/README.md) · [6 라우팅](../stages/6-routing/README.md) |
-| E5 | [사용자 피드백 · 사람 판정](../stages/evalops/e5-ev-feedback/README.md) | 🟡 기초 있음 | 답변마다 좋아요 · 싫어요 · 이유를 받고, 사람 판정으로 자동 판정을 보정한다 | [2 RAG](../stages/2-rag/README.md) · [8b 강화학습](../stages/8b-rl/README.md) |
-| E6 | [드리프트 · 이상 감지](../stages/evalops/e6-ev-drift/README.md) | ⬜ 예정 | 들어오는 질문의 분포 · 검색 확신도 · 거절률이 평소와 달라지면 알린다 | [A 의미 응용](../stages/apps/README.md) |
-| E7 | [A/B · 온라인 실험](../stages/evalops/e7-ev-ab/README.md) | ⬜ 예정 | 실제 요청을 두 설정에 나눠 보내 품질 · 만족도 · 비용을 비교한다 | [6 라우팅](../stages/6-routing/README.md) |
-| E8 | [개선 반영 루프](../stages/evalops/e8-ev-loop/README.md) | ⬜ 예정 | 실패 사례를 모아 평가 세트 · 학습 데이터 · 규칙으로 되돌려 다음 버전을 만든다 | [5 파인튜닝](../stages/5-finetune/README.md) · [8b 강화학습](../stages/8b-rl/README.md) |
+| # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
+|---|---|---|---|---|---|
+| E1 | [평가 세트 · 정답 관리](../stages/evalops/e1-sets/README.md) | 🟡 기초 있음 | 질문 · 정답 근거 · 질문 유형을 세트로 관리하고, 생성 · 보정 · 보충 기록을 남긴다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
+| E2 | [오프라인 평가 · 회귀](../stages/evalops/e2-offline/README.md) | 🟡 기초 있음 | 설정 · 모델 · 라이브러리를 바꿀 때마다 고정 세트로 다시 재서 기준선보다 나빠졌는지 확인한다 | [2 RAG](../stages/llm/2-rag/README.md) · [6 라우팅](../stages/llm/6-routing/README.md) | — |
+| E3 | [트레이싱](../stages/evalops/e3-tracing/README.md) | 🟡 기초 있음 | 질문마다 단계 · 시간 · 토큰 · 결정(라우팅 · 도구)을 기록해 한 요청을 끝까지 따라가 본다 | [2 RAG](../stages/llm/2-rag/README.md) · [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | — |
+| E4 | [비용 · 지연 대시보드](../stages/evalops/e4-cost/README.md) | ⬜ 예정 | 질문당 토큰 · 시간 · 비용을 모아 단계별 · 경로별로 보여 준다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [6 라우팅](../stages/llm/6-routing/README.md) | — |
+| E5 | [사용자 피드백 · 사람 판정](../stages/evalops/e5-feedback/README.md) | 🟡 기초 있음 | 답변마다 좋아요 · 싫어요 · 이유를 받고, 사람 판정으로 자동 판정을 보정한다 | [2 RAG](../stages/llm/2-rag/README.md) · [8b 강화학습](../stages/llm/8b-rl/README.md) | — |
+| E6 | [드리프트 · 이상 감지](../stages/evalops/e6-drift/README.md) | ⬜ 예정 | 들어오는 질문의 분포 · 검색 확신도 · 거절률이 평소와 달라지면 알린다 | [A 의미 응용](../stages/llm/a-apps/README.md) | — |
+| E7 | [A/B · 온라인 실험](../stages/evalops/e7-ab/README.md) | ⬜ 예정 | 실제 요청을 두 설정에 나눠 보내 품질 · 만족도 · 비용을 비교한다 | [6 라우팅](../stages/llm/6-routing/README.md) | — |
+| E8 | [개선 반영 루프](../stages/evalops/e8-loop/README.md) | ⬜ 예정 | 실패 사례를 모아 평가 세트 · 학습 데이터 · 규칙으로 되돌려 다음 버전을 만든다 | [5 파인튜닝](../stages/llm/5-finetune/README.md) · [8b 강화학습](../stages/llm/8b-rl/README.md) | — |
 
 ## 설계 원칙
 
@@ -45,4 +45,4 @@ sentence-transformers 를 올린 날: 호환성 점검 → 고정 회귀 세트(
 
 ---
 
-다른 맵: [LLM 시스템 엔지니어링 맵](../map.md) · [지식 그래프 · GraphRAG 맵](../kg-map.md) · [멀티에이전트 · 멀티모달 맵](../agents-map.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)
+다른 맵: [LLM 시스템 엔지니어링 맵](llm.md) · [지식 그래프 · GraphRAG 맵](knowledge-graph.md) · [멀티에이전트 · 멀티모달 맵](multi-agent.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [서비스 시나리오: 고객 AS 상담 맵](as-service.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)

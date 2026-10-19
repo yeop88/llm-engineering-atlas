@@ -60,3 +60,19 @@ def test_relative_links_resolve():
                 if anchor not in anchors[dest]:
                     broken.append(f"{f.relative_to(ROOT)} → {target} (앵커 없음)")
     assert not broken, "\n".join(broken)
+
+
+def test_docs_layout_is_consistent():
+    """문서 구조 규칙(docs/README.md '구조'): 맵 개요는 docs/maps/<맵>.md, 단계는 docs/stages/<맵>/<번호>-<이름>/ — 맵마다 위치가 달랐던 것을 맞춘 뒤 다시 흩어지지 않게."""
+    docs = ROOT / "docs"
+    assert sorted(p.name for p in docs.glob("*.md")) == ["README.md"]  # 최상위에는 색인만
+    slugs = {m.slug for m in registry.MAPS}
+    assert {p.name for p in (docs / "stages").iterdir() if p.is_dir()} == slugs
+    assert {p.stem for p in (docs / "maps").glob("*.md")} == slugs
+    for m in registry.MAPS:
+        assert m.doc == f"docs/maps/{m.slug}.md"
+        text = (ROOT / m.doc).read_text(encoding="utf-8")
+        assert "## 단계" in text and "| # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |" in text, m.doc  # 모든 맵에 같은 단계 표
+    for s in registry.STAGES:
+        folder = s.doc_dir.split("/")
+        assert folder[:3] == ["docs", "stages", s.map_info.slug] and folder[3].startswith(s.no.lower() + "-"), s.doc_dir

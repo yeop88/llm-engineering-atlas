@@ -80,15 +80,12 @@ uv run uvicorn app.main:app --reload --port 8000
 
 ## 문서
 
-전체 색인은 **[docs/README.md](docs/README.md)** 입니다. 문서는 흐름도의 단계 순서로 정리되어 있고, 단계마다 원리 · 왜 하는가 · 어떻게가 있습니다.
+전체 색인은 **[docs/README.md](docs/README.md)** 입니다. 문서는 **맵 → 단계** 순서로, 모든 맵이 같은 구조를 따릅니다.
 
-- [docs/map.md](docs/map.md) — 전체 흐름도와 각 단계의 목적 · 계획
-- [docs/kg-map.md](docs/kg-map.md) — 두 번째 맵: 지식 그래프 · GraphRAG (온톨로지 → 그래프 DB → Text2Cypher · 하이브리드 · 커뮤니티 요약, 예정)
-- [docs/agents-map.md](docs/agents-map.md) — 세 번째 맵: 멀티에이전트 · 멀티모달 (오케스트레이터 · 검색 · 분석 · 작성 · 검증 에이전트, 멀티모달 입출력 — 기초 있음 4 · 예정 4)
-- [docs/maps/](docs/maps/) — 평가 · 관측(LLMOps) · 보안 · 가드레일 · 문서 처리 · 서빙 · 최적화 · 대화 · 메모리 · 고객 AS 상담 시나리오 · 후학습, 그리고 데이터 플라이휠 · 엔터프라이즈 플랫폼 · 에이전트 상호운용 · 실시간 음성 상담 · 규제 대응 · 장기 실행 에이전트 · RLVR · 온디바이스 · 엣지 맵 (전체 목록은 [docs/README.md](docs/README.md))
-- 단계: [1 임베딩](docs/stages/1-embedding/README.md) · [2 RAG](docs/stages/2-rag/README.md) · [3 리랭킹](docs/stages/3-rerank/README.md) ([상세](docs/stages/3-rerank/rerank.md)) · [4 검색 향상](docs/stages/4-search-lab/README.md) · [5 파인튜닝](docs/stages/5-finetune/README.md) · [6 라우팅](docs/stages/6-routing/README.md) ([상세](docs/stages/6-routing/routing.md)) · [7a 지식 증류](docs/stages/7a-distill/README.md) ([상세](docs/stages/7a-distill/distill.md)) · [7b 양자화](docs/stages/7b-quant/README.md) ([상세](docs/stages/7b-quant/quant.md)) · [8a 에이전트](docs/stages/8a-agent/README.md) ([상세](docs/stages/8a-agent/agent.md)) · [8b 강화학습](docs/stages/8b-rl/README.md) ([상세](docs/stages/8b-rl/rl.md)) · [멀티모달](docs/stages/multimodal/README.md) · [의미 응용](docs/stages/apps/README.md)
+- 맵 개요 `docs/maps/<맵>.md` — 18개: [LLM 시스템 엔지니어링](docs/maps/llm.md)(구현된 12단계) · [지식 그래프](docs/maps/knowledge-graph.md) · [멀티에이전트 · 멀티모달](docs/maps/multi-agent.md) 외 15개 ([목록](docs/README.md#맵))
+- 단계 문서 `docs/stages/<맵>/<번호>-<이름>/` — 단계 README(원리 · 왜 · 어떻게 · 화면 · 할 일 · 기반 단계)와 상세 · 실측 기록. 예: [2 RAG](docs/stages/llm/2-rag/README.md)([상세](docs/stages/llm/2-rag/rag.md)) · [6 라우팅](docs/stages/llm/6-routing/README.md)([상세](docs/stages/llm/6-routing/routing.md)) · [8a 에이전트](docs/stages/llm/8a-agent/README.md)([상세](docs/stages/llm/8a-agent/agent.md))
 - 가이드: [아키텍처](docs/guides/architecture.md) · [API](docs/guides/api.md) · [데이터 처리](docs/guides/data-processing.md) · [배포 · 운영](docs/guides/deploy.md) · [LLM 연결](docs/guides/llm.md) · [GPU 설치](docs/guides/gpu.md) · [문제 해결](docs/guides/troubleshooting.md)
-- 기록: [모델 검증과 실측](docs/records/model-verification.md) · [파인튜닝 실행 기록](docs/stages/5-finetune/finetune.md#실행-기록)
+- 기록: [모델 검증과 실측](docs/records/model-verification.md) · [파인튜닝 실행 기록](docs/stages/llm/5-finetune/finetune.md#실행-기록)
 
 ## 개발
 
@@ -109,7 +106,7 @@ uv run ruff format app tests # 포맷
 
 **임베딩 모델의 라이선스는 이와 별도입니다.**
 - 이 저장소에는 모델 가중치나 모델 코드가 포함되어 있지 않습니다. 앱은 사용자가 요청할 때 Hugging Face Hub에서 모델을 내려받아 로컬에서 실행할 뿐 재배포하지 않습니다.
-- 각 모델은 제공자가 정한 고유 라이선스를 따르며, MIT 라이선스가 모델에 적용되지 않습니다. 모델을 사용하기 전에 해당 모델 카드의 라이선스를 직접 확인하세요. 카탈로그의 라이선스 표기([docs/stages/1-embedding/models.md](docs/stages/1-embedding/models.md), 앱의 모델 화면)는 참고용이며 변경될 수 있습니다.
+- 각 모델은 제공자가 정한 고유 라이선스를 따르며, MIT 라이선스가 모델에 적용되지 않습니다. 모델을 사용하기 전에 해당 모델 카드의 라이선스를 직접 확인하세요. 카탈로그의 라이선스 표기([docs/stages/llm/1-embedding/models.md](docs/stages/llm/1-embedding/models.md), 앱의 모델 화면)는 참고용이며 변경될 수 있습니다.
 - 특히 다음 모델은 상업적 사용이 제한되거나 별도 조건이 있습니다.
 
 | 라이선스 | 해당 모델 (카탈로그 기준) |

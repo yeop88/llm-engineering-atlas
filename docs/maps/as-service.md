@@ -22,16 +22,16 @@
 
 ## 단계
 
-| # | 단계 | 상태 | 무엇을 | 기반 단계 |
-|---|---|---|---|---|
-| AS1 | [문의 접수 (텍스트 · 사진 · 음성)](../stages/as-service/as1-as-intake/README.md) | ⬜ 예정 | 채팅 · 사진 · 음성 문의를 한 형식으로 받아 대화로 이어 간다 | [MA1 멀티모달 임베딩](../stages/agents/ma1-mm-input/README.md) · [C1 맥락 재작성](../stages/conversation/c1-cv-rewrite/README.md) |
-| AS2 | [의도 · 긴급도 분류](../stages/as-service/as2-as-triage/README.md) | 🟡 기초 있음 | 문의 유형(고장 · 사용법 · 배송 · 환불)과 긴급도(안전 관련)를 나눠 처리 경로를 정한다 | [A 의미 응용](../stages/apps/README.md) · [6 라우팅](../stages/6-routing/README.md) |
-| AS3 | [FAQ · 매뉴얼 답변](../stages/as-service/as3-as-faq/README.md) | 🟡 기초 있음 | 매뉴얼 · FAQ 에서 근거를 찾아 인용하며 답한다 — 쉬운 문의는 RAG 한 번 | [2 RAG](../stages/2-rag/README.md) · [S1 캐시](../stages/serving/s1-sv-cache/README.md) |
-| AS4 | [오류 사진 진단](../stages/as-service/as4-as-photo/README.md) | 🟡 기초 있음 | 오류 화면 · 부품 사진에서 오류 코드 · 증상을 읽고 매뉴얼의 해당 항목을 찾는다 | [MA2 멀티모달 RAG](../stages/agents/ma2-mm-rag/README.md) · [M 멀티모달](../stages/multimodal/README.md) |
-| AS5 | [수리 · 조치 안내](../stages/as-service/as5-as-guide/README.md) | ⬜ 예정 | 고객이 따라 할 수 있는 단계별 조치를 쓰고, 그림 · 음성으로도 낸다 | [MA6 작성 에이전트](../stages/agents/ma6-report-agent/README.md) · [MA8 멀티모달 출력](../stages/agents/ma8-mm-output/README.md) |
-| AS6 | [품질 검증](../stages/as-service/as6-as-verify/README.md) | 🟡 기초 있음 | 안내가 매뉴얼과 맞는지 · 질문에 답하는지 · 안전 정책을 지키는지 확인한다 | [MA7 검증 에이전트](../stages/agents/ma7-critic-agent/README.md) · [G4 출력 검사](../stages/guardrails/g4-gr-output/README.md) |
-| AS7 | [접수 티켓 · 상담원 이관](../stages/as-service/as7-as-ticket/README.md) | ⬜ 예정 | 해결되지 않으면 방문 · 수리 접수 티켓을 만들고 대화 요약과 함께 상담원에게 넘긴다 | [C6 상담원 이관](../stages/conversation/c6-cv-handoff/README.md) · [MA3 오케스트레이터](../stages/agents/ma3-orchestrator/README.md) |
-| AS8 | [피드백 · 개선](../stages/as-service/as8-as-feedback/README.md) | ⬜ 예정 | 해결 여부 · 만족도를 받아 실패 사례를 평가 세트 · 매뉴얼 보강으로 되돌린다 | [E5 피드백](../stages/evalops/e5-ev-feedback/README.md) · [E8 개선 루프](../stages/evalops/e8-ev-loop/README.md) |
+| # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
+|---|---|---|---|---|---|
+| AS1 | [문의 접수 (텍스트 · 사진 · 음성)](../stages/as-service/as1-intake/README.md) | ⬜ 예정 | 채팅 · 사진 · 음성 문의를 한 형식으로 받아 대화로 이어 간다 | [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) · [C1 맥락 재작성](../stages/conversation/c1-rewrite/README.md) | — |
+| AS2 | [의도 · 긴급도 분류](../stages/as-service/as2-triage/README.md) | 🟡 기초 있음 | 문의 유형(고장 · 사용법 · 배송 · 환불)과 긴급도(안전 관련)를 나눠 처리 경로를 정한다 | [A 의미 응용](../stages/llm/a-apps/README.md) · [6 라우팅](../stages/llm/6-routing/README.md) | — |
+| AS3 | [FAQ · 매뉴얼 답변](../stages/as-service/as3-faq/README.md) | 🟡 기초 있음 | 매뉴얼 · FAQ 에서 근거를 찾아 인용하며 답한다 — 쉬운 문의는 RAG 한 번 | [2 RAG](../stages/llm/2-rag/README.md) · [S1 캐시](../stages/serving/s1-cache/README.md) | — |
+| AS4 | [오류 사진 진단](../stages/as-service/as4-photo/README.md) | 🟡 기초 있음 | 오류 화면 · 부품 사진에서 오류 코드 · 증상을 읽고 매뉴얼의 해당 항목을 찾는다 | [MA2 멀티모달 RAG](../stages/multi-agent/ma2-rag/README.md) · [M 멀티모달](../stages/llm/m-multimodal/README.md) | — |
+| AS5 | [수리 · 조치 안내](../stages/as-service/as5-guide/README.md) | ⬜ 예정 | 고객이 따라 할 수 있는 단계별 조치를 쓰고, 그림 · 음성으로도 낸다 | [MA6 작성 에이전트](../stages/multi-agent/ma6-report-agent/README.md) · [MA8 멀티모달 출력](../stages/multi-agent/ma8-output/README.md) | — |
+| AS6 | [품질 검증](../stages/as-service/as6-verify/README.md) | 🟡 기초 있음 | 안내가 매뉴얼과 맞는지 · 질문에 답하는지 · 안전 정책을 지키는지 확인한다 | [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) · [G4 출력 검사](../stages/guardrails/g4-output/README.md) | — |
+| AS7 | [접수 티켓 · 상담원 이관](../stages/as-service/as7-ticket/README.md) | ⬜ 예정 | 해결되지 않으면 방문 · 수리 접수 티켓을 만들고 대화 요약과 함께 상담원에게 넘긴다 | [C6 상담원 이관](../stages/conversation/c6-handoff/README.md) · [MA3 오케스트레이터](../stages/multi-agent/ma3-orchestrator/README.md) | — |
+| AS8 | [피드백 · 개선](../stages/as-service/as8-feedback/README.md) | ⬜ 예정 | 해결 여부 · 만족도를 받아 실패 사례를 평가 세트 · 매뉴얼 보강으로 되돌린다 | [E5 피드백](../stages/evalops/e5-feedback/README.md) · [E8 개선 루프](../stages/evalops/e8-loop/README.md) | — |
 
 ## 설계 원칙
 
@@ -46,4 +46,4 @@
 
 ---
 
-다른 맵: [LLM 시스템 엔지니어링 맵](../map.md) · [지식 그래프 · GraphRAG 맵](../kg-map.md) · [멀티에이전트 · 멀티모달 맵](../agents-map.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)
+다른 맵: [LLM 시스템 엔지니어링 맵](llm.md) · [지식 그래프 · GraphRAG 맵](knowledge-graph.md) · [멀티에이전트 · 멀티모달 맵](multi-agent.md) · [평가 · 관측 (LLMOps) 맵](evalops.md) · [보안 · 가드레일 · 거버넌스 맵](guardrails.md) · [문서 처리 (Document Intelligence) 맵](docintel.md) · [서빙 · 추론 최적화 · 비용 맵](serving.md) · [대화 · 메모리 맵](conversation.md) · [후학습 (Post-training) 맵](posttrain.md) · [데이터 플라이휠 맵](flywheel.md) · [엔터프라이즈 AI 플랫폼 아키텍처 맵](platform.md) · [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [실시간 음성 상담 맵](voice.md) · [규제 대응 · 컴플라이언스 맵](compliance.md) · [장기 실행 에이전트 · 업무 자동화 맵](longrun.md) · [강화학습 기반 에이전트 학습 (RLVR) 맵](rlvr.md) · [온디바이스 · 엣지 맵](edge.md)

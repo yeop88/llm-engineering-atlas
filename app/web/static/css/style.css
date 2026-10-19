@@ -12,7 +12,7 @@
   --code: #f1f3f5;
   --radius: 10px;
   --shadow: 0 1px 2px rgba(16, 24, 40, .06);
-  /* 차트 범주 색상 (고정 순서, 라이트/다크 각각 색각이상 검증 통과 — docs/stages/1-embedding/visualization.md) */
+  /* 차트 범주 색상 (고정 순서, 라이트/다크 각각 색각이상 검증 통과 — docs/stages/llm/1-embedding/visualization.md) */
   --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100;
   --series-5: #e87ba4; --series-6: #008300; --series-7: #6250d6; --series-8: #e34948;
   --series-other: #b8bcc6;
