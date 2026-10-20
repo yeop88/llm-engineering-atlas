@@ -1,5 +1,7 @@
 """AS 상담 흐름(flow.handle): 분류 · 답변 · 사진 · 임베딩 함수를 가짜로 넣어 경로마다의 판단을 본다 — 모델 · LLM 없이."""
 
+from datetime import UTC, datetime
+
 import numpy as np
 import pytest
 from sqlalchemy import delete, select
@@ -205,6 +207,30 @@ def test_semantic_cache(env):
     assert flow.cache_lookup(db, cid, "TEST-B", "m", v) is None  # 다른 제품 모델 범위
     assert flow.cache_lookup(db, cid, "TEST-A", "other", v) is None  # 다른 임베딩 모델의 벡터와 비교하지 않는다
     db.rollback()
+
+
+def test_semantic_cache_dropped_when_docs_change(env):
+    """매뉴얼이 바뀐 뒤에는 옛 답을 재사용하지 않는다."""
+    db, cid = env["db"], env["col"].id
+    db.execute(delete(AnswerCache).where(AnswerCache.scope.like("TEST-%")))
+    v = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+    doc = env["doc"]["WM-200"]
+    flow.cache_store(db, cid, "TEST-C", "m", "E4 떠요", v, "옛 답", [{"document_id": doc.id}])
+    db.commit()
+    assert flow.cache_lookup(db, cid, "TEST-C", "m", v) is not None
+    before = dict(doc.meta or {})
+    doc.meta = before | {"changed_at": datetime.now(UTC).isoformat()}  # 캐시를 만든 뒤에 글이 바뀜
+    db.commit()
+    assert flow.cache_lookup(db, cid, "TEST-C", "m", v) is None
+    db.commit()
+    assert db.scalar(select(AnswerCache).where(AnswerCache.scope == "TEST-C")) is None  # 지워짐
+    # 근거 문서가 없어진 캐시도 버린다
+    flow.cache_store(db, cid, "TEST-D", "m", "E4 떠요", v, "옛 답", [{"document_id": 999999}])
+    db.commit()
+    assert flow.cache_lookup(db, cid, "TEST-D", "m", v) is None
+    db.rollback()
+    doc.meta = before  # 공유 컬렉션이라 뒤 테스트의 캐시에 영향이 없게 되돌린다
+    db.commit()
 
 
 def test_cacheable_rules():

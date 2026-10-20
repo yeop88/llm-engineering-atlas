@@ -64,6 +64,7 @@ def transcribe(audio: bytes, filename: str) -> str:
 def cache_lookup(db: Session, collection_id: int, scope: str, model_hf: str, vec: np.ndarray) -> AnswerCache | None:
     rows = db.scalars(select(AnswerCache).where(AnswerCache.collection_id == collection_id, AnswerCache.scope == scope,
                                                 AnswerCache.model_hf_id == model_hf)).all()  # fmt: skip
+    rows = _drop_stale(db, collection_id, rows)
     best, best_sim = None, 0.0
     for r in rows:
         sim = float(np.dot(vec, np.asarray(r.vector, dtype=np.float32)))
@@ -74,6 +75,28 @@ def cache_lookup(db: Session, collection_id: int, scope: str, model_hf: str, vec
         best.last_hit_at = utcnow()
         return best
     return None
+
+
+def _drop_stale(db: Session, collection_id: int, rows: list[AnswerCache]) -> list[AnswerCache]:
+    """자료가 바뀐 뒤의 캐시는 버린다 — 매뉴얼을 고쳐도 옛 답이 계속 나가면 캐시가 틀린 답을 퍼뜨린다.
+    컬렉션 문서가 캐시보다 뒤에 올라오거나 글이 바뀌었으면(changed_at: OCR · 정제 · 가리기 · 폴더 동기화) 그 컬렉션의 앞선 캐시를 모두 버리고,
+    근거 문서가 지워진 캐시도 버린다. 새 문서가 다른 질문의 답을 바꿀 수 있어 근거 문서만이 아니라 컬렉션 단위로 본다."""
+    if not rows:
+        return rows
+    docs = db.execute(select(Document.id, Document.created_at, Document.meta).where(Document.collection_id == collection_id)).all()
+    ids = {i for i, _, _ in docs}
+    latest = max([c for _, c, _ in docs] + [datetime.fromisoformat(m["changed_at"]) for _, _, m in docs if (m or {}).get("changed_at")],
+                 default=None)  # fmt: skip
+    keep = []
+    for r in rows:
+        src_gone = any(s.get("document_id") not in ids for s in r.sources or [] if s.get("document_id"))
+        if src_gone or (latest is not None and latest > r.created_at):
+            db.delete(r)
+        else:
+            keep.append(r)
+    if len(keep) < len(rows):
+        db.flush()
+    return keep
 
 
 def cache_store(
