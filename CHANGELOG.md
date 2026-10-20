@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-21
+
 ### 추가
 - **운영 맵 4개 구현(30단계)** — 사이드바 '운영 · 서비스'
   - **문서 처리(D1~D7)**: 폴더 수집 소스(`INGEST_ROOTS` 안만, sha 로 새 · 바뀜 · 지움 판단, 주기 수집), 업로드 원본 보관, 파싱 점검(깨진 글자 · 빈 쪽), 비전 LLM OCR(PDF 쪽 그림 → 글, 글자 정확도), pdfplumber 표 → 마크다운 · 그림 → 미디어 청크, 머리말 · 꼬리말 · 거의 같은 문서 · 판 정리(옛 판 `superseded`), 문서 메타(종류 · 부서 · 제품 모델 · 날짜 · 권한) 편집과 검색 필터, 바뀐 문서만 다시 청크 · 임베딩하는 증분 갱신, 청크 품질 · 근거 보존 보고. 화면 `/docintel/sources` · `/docintel/parsing` · `/docintel/quality`
@@ -284,7 +286,8 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.7.1...v1.0.0

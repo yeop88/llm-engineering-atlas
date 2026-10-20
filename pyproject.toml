@@ -1,6 +1,6 @@
 [project]
 name = "llm-engineering-atlas"
-version = "1.0.2"
+version = "1.1.0"
 description = "Global LLM system engineering lab, Korean-first: 임베딩 → RAG → 리랭킹 → 라우팅 → 소형/대형 모델을 단계별로 실험·검증하고 연결하는 웹 앱"
 readme = "README.md"
 requires-python = ">=3.14"
