@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-10-20
+
 ### 변경
 - 문서를 1.0 화면 구조에 맞춤: 문서 검색 · 파인튜닝 · 의미 응용 · 배포 가이드의 '메뉴' · '상단' 안내를 사이드바 기준으로, 답변 생성 절 제목(과 그 링크)
 - 문제 해결에 Windows `--reload` 재시작 문제와 `gen_docs.py --check` 의 cp949 출력 오류 추가
@@ -261,7 +263,8 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.7.1...v1.0.0
 [0.7.1]: https://github.com/yeop88/llm-engineering-atlas/compare/v0.7.0...v0.7.1
