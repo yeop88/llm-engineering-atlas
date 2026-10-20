@@ -64,6 +64,15 @@ class LLMRerankConfig(BaseModel):
     model: str | None = Field(default=None, max_length=200)
 
 
+class MetaFilter(BaseModel):
+    doc_type: list[str] = Field(default_factory=list, max_length=50)
+    dept: list[str] = Field(default_factory=list, max_length=50)
+    product_model: list[str] = Field(default_factory=list, max_length=50)
+    date_from: str | None = Field(default=None, max_length=10)  # YYYY-MM-DD
+    date_to: str | None = Field(default=None, max_length=10)
+    latest_only: bool = False
+
+
 class SearchConfig(BaseModel):
     label: str = ""
     index_id: int | None = None  # 의미 검색(dense/hybrid)에 필요
@@ -79,6 +88,10 @@ class SearchConfig(BaseModel):
     llm_rerank: LLMRerankConfig | None = None  # 3 리랭킹: LLM 목록형 재정렬 (연결 계층에서 적용)
     doc_ids: list[int] | None = None
     enhance: EnhanceConfig | None = None
+    # 문서 메타데이터 필터(문서 처리 D6): 종류 · 부서 · 제품 모델 · 날짜 범위 · 최신판만 — 연결 계층이 허용 문서로 바꿔 doc_ids 와 겹친다
+    filters: MetaFilter | None = None
+    # 권한별 검색(보안 G3): 검색할 그룹. API 가 사용자에 맞춰 덮어쓴다 — 모든 문서를 보는 사용자만 '이 그룹으로 검색해 보기'에 쓸 수 있다
+    acl_groups: list[str] | None = Field(default=None, max_length=20)
 
 
 class PublicCorpusImport(BaseModel):
@@ -158,6 +171,8 @@ class AnswerRequest(LLMRef):
     compress: CompressConfig | None = None
     images: bool = False  # 근거 중 이미지 · 영상 장면을 그림으로 첨부(비전 LLM 필요) — answer.attach_images
     max_images: int = Field(default=3, ge=1, le=8)
+    # 가드레일 동작(보안 맵): off · mask · enforce. 비우면 GUARD_MODE 설정 — 화면에서 같은 질문을 방식별로 비교해 보려고 받는다
+    guard_mode: Literal["off", "mask", "enforce"] | None = None
 
 
 class AnswerEvalRequest(LLMRef):

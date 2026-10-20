@@ -6,15 +6,18 @@ import time
 from collections.abc import Iterator
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from app.core import crud, llm
+from app.core.auth import current_user
 from app.core.db import ChunkSet, Collection, EmbeddingModel, EvalSet, SessionLocal, VectorIndex
 from app.core.jobs import Job, jobs
 from app.core.vectorstores import StoreUnavailable
+from app.pipeline import serve  # 가드레일 · 요청 기록을 끼운 서비스 답변(입력 방어 · 권한 · 정책 · 개인정보 · 트레이스)
 from app.pipeline.search import run_search  # 검색 향상(enhance) 등 다음 단계를 끼워 넣는 연결점
-from app.stages.rag import answer, legal, service
+from app.stages.guardrails import acl, pii
+from app.stages.rag import answer, service
 from app.stages.rag.schemas import AnswerEvalRequest, AnswerRequest
 
 router = APIRouter(prefix="/api", tags=["rag-answer"])
@@ -25,13 +28,19 @@ def _event(kind: str, **data: Any) -> str:
 
 
 @router.post("/collections/{collection_id}/answer")
-def generate_answer(collection_id: int, body: AnswerRequest) -> StreamingResponse:
-    """NDJSON 스트림: search → delta(여러 번) → verify → judge(선택) → done. 오류는 error 이벤트."""
+def generate_answer(collection_id: int, body: AnswerRequest, request: Request) -> StreamingResponse:
+    """NDJSON 스트림: search → delta(여러 번) → verify → guard → judge(선택) → done. 오류는 error 이벤트.
+
+    입력 방어 · 권한 · 근거 격리 · 출력 정책 · 개인정보 가리기 · 요청 기록은 연결 계층(pipeline/serve.py)이 한다 —
+    AS 상담 · 레드팀 · A/B 실험과 같은 흐름. 개인정보는 흘려보내는 도중 문장 단위로 가린다(끝난 뒤 가리면 화면에 이미 나간 뒤라)."""
     try:
         cfg = llm.resolve(body.provider, body.model)
     except llm.LLMError as exc:
         raise HTTPException(400, str(exc)) from exc
+    user = current_user(request)
     search_cfg = body.config.model_dump() | {"top_k": body.context_top}
+    search_cfg["acl_groups"] = acl.effective_groups(user, body.config.acl_groups)
+    client = request.client.host if request.client else ""
 
     def stream() -> Iterator[str]:
         timings: dict[str, float] = {}
@@ -50,50 +59,62 @@ def generate_answer(collection_id: int, body: AnswerRequest) -> StreamingRespons
                 if search_cfg.get("reranker_id") and (rr := db.get(EmbeddingModel, search_cfg["reranker_id"])):
                     models.append(rr.hf_id)
                 t0 = time.perf_counter()
-                res = run_search(db, body.question, search_cfg)
+                p = serve.prepare(db, body.question, search_cfg, user=user, mode=body.guard_mode,
+                                  compress_keep=body.compress.keep if body.compress else None,
+                                  max_context_chars=body.max_context_chars, images=body.images, max_images=body.max_images)  # fmt: skip
                 timings["search_ms"] = round((time.perf_counter() - t0) * 1000, 1)
             except (service.RagError, StoreUnavailable, ValueError) as exc:
                 yield _event("error", message=f"검색 실패: {exc}")
                 return
-            results = answer.compress(res["results"], body.question, body.compress.keep) if body.compress else res["results"]
-            context, sources = answer.build_context(results, body.max_context_chars)
-            keep = ("rank", "chunk_id", "document_id", "filename", "title", "page", "heading", "text", "score", "media")
             yield _event(
                 "search",
-                sources=[{k: s.get(k) for k in keep} for s in sources],
-                timings_ms=res.get("timings_ms"),
+                sources=p.public_sources(),
+                timings_ms=p.search_meta.get("timings_ms"),
                 llm=cfg.public(),
-                enhance=res.get("enhance"),  # 검색 향상을 켰다면 LLM 이 만든 변형을 답변 화면에서도 확인할 수 있게
+                enhance=p.search_meta.get("enhance"),  # 검색 향상을 켰다면 LLM 이 만든 변형을 답변 화면에서도 확인할 수 있게
+                guard_input=p.guard.get("input"),
+                restricted=p.search_meta.get("restricted"),
             )
-            if not sources:
-                yield _event("error", message="검색 결과가 없습니다.")
+            if p.blocked:
+                fin = serve.finish(db, p, "", cfg, client=client)
+                yield _event("guard", **fin["guard"], answer=fin["answer"])
+                yield _event("done", answer=fin["answer"], timings=timings, trace_id=fin["trace_id"], blocked=True)
                 return
+            if not p.sources:
+                yield _event(
+                    "error",
+                    message="검색 결과가 없습니다." if not p.guard.get("restricted") else "볼 수 있는 문서에서 검색 결과가 없습니다.",
+                )
+                return
+            if p.images:
+                timings["images"] = len(p.images)
             final: dict[str, Any] = {}
-            images, note = answer.attach_images(db, sources, body.max_images) if body.images else ([], "")
-            if images:
-                timings["images"] = len(images)
+            masker = pii.StreamMasker() if p.mode != "off" else None
             try:
-                for ev in llm.chat_stream(
-                    cfg, answer.SYSTEM, answer.user_prompt(body.question, context, note), body.max_tokens, body.temperature, images=images
-                ):
+                for ev in llm.chat_stream(cfg, p.system, p.prompt, body.max_tokens, body.temperature, images=p.images or None):
                     if ev.get("done"):
                         final = ev
-                    else:
+                    elif masker is None:
                         yield _event("delta", text=ev["delta"])
+                    elif out := masker.feed(ev["delta"]):
+                        yield _event("delta", text=out)
+                if masker is not None and (tail := masker.flush()):
+                    yield _event("delta", text=tail)
             except llm.LLMError as exc:
                 yield _event("error", message=str(exc))
                 return
             text = final.get("text", "")
             timings["llm_s"] = final.get("seconds", 0)
             timings["ttft_s"] = final.get("ttft_s")
-            check = answer.verify(text, sources, question=body.question)
-            # 조문 · 판례 번호 검사(번호가 나온 답변만) — 번호만 바꾼 환각은 문장 검증으로 못 잡는다
-            check["citations"] = legal.check_citations(text, sources, legal.lookup_fn_for(db, legal.chunk_set_of(db, search_cfg)))
+            fin = serve.finish(db, p, text, cfg, usage=final.get("usage"), llm_seconds=timings["llm_s"], client=client)
+            check = fin["verify"]
             yield _event("verify", **check)
+            # 정책으로 고쳤거나 거절했으면(enforce) 화면의 답을 바꿔 보여 준다 — 개인정보는 이미 흘려보낼 때 가렸다
+            yield _event("guard", **fin["guard"], answer=fin["answer"] if fin["guard"].get("changed") else None)
             judged = None
             if body.judge and check["sentences"]:
                 try:
-                    judged = answer.verify_llm(cfg, body.question, context, [s["text"] for s in check["sentences"]])
+                    judged = answer.verify_llm(cfg, body.question, p.context, [s["text"] for s in check["sentences"]])
                     timings["judge_s"] = judged["seconds"]
                     yield _event("judge", **judged)
                 except llm.LLMError as exc:
@@ -105,17 +126,18 @@ def generate_answer(collection_id: int, body: AnswerRequest) -> StreamingRespons
             run = crud.record_run(
                 db, "rag_answer", list(dict.fromkeys(models)) + [f"llm:{cfg.model}"], f"[{col.name}] {body.question}",
                 body.model_dump(exclude={"question"}) | {"collection_id": col.id},
-                {"answer": text, "summary": summary, "usage": final.get("usage"), "timings": timings,
-                 "sources": [{"chunk_id": s["chunk_id"], "filename": s["filename"]} for s in sources]},
+                {"answer": fin["answer"], "summary": summary, "usage": final.get("usage"), "timings": timings, "trace_id": fin["trace_id"],
+                 "sources": [{"chunk_id": s["chunk_id"], "filename": s["filename"]} for s in p.sources]},
                 timings["search_ms"] + timings["llm_s"] * 1000,
             )  # fmt: skip
             yield _event(
                 "done",
-                answer=text,
+                answer=fin["answer"],
                 usage=final.get("usage"),
                 tokens_per_second=final.get("tokens_per_second"),
                 timings=timings,
                 run_id=run.id,
+                trace_id=fin["trace_id"],
             )
 
     return StreamingResponse(stream(), media_type="application/x-ndjson")

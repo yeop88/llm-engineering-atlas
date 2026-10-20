@@ -301,6 +301,9 @@ def parse(filename: str, data: bytes) -> ParsedDocument:
     else:
         pages, meta, kind = *parse_plain(data, ext), "none"
     if not any(p.strip() for p in pages):
-        raise ParseError(meta.get("warning") or "추출된 텍스트가 없습니다.")
+        # 스캔 PDF 는 글 없이 받아 둔다 — 거절하면 OCR(문서 처리 D2)로 채울 문서 자체가 없다. 청크는 OCR 뒤에 생긴다
+        if ext != ".pdf" or not pages:
+            raise ParseError(meta.get("warning") or "추출된 텍스트가 없습니다.")
+        meta["needs_ocr"] = True
     title = meta.get("pdf_title") or meta.get("doc_title") or meta.get("html_title") or _guess_title(pages, filename)
     return ParsedDocument(title=title[:300], pages=pages, page_kind=kind, mime=SUPPORTED[ext], meta=meta)

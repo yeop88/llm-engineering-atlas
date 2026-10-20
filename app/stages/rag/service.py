@@ -46,6 +46,8 @@ def ingest(db: Session, collection: Collection, filename: str, data: bytes) -> t
         parsed = parsers.parse(filename, data)
     except parsers.ParseError as exc:
         return None, str(exc)
+    # 원본도 남긴다 — OCR · 표 · 그림 다시 뽑기처럼 처리 방법이 바뀌면 원본에서 다시 처리해야 한다(문서 처리 맵 D1 · D2 · D3)
+    original = media_store.save_original(sha, filename, data)
     doc = Document(
         collection_id=collection.id,
         filename=filename[:500],
@@ -55,7 +57,7 @@ def ingest(db: Session, collection: Collection, filename: str, data: bytes) -> t
         sha256=sha,
         n_chars=sum(len(p) for p in parsed.pages),
         pages=parsed.pages,
-        meta=parsed.meta | {"page_kind": parsed.page_kind},
+        meta=parsed.meta | {"page_kind": parsed.page_kind, "original": original},
     )
     db.add(doc)
     db.commit()
@@ -76,10 +78,13 @@ def delete_document(db: Session, doc: Document) -> None:
                 log.warning("벡터 DB(%s) 에 연결할 수 없어 인덱스 #%d 의 벡터를 지우지 못했습니다", idx.store, idx.id)
             idx.n_vectors = max(0, idx.n_vectors - len(ids))
         bm25_cache.invalidate(sid)
-    doc_id = doc.id
+    doc_id, sha, original = doc.id, doc.sha256, (doc.meta or {}).get("original")
     db.delete(doc)
     db.commit()
     media_store.remove_document_media(doc_id)  # 이미지 · 영상 문서의 원본과 프레임 파일 (없으면 아무 일도 안 함)
+    # 같은 원본을 다른 컬렉션 문서가 쓰고 있지 않을 때만 지운다(원본은 내용 해시 이름으로 한 벌만 저장)
+    if original and not db.scalar(select(func.count()).select_from(Document).where(Document.sha256 == sha)):
+        media_store.remove_original(original)
     for sid in by_set:  # 청크 수 갱신
         cs = db.get(ChunkSet, sid)
         if cs:
@@ -91,7 +96,11 @@ def delete_document(db: Session, doc: Document) -> None:
 def _doc_chunks(d: Document, s: dict[str, Any]) -> list[chunking.ChunkSpec]:
     if items := (d.meta or {}).get("media_items"):
         return chunking.media_chunks(items)
-    return chunking.chunk_pages(d.pages, s, paged=d.meta.get("page_kind") == "page")
+    chunks = chunking.chunk_pages(d.pages, s, paged=d.meta.get("page_kind") == "page")
+    # 문서 안의 그림(문서 처리 D3 가 PDF 에서 뽑은 그림 영역): 글 청크 뒤에 그림 하나 = 청크 하나로 — 멀티모달 모델이면 그림으로 색인된다
+    if figures := (d.meta or {}).get("figure_items"):
+        chunks += chunking.media_chunks(figures)
+    return chunks
 
 
 def has_media(cs: ChunkSet) -> bool:

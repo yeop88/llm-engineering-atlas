@@ -91,13 +91,19 @@ def test_answer_stream_api(client, fake_llm):
         assert r.status_code == 200
         events = [json.loads(line) for line in r.iter_lines() if line.strip()]
     kinds = [e["type"] for e in events]
-    assert kinds[0] == "search" and kinds.count("delta") == 3 and kinds[-3:] == ["verify", "judge", "done"]
+    # 기본(mask)은 개인정보를 문장 단위로 가리느라 조각을 합쳐 흘려보낸다 — 글은 같다
+    assert kinds[0] == "search" and kinds.count("delta") >= 1 and kinds[-4:] == ["verify", "guard", "judge", "done"]
+    assert "".join(e["text"] for e in events if e["type"] == "delta") == events[-1]["answer"] and events[-1]["trace_id"]
     assert events[0]["sources"][0]["filename"] == "보도자료.txt" and len(events[0]["sources"]) <= 3
     done = events[-1]
     assert done["answer"].endswith("[1].") and done["usage"]["output_tokens"] == 12 and done["run_id"]
     verify = next(e for e in events if e["type"] == "verify")
     assert verify["cited_sources"] == [1] and verify["sentences"][0]["status"] == "supported"
     assert next(e for e in events if e["type"] == "judge")["supported_ratio"] == 1.0
+    # 가리기를 끄면(off) LLM 조각이 그대로 흘러나온다
+    with client.stream("POST", f"/api/collections/{cid}/answer", json=body | {"judge": False, "guard_mode": "off"}) as r:
+        off = [json.loads(line) for line in r.iter_lines() if line.strip()]
+    assert [e["type"] for e in off].count("delta") == 3
     stream_req = next(b for b in fake_llm if b.get("stream"))
     assert stream_req["chat_template_kwargs"] == {"enable_thinking": False} and "근거:" in stream_req["messages"][1]["content"]
     # 잘못된 설정 → 오류 이벤트, LLM 미설정 → 400

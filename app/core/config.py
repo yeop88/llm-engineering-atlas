@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -23,6 +24,23 @@ class Settings(BaseSettings):
     api_token: str | None = None
     auth_cookie_days: int = 14
     auth_cookie_secure: bool = False  # HTTPS 뒤에서만 쿠키를 보내려면 true
+    # 사용자별 토큰 · 그룹 · 역할 (권한별 검색 · 감사 로그용). API_TOKEN 은 모든 문서를 보는 관리자 토큰으로 남는다.
+    # 예: [{"name": "hr-kim", "token": "…", "groups": ["hr"], "role": "user"}] — 그룹이 붙은 문서는 그 그룹 사용자만 검색된다
+    api_users: list[dict[str, Any]] = []
+    # 요청 기록(트레이스 · 감사 로그) 보관 일수. 0 = 지우지 않음. 지울 때도 해시 사슬은 남은 첫 행부터 다시 검사한다
+    trace_retention_days: int = 0
+    # 모델별 단가(원 또는 달러, 100만 토큰당 [입력, 출력]) — 비용 대시보드용. 로컬 모델은 비워 두면 0
+    llm_prices: dict[str, list[float]] = {}
+    # 출력 정책 · 개인정보 가리기를 답변에 적용 (보안 · 가드레일 맵). off = 검사만 하고 기록, mask = 개인정보만 가림, enforce = 위반 시 수정 · 거절
+    guard_mode: str = "mask"
+    # 문서 수집 소스(폴더)로 허용하는 상위 경로들. 비우면 data/inbox 만 — 서버의 아무 폴더나 읽지 못하게
+    ingest_roots: list[Path] = []
+    # 라이브러리 업그레이드를 감지하면 시작할 때 회귀 세트를 자동으로 다시 잰다(평가 · 관측 E2). 임베딩 · 검색만이라 LLM 은 쓰지 않는다
+    regression_on_upgrade: bool = False
+    # 고객 AS 상담(AS1 · AS7): 음성 인식 서버(OpenAI 호환 /audio/transcriptions, 예: whisper.cpp server)와 티켓을 보낼 외부 접수 시스템 주소
+    stt_url: str | None = None
+    stt_model: str = "whisper-1"
+    as_ticket_webhook: str | None = None
 
     # 라이브러리(sentence-transformers · transformers · torch) 버전이 지난 점검 때와 다르면 시작할 때 내려받은 모델을 자동 점검.
     # 모델을 하나씩 올려 보므로 CPU 에서는 몇 분 걸린다 — 기본은 끄고 화면에서 '점검 권장'만 알린다.
@@ -101,6 +119,11 @@ class Settings(BaseSettings):
     @property
     def upload_dir(self) -> Path:
         return self.data_dir / "uploads"
+
+    @property
+    def inbox_dir(self) -> Path:
+        """문서 수집 소스의 기본 허용 폴더(INGEST_ROOTS 를 비우면 여기만)."""
+        return self.data_dir / "inbox"
 
     @property
     def media_dir(self) -> Path:

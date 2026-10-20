@@ -41,3 +41,35 @@ def open_image(rel_path: str) -> Image.Image:
 
 def remove_document_media(doc_id: int) -> None:
     shutil.rmtree(doc_dir(doc_id), ignore_errors=True)
+
+
+# ── 문서 원본 ─────────────────────────────────────────────────────────────
+# 0.x 까지는 글만 뽑아 두고 원본을 버렸다. 문서 처리 맵(OCR · 표 · 그림 다시 뽑기, 처리 방법을 바꿔 다시 처리)에는 원본이 필요해
+# 업로드할 때 내용 해시 이름으로 남긴다. 같은 파일을 여러 컬렉션에 올려도 한 벌만 저장한다.
+def original_path(sha256: str, filename: str) -> Path:
+    ext = Path(filename).suffix.lower()[:10]
+    return get_settings().upload_dir / sha256[:2] / f"{sha256}{ext}"
+
+
+def save_original(sha256: str, filename: str, data: bytes) -> str:
+    """원본 저장 → upload_dir 기준 상대 경로."""
+    p = original_path(sha256, filename)
+    if not p.exists():
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(data)
+    return p.relative_to(get_settings().upload_dir).as_posix()
+
+
+def read_original(rel_path: str) -> bytes:
+    root = get_settings().upload_dir.resolve()
+    p = (root / rel_path).resolve()
+    if not p.is_relative_to(root) or not p.is_file():
+        raise MediaError("원본 파일이 없습니다 — 원본 저장 전에 올린 문서는 다시 올려야 합니다.")
+    return p.read_bytes()
+
+
+def remove_original(rel_path: str) -> None:
+    root = get_settings().upload_dir.resolve()
+    p = (root / rel_path).resolve()
+    if p.is_relative_to(root) and p.is_file():
+        p.unlink()

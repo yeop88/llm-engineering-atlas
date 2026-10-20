@@ -9,6 +9,9 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.core import llm
+from app.core.db import ChunkSet, VectorIndex
+from app.stages.docintel import meta as doc_meta
+from app.stages.guardrails import acl
 from app.stages.rag import service
 from app.stages.rerank import llm_rerank
 from app.stages.search_lab import enhance
@@ -17,7 +20,43 @@ from app.stages.search_lab import enhance
 ENHANCE_LABEL = enhance.TECHNIQUES
 
 
+def collection_of(db: Session, cfg: dict[str, Any]) -> int | None:
+    """검색 설정이 가리키는 컬렉션(인덱스 → 청크 세트 → 컬렉션)."""
+    if cfg.get("index_id") and (idx := db.get(VectorIndex, cfg["index_id"])):
+        cs_id = idx.chunk_set_id
+    else:
+        cs_id = cfg.get("chunk_set_id")
+    cs = db.get(ChunkSet, cs_id) if cs_id else None
+    return cs.collection_id if cs else None
+
+
+def restrict(db: Session, cfg: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """권한(G3) · 메타데이터 필터(D6)를 허용 문서 id 로 바꿔 doc_ids 와 겹친다. → (새 설정, 무엇을 걸렀나).
+    검색 전에 거르는 이유: 벡터 · BM25 후보 단계에서 빠져야 LLM 이 읽지도 않는다(답변 뒤에 지우면 늦다)."""
+    sets: list[set[int]] = []
+    info: dict[str, Any] = {}
+    if cfg.get("doc_ids"):
+        sets.append(set(cfg["doc_ids"]))
+    cid = collection_of(db, cfg) if (cfg.get("acl_groups") or doc_meta.active(cfg.get("filters"))) else None
+    allowed = acl.allowed_doc_ids(db, cid, cfg.get("acl_groups"))
+    if allowed is not None:
+        sets.append(set(allowed))
+        info["acl"] = {"groups": cfg.get("acl_groups"), "allowed_docs": len(allowed)}
+    filtered = doc_meta.resolve_filters(db, cid, cfg.get("filters"))
+    if filtered is not None:
+        sets.append(set(filtered))
+        info["filters"] = {"filters": cfg.get("filters"), "allowed_docs": len(filtered)}
+    if not sets:
+        return cfg, info
+    ids = sorted(set.intersection(*sets))
+    return cfg | {"doc_ids": ids, "_restricted": True}, info
+
+
 def run_search(db: Session, query: str, cfg: dict[str, Any]) -> dict[str, Any]:
+    cfg, restricted = restrict(db, cfg)
+    if cfg.get("_restricted") and not cfg["doc_ids"]:
+        # 볼 수 있는 문서가 하나도 없으면 빈 결과 — doc_ids=[] 를 '제한 없음'으로 오해하지 않게 여기서 끝낸다
+        return {"results": [], "timings_ms": {}, "total_ms": 0.0, "restricted": restricted}
     tech = (cfg.get("enhance") or {}).get("technique") or "none"
     lr = cfg.get("llm_rerank")
     if lr:
@@ -27,6 +66,8 @@ def run_search(db: Session, query: str, cfg: dict[str, Any]) -> dict[str, Any]:
     res = service.search(db, query, cfg) if tech == "none" else enhance.search(db, query, cfg)
     if lr and res["results"]:
         res = _llm_rerank(query, res, lr, int(cfg.get("top_k") or 10))
+    if restricted:
+        res = res | {"restricted": restricted}
     return res
 
 

@@ -1,5 +1,7 @@
 import logging
 import os
+import threading
+import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -9,7 +11,7 @@ os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 from fastapi import FastAPI  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from app.core import auth, llm_api, system_api  # noqa: E402
+from app.core import auth, llm_api, system_api, tracing  # noqa: E402
 from app.core.config import APP_DIR, get_settings  # noqa: E402
 from app.core.crud import mark_interrupted, seed_catalog  # noqa: E402
 from app.core.db import SessionLocal, init_db  # noqa: E402
@@ -18,10 +20,14 @@ from app.core.runtime import sampler  # noqa: E402
 from app.pipeline import api as flow_api  # noqa: E402
 from app.stages.agent import api as agent_api  # noqa: E402
 from app.stages.apps import api as apps_api  # noqa: E402
+from app.stages.as_service import api as as_api  # noqa: E402
 from app.stages.distill import api as distill_api  # noqa: E402
+from app.stages.docintel import api as docintel_api  # noqa: E402
 from app.stages.embedding import benchmarks_api, compat, models_api, playground_api  # noqa: E402
 from app.stages.embedding.model_manager import get_manager  # noqa: E402
+from app.stages.evalops import api as evalops_api  # noqa: E402
 from app.stages.finetune import api as finetune_api  # noqa: E402
+from app.stages.guardrails import api as guardrails_api  # noqa: E402
 from app.stages.quant import api as quant_api  # noqa: E402
 from app.stages.rag import answer_api, collections_api, eval_api, verify_api  # noqa: E402
 from app.stages.rerank import api as rerank_api  # noqa: E402
@@ -31,6 +37,23 @@ from app.web import pages  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("app")
+
+
+def _periodic(stop: threading.Event) -> None:
+    """1분마다: 주기가 된 문서 수집 소스(D1) · 하루 한 번 보관 기간 지난 요청 기록 정리(G5). 스케줄러 라이브러리 없이 —
+    할 일이 둘뿐이고, 앱이 꺼지면 같이 멈춰야 해서(따로 도는 cron 은 앱 없이 DB 를 건드린다)."""
+    last_purge = 0.0
+    while not stop.wait(60):
+        try:
+            docintel_api.run_due()
+            if get_settings().trace_retention_days and (now := time.time()) - last_purge > 86400:
+                with SessionLocal() as db:
+                    n = tracing.purge(db)
+                last_purge = now
+                if n:
+                    log.info("보관 기간이 지난 요청 기록 %d건 정리", n)
+        except Exception:  # 주기 작업 하나가 실패해도 스레드는 살아 있게
+            log.exception("주기 작업 실패")
 
 
 @asynccontextmanager
@@ -48,8 +71,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         log.warning("라이브러리 버전이 지난 호환성 점검 때와 다릅니다 — 모델 화면에서 점검을 권장합니다")
         if settings.compat_check_on_upgrade:
             jobs.submit("compat", "호환성 점검 (라이브러리 업그레이드 감지)", lambda j: compat.run_all(j, reason="upgrade"))
+        if settings.regression_on_upgrade:  # 업그레이드가 검색 결과를 바꿨는지 회귀 세트로 바로 확인(E2)
+            jobs.submit("regression", "회귀 평가 (라이브러리 업그레이드 감지)", lambda j: evalops_api.run_regressions(j, reason="upgrade"))
     sampler.start()
+    stop = threading.Event()
+    threading.Thread(target=_periodic, args=(stop,), name="periodic", daemon=True).start()
     yield
+    stop.set()
     sampler.stop()
     jobs.shutdown()
     get_manager().unload_all()
@@ -83,6 +111,10 @@ for module in (
     agent_api,
     rl_api,
     apps_api,
+    docintel_api,  # 운영 맵: 문서 처리 → 보안 · 가드레일 → 평가 · 관측 → 서비스 시나리오(AS)
+    guardrails_api,
+    evalops_api,
+    as_api,
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

@@ -216,6 +216,12 @@ class EvalSet(Base):
     items: Mapped[list[Any]] = mapped_column(default=list)
     stats: Mapped[dict[str, Any]] = mapped_column(default=dict)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    # 평가 세트 관리(E1 · E2, 마이그레이션 0010): 문항을 바꿀 때마다 판을 올리고 이력을 남긴다 — 같은 세트로 다시 잴 수 있게.
+    # regression = 회귀 세트(바꿀 때마다 다시 잼), baseline = 기준선 {config, run_id, rows(질문별 점수), metrics}
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    regression: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    baseline: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    history: Mapped[list[Any]] = mapped_column(default=list)
 
 
 class FinetuneRun(Base):
@@ -299,6 +305,119 @@ class JobRecord(Base):
     meta: Mapped[dict[str, Any]] = mapped_column(default=dict)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
     finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
+class Trace(Base):
+    """서비스 요청 하나의 기록(트레이스) — 평가 · 관측 · 가드레일 · AS 상담 맵이 같이 쓴다(마이그레이션 0010).
+
+    실행 이력(TestRun)은 실험 결과를 남기는 것이라 사용자 · 단계 시간 · 피드백 · 권한이 없었다. 이 표는 '서비스 중에 무슨 일이
+    있었나'를 질문 단위로 남긴다: 단계별 시간 · 토큰 · 비용(E3 · E4), 피드백(E5), 검색 확신도 · 거절(E6), 실험 팔(E7),
+    실패 분류(E8), 요청자 · 근거 문서(G5 감사). hash 는 앞 행의 hash 를 이어 만든 사슬이라 중간 행을 고치면 드러난다.
+    """
+
+    __tablename__ = "traces"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    kind: Mapped[str] = mapped_column(String(30), index=True)  # answer | flow | agent | as | ab
+    user: Mapped[str] = mapped_column(String(100), default="local", index=True)
+    groups: Mapped[list[Any]] = mapped_column(default=list)
+    client: Mapped[str] = mapped_column(String(64), default="")
+    session_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    collection_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    question: Mapped[str] = mapped_column(Text, default="")
+    answer: Mapped[str] = mapped_column(Text, default="")
+    route: Mapped[str] = mapped_column(String(30), default="")
+    model: Mapped[str] = mapped_column(String(200), default="")
+    steps: Mapped[list[Any]] = mapped_column(default=list)  # [{name, ms, ...}]
+    total_ms: Mapped[float] = mapped_column(Float, default=0.0)
+    tokens_in: Mapped[int] = mapped_column(Integer, default=0)
+    tokens_out: Mapped[int] = mapped_column(Integer, default=0)
+    cost: Mapped[float] = mapped_column(Float, default=0.0)
+    sources: Mapped[list[Any]] = mapped_column(default=list)  # [{document_id, chunk_id, filename}]
+    verify: Mapped[dict[str, Any]] = mapped_column(default=dict)  # supported_ratio · relevant_ratio · refused · invalid_citations
+    signals: Mapped[dict[str, Any]] = mapped_column(default=dict)  # top1 · gap(확신도) · n_sources
+    guard: Mapped[dict[str, Any]] = mapped_column(default=dict)  # injection · pii · policy · acl
+    experiment_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    arm: Mapped[str] = mapped_column(String(10), default="")
+    feedback: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 1 좋아요 · -1 싫어요
+    feedback_reason: Mapped[str] = mapped_column(String(40), default="")
+    feedback_note: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(20), default="ok")  # ok | error | blocked
+    error: Mapped[str] = mapped_column(Text, default="")
+    prev_hash: Mapped[str] = mapped_column(String(64), default="")
+    hash: Mapped[str] = mapped_column(String(64), default="")
+
+
+class Experiment(Base):
+    """A/B 실험(E7): 요청을 두 설정(연결 실행 설정)에 나눠 보내고 피드백 · 품질 · 비용으로 비교한다."""
+
+    __tablename__ = "experiments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    collection_id: Mapped[int | None] = mapped_column(ForeignKey("collections.id", ondelete="SET NULL"), nullable=True)
+    arms: Mapped[dict[str, Any]] = mapped_column(default=dict)  # {"A": FlowConfig, "B": FlowConfig}
+    split: Mapped[float] = mapped_column(Float, default=0.5)  # B 로 보낼 비율
+    status: Mapped[str] = mapped_column(String(20), default="running")  # running | stopped
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class AnswerCache(Base):
+    """의미 캐시(AS3): 거의 같은 질문이 다시 오면 검색 · 생성 없이 앞서 검증을 통과한 답을 돌려준다."""
+
+    __tablename__ = "answer_cache"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    collection_id: Mapped[int] = mapped_column(ForeignKey("collections.id", ondelete="CASCADE"), index=True)
+    scope: Mapped[str] = mapped_column(String(200), default="")  # 같은 답을 써도 되는 범위(예: 제품 모델) — 다르면 캐시를 쓰지 않는다
+    model_hf_id: Mapped[str] = mapped_column(String(200))
+    question: Mapped[str] = mapped_column(Text)
+    vector: Mapped[list[Any]] = mapped_column(default=list)
+    answer: Mapped[str] = mapped_column(Text)
+    sources: Mapped[list[Any]] = mapped_column(default=list)
+    hits: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    last_hit_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
+class AsSession(Base):
+    """고객 AS 상담 한 건(AS1 접수 ~ AS8 피드백): 대화 · 분류 · 진단 · 안내 · 검증 · 티켓 · 해결 여부."""
+
+    __tablename__ = "as_sessions"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    collection_id: Mapped[int | None] = mapped_column(ForeignKey("collections.id", ondelete="SET NULL"), nullable=True)
+    customer: Mapped[str] = mapped_column(String(100), default="")
+    product_model: Mapped[str] = mapped_column(String(100), default="")
+    channel: Mapped[str] = mapped_column(String(20), default="chat")  # chat | photo | voice
+    messages: Mapped[list[Any]] = mapped_column(default=list)  # [{role, text, images, at, meta}]
+    intent: Mapped[str] = mapped_column(String(40), default="")
+    urgency: Mapped[str] = mapped_column(String(20), default="")  # safety | high | normal
+    status: Mapped[str] = mapped_column(String(20), default="open", index=True)  # open | resolved | handoff | closed
+    resolved: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    satisfaction: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 1~5
+    ticket: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
+
+
+class IngestSource(Base):
+    """문서 수집 소스(D1): 허용된 폴더를 주기적으로 읽어 새 · 바뀐 · 지운 파일만 컬렉션에 반영한다."""
+
+    __tablename__ = "ingest_sources"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    collection_id: Mapped[int] = mapped_column(ForeignKey("collections.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(20), default="folder")
+    path: Mapped[str] = mapped_column(Text)
+    pattern: Mapped[str] = mapped_column(String(100), default="*")
+    interval_min: Mapped[int] = mapped_column(Integer, default=0)  # 0 = 손으로만
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    last_stats: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
 _settings = get_settings()
