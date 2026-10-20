@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-21
+
+### 수정
+- AS 의미 캐시가 매뉴얼이 바뀐 뒤에도 옛 답을 재사용하던 문제 — 컬렉션 문서가 새로 올라오거나 글이 바뀌면 앞선 캐시를 버리고, 근거 문서가 지워진 캐시도 버림
+
 ## [1.1.0] - 2026-10-21
 
 ### 추가
@@ -286,7 +291,8 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.0...v1.0.1
