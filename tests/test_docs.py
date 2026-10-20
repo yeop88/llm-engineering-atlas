@@ -76,3 +76,13 @@ def test_docs_layout_is_consistent():
     for s in registry.STAGES:
         folder = s.doc_dir.split("/")
         assert folder[:3] == ["docs", "stages", s.map_info.slug] and folder[3].startswith(s.no.lower() + "-"), s.doc_dir
+
+
+def test_docs_match_code(client):
+    """문서에 적은 저장소 경로(`app/…` · `tests/…` · `docs/…`)가 실제로 있고, 화면 주소가 지금 주소인지(scripts/check_docs.py).
+    파일을 옮기거나 이름 · 화면 주소를 바꾸고 문서를 안 고치면 여기서 실패한다 — 1.0 정리 때 이런 어긋남이 10여 곳 쌓였다."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import check_docs
+
+    problems = check_docs.check(check_docs.doc_files(), client)
+    assert not problems, "\n".join(problems)

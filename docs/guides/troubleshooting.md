@@ -18,6 +18,12 @@ Windows 의 앱 제어 정책(Smart App Control 등)이 가상환경의 `alembic
 
   `PYTHONPATH` 로 패키지 폴더만 넘기면 안 됩니다 — `.pth` 파일을 읽지 않아 pywin32 가 빠지고, Qdrant 로컬 모드가 `pywintypes is required for Win32Locker` 오류로 열리지 않습니다(실제로 겪음).
 
+### `--reload` 로 띄운 서버가 파이썬을 고쳐도 예전 코드로 응답함 (Windows)
+로그에 `WatchFiles detected changes … Reloading` 이 찍혀도 새 프로세스가 뜨지 않아 예전 라우트로 응답하는 경우가 있었습니다(예: 새로 넣은 주소가 계속 422). 파이썬을 고쳤으면 서버를 끄고 `uv run python -m uvicorn app.main:app --port 8000` 으로 다시 띄웁니다. 템플릿(`.html`) · 정적 파일(`.js` · `.css`)은 다시 띄우지 않아도 바로 반영됩니다.
+
+### `gen_docs.py --check` 가 `UnicodeEncodeError: 'cp949'` 로 끝남
+1.0.0 이전 버전에서 문서가 최신이 아닐 때 그 메시지(`—` 포함)를 Windows 콘솔이 못 써서 생긴 오류입니다. 지금은 못 쓰는 글자를 바꿔 출력합니다. 예전 버전이면 `uv run python scripts/gen_docs.py` 로 문서를 다시 만들면 됩니다.
+
 ### Qdrant 로컬 모드 "already accessed by another instance"
 `QDRANT_URL` 없이 쓰는 로컬 파일 모드는 한 프로세스만 `data/qdrant` 를 열 수 있습니다. 서버를 두 개 띄웠거나 다른 스크립트가 같은 폴더를 열고 있으면 생깁니다. 여러 프로세스(예: `--workers 2`)로 운영하려면 Qdrant 서버(`docker compose up -d`)를 쓰고 `QDRANT_URL=http://localhost:6333` 을 설정하세요.
 

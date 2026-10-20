@@ -30,7 +30,7 @@ AUTH_COOKIE_SECURE=true                # HTTPS 리버스 프록시 뒤라면
 
 | 접근 | 방법 |
 |---|---|
-| 화면 | `/login` 에서 토큰 입력 → 쿠키(HttpOnly · SameSite=Lax). 상단 '로그아웃' |
+| 화면 | `/login` 에서 토큰 입력 → 쿠키(HttpOnly · SameSite=Lax). 사이드바 아래 '로그아웃' |
 | API · 스크립트 | `Authorization: Bearer <토큰>` 헤더 |
 | 열린 경로 | `/login` · `/logout` · `/static/*` · `/api/health` |
 

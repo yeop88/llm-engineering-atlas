@@ -92,7 +92,7 @@ uv run uvicorn app.main:app --reload --port 8000
 
 - 맵 개요 `docs/maps/<맵>.md` — 18개: [LLM 시스템 엔지니어링](docs/maps/llm.md)(구현된 12단계) · [지식 그래프](docs/maps/knowledge-graph.md) · [멀티에이전트 · 멀티모달](docs/maps/multi-agent.md) 외 15개 ([목록](docs/README.md#맵))
 - 단계 문서 `docs/stages/<맵>/<번호>-<이름>/` — 단계 README(원리 · 왜 · 어떻게 · 화면 · 할 일 · 기반 단계)와 상세 · 실측 기록. 예: [2 RAG](docs/stages/llm/2-rag/README.md)([상세](docs/stages/llm/2-rag/rag.md)) · [6 라우팅](docs/stages/llm/6-routing/README.md)([상세](docs/stages/llm/6-routing/routing.md)) · [8a 에이전트](docs/stages/llm/8a-agent/README.md)([상세](docs/stages/llm/8a-agent/agent.md))
-- 가이드: [아키텍처](docs/guides/architecture.md) · [API](docs/guides/api.md) · [데이터 처리](docs/guides/data-processing.md) · [배포 · 운영](docs/guides/deploy.md) · [LLM 연결](docs/guides/llm.md) · [GPU 설치](docs/guides/gpu.md) · [문제 해결](docs/guides/troubleshooting.md)
+- 가이드: [아키텍처](docs/guides/architecture.md) · [API](docs/guides/api.md) · [화면(UI)](docs/guides/ui.md) · [데이터 처리](docs/guides/data-processing.md) · [배포 · 운영](docs/guides/deploy.md) · [LLM 연결](docs/guides/llm.md) · [GPU 설치](docs/guides/gpu.md) · [문제 해결](docs/guides/troubleshooting.md)
 - 기록: [모델 검증과 실측](docs/records/model-verification.md) · [파인튜닝 실행 기록](docs/stages/llm/5-finetune/finetune.md#실행-기록)
 
 ## 개발
@@ -104,7 +104,11 @@ uv run pytest -q             # 테스트 (실제 모델 다운로드 없음, Qdr
 uv run python -m alembic revision --autogenerate -m "설명"   # DB 스키마 변경 시
 uv run ruff check app tests  # 린트
 uv run ruff format app tests # 포맷
+uv run python scripts/gen_docs.py    # 레지스트리를 고쳤으면 생성 문서 다시 만들기
+uv run python scripts/check_docs.py  # 문서의 경로 · 화면 주소가 지금 코드와 맞는지 (테스트에도 포함)
 ```
+
+코드를 바꾸면 같은 커밋에서 문서도 고칩니다 — 무엇을 바꾸면 어디를 고치는지는 [아키텍처 · 문서와 코드 맞추기](docs/guides/architecture.md#문서와-코드-맞추기).
 
 변경 사항은 [CHANGELOG.md](CHANGELOG.md)에 기록합니다. 버전은 [Semantic Versioning](https://semver.org/lang/ko/)을 따릅니다 — 버그 수정 · 문서 · 작은 개선은 패치(`0.3.1`), 새 기능 · 새 단계 · 새 화면은 마이너(`0.4.0`), 호환이 깨지는 큰 변경(API · 설정 이름 · 데이터 구조)은 메이저(`1.0.0`). 작업 묶음이 끝날 때마다 태그와 릴리스를 만듭니다.
 
