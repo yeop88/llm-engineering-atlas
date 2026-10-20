@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}상담 창{% endblock %}
+{% block content %}
+{% call ui.page_header("상담 창") %}고객 AS 상담 한 건을 처음부터 끝까지 진행합니다. 글 · 오류 화면 사진 · 음성으로 문의를 받으면 의도 · 긴급도를 나누고(안전 관련은 바로 상담원), 고객 제품의 매뉴얼 · FAQ 로 답한 뒤 근거 일치 · 오류 코드 · 정책 · 제품 모델을 검증합니다. 해결되지 않으면 티켓을 만들어 상담원에게 넘깁니다.{% endcall %}
+
+<div class="ans-layout">
+  <aside class="stack">
+    <div class="card stack">
+      <h2>예시 자료</h2>
+      <div id="c-setup"><div class="loading" role="status">불러오는 중…</div></div>
+      <div id="c-setup-progress" hidden></div>
+    </div>
+    <div class="card stack">
+      <h2>새 상담</h2>
+      <div class="field"><label for="c-customer">고객 이름</label><input id="c-customer" placeholder="예: 홍길동" maxlength="100"></div>
+      <div class="field"><label for="c-product">제품 모델</label><select id="c-product"><option value="">모름 (모델을 가리지 않음)</option></select></div>
+      <div class="field"><label for="c-channel">접수 경로</label><select id="c-channel"><option value="chat">채팅</option><option value="photo">사진</option><option value="voice">음성</option></select></div>
+      <button class="btn primary" id="c-new">상담 시작</button>
+    </div>
+    <div class="card stack">
+      <h2>LLM</h2>
+      <div class="field"><label for="c-provider">제공자</label><select id="c-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+      <div class="field"><label for="c-model">모델 (비우면 설정값)</label><input id="c-model" data-ctx="model" list="c-model-list"><datalist id="c-model-list"></datalist></div>
+      <div class="small muted" id="c-llm"></div>
+      <div class="small muted">사진의 오류 코드를 읽으려면 비전 LLM(예: llama-server --mmproj)이 필요합니다.</div>
+    </div>
+    <div class="card stack">
+      <div class="row between"><h2 class="m-0">최근 상담</h2><button class="btn sm" id="c-reload">새로 고침</button></div>
+      <div id="c-recent" class="stack scroll-md"></div>
+    </div>
+  </aside>
+  <section class="stack">
+    <div class="card" id="c-head"><div class="empty">왼쪽에서 상담을 시작하거나 최근 상담을 여세요.</div></div>
+    <div id="c-thread" class="stack"></div>
+    <div class="card stack" id="c-fb" hidden>
+      <div class="row">
+        <b class="small">안내대로 해결되셨나요?</b>
+        <div class="field"><label for="c-sat">만족도</label><select id="c-sat" class="w-lg"><option value="">고르지 않음</option><option value="5">5 매우 만족</option><option value="4">4 만족</option><option value="3">3 보통</option><option value="2">2 불만</option><option value="1">1 매우 불만</option></select></div>
+        <div class="field grow"><label for="c-comment">한마디 (선택)</label><input id="c-comment" maxlength="1000" placeholder="예: 필터 청소로 해결했어요"></div>
+        <div class="self-end row gap-1"><button class="btn primary" id="c-yes">해결됨</button><button class="btn" id="c-no">해결 안 됨 (상담원 연결)</button></div>
+      </div>
+    </div>
+    <div class="card stack" id="c-input" hidden>
+      <div class="field"><label for="c-text">문의 내용</label><textarea id="c-text" rows="3" placeholder="예: 세탁기에 E4 가 뜨고 물이 안 빠져요 (Ctrl+Enter 로 보내기)"></textarea></div>
+      <div class="row">
+        <div class="field grow"><label for="c-images">오류 화면 사진 (최대 3장, 첫 장으로 코드를 읽음)</label><input id="c-images" type="file" accept="image/*" multiple></div>
+        <div class="field grow"><label for="c-audio">음성 파일 (서버에 STT_URL 이 설정돼야 글로 옮김)</label><input id="c-audio" type="file" accept="audio/*"></div>
+        <div class="self-end"><button class="btn primary" id="c-send">보내기</button></div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/as/console.js') }}"></script>
+{% endblock %}

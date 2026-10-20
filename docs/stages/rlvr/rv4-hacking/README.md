@@ -34,7 +34,7 @@
 이미 있는 단계 위에 짓습니다.
 
 - [8b 강화학습](../../llm/8b-rl/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
-- [E5 사용자 피드백 · 사람 판정](../../evalops/e5-feedback/README.md) — 평가 · 관측 (LLMOps) 맵 · 🟡 기초 있음
+- [E5 사용자 피드백 · 사람 판정](../../evalops/e5-feedback/README.md) — 평가 · 관측 (LLMOps) 맵 · ✅ 구현됨
 
 ---
 

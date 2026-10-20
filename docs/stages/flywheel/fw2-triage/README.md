@@ -34,7 +34,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [E8 개선 반영 루프](../../evalops/e8-loop/README.md) — 평가 · 관측 (LLMOps) 맵 · ⬜ 예정
+- [E8 개선 반영 루프](../../evalops/e8-loop/README.md) — 평가 · 관측 (LLMOps) 맵 · ✅ 구현됨
 - [MA7 품질 검증 에이전트](../../multi-agent/ma7-critic-agent/README.md) — 멀티에이전트 · 멀티모달 맵 · 🟡 기초 있음
 
 ---

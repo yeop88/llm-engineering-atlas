@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [E1 평가 세트 · 정답 관리](../../evalops/e1-sets/README.md) — 평가 · 관측 (LLMOps) 맵 · 🟡 기초 있음
+- [E1 평가 세트 · 정답 관리](../../evalops/e1-sets/README.md) — 평가 · 관측 (LLMOps) 맵 · ✅ 구현됨
 - [8a 에이전틱 AI](../../llm/8a-agent/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
 
 ---

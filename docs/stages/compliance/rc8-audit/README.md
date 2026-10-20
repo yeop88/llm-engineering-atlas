@@ -33,8 +33,8 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [G5 접근 제어 · 감사 로그](../../guardrails/g5-audit/README.md) — 보안 · 가드레일 · 거버넌스 맵 · 🟡 기초 있음
-- [E3 트레이싱](../../evalops/e3-tracing/README.md) — 평가 · 관측 (LLMOps) 맵 · 🟡 기초 있음
+- [G5 접근 제어 · 감사 로그](../../guardrails/g5-audit/README.md) — 보안 · 가드레일 · 거버넌스 맵 · ✅ 구현됨
+- [E3 트레이싱](../../evalops/e3-tracing/README.md) — 평가 · 관측 (LLMOps) 맵 · ✅ 구현됨
 
 ---
 

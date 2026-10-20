@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}권한 · 감사 · 라이선스{% endblock %}
+{% block content %}
+{% call ui.page_header("권한 · 감사 · 라이선스") %}문서마다 붙은 <b>볼 수 있는 그룹</b>(meta.acl)을 보고, 같은 질문을 권한 없이 / 그 그룹으로 검색해 볼 수 없는 문서가 섞이는지 시험합니다. 서비스 답변마다 남는 <b>감사 로그</b>(해시 사슬)를 조회 · 검사 · 내보내고, 서비스 설정이 쓰는 자료 · 모델의 <b>라이선스</b>를 점검합니다.{% endcall %}
+
+<div class="card stack">
+  <h2 class="m-0">문서 권한 (ACL)</h2>
+  <div class="row">
+    <div class="field grow"><label for="a-col">컬렉션</label><select id="a-col"></select></div>
+    <div class="field"><label for="a-mode">검색 방식</label><select id="a-mode"><option value="bm25">BM25</option><option value="dense">의미</option><option value="hybrid">하이브리드</option></select></div>
+    <div class="field" id="a-idx-wrap" hidden><label for="a-idx">벡터 인덱스</label><select id="a-idx"></select></div>
+    <div class="field" id="a-cs-wrap"><label for="a-cs">청크 세트</label><select id="a-cs"></select></div>
+  </div>
+  <div id="a-acl"></div>
+</div>
+
+<div class="card stack mt-4">
+  <h2 class="m-0">권한 누출 시험</h2>
+  <div class="small muted">같은 질문을 '권한 없이'와 '이 그룹으로' 검색해, 이 그룹이 볼 수 없는 문서가 결과에 섞이는지 셉니다. 권한 없이 섞이는 수(would_leak)는 거르지 않았다면 새었을 질문 수, 이 그룹으로 섞이는 수(leaks)는 0 이어야 합니다. 모든 문서를 보는 사용자(관리자 · 로컬)만 다른 그룹으로 시험할 수 있습니다.</div>
+  <div class="row">
+    <div class="field"><label for="l-groups">그룹 (쉼표로 구분)</label><input id="l-groups" placeholder="예: sales, support" value="staff"></div>
+    <div class="field"><label for="l-n">질문 수 상한</label><input class="w-sm" id="l-n" type="number" value="30" min="1" max="500"></div>
+    <div class="field grow"><label for="l-set">평가 세트 질문도 쓰기</label><select id="l-set"><option value="">쓰지 않음</option></select></div>
+  </div>
+  <div class="field"><label for="l-queries">질문 (한 줄에 하나)</label><textarea id="l-queries" rows="3" placeholder="예: 연봉 인상률은?"></textarea></div>
+  <div><button class="btn primary" id="l-run">시험</button></div>
+  <div id="l-out"></div>
+</div>
+
+<div id="audit" class="card stack mt-4">
+  <div class="row between"><h2 class="m-0">감사 로그</h2>
+    <div class="row"><button class="btn" id="g-verify">무결성 검사</button><a class="btn" id="g-csv" href="/api/guardrails/audit/export.csv">CSV 내보내기</a></div></div>
+  <div class="small muted">누가 언제 무엇을 묻고 어떤 문서를 근거로 받았는지 — 서비스 답변마다 한 행씩 남고, 행마다 앞 행의 hash 를 이어 고치면 드러납니다. 관리자만 볼 수 있습니다.</div>
+  <div class="row">
+    <div class="field"><label for="g-user">사용자</label><select id="g-user"><option value="">모두</option></select></div>
+    <div class="field"><label for="g-kind">종류</label><select id="g-kind"><option value="">모두</option></select></div>
+    <div class="field"><label for="g-status">상태</label><select id="g-status"><option value="">모두</option><option value="ok">ok</option><option value="blocked">blocked</option><option value="error">error</option></select></div>
+    <div class="field"><label for="g-days">최근 며칠</label><input class="w-sm" id="g-days" type="number" min="0" value="30" title="0 이면 기간 제한 없음"></div>
+    <div class="field"><label for="g-limit">최대 행</label><input class="w-sm" id="g-limit" type="number" min="1" max="2000" value="200"></div>
+    <div class="self-end"><button class="btn primary" id="g-load">조회</button></div>
+  </div>
+  <div id="g-verify-out"></div>
+  <div id="g-out"></div>
+  <details class="mt-2"><summary class="small">보관 기간이 지난 기록 지우기</summary>
+    <div class="row mt-2">
+      <div class="field"><label for="g-purge-days">며칠보다 오래된 기록</label><input class="w-sm" id="g-purge-days" type="number" min="1" value="365"></div>
+      <div class="self-end"><button class="btn danger" id="g-purge">지우기</button></div>
+    </div></details>
+</div>
+
+<div id="license" class="card stack mt-4">
+  <h2 class="m-0">데이터 · 모델 라이선스</h2>
+  <div class="small muted">위에서 고른 컬렉션 · 벡터 인덱스(임베딩 모델)에 리랭커 · LLM 이름을 더해 상업 서비스에 쓸 수 있는지 봅니다. 자료 라이선스는 수집할 때 문서에 남긴 값입니다.</div>
+  <div class="row">
+    <label class="row small m-0"><input type="checkbox" id="c-use-col" checked> 컬렉션 자료</label>
+    <label class="row small m-0"><input type="checkbox" id="c-use-idx" checked> 벡터 인덱스의 임베딩 모델</label>
+    <div class="field"><label for="c-rr">리랭커</label><select id="c-rr"><option value="">없음</option></select></div>
+    <div class="field grow"><label for="c-llm">LLM 모델 이름 (쉼표로 구분)</label><input id="c-llm" placeholder="예: gemma-4-e4b, gpt-4o-mini"></div>
+    <div class="self-end"><button class="btn primary" id="c-run">점검</button></div>
+  </div>
+  <div id="c-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/guardrails/access.js') }}"></script>
+{% endblock %}

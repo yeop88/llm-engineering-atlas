@@ -35,7 +35,7 @@
 이미 있는 단계 위에 짓습니다.
 
 - [MA5 분석 · 코딩 에이전트](../../multi-agent/ma5-analysis-agent/README.md) — 멀티에이전트 · 멀티모달 맵 · ⬜ 예정
-- [G1 입력 방어 (프롬프트 인젝션)](../../guardrails/g1-injection/README.md) — 보안 · 가드레일 · 거버넌스 맵 · ⬜ 예정
+- [G1 입력 방어 (프롬프트 인젝션)](../../guardrails/g1-injection/README.md) — 보안 · 가드레일 · 거버넌스 맵 · ✅ 구현됨
 
 ---
 

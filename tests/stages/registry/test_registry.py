@@ -20,13 +20,17 @@ def test_every_stage_is_described():
 
 
 def test_stage_pages_point_to_real_routes():
-    # 라우트는 레지스트리의 Page 로 만들어진다 — 화면은 템플릿을 가져야 하고, nav 키는 겹치지 않아야 한다
+    # 라우트는 레지스트리의 Page 로 만들어진다 — 화면은 템플릿을 가져야 하고, nav 키는 겹치지 않아야 한다.
+    # 예외: 여러 단계를 한 화면에서 다루면 나머지 단계는 그 화면의 부분(#앵커, 템플릿 없음)을 가리킨다 — 화면 주소는 실제 라우트여야 한다
     routes = {p.href for p in all_pages()}
-    navs = [p.nav for p in all_pages()]
+    navs = [p.nav for p in all_pages()] + [p.nav for s in registry.STAGES for p in s.pages if not p.template]
     assert len(navs) == len(set(navs))
     for s in registry.STAGES:
         for p in s.pages:
-            assert p.href in routes and p.template, p.href
+            if "#" in p.href:
+                assert not p.template and p.href.split("#")[0] in routes, p.href
+            else:
+                assert p.href in routes and p.template, p.href
             assert registry.stage_for_nav(p.nav) is s
     assert registry.stage_for_nav("stage_routing") is registry.BY_KEY["routing"]
     assert registry.stage_for_nav("history") is None

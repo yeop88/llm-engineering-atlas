@@ -1,6 +1,6 @@
 """평가 · 관측 (LLMOps) 맵 — 맵 정의와 단계. 화면 · 메뉴 · 문서가 모두 여기서 나온다(scripts/gen_docs.py)."""
 
-from app.stages.registry.model import BASIC, PLANNED, Map, Stage
+from app.stages.registry.model import DONE, Map, Page, Stage
 
 MAP = Map("evalops", "평가 · 관측 (LLMOps) 맵", "/maps/evalops", "docs/maps/evalops.md",
         summary="평가 세트 → 오프라인 평가 · 회귀 → 트레이싱 → 피드백 → 드리프트 감지 · A/B → 개선 반영 — 서비스가 지금 잘 되고 있는지 숫자로 아는 흐름",
@@ -24,11 +24,16 @@ MAP = Map("evalops", "평가 · 관측 (LLMOps) 맵", "/maps/evalops", "docs/map
 STAGES: list[Stage] = [
     Stage(
         key="ev_sets",
+        pages=[
+            Page(
+                "evalops_sets", "/evalops/sets", "평가 세트 · 회귀", "세트 버전 · 검토 상태 · 회귀 기준선 · 회귀 실행", "evalops/sets.html"
+            )
+        ],
         no="E1",
         title="평가 세트 · 정답 관리",
         short="평가 세트",
         en="Eval datasets & ground truth",
-        status=BASIC,
+        status=DONE,
         flow="evalops",
         map="evalops",
         builds_on=["rag"],
@@ -36,19 +41,25 @@ STAGES: list[Stage] = [
         principle="평가 세트는 '좋은 답'의 기준입니다. 질문마다 정답 문서 · 근거 문장 · 유형(사실 · 조건 · 여러 문서 · 답 없음 …)을 두고, 세트를 만든 방법 · 시드 · 보정 내역을 함께 남겨 같은 세트로 다시 잴 수 있게 합니다.",
         why="기준이 흔들리면 모든 비교가 무의미합니다. 생성 LLM 이 근거를 고치거나(법률 6%) 특정 종류가 빠지는(법령 질문 0개) 문제는 세트를 열어 봐야 보입니다.",
         how=[
-            "(있음) LLM 질문 7유형 생성 · 직접 입력 · 문서 지정 보충(document_ids), 근거 보정 · 제외 기록(데이터 처리 문서)",
-            "(예정) 세트 버전 · 변경 이력, 세트별 '회귀 기준선' 지정, 사람 검토 상태(검토 전 · 통과 · 제외)",
+            "세트 버전 · 변경 이력(문항 추가 · 검토마다 버전 +1)",
+            "문항 검토 상태(검토 전 · 통과 · 제외) — 제외 문항은 평가에서 빠짐",
+            "회귀 세트 지정 · 기준선 저장",
+            "(있음) LLM 질문 7유형 생성 · 직접 입력 · 문서 지정 보충, 근거 보정 기록",
         ],
-        plans=["세트 버전 · 검토 상태", "회귀 기준선 세트 지정"],
-        docs=[("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md")],
+        plans=["검토 일괄 처리"],
+        docs=[
+            ("평가 세트 관리 · 회귀 평가", "docs/stages/evalops/e1-sets/regression.md"),
+            ("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md"),
+        ],
     ),
     Stage(
         key="ev_offline",
+        pages=[Page("evalops_regression", "/evalops/sets#regression", "회귀 실행", "기준선 대비 짝지은 차이 · 경보")],
         no="E2",
         title="오프라인 평가 · 회귀",
         short="회귀 평가",
         en="Offline eval & regression",
-        status=BASIC,
+        status=DONE,
         flow="evalops",
         map="evalops",
         builds_on=["rag", "routing"],
@@ -56,19 +67,32 @@ STAGES: list[Stage] = [
         principle="회귀 평가는 같은 세트 · 같은 조건으로 '바꾸기 전'과 '바꾼 뒤'를 짝지어 비교하는 것입니다. 질문별 차이의 신뢰구간으로 우연인지 판단하고, 유의하게 나빠지면 경보를 냅니다.",
         why="라이브러리 업그레이드 · 모델 교체 · 프롬프트 수정은 조용히 품질을 떨어뜨립니다. 사람이 매번 기억해서 재는 대신 정해진 세트를 자동으로 돌려야 합니다.",
         how=[
-            "(있음) 조합 평가 · 연결 비교 · 라우팅 평가 — 짝지은 차이와 95% 구간, 실행 이력, 모델 호환성 점검(라이브러리 버전 감지)",
-            "(예정) 업그레이드 · 설정 변경 시 회귀 세트 자동 실행, 기준선 대비 유의한 하락이면 경보",
+            "기준선 대비 질문별 짝지은 차이 · 95% 구간 → 유의하게 나빠지면 경보, 유형별 차이 · 가장 나빠진 질문",
+            "설정을 바꿔 돌리기 · 라이브러리 업그레이드 감지 때 자동 실행(REGRESSION_ON_UPGRADE)",
+            "(있음) 조합 평가 · 연결 비교 · 라우팅 평가, 모델 호환성 점검",
         ],
-        plans=["회귀 세트 자동 실행", "하락 경보"],
-        docs=[("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md")],
+        plans=["답변 품질 회귀(LLM 판정)"],
+        docs=[
+            ("평가 세트 관리 · 회귀 평가", "docs/stages/evalops/e1-sets/regression.md"),
+            ("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md"),
+        ],
     ),
     Stage(
         key="ev_tracing",
+        pages=[
+            Page(
+                "evalops_traces",
+                "/evalops/traces",
+                "요청 기록 · 비용",
+                "질문별 단계 · 시간 · 토큰 · 비용, 느린 · 근거 약한 답 찾기",
+                "evalops/traces.html",
+            )
+        ],
         no="E3",
         title="트레이싱",
         short="트레이싱",
         en="Tracing",
-        status=BASIC,
+        status=DONE,
         flow="evalops",
         map="evalops",
         builds_on=["rag", "agent"],
@@ -76,19 +100,23 @@ STAGES: list[Stage] = [
         principle="트레이스는 요청 하나가 거친 단계(검색 · 재정렬 · 라우팅 · 에이전트 행동 · 답변 · 검증)를 시간 순서로 남긴 기록입니다. 단계마다 입력 · 출력 요약 · 시간 · 토큰을 남기면 느리거나 틀린 원인을 찾을 수 있습니다.",
         why="평균만 있으면 원인을 못 찾습니다 — 에이전트 측정에서 한 질문이 20분 걸린 이유를 질문별 기록이 없어 찾지 못했습니다.",
         how=[
-            "(있음) 연결 실행의 단계별 상태 · 시간, llama-server 읽기 · 쓰기 시간, 에이전트 단계 기록, 연결 비교의 질문별 기록",
-            "(예정) 모든 서비스 요청에 추적 id 와 단계 기록 저장(OpenTelemetry 형식 호환), 느린 요청 · 실패 요청 찾기 화면",
+            "모든 서비스 답변을 요청 기록으로: 단계별 시간(입력 검사 · 검색 · 근거 검사 · LLM · 검증 · 출력 검사) · 토큰 · 검색 신호(1위 점수 · 1 · 2위 차) · 근거 · 검증 · 가드레일 결과",
+            "기록 목록 · 상세, 느림 · 근거 약함 · 거절 · 차단 표시로 찾기",
         ],
-        plans=["요청 단위 트레이스 저장", "느린 · 실패 요청 화면"],
-        docs=[("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md")],
+        plans=["에이전트 · 연결 실행 단계도 기록"],
+        docs=[
+            ("요청 기록 · 비용 · 지연", "docs/stages/evalops/e3-tracing/tracing.md"),
+            ("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md"),
+        ],
     ),
     Stage(
         key="ev_cost",
+        pages=[Page("evalops_cost", "/evalops/traces#dashboard", "비용 · 지연 대시보드", "p50 · p95 지연 · 토큰 · 비용")],
         no="E4",
         title="비용 · 지연 대시보드",
         short="비용 · 지연",
         en="Cost & latency dashboard",
-        status=PLANNED,
+        status=DONE,
         flow="evalops",
         map="evalops",
         builds_on=["quant", "routing"],
@@ -96,19 +124,30 @@ STAGES: list[Stage] = [
         principle="답변 하나의 비용은 읽은 토큰 · 쓴 토큰 · 모델 단가 · 걸린 시간의 합입니다. 단계 · 경로 · 모델별로 나눠 모으면 어디에 돈과 시간이 쓰이는지 보입니다.",
         why="라우팅 · 압축 · 소형 모델의 효과는 '얼마나 아꼈나'로 판단합니다. 지금은 측정 때만 시간을 보고, 서비스 중의 분포(p95)는 모릅니다.",
         how=[
-            "(있음) 답변의 토큰 · 시간 · 읽기/쓰기 속도 기록, 연결 비교의 단계별 평균 지연",
-            "(예정) 요청 기록을 모은 일 · 주별 대시보드(평균 · p95 · 경로별 비용)",
+            "기간 · 경로 · 모델 · 종류별 p50 · p95 지연, 토큰, 비용(LLM_PRICES: 1M 토큰당 가격), 단계별 시간 몫",
         ],
-        plans=["일별 비용 · 지연 대시보드"],
-        docs=[("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md")],
+        plans=["예산 경보"],
+        docs=[
+            ("요청 기록 · 비용 · 지연", "docs/stages/evalops/e3-tracing/tracing.md"),
+            ("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md"),
+        ],
     ),
     Stage(
         key="ev_feedback",
+        pages=[
+            Page(
+                "evalops_feedback",
+                "/evalops/feedback",
+                "피드백 · 개선 루프",
+                "좋아요 · 싫어요 · 이유, 실패 유형 분류 → 평가 세트 · 학습 데이터",
+                "evalops/feedback.html",
+            )
+        ],
         no="E5",
         title="사용자 피드백 · 사람 판정",
         short="피드백",
         en="User feedback & human labels",
-        status=BASIC,
+        status=DONE,
         flow="evalops",
         map="evalops",
         builds_on=["rag", "rl"],
@@ -116,19 +155,32 @@ STAGES: list[Stage] = [
         principle="사용자 피드백은 가장 싼 정답 신호지만 시끄럽습니다. 이유(근거 없음 · 질문과 상관없음 · 틀린 숫자)를 고르게 하면 어느 단계를 고칠지 알 수 있고, 사람 판정과 자동 판정의 일치도로 자동 판정 기준을 맞춥니다.",
         why="자동 판정만 믿으면 틀립니다 — 작은 LLM 판정은 사람 판정 28개를 모두 통과시켰고, 사람이 문제 삼은 것은 '질문과 상관없는 문장'이었습니다.",
         how=[
-            "(있음) 검증 보정 화면(근거 일치 · 질문 관련성 판정, 일치도 · 기준 탐색), 선호 쌍 수집(사람 · 자동)",
-            "(예정) 답변 화면의 좋아요 · 싫어요 · 이유, 피드백을 판정 라벨 · 평가 세트 후보로 넘기기",
+            "답변마다 좋아요 · 싫어요 + 이유 · 메모(답변 화면 · 기록 화면)",
+            "자동 판정(근거 일치)과 사람 판정의 일치율",
+            "싫어요 받은 기록 → 평가 세트 후보",
         ],
-        plans=["답변 피드백 버튼 · 이유", "피드백 → 라벨 · 평가 세트"],
-        docs=[("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md")],
+        plans=["판정자 여럿 · 합의"],
+        docs=[
+            ("사용자 피드백 · 개선 루프", "docs/stages/evalops/e5-feedback/feedback.md"),
+            ("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md"),
+        ],
     ),
     Stage(
         key="ev_drift",
+        pages=[
+            Page(
+                "evalops_drift",
+                "/evalops/drift",
+                "드리프트 감지",
+                "기준 기간과 최근 질문 분포 · 검색 신호 비교, 새 유형 질문",
+                "evalops/drift.html",
+            )
+        ],
         no="E6",
         title="드리프트 · 이상 감지",
         short="드리프트",
         en="Drift & anomaly detection",
-        status=PLANNED,
+        status=DONE,
         flow="evalops",
         map="evalops",
         builds_on=["apps"],
@@ -136,19 +188,28 @@ STAGES: list[Stage] = [
         principle="드리프트는 시간이 지나며 질문 주제 · 말투가 바뀌거나 자료가 낡아 성능이 떨어지는 현상입니다. 질문 임베딩의 분포, 검색 확신도, 거절률 같은 신호를 기준 기간과 비교해 감지합니다.",
         why="평가 세트는 만든 시점의 질문만 담습니다. 새 제품 · 새 법령이 나오면 세트에 없는 질문이 늘어 품질이 떨어지는데, 평가 세트로는 보이지 않습니다.",
         how=[
-            "(있음) 의미 응용의 이상 · 신종 탐지(임베딩 기반), 라우팅의 검색 확신도",
-            "(예정) 주간 질문 분포 · 확신도 · 거절률 비교, 신종 질문 묶음을 평가 세트 후보로",
+            "기준 기간 vs 최근: 질문 임베딩으로 새 유형 질문(가장 가까운 기준 질문 유사도 < 0.6) 비율 · 묶음",
+            "검색 신호(1위 점수 · 1 · 2위 차) 변화를 부트스트랩 구간으로 — 우연한 흔들림과 구분",
         ],
-        plans=["질문 분포 · 확신도 감시", "신종 질문 → 평가 세트 후보"],
-        docs=[("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md")],
+        plans=["주기 실행 · 경보"],
+        docs=[("드리프트 감지", "docs/stages/evalops/e6-drift/drift.md"), ("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md")],
     ),
     Stage(
         key="ev_ab",
+        pages=[
+            Page(
+                "evalops_experiments",
+                "/evalops/experiments",
+                "A/B 실험",
+                "사용자를 나눠 두 설정 비교, 기록 재생으로 미리 재기",
+                "evalops/experiments.html",
+            )
+        ],
         no="E7",
         title="A/B · 온라인 실험",
         short="A/B 실험",
         en="A/B & online experiments",
-        status=PLANNED,
+        status=DONE,
         flow="evalops",
         map="evalops",
         builds_on=["routing"],
@@ -156,19 +217,21 @@ STAGES: list[Stage] = [
         principle="A/B 실험은 요청을 무작위로 나눠 두 설정에 보내고 결과를 비교합니다. 오프라인 평가가 '세트에서 좋은가'라면 A/B 는 '실제 사용자에게 좋은가'를 봅니다.",
         why="오프라인 지표와 실제 만족도는 어긋날 수 있습니다(Best-of 는 보상이 유의하게 올랐지만 품질은 불확실). 출시 결정은 실제 요청으로 확인해야 합니다.",
         how=[
-            "(있음) 짝지은 비교 통계(부트스트랩 · 신뢰구간), 학습 라우터 · 경로 설정 저장",
-            "(예정) 요청 분할 · 실험 기록, 피드백 · 비용 지표로 판정",
+            "실험 = 두 설정(검색 · LLM). 사용자 해시로 고정 배정(같은 사용자는 늘 같은 쪽), 실험 답변도 서비스 답변으로 기록",
+            "기록 재생: 지난 질문을 두 설정으로 다시 답해 출시 전에 비교",
+            "판정: 근거 일치 · 좋아요 비율 · 지연 차이와 표본 수",
         ],
-        plans=["요청 분할 실험"],
-        docs=[("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md")],
+        plans=["순차 검정(일찍 멈추기)"],
+        docs=[("A/B 실험", "docs/stages/evalops/e7-ab/ab.md"), ("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md")],
     ),
     Stage(
         key="ev_loop",
+        pages=[Page("evalops_loop", "/evalops/feedback#loop", "개선 루프", "실패 유형 → 평가 세트 · 빈틈 CSV")],
         no="E8",
         title="개선 반영 루프",
         short="개선 루프",
         en="Improvement loop",
-        status=PLANNED,
+        status=DONE,
         flow="evalops",
         map="evalops",
         builds_on=["finetune", "rl"],
@@ -176,10 +239,13 @@ STAGES: list[Stage] = [
         principle="개선 루프(데이터 플라이휠)는 서비스에서 나온 실패 사례를 분류해 평가 세트(재발 방지), 학습 데이터(파인튜닝 · 선호 학습), 규칙(라우팅 · 가드레일)으로 돌려보내는 과정입니다.",
         why="같은 실수를 사람이 매번 찾지 않으려면 실패가 자동으로 다음 평가 · 학습의 재료가 되어야 합니다.",
         how=[
-            "(있음) 임베딩 파인튜닝 · 증류의 학습 데이터 만들기와 누수 방지, 선호 쌍 · DPO 데이터 내보내기",
-            "(예정) 실패 사례 분류(검색 실패 · 인용 실패 · 관련 없는 답 · 거절 실패) → 각 목적지로 보내기",
+            "실패 유형 분류(검색 실패 · 인용 문제 · 질문과 다름 · 과잉 거절 · 정책) — 기록의 검증 · 피드백 신호로",
+            "평가 세트로 보내기 · 빈틈 목록 CSV(학습 데이터 후보)",
         ],
-        plans=["실패 사례 분류 · 되돌리기"],
-        docs=[("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md")],
+        plans=["분류별 자동 개선 제안"],
+        docs=[
+            ("사용자 피드백 · 개선 루프", "docs/stages/evalops/e5-feedback/feedback.md"),
+            ("평가 · 관측 (LLMOps) 맵", "docs/maps/evalops.md"),
+        ],
     ),
 ]

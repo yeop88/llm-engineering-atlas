@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}평가 세트 · 회귀{% endblock %}
+{% block content %}
+{% call ui.page_header("평가 세트 · 회귀") %}평가 세트는 '좋은 답'의 기준이라 문항을 바꿀 때마다 판(버전)을 올리고 이력을 남깁니다. 문항마다 검토 상태(검토 전 · 통과 · 제외)를 두고, '제외'는 회귀에서 빠집니다. 회귀 세트로 지정하고 기준선을 만들어 두면, 설정 · 라이브러리 · 모델을 바꾼 뒤 같은 질문끼리 짝지어 나빠졌는지 확인합니다(차이의 95% 구간이 0 아래면 경보).{% endcall %}
+
+<div class="card stack">
+  <h2>평가 세트</h2>
+  <div class="row">
+    <div class="field"><label for="s-col">컬렉션</label><select id="s-col"></select></div>
+    <div class="self-end"><button class="btn" id="s-reload">새로 고침</button></div>
+  </div>
+  <div id="s-list"><div class="loading" role="status">불러오는 중…</div></div>
+</div>
+
+<div class="card stack mt-4">
+  <h2>검색 설정 <span class="small muted">기준선을 만들 때 · '바꾼 설정으로 회귀'를 잴 때 씁니다</span></h2>
+  <div class="row">
+    <div class="field"><label for="s-mode">검색 방식</label><select id="s-mode"><option value="hybrid">하이브리드</option><option value="dense">의미</option><option value="bm25">BM25</option></select></div>
+    <div class="field" id="s-idx-wrap"><label for="s-idx">벡터 인덱스</label><select id="s-idx"></select></div>
+    <div class="field" id="s-cs-wrap" hidden><label for="s-cs">청크 세트</label><select id="s-cs"></select></div>
+    <div class="field"><label for="s-rr">리랭커</label><select id="s-rr"><option value="">사용 안 함</option></select></div>
+    <div class="field"><label for="s-top">top_k</label><input class="w-sm" id="s-top" type="number" value="10" min="1" max="100"></div>
+  </div>
+</div>
+
+<div class="card stack mt-4" id="d-card" hidden>
+  <div class="row between"><h2 class="m-0" id="d-title">세트</h2><span class="small muted" id="d-meta"></span></div>
+  <div class="row">
+    <div class="field"><label for="d-label">기준선 이름 (선택)</label><input class="w-xl" id="d-label" placeholder="예: v1.2 하이브리드"></div>
+    <div class="self-end"><button class="btn primary" id="d-baseline">위 검색 설정으로 기준선 만들기</button></div>
+  </div>
+  <div id="d-progress" hidden></div>
+  <div id="d-baseline-out"></div>
+  <div class="row">
+    <div class="field"><label for="d-filter">문항 보기</label><select id="d-filter"><option value="">전체</option><option value="pending">검토 전</option><option value="ok">통과</option><option value="excluded">제외</option></select></div>
+    <div class="field grow"><label for="d-note">검토 메모 (선택 — 다음에 누르는 통과 · 제외에 붙음)</label><input id="d-note" maxlength="500"></div>
+  </div>
+  <div id="d-items"></div>
+  <details><summary class="small">변경 이력 (최근 20개)</summary><div id="d-history" class="mt-2"></div></details>
+</div>
+
+<div id="regression" class="card stack mt-4">
+  <h2>회귀 실행</h2>
+  <div class="small muted">고른 세트(또는 회귀로 지정한 세트 모두)를 다시 재서 기준선과 같은 질문끼리 비교합니다. 설정을 바꾸지 않고 재면 라이브러리 · 모델 업그레이드 회귀를, 위 검색 설정으로 재면 설정 변경의 영향을 봅니다.</div>
+  <div class="row">
+    <div class="field"><label for="g-scope">대상</label><select id="g-scope"><option value="all">회귀로 지정한 세트 모두</option><option value="one">위에서 연 세트만</option></select></div>
+    <label class="row small m-0"><input type="checkbox" id="g-changed"> 위 검색 설정으로 재기 (끄면 기준선 설정 그대로)</label>
+    <label class="row small m-0"><input type="checkbox" id="g-update"> 재고 나서 기준선 갱신</label>
+    <div class="self-end"><button class="btn primary" id="g-run">회귀 실행</button></div>
+  </div>
+  <div id="g-progress" hidden></div>
+  <div id="g-out"></div>
+</div>
+
+<div class="card stack mt-4">
+  <div class="row between"><h2 class="m-0">회귀 실행 이력</h2><button class="btn sm" id="h-reload">새로 고침</button></div>
+  <div id="h-list"></div>
+  <div id="h-detail"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/evalops/sets.js') }}"></script>
+{% endblock %}

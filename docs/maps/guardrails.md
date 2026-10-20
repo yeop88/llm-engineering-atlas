@@ -22,13 +22,13 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| G1 | [입력 방어 (프롬프트 인젝션)](../stages/guardrails/g1-injection/README.md) | ⬜ 예정 | 사용자 입력과 근거 문서 속에 숨은 지시가 LLM 을 조종하지 못하게 막는다 | [2 RAG](../stages/llm/2-rag/README.md) · [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | — |
-| G2 | [개인정보 탐지 · 마스킹](../stages/guardrails/g2-pii/README.md) | ⬜ 예정 | 주민번호 · 연락처 · 이름 같은 개인정보를 색인 전 · 답변 전에 찾아 가린다 | [2 RAG](../stages/llm/2-rag/README.md) · [A 의미 응용](../stages/llm/a-apps/README.md) | — |
-| G3 | [권한별 검색 (ACL)](../stages/guardrails/g3-acl/README.md) | 🟡 기초 있음 | 사용자가 볼 수 있는 문서만 검색 후보에 넣는다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
-| G4 | [출력 정책 검사](../stages/guardrails/g4-output/README.md) | 🟡 기초 있음 | 답변이 근거 · 질문 · 정책을 어기지 않는지 내보내기 전에 검사한다 | [2 RAG](../stages/llm/2-rag/README.md) · [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) | — |
-| G5 | [접근 제어 · 감사 로그](../stages/guardrails/g5-audit/README.md) | 🟡 기초 있음 | 누가 언제 무엇을 묻고 어떤 문서를 근거로 받았는지 남기고, 접근을 토큰 · 권한으로 막는다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
-| G6 | [데이터 · 모델 라이선스 · 출처](../stages/guardrails/g6-license/README.md) | 🟡 기초 있음 | 자료 · 모델마다 출처 · 라이선스 · 사용 조건을 기록하고 상업 사용 가능 여부를 확인한다 | [1 임베딩](../stages/llm/1-embedding/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | — |
-| G7 | [레드팀 · 안전성 평가](../stages/guardrails/g7-redteam/README.md) | ⬜ 예정 | 공격 · 유도 질문 세트로 방어가 실제로 동작하는지 정기적으로 잰다 | [2 RAG](../stages/llm/2-rag/README.md) · [E1 평가 세트](../stages/evalops/e1-sets/README.md) | — |
+| G1 | [입력 방어 (프롬프트 인젝션)](../stages/guardrails/g1-injection/README.md) | ✅ 구현됨 | 사용자 입력과 근거 문서 속에 숨은 지시가 LLM 을 조종하지 못하게 막는다 | [2 RAG](../stages/llm/2-rag/README.md) · [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | [입력 · 출력 방어 — 인젝션 · 개인정보 · 출력 정책](../stages/guardrails/g1-injection/guards.md) |
+| G2 | [개인정보 탐지 · 마스킹](../stages/guardrails/g2-pii/README.md) | ✅ 구현됨 | 주민번호 · 연락처 · 이름 같은 개인정보를 색인 전 · 답변 전에 찾아 가린다 | [2 RAG](../stages/llm/2-rag/README.md) · [A 의미 응용](../stages/llm/a-apps/README.md) | [입력 · 출력 방어 — 인젝션 · 개인정보 · 출력 정책](../stages/guardrails/g1-injection/guards.md) |
+| G3 | [권한별 검색 (ACL)](../stages/guardrails/g3-acl/README.md) | ✅ 구현됨 | 사용자가 볼 수 있는 문서만 검색 후보에 넣는다 | [2 RAG](../stages/llm/2-rag/README.md) | [권한 · 감사 · 라이선스](../stages/guardrails/g3-acl/access.md) |
+| G4 | [출력 정책 검사](../stages/guardrails/g4-output/README.md) | ✅ 구현됨 | 답변이 근거 · 질문 · 정책을 어기지 않는지 내보내기 전에 검사한다 | [2 RAG](../stages/llm/2-rag/README.md) · [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) | [입력 · 출력 방어 — 인젝션 · 개인정보 · 출력 정책](../stages/guardrails/g1-injection/guards.md) |
+| G5 | [접근 제어 · 감사 로그](../stages/guardrails/g5-audit/README.md) | ✅ 구현됨 | 누가 언제 무엇을 묻고 어떤 문서를 근거로 받았는지 남기고, 접근을 토큰 · 권한으로 막는다 | [2 RAG](../stages/llm/2-rag/README.md) | [권한 · 감사 · 라이선스](../stages/guardrails/g3-acl/access.md) |
+| G6 | [데이터 · 모델 라이선스 · 출처](../stages/guardrails/g6-license/README.md) | ✅ 구현됨 | 자료 · 모델마다 출처 · 라이선스 · 사용 조건을 기록하고 상업 사용 가능 여부를 확인한다 | [1 임베딩](../stages/llm/1-embedding/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | [권한 · 감사 · 라이선스](../stages/guardrails/g3-acl/access.md) |
+| G7 | [레드팀 · 안전성 평가](../stages/guardrails/g7-redteam/README.md) | ✅ 구현됨 | 공격 · 유도 질문 세트로 방어가 실제로 동작하는지 정기적으로 잰다 | [2 RAG](../stages/llm/2-rag/README.md) · [E1 평가 세트](../stages/evalops/e1-sets/README.md) | [레드팀 시험](../stages/guardrails/g7-redteam/redteam.md) |
 
 ## 설계 원칙
 

@@ -9,6 +9,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from app.core import auth
 from app.core.config import APP_DIR, get_settings
 from app.stages import registry
 from app.stages.embedding.catalog import CATALOG_VERSION
@@ -51,11 +52,23 @@ def sidebar() -> list[dict]:
         if len(s.pages) > 1:
             item["children"] = [{"label": p.label, "href": p.href, "key": p.nav} for p in s.pages]
         experiments.append(item)
+    # 운영 · 서비스: LLM 맵 밖에서 화면이 있는 맵(문서 처리 · 가드레일 · 평가 · AS). 맵 하나 = 항목 하나, 화면은 펼침 —
+    # 단계(30개)를 다 늘어놓으면 사이드바가 길어지고, 화면 하나가 여러 단계를 함께 다룬다
+    ops = []
+    for m in registry.MAPS:
+        stages = registry.map_stages(m.key)
+        pages = [p for s in stages for p in s.pages]
+        if m.key == "llm" or not pages:
+            continue
+        ops.append({"label": m.title.removesuffix(" 맵").split(": ")[-1].split(" (")[0], "href": m.href, "icon": "▸",
+                    "keys": [f"map_{m.key}"] + [p.nav for p in pages] + [f"stage_{s.key}" for s in stages],
+                    "children": [{"label": p.label, "href": p.href, "key": p.nav} for p in pages if p.template]})  # fmt: skip
     maps = [{"label": m.title.removesuffix(" 맵"), "href": m.href, "key": f"map_{m.key}"} for m in registry.MAPS]
     common = {p.nav: p for p in COMMON_PAGES}
     return [
         {"title": "", "items": [{"label": "대시보드", "href": "/", "keys": ["dashboard"], "icon": "◇", "children": []}]},
         {"title": "실험 · LLM 시스템 맵", "items": experiments},
+        {"title": "운영 · 서비스", "items": ops},
         {"title": "맵", "items": [
             {"label": "모든 맵", "href": "/maps", "keys": ["maps"], "icon": "▦", "children": []},
             {"label": f"맵 {len(maps)}개", "href": None, "keys": [m["key"] for m in maps] + [f"stage_{s.key}" for s in registry.OTHER_MAP_STAGES],
@@ -113,7 +126,7 @@ def doc_url(path: str) -> str:
 templates.env.globals.update(
     app_name=get_settings().app_name, catalog_version=CATALOG_VERSION, sidebar=sidebar(), crumbs=crumbs, registry=registry,
     stage_for_nav=registry.stage_for_nav, doc_url=doc_url,
-    auth_enabled=lambda: bool(get_settings().api_token),  # 함수로 둬 테스트 · 설정 변경이 바로 반영되게
+    auth_enabled=auth.enabled,  # 함수로 둬 테스트 · 설정 변경이 바로 반영되게
 )  # fmt: skip
 
 

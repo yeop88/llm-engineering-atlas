@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}파싱 · OCR · 표{% endblock %}
+{% block content %}
+{% call ui.page_header("파싱 · OCR · 표") %}파싱에서 빠진 글은 검색 · 답변 어디서도 되살릴 수 없습니다. 문서마다 쪽별 글자 수 · 빈 쪽 · 깨진 글자 비율을 보고, 글자가 없는 쪽(스캔 PDF)은 <b>비전 LLM OCR</b> 로 채웁니다. PDF 의 표는 <b>행 · 열 구조(마크다운 표)</b>로, 그림 영역은 이미지 청크로 다시 뽑습니다. 글을 바꾼 문서는 '수집 · 메타 · 증분 갱신' 화면의 증분 갱신으로 청크 · 벡터를 다시 만드세요.{% endcall %}
+
+<div class="card stack">
+  <div class="row">
+    <div class="field grow"><label for="p-col">컬렉션</label><select id="p-col"></select></div>
+    <label class="row small m-0"><input type="checkbox" id="p-only"> 문제가 있는 문서만</label>
+    <div class="self-end"><button class="btn" id="p-reload">다시 점검</button></div>
+  </div>
+  <div id="p-summary"></div>
+  <div id="p-list"></div>
+</div>
+
+<div class="card stack mt-4" id="d-card" hidden>
+  <h2 id="d-title">문서</h2>
+  <div id="d-info"></div>
+
+  <div class="grid cols-2">
+    <div class="stack">
+      <b>OCR (비전 LLM)</b>
+      <div class="small muted">비우면 빈 쪽을 모두 읽습니다. 파서가 이미 글을 뽑은 쪽을 적으면 그 쪽은 덮어쓰지 않고 <b>글자 정확도</b>만 잽니다(파서 글을 정답으로) — 빈 쪽 OCR 결과를 얼마나 믿을지 정하는 기준입니다. 쪽당 수십 초가 걸립니다.</div>
+      <div class="row">
+        <div class="field"><label for="o-provider">LLM</label><select id="o-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+        <div class="field grow"><label for="o-model">비전 모델 (비우면 설정값)</label><input id="o-model" data-ctx="model"></div>
+        <div class="field"><label for="o-pages">쪽 번호</label><input class="w-xl" id="o-pages" placeholder="예: 1, 3-5"></div>
+        <div class="self-end"><button class="btn primary" id="o-run">OCR 실행</button></div>
+      </div>
+      <div id="o-progress" hidden></div>
+      <div id="o-out"></div>
+    </div>
+    <div class="stack">
+      <b>표 · 그림 추출 (PDF)</b>
+      <div class="small muted">원본 PDF 에서 표 영역을 찾아 표 밖 글은 그대로, 표는 마크다운 표로 그 쪽 글 뒤에 붙입니다. 문서 글 전체를 원본에서 다시 만듭니다(OCR 로 채운 빈 쪽은 OCR 글을 그대로 둠).</div>
+      <div class="row">
+        <label class="row small m-0"><input type="checkbox" id="l-figs" checked> 그림 영역도 이미지로 저장</label>
+        <div class="self-end"><button class="btn primary" id="l-run">표 · 그림 추출</button></div>
+      </div>
+      <div id="l-progress" hidden></div>
+      <div id="l-out"></div>
+    </div>
+  </div>
+
+  <h3 class="mt-4">표 · 그림</h3>
+  <div id="t-out"></div>
+
+  <h3 class="mt-4">쪽별 글</h3>
+  <div class="row">
+    <div class="field"><label for="d-page">쪽</label><select id="d-page"></select></div>
+  </div>
+  <div class="pre bg-code p-2 scroll-md small" id="d-text"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/docintel/parsing.js') }}"></script>
+{% endblock %}

@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [E4 비용 · 지연 대시보드](../../evalops/e4-cost/README.md) — 평가 · 관측 (LLMOps) 맵 · ⬜ 예정
+- [E4 비용 · 지연 대시보드](../../evalops/e4-cost/README.md) — 평가 · 관측 (LLMOps) 맵 · ✅ 구현됨
 
 ---
 

@@ -34,6 +34,9 @@ base.html
 1. **레지스트리에 화면 한 줄** — `app/stages/registry/maps/<맵>.py` 의 단계 `pages` 에
    `Page("rag_answer", "/rag/answer", "답변 생성", "근거 인용 답변 · 환각 검증", "rag/answer.html")`
    (nav 키 · 주소 · 이름 · 설명 · 템플릿). 라우트 · 사이드바 · 위치 표시 · 빠른 이동 색인이 여기서 만들어집니다. 단계 밖 공통 화면만 `app/web/pages.py` 의 `COMMON_PAGES`.
+   - 한 화면이 여러 단계를 다루면(운영 맵: 화면 14개 · 단계 30개) 나머지 단계는 그 화면의 부분을 가리킵니다:
+     `Page("evalops_regression", "/evalops/sets#regression", "회귀 실행", "…")` — 템플릿 없이, 주소에 `#<카드 id>`. 라우트 · 사이드바 항목은 만들지 않고, 단계 소개 · 빠른 이동에서 그 카드로 갑니다. 카드에 같은 `id` 를 붙입니다.
+   - 사이드바: LLM 맵 단계는 '실험', 그 밖에 화면이 있는 맵(문서 처리 · 보안 · 가드레일 · 평가 · 관측 · 고객 AS 상담)은 '운영 · 서비스'에 맵 하나 = 항목 하나로 묶입니다.
 2. **템플릿** `app/web/templates/<단계>/<화면>.html`
    ```jinja
    {% extends "base.html" %}

@@ -4,6 +4,27 @@
 
 ## [Unreleased]
 
+### 추가
+- **운영 맵 4개 구현(30단계)** — 사이드바 '운영 · 서비스'
+  - **문서 처리(D1~D7)**: 폴더 수집 소스(`INGEST_ROOTS` 안만, sha 로 새 · 바뀜 · 지움 판단, 주기 수집), 업로드 원본 보관, 파싱 점검(깨진 글자 · 빈 쪽), 비전 LLM OCR(PDF 쪽 그림 → 글, 글자 정확도), pdfplumber 표 → 마크다운 · 그림 → 미디어 청크, 머리말 · 꼬리말 · 거의 같은 문서 · 판 정리(옛 판 `superseded`), 문서 메타(종류 · 부서 · 제품 모델 · 날짜 · 권한) 편집과 검색 필터, 바뀐 문서만 다시 청크 · 임베딩하는 증분 갱신, 청크 품질 · 근거 보존 보고. 화면 `/docintel/sources` · `/docintel/parsing` · `/docintel/quality`
+  - **보안 · 가드레일(G1~G7)**: 프롬프트 인젝션 감지(질문 · 근거) · 근거 격리, 개인정보 탐지 · 가리기(스트리밍은 문장 단위), 사용자 · 그룹(`API_USERS`)별 권한 검색 · 유출 시험, 분야별 출력 정책(법률 · 의료 · 고객 지원), 해시 체인 감사 로그 · CSV · 보관 기간, 라이선스 점검, 레드팀 공격 37개. `GUARD_MODE`(off · mask · enforce)로 모든 서비스 답변에 같은 방어. 화면 `/guardrails/check` · `/guardrails/access` · `/guardrails/redteam`
+  - **평가 · 관측(E1~E8)**: 평가 세트 버전 · 검토 상태 · 회귀 지정 · 기준선, 회귀 실행(짝지은 차이 · 95% 구간 · 경보, `REGRESSION_ON_UPGRADE`), 모든 서비스 답변의 요청 기록(단계별 시간 · 토큰 · 비용 · 검색 신호 · 검사 결과), 비용 · 지연 대시보드(`LLM_PRICES`), 답변 피드백(좋아요 · 싫어요 · 이유) · 자동 판정 일치율, 드리프트(새 유형 질문 · 검색 신호 변화), A/B 실험(사용자 고정 배정 · 기록 재생), 실패 유형 분류 → 평가 세트 · 빈틈 CSV. 화면 `/evalops/sets` · `/evalops/traces` · `/evalops/feedback` · `/evalops/drift` · `/evalops/experiments`
+  - **고객 AS 상담(AS1~AS8)**: 글 · 사진 · 음성(`STT_URL`) 접수, 안전 문의 규칙 우선 이관, 의도 제로샷 분류 · 오류 코드 추출, 제품 모델 범위 검색 · 의미 캐시, 비전 LLM 오류 사진 코드 읽기, 고장 문의 번호 단계 안내, 근거 · 코드 일치 · 정책 · 다른 모델 근거 검증, 티켓 · 외부 접수 연동(`AS_TICKET_WEBHOOK`), 해결률 · 이관률 · 만족도. 가상 제품 예시 매뉴얼 · 라벨 문의 48개. 화면 `/as/console` · `/as/tickets` · `/as/eval`
+- 답변 화면: 방어 모드 선택, 검사 결과(`guard` 이벤트) 표시, 답변 피드백 버튼(`done` 의 `trace_id`)
+- 연결 계층 `pipeline/serve.py`(서비스 답변의 방어 · 검증 · 기록), `core/tracing.py`(요청 기록), `/api/me`
+- 앱 안 주기 작업(1분): 주기가 된 수집 소스 · 보관 기간이 지난 요청 기록 정리
+- DB 마이그레이션 0010: `traces` · `experiments` · `answer_cache` · `as_sessions` · `ingest_sources`, 평가 세트 버전 · 회귀 · 기준선 · 이력
+- 의존성 `pdfplumber`(표 추출, `pypdfium2` 로 PDF 쪽 그림)
+- README 맵 표를 레지스트리로 생성(`scripts/gen_docs.py`)
+
+### 변경
+- README 를 맵 18개 · 단계 구조에 맞게 다시 씀(맵 표 · 실측 요약 · 시작 방법)
+- 스캔 PDF(글 층 없음)를 업로드에서 거절하지 않고 빈 쪽으로 받아 'OCR 필요'로 표시 — OCR 로 글이 생기면 표시를 지움
+- 단계 하나에 화면 하나가 없는 운영 맵 단계는 그 화면의 부분(`/<화면>#<카드>`)을 가리킴(레지스트리 `Page` 에 템플릿 없이)
+- 폴더 수집 소스 추가 · 삭제와 문서 권한(`acl`) 변경은 관리자만(`API_USERS` 사용 시)
+- 감사 로그 조회 · CSV 에 종류(`kind`) 거르기
+- 답변 스트림 이벤트 순서 `search` → `delta` → `verify` → `guard` → `judge` → `done`. 기본 `GUARD_MODE=mask` 라 답의 개인정보는 가려지고 `delta` 가 문장 단위로 옴
+
 ## [1.0.2] - 2026-10-20
 
 ### 변경

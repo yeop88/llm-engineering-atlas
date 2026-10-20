@@ -22,14 +22,14 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| E1 | [평가 세트 · 정답 관리](../stages/evalops/e1-sets/README.md) | 🟡 기초 있음 | 질문 · 정답 근거 · 질문 유형을 세트로 관리하고, 생성 · 보정 · 보충 기록을 남긴다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
-| E2 | [오프라인 평가 · 회귀](../stages/evalops/e2-offline/README.md) | 🟡 기초 있음 | 설정 · 모델 · 라이브러리를 바꿀 때마다 고정 세트로 다시 재서 기준선보다 나빠졌는지 확인한다 | [2 RAG](../stages/llm/2-rag/README.md) · [6 라우팅](../stages/llm/6-routing/README.md) | — |
-| E3 | [트레이싱](../stages/evalops/e3-tracing/README.md) | 🟡 기초 있음 | 질문마다 단계 · 시간 · 토큰 · 결정(라우팅 · 도구)을 기록해 한 요청을 끝까지 따라가 본다 | [2 RAG](../stages/llm/2-rag/README.md) · [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | — |
-| E4 | [비용 · 지연 대시보드](../stages/evalops/e4-cost/README.md) | ⬜ 예정 | 질문당 토큰 · 시간 · 비용을 모아 단계별 · 경로별로 보여 준다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [6 라우팅](../stages/llm/6-routing/README.md) | — |
-| E5 | [사용자 피드백 · 사람 판정](../stages/evalops/e5-feedback/README.md) | 🟡 기초 있음 | 답변마다 좋아요 · 싫어요 · 이유를 받고, 사람 판정으로 자동 판정을 보정한다 | [2 RAG](../stages/llm/2-rag/README.md) · [8b 강화학습](../stages/llm/8b-rl/README.md) | — |
-| E6 | [드리프트 · 이상 감지](../stages/evalops/e6-drift/README.md) | ⬜ 예정 | 들어오는 질문의 분포 · 검색 확신도 · 거절률이 평소와 달라지면 알린다 | [A 의미 응용](../stages/llm/a-apps/README.md) | — |
-| E7 | [A/B · 온라인 실험](../stages/evalops/e7-ab/README.md) | ⬜ 예정 | 실제 요청을 두 설정에 나눠 보내 품질 · 만족도 · 비용을 비교한다 | [6 라우팅](../stages/llm/6-routing/README.md) | — |
-| E8 | [개선 반영 루프](../stages/evalops/e8-loop/README.md) | ⬜ 예정 | 실패 사례를 모아 평가 세트 · 학습 데이터 · 규칙으로 되돌려 다음 버전을 만든다 | [5 파인튜닝](../stages/llm/5-finetune/README.md) · [8b 강화학습](../stages/llm/8b-rl/README.md) | — |
+| E1 | [평가 세트 · 정답 관리](../stages/evalops/e1-sets/README.md) | ✅ 구현됨 | 질문 · 정답 근거 · 질문 유형을 세트로 관리하고, 생성 · 보정 · 보충 기록을 남긴다 | [2 RAG](../stages/llm/2-rag/README.md) | [평가 세트 관리 · 회귀 평가](../stages/evalops/e1-sets/regression.md) |
+| E2 | [오프라인 평가 · 회귀](../stages/evalops/e2-offline/README.md) | ✅ 구현됨 | 설정 · 모델 · 라이브러리를 바꿀 때마다 고정 세트로 다시 재서 기준선보다 나빠졌는지 확인한다 | [2 RAG](../stages/llm/2-rag/README.md) · [6 라우팅](../stages/llm/6-routing/README.md) | [평가 세트 관리 · 회귀 평가](../stages/evalops/e1-sets/regression.md) |
+| E3 | [트레이싱](../stages/evalops/e3-tracing/README.md) | ✅ 구현됨 | 질문마다 단계 · 시간 · 토큰 · 결정(라우팅 · 도구)을 기록해 한 요청을 끝까지 따라가 본다 | [2 RAG](../stages/llm/2-rag/README.md) · [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | [요청 기록 · 비용 · 지연](../stages/evalops/e3-tracing/tracing.md) |
+| E4 | [비용 · 지연 대시보드](../stages/evalops/e4-cost/README.md) | ✅ 구현됨 | 질문당 토큰 · 시간 · 비용을 모아 단계별 · 경로별로 보여 준다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [6 라우팅](../stages/llm/6-routing/README.md) | [요청 기록 · 비용 · 지연](../stages/evalops/e3-tracing/tracing.md) |
+| E5 | [사용자 피드백 · 사람 판정](../stages/evalops/e5-feedback/README.md) | ✅ 구현됨 | 답변마다 좋아요 · 싫어요 · 이유를 받고, 사람 판정으로 자동 판정을 보정한다 | [2 RAG](../stages/llm/2-rag/README.md) · [8b 강화학습](../stages/llm/8b-rl/README.md) | [사용자 피드백 · 개선 루프](../stages/evalops/e5-feedback/feedback.md) |
+| E6 | [드리프트 · 이상 감지](../stages/evalops/e6-drift/README.md) | ✅ 구현됨 | 들어오는 질문의 분포 · 검색 확신도 · 거절률이 평소와 달라지면 알린다 | [A 의미 응용](../stages/llm/a-apps/README.md) | [드리프트 감지](../stages/evalops/e6-drift/drift.md) |
+| E7 | [A/B · 온라인 실험](../stages/evalops/e7-ab/README.md) | ✅ 구현됨 | 실제 요청을 두 설정에 나눠 보내 품질 · 만족도 · 비용을 비교한다 | [6 라우팅](../stages/llm/6-routing/README.md) | [A/B 실험](../stages/evalops/e7-ab/ab.md) |
+| E8 | [개선 반영 루프](../stages/evalops/e8-loop/README.md) | ✅ 구현됨 | 실패 사례를 모아 평가 세트 · 학습 데이터 · 규칙으로 되돌려 다음 버전을 만든다 | [5 파인튜닝](../stages/llm/5-finetune/README.md) · [8b 강화학습](../stages/llm/8b-rl/README.md) | [사용자 피드백 · 개선 루프](../stages/evalops/e5-feedback/feedback.md) |
 
 ## 설계 원칙
 

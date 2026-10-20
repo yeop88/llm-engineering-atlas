@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [E7 A/B · 온라인 실험](../../evalops/e7-ab/README.md) — 평가 · 관측 (LLMOps) 맵 · ⬜ 예정
+- [E7 A/B · 온라인 실험](../../evalops/e7-ab/README.md) — 평가 · 관측 (LLMOps) 맵 · ✅ 구현됨
 
 ---
 

@@ -1,4 +1,4 @@
-"""단계 레지스트리(app/stages/registry/)로 문서 색인(docs/README.md)과 단계별 README 를 만든다.
+"""단계 레지스트리(app/stages/registry/)로 문서 색인(docs/README.md) · 단계별 README · 맵 개요 · 저장소 README 의 맵 표를 만든다.
 
 화면(메뉴 · 단계 설명 · 맵)과 문서가 같은 원본에서 나오도록 하기 위함이다. 레지스트리를 고친 뒤 실행:
 
@@ -191,8 +191,39 @@ def fill_stage_table(m: registry.Map) -> str:
     return head + MARK_START + "\n" + "\n".join(stage_table(m.doc, m.key)) + "\n" + MARK_END + tail
 
 
+README_START = "<!-- 맵 표: scripts/gen_docs.py 가 레지스트리로 채웁니다. 이 표시 사이는 고치지 마세요. -->"
+README_END = "<!-- /맵 표 -->"
+
+
+def readme_map_table() -> str:
+    """README 의 맵 표: 맵이 늘고 단계를 구현할 때마다 README 를 손으로 고치다 어긋났다(맵 18개인데 한 줄로만 소개) — 레지스트리로 채운다."""
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    if README_START not in text or README_END not in text:
+        raise SystemExit(f"README.md 에 맵 표 표시({README_START} … {README_END})가 없습니다.")
+    me = "README.md"
+    st = [s.status for s in registry.STAGES]
+    rows = [
+        "| 맵 | 무엇을 | 단계 | ✅ | 🟡 | ⬜ | 화면 · 개요 |",
+        "|---|---|---|---|---|---|---|",
+        *[
+            f"| **{m.title.removesuffix(' 맵')}** | {m.summary.rsplit(' — ', 1)[-1]} | {len(ss)} | {n(ss, registry.DONE)} | {n(ss, registry.BASIC)} | {n(ss, registry.PLANNED)} "
+            f"| `{m.href}` · [개요]({rel(me, m.doc)}) |"
+            for m in registry.MAPS
+            for ss in [[s.status for s in registry.map_stages(m.key)]]
+        ],
+        f"| **합계 {len(registry.MAPS)}개** | | {len(st)} | {st.count(registry.DONE)} | {st.count(registry.BASIC)} | {st.count(registry.PLANNED)} | `/maps` |",
+    ]
+    head, rest = text.split(README_START, 1)
+    _, tail = rest.split(README_END, 1)
+    return head + README_START + "\n" + "\n".join(rows) + "\n" + README_END + tail
+
+
+def n(statuses: list[str], code: str) -> str:
+    return str(statuses.count(code)) if statuses.count(code) else "—"
+
+
 def outputs() -> dict[str, str]:
-    out = {"docs/README.md": index()}
+    out = {"docs/README.md": index(), "README.md": readme_map_table()}
     for m in registry.MAPS:
         out[m.doc] = map_doc(m) if m.generated_doc else fill_stage_table(m)
     for s in registry.STAGES:

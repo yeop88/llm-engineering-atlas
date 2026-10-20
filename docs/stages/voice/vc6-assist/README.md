@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [AS3 FAQ · 매뉴얼 답변](../../as-service/as3-faq/README.md) — 서비스 시나리오: 고객 AS 상담 맵 · 🟡 기초 있음
+- [AS3 FAQ · 매뉴얼 답변](../../as-service/as3-faq/README.md) — 서비스 시나리오: 고객 AS 상담 맵 · ✅ 구현됨
 - [C6 상담원 이관 · 인계 요약](../../conversation/c6-handoff/README.md) — 대화 · 메모리 맵 · ⬜ 예정
 
 ---

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}드리프트 감지{% endblock %}
+{% block content %}
+{% call ui.page_header("드리프트 감지") %}평가 세트는 만든 때의 질문만 담습니다. 새 제품 · 새 법령으로 세트에 없는 질문이 늘면 품질이 떨어져도 세트로는 안 보입니다. 최근 질문을 기준(이전 기간의 요청 또는 평가 세트 질문)과 비교해 ① 새로운 질문 비율(가장 가까운 기준 질문과의 의미 유사도가 기준값 미만) ② 검색 확신도(1위 점수 · 1 · 2위 차이) ③ 거절률이 달라졌는지 봅니다. 차이는 부트스트랩 95% 구간으로, 구간이 0 을 지나지 않을 때만 유의합니다.{% endcall %}
+
+<div class="card stack">
+  <h2>비교 설정</h2>
+  <div class="row">
+    <div class="field"><label for="d-col">컬렉션</label><select id="d-col"><option value="">전체 컬렉션</option></select></div>
+    <div class="field"><label for="d-recent">최근 기간 (일)</label><input class="w-sm" id="d-recent" type="number" value="7" min="1" max="365"></div>
+    <div class="field"><label for="d-base">기준 기간 (일, 최근 기간 앞)</label><input class="w-sm" id="d-base" type="number" value="30" min="2" max="730"></div>
+    <div class="field"><label for="d-sim">새로운 질문 기준 유사도</label><input class="w-md" id="d-sim" type="number" value="0.6" step="0.05" min="0.1" max="0.95"></div>
+  </div>
+  <div class="row">
+    <div class="field grow"><label for="d-set">기준을 평가 세트 질문으로 (요청 기록이 적을 때 — 이때는 검색 신호 · 거절률 비교 없음)</label><select id="d-set"><option value="">쓰지 않음 (기준 기간의 요청)</option></select></div>
+  </div>
+  <div class="field"><label for="d-questions">최근 질문 직접 넣기 (한 줄에 하나, 시험용 — 비우면 최근 기간의 요청)</label><textarea id="d-questions" rows="4" placeholder="예: 신형 건조기 필터는 어디에 있나요?"></textarea></div>
+  <div class="row"><span class="small muted">질문 임베딩은 설정의 VERIFY_MODEL 모델로 합니다. 기준 · 최근 질문이 각각 3개 이상 있어야 합니다.</span><span class="spacer"></span><button class="btn primary" id="d-run">드리프트 감지</button></div>
+  <div id="d-progress" hidden></div>
+</div>
+
+<div class="card stack mt-4">
+  <h2>결과</h2>
+  <div id="d-out"><div class="empty">설정을 고르고 '드리프트 감지'를 누르세요. 요청 기록은 답변 생성 · AS 상담 · A/B 실험을 쓰면 쌓입니다.</div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/evalops/drift.js') }}"></script>
+{% endblock %}

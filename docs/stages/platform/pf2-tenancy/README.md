@@ -34,7 +34,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [G3 권한별 검색 (ACL)](../../guardrails/g3-acl/README.md) — 보안 · 가드레일 · 거버넌스 맵 · 🟡 기초 있음
+- [G3 권한별 검색 (ACL)](../../guardrails/g3-acl/README.md) — 보안 · 가드레일 · 거버넌스 맵 · ✅ 구현됨
 
 ---
 

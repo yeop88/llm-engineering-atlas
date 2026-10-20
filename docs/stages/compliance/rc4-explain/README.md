@@ -34,7 +34,7 @@
 이미 있는 단계 위에 짓습니다.
 
 - [2 RAG 검색](../../llm/2-rag/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
-- [G5 접근 제어 · 감사 로그](../../guardrails/g5-audit/README.md) — 보안 · 가드레일 · 거버넌스 맵 · 🟡 기초 있음
+- [G5 접근 제어 · 감사 로그](../../guardrails/g5-audit/README.md) — 보안 · 가드레일 · 거버넌스 맵 · ✅ 구현됨
 
 ---
 

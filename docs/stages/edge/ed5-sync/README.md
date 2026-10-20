@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [D6 메타데이터 · 증분 갱신](../../docintel/d6-meta/README.md) — 문서 처리 (Document Intelligence) 맵 · ⬜ 예정
+- [D6 메타데이터 · 증분 갱신](../../docintel/d6-meta/README.md) — 문서 처리 (Document Intelligence) 맵 · ✅ 구현됨
 
 ---
 

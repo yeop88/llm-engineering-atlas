@@ -70,7 +70,7 @@ async function send() {
   const bm25 = $("#a-mode").value === "bm25";
   const body = {
     question: q, context_top: +$("#a-top").value, max_tokens: +$("#a-max").value, judge: $("#a-judge").checked, compress: $("#a-compress").checked ? { keep: 3 } : null, images: $("#a-images").checked,
-    provider: $("#a-provider").value || null, model: $("#a-model").value.trim() || null,
+    provider: $("#a-provider").value || null, model: $("#a-model").value.trim() || null, guard_mode: $("#a-guard").value || null,
     config: { mode: $("#a-mode").value, index_id: bm25 ? null : +$("#a-idx").value || null, chunk_set_id: bm25 ? +$("#a-cs").value || null : null, reranker_id: +$("#a-rr").value || null },
   };
   if (!bm25 && !body.config.index_id) return toast("벡터 인덱스가 없습니다. BM25 를 고르거나 인덱스를 만드세요.", "err");
@@ -81,8 +81,10 @@ async function send() {
     <div class="small muted" data-status>검색 중…</div>
     <div class="answer" data-answer></div>
     <div data-verify></div>
+    <div data-guard class="row small gap-2"></div>
     <details data-sources><summary class="small">근거 <span data-nsrc></span></summary><div data-srclist class="stack mt-2"></div></details>
-    <div class="small muted" data-meta></div></div>`);
+    <div class="small muted" data-meta></div>
+    <div data-fb-box class="stack"></div></div>`);
   const turn = document.getElementById(turnId), $t = s => turn.querySelector(s);
   turn.scrollIntoView({ behavior: "smooth", block: "end" });
   $("#a-q").value = ""; $("#a-send").disabled = true;
@@ -105,6 +107,7 @@ async function send() {
           sources = ev.sources;
           $t("[data-status]").textContent = `근거 ${sources.length}개 · ${ev.llm.model} 답변 생성 중…`;
           $t("[data-nsrc]").textContent = `${sources.length}개`;
+          if (ev.guard_input?.suspicious) $t("[data-guard]").innerHTML = guardBadges({ input: ev.guard_input });
           $t("[data-srclist]").innerHTML = html.join(sources.map((s, i) => html`<div class="src" id="${turnId}-src-${i + 1}"><span class="cite">${i + 1}</span> <b class="small">${s.filename}${s.page ? html` p.${s.page}` : ""}${s.heading ? html` · ${s.heading}` : ""}</b> <span class="small muted mono">${s.score?.toFixed?.(3) ?? ""}</span><div class="small">${s.text}</div></div>`), "");
         } else if (ev.type === "delta") {
           text += ev.text;
@@ -124,10 +127,16 @@ async function send() {
           const spans = turn.querySelectorAll(".sent");
           ev.judgements.forEach((j, i) => { if (j && spans[i]) spans[i].insertAdjacentHTML("beforeend", html` <span class="badge ${j.supported ? "ok" : "err"}" title="${j.reason}">LLM ${j.supported ? "✓" : "✗"}</span>`); });
           $t("[data-verify]").insertAdjacentHTML("beforeend", html`<div class="small muted">LLM 판정: 뒷받침 ${ev.supported_ratio == null ? "-" : Math.round(ev.supported_ratio * 100) + "%"} (${ev.seconds}s, 작은 모델의 판정은 참고용)</div>`);
+        } else if (ev.type === "guard") {
+          $t("[data-guard]").innerHTML = guardBadges(ev);
+          // 정책으로 고쳤거나(enforce) 입력 방어로 막았으면 서버가 내보낼 답을 준다 — 흘려보낸 글 대신 그것을 보인다
+          if (ev.answer) { text = ev.answer; $t("[data-answer]").innerHTML = renderAnswer(ev.answer, turnId, sources.length); }
         } else if (ev.type === "done") {
           const u = ev.usage || {};
-          $t("[data-status]").remove();
-          $t("[data-meta]").textContent = `검색 ${ev.timings.search_ms}ms · 답변 ${ev.timings.llm_s}s${ev.timings.ttft_s != null ? ` (근거 읽기 ${ev.timings.ttft_s}s` + (ev.tokens_per_second ? ` · 생성 ${ev.tokens_per_second} 토큰/초)` : ")") : ""}${ev.timings.judge_s ? ` · 판정 ${ev.timings.judge_s}s` : ""} · 토큰 ${u.input_tokens ?? "-"}→${u.output_tokens ?? "-"}${u.truncated ? " · 길이 한도에서 잘림" : ""}`;
+          $t("[data-status]")?.remove();
+          if (ev.trace_id) feedbackBar(turn, turnId, ev.trace_id);
+          if (ev.blocked) { $t("[data-meta]").textContent = `입력 방어로 차단 · 검색 ${ev.timings?.search_ms ?? "-"}ms · 요청 #${ev.trace_id}`; continue; }
+          $t("[data-meta]").textContent =`검색 ${ev.timings.search_ms}ms · 답변 ${ev.timings.llm_s}s${ev.timings.ttft_s != null ? ` (근거 읽기 ${ev.timings.ttft_s}s` + (ev.tokens_per_second ? ` · 생성 ${ev.tokens_per_second} 토큰/초)` : ")") : ""}${ev.timings.judge_s ? ` · 판정 ${ev.timings.judge_s}s` : ""} · 토큰 ${u.input_tokens ?? "-"}→${u.output_tokens ?? "-"}${u.truncated ? " · 길이 한도에서 잘림" : ""}`;
         } else if (ev.type === "error") {
           $t("[data-status]")?.remove();
           $t("[data-answer]").insertAdjacentHTML("beforeend", html`<div class="errbox">${ev.message}</div>`);
@@ -141,6 +150,50 @@ async function send() {
   } finally { $("#a-send").disabled = false; }
 }
 $("#a-send").onclick = send;
+
+// 가드레일 결과(serve.finish 의 guard): 입력 인젝션 의심 · 지시가 숨은 근거 · 개인정보 가림 · 출력 정책
+const POLICY = { pass: ["ok", "통과"], fix: ["warn", "수정"], block: ["err", "차단"] };
+function guardBadges(g) {
+  const out = g.output || {}, nPii = Object.values(out.pii || {}).reduce((a, b) => a + b, 0), parts = [];
+  if (g.input?.suspicious) parts.push(html`<span class="badge warn" title="${html.join((g.input.hits || []).map(h => `${h.rule}: ${h.match}`), " / ")}">입력 인젝션 의심</span>`);
+  if (g.context?.length) parts.push(html`<span class="badge warn">지시가 숨은 근거 ${g.context.length}개</span>`);
+  if (nPii) parts.push(html`<span class="badge warn" title="${html.join(Object.entries(out.pii).map(([k, n]) => `${k} ${n}`), " · ")}">개인정보 ${nPii}건 가림</span>`);
+  if (out.violations?.length) parts.push(html`<span class="badge err" title="${html.join(out.violations.map(v => `${v.rule}: ${v.match}`), " / ")}">정책 위반 ${out.violations.length}</span>`);
+  if (out.action && POLICY[out.action]) parts.push(html`<span class="badge ${POLICY[out.action][0]}">출력 정책 ${POLICY[out.action][1]}</span>`);
+  if (g.action === "block") parts.push(html`<span class="badge err">요청 차단</span>`);
+  return parts.length ? html`<span class="muted">가드레일</span> ${html.join(parts, " ")}` : "";
+}
+
+// 답변 피드백(평가 · 관측 E5): 요청 기록(trace)에 붙어 피드백 · 개선 루프 화면에 모인다
+let fbReasons = null;
+async function feedbackBar(turn, turnId, traceId) {
+  const box = turn.querySelector("[data-fb-box]");
+  turn.dataset.trace = traceId;
+  fbReasons ??= api("/api/evalops/feedback?days=1").then(r => r.reason_labels).catch(() => ({ other: "기타" }));
+  const reasons = await fbReasons;
+  box.innerHTML = html`<div class="row small gap-2"><span class="muted">이 답이 도움이 됐나요?</span>
+      <button type="button" class="btn sm" data-fb="1">좋아요</button><button type="button" class="btn sm" data-fb="-1">싫어요</button>
+      <span data-fb-state></span><a class="muted" href="/evalops/traces?trace=${traceId}">요청 #${traceId}</a></div>
+    <div class="row small" data-fb-bad hidden>
+      <div class="field"><label for="${turnId}-fb-reason">이유</label><select id="${turnId}-fb-reason">${Object.entries(reasons).map(([k, v]) => html`<option value="${k}">${v}</option>`)}</select></div>
+      <div class="field grow"><label for="${turnId}-fb-note">메모 (선택)</label><input id="${turnId}-fb-note" maxlength="1000"></div>
+      <div class="self-end"><button type="button" class="btn sm primary" data-fb-send>보내기</button></div></div>`;
+}
+async function sendFeedback(turn, rating, reason = "", note = "") {
+  const r = await api(`/api/evalops/traces/${turn.dataset.trace}/feedback`, { method: "POST", body: { rating, reason, note } });
+  turn.querySelector("[data-fb-state]").innerHTML = r.feedback === 1 ? html`<span class="badge ok">좋아요 보냄</span>` : html`<span class="badge err">싫어요 보냄</span>`;
+  turn.querySelector("[data-fb-bad]").hidden = true;
+}
+$("#a-thread").addEventListener("click", async e => {
+  const turn = e.target.closest("[data-trace]");
+  if (!turn) return;
+  const fb = e.target.closest("[data-fb]"), go = e.target.closest("[data-fb-send]");
+  try {
+    if (fb?.dataset.fb === "1") await sendFeedback(turn, 1);
+    else if (fb?.dataset.fb === "-1") { turn.querySelector("[data-fb-bad]").hidden = false; turn.querySelector("[data-fb-bad] select").focus(); }
+    else if (go) await sendFeedback(turn, -1, turn.querySelector("[data-fb-bad] select").value, turn.querySelector("[data-fb-bad] input").value.trim());
+  } catch (err) { toast(err.message, "err"); }
+});
 
 function currentConfig() {
   const bm25 = $("#a-mode").value === "bm25";

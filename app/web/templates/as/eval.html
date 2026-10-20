@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}분류 · 사진 · 종단 실측{% endblock %}
+{% block content %}
+{% call ui.page_header("분류 · 사진 · 종단 실측") %}고객 AS 상담 흐름을 라벨 붙은 예시 문의 48개 · 오류 화면 그림 12종으로 잽니다. 분류(AS2)는 제로샷과 학습 분류기를 같은 문의로 비교하고 안전 문의를 놓치지 않는지 보며, 사진 진단(AS4)은 비전 LLM 이 코드를 얼마나 바로 읽는지, 종단 평가는 문의를 처음부터 끝까지 흘려 안전 이관 · 맞는 제품 문서 · 다른 모델 근거 비율을 봅니다.{% endcall %}
+
+<div class="card stack">
+  <h2>의도 · 긴급도 분류 (AS2)</h2>
+  <div class="small muted">의도: 문의 ↔ 라벨 설명 유사도(제로샷) vs 라벨 붙인 문의로 학습한 로지스틱 회귀(5겹 교차검증). 긴급도: 규칙(안전 &gt; 높음 &gt; 보통) — 안전 문의는 확률 모델에 맡기지 않으므로 안전 재현율이 1 이어야 합니다.</div>
+  <div class="row">
+    <div class="field grow"><label for="tr-model">임베딩 모델</label><select id="tr-model"></select></div>
+    <div class="self-end"><button class="btn primary" id="tr-run">분류 평가</button></div>
+  </div>
+  <div id="tr-progress" hidden></div>
+  <div id="tr-out"></div>
+</div>
+
+<div id="photo" class="card stack mt-4">
+  <h2>오류 사진 진단 (AS4)</h2>
+  <div class="small muted">코드 12종의 표시창 그림을 만들어 비전 LLM 에 읽힙니다. '목록 맞춤 전'은 모델이 읽은 그대로, '맞춤 후'는 비슷한 글자(0/O · 8/B)를 알려진 코드 목록으로 고친 결과입니다. 어려운 사진은 기울기 · 흐림 · 빛 반사를 더합니다.</div>
+  <div class="row">
+    <div class="field"><label for="ph-provider">LLM</label><select id="ph-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="ph-model">모델 (비우면 설정값, 비전 모델 필요)</label><input id="ph-model" data-ctx="model" list="ev-model-list"></div>
+    <div class="field"><label for="ph-repeats">코드마다 그림 수</label><input class="w-sm" id="ph-repeats" type="number" value="1" min="1" max="5"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="ph-hard"> 어려운 사진</label>
+    <div class="self-end"><button class="btn primary" id="ph-run">사진 평가</button></div>
+  </div>
+  <datalist id="ev-model-list"></datalist>
+  <div id="ph-progress" hidden></div>
+  <div id="ph-out"></div>
+</div>
+
+<div class="card stack mt-4">
+  <h2>종단 평가 (AS1 ~ AS7)</h2>
+  <div class="small muted">라벨 붙은 문의를 상담 흐름(분류 → 검색 · 답변 → 검증 → 이관)에 하나씩 넣습니다. 평가용 상담은 지표에 섞이지 않게 끝나면 지웁니다. 로컬 LLM 은 문의당 10~30초가 걸립니다. 위 사진 평가의 LLM 설정을 같이 씁니다.</div>
+  <div class="row">
+    <div class="field"><label for="e2e-guard">가드레일</label><select id="e2e-guard"><option value="enforce">enforce (막기)</option><option value="mask">mask (가리기)</option><option value="off">off (끄기)</option></select></div>
+    <div class="field"><label for="e2e-limit">문의 수</label><input class="w-md" id="e2e-limit" type="number" value="48" min="1" max="500"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="e2e-filter" checked> 제품 모델로 문서 거르기</label>
+    <div class="self-end"><button class="btn primary" id="e2e-run">종단 평가</button></div>
+  </div>
+  <div id="e2e-progress" hidden></div>
+  <div id="e2e-out"></div>
+</div>
+
+<div class="card stack mt-4">
+  <div class="row between"><h2 class="m-0">실행 기록</h2><button class="btn sm" id="h-reload">새로 고침</button></div>
+  <div id="h-list"></div>
+  <div id="h-detail"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/as/eval.js') }}"></script>
+{% endblock %}

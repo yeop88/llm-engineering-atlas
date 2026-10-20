@@ -34,7 +34,7 @@
 이미 있는 단계 위에 짓습니다.
 
 - [C3 대화 요약 메모리](../../conversation/c3-memory/README.md) — 대화 · 메모리 맵 · ⬜ 예정
-- [AS7 접수 티켓 · 상담원 이관](../../as-service/as7-ticket/README.md) — 서비스 시나리오: 고객 AS 상담 맵 · ⬜ 예정
+- [AS7 접수 티켓 · 상담원 이관](../../as-service/as7-ticket/README.md) — 서비스 시나리오: 고객 AS 상담 맵 · ✅ 구현됨
 
 ---
 

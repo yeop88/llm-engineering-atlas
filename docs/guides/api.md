@@ -167,7 +167,7 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 
 | 메서드 | 경로 | 설명 |
 |---|---|---|
-| POST | `/api/collections/{id}/answer` | NDJSON 스트림: `search` → `delta`(여러 번) → `verify` → `judge`(선택) → `done`, 오류는 `error`. 본문 `{"question", "config": SearchConfig, "context_top", "max_context_chars", "max_tokens", "temperature", "judge", "provider"?, "model"?}` |
+| POST | `/api/collections/{id}/answer` | NDJSON 스트림: `search` → `delta`(여러 번) → `verify` → `guard`(입력 · 근거 · 출력 검사 결과) → `judge`(선택) → `done`(`trace_id` 포함 — 피드백에 씀), 오류는 `error`. 본문 `{"question", "config": SearchConfig, "context_top", "max_context_chars", "max_tokens", "temperature", "judge", "guard_mode"?: "off"·"mask"·"enforce", "provider"?, "model"?}`. mask 이상이면 `delta` 는 문장 단위로 모아 개인정보를 가린 글 |
 | POST | `/api/eval-sets/{id}/answer-eval` | 평가 세트로 답변 일괄 평가 (작업) `{"config", "max_queries", "context_top", ...}` |
 
 ## 파인튜닝
@@ -248,3 +248,86 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/collections/{id}/answer` | `images: true, max_images: 3` 근거 중 이미지 · 장면을 그림으로 첨부(비전 LLM). verify 이벤트에 `citations`(번호가 나온 답변만) |
 | POST | `/api/routing/learned` | `{"run_id", "model_id", "margin": 0, "c": 1.0, "threshold": 0.5, "save": true}` → 작업. 라우팅 평가 기록으로 학습 라우터 학습 · 교차검증 비교 |
 | GET | `/api/routing/learned` | 저장된 학습 라우터. 연결 실행 `routing: {"router": "learned", "learned_id"}` |
+
+## 사용자 · 검색 제한 (공통)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/me` | 지금 사용자 `{"name", "groups", "role", "auth"}` (토큰 없이 쓰면 `local` · 모든 그룹 · 관리자) |
+
+`SearchConfig` 에 `filters: {"doc_type": [], "dept": [], "product_model": [], "date_from", "date_to", "latest_only"}`(문서 메타 필터) · `acl_groups`(이 그룹 권한으로 검색 — 모든 문서를 보는 사용자만, 다른 사용자는 자기 그룹으로 덮어씀)를 넣을 수 있습니다. 허용 문서가 0개면 결과도 0개이고 응답에 `restricted` 가 붙습니다.
+
+## 문서 처리 (`/api/docintel`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET / POST | `/api/docintel/sources` | 폴더 수집 소스 목록(`?collection_id=`) / 추가 `{"collection_id", "path", "pattern": "*", "interval_min": 0}` — `INGEST_ROOTS`(기본 `data/inbox`) 밖 경로는 400 |
+| DELETE | `/api/docintel/sources/{id}` | 소스 삭제(문서는 그대로) |
+| POST | `/api/docintel/sources/{id}/sync` | 동기화 작업 `{"refresh": true}` → 새 · 바뀜 · 지움 · 그대로 + 청크 세트 증분 갱신 결과. 이미 도는 중이면 409 |
+| GET | `/api/docintel/collections/{id}/parsing` · `/api/docintel/documents/{id}/parsing` | 파싱 점검(깨진 글자 비율 · 빈 · 짧은 쪽) |
+| POST | `/api/docintel/documents/{id}/ocr` | OCR 작업(PDF, 비전 LLM) `{"pages": [], "provider"?, "model"?}` — 빈 쪽은 채우고, 글이 있는 쪽은 덮어쓰지 않고 글자 정확도만 잼 |
+| POST | `/api/docintel/documents/{id}/layout` | 표 · 그림 추출 작업 `{"figures": true}` — 표는 마크다운으로 페이지 글에, 그림은 미디어 청크로 |
+| GET | `/api/docintel/documents/{id}/tables` | 추출한 표 · 그림 목록 |
+| GET | `/api/docintel/documents/{id}/figures/{n}` | 뽑은 그림 n 번째(0부터) JPEG — 색인 전에 잘린 모양 확인용 |
+| GET / POST | `/api/docintel/collections/{id}/clean` · `…/clean/apply` | 머리말 · 꼬리말 · 거의 같은 문서 · 판 묶음 분석(`?threshold=0.85`) / 적용 `{"boilerplate", "versions", "threshold"}` |
+| GET | `/api/docintel/chunk-sets/{id}/quality` | 청크 품질(길이 분포 · 짧은 · 긴 · 끊긴 청크) |
+| GET | `/api/docintel/chunk-sets/{id}/preservation?eval_set_id=` | 근거 보존율(근거 문장이 한 청크에 온전히 들어간 비율) |
+| GET | `/api/docintel/collections/{id}/meta` | 문서별 메타 · 모음(facets) |
+| PATCH | `/api/docintel/documents/{id}/meta` | 메타 고치기 `{"values": {"doc_type", "dept", "product_model", "date", "acl", "superseded", …}}` |
+| GET | `/api/docintel/collections/{id}/status` | 청크 세트별 증분 갱신 계획(추가 · 변경 · 삭제 문서) |
+| POST | `/api/docintel/chunk-sets/{id}/refresh` | 증분 갱신 작업: 바뀐 문서만 다시 청크 · 임베딩(인덱스 모두) |
+
+## 보안 · 가드레일 (`/api/guardrails`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/api/guardrails/check-input` | `{"text"}` → 인젝션 의심 여부 · 걸린 규칙 |
+| POST | `/api/guardrails/pii/scan` | `{"text"}` → 개인정보 위치 · 종류별 수 · 가린 글 |
+| POST | `/api/guardrails/check-output` | `{"text", "domain": "general"·"legal"·"medical"·"support"}` → 위반 · 판정(pass · fix · block) · 고친 글 |
+| GET | `/api/guardrails/policies` | 분야별 정책 규칙 · 개인정보 종류 · 인젝션 규칙 · 지금 `GUARD_MODE` |
+| GET / POST | `/api/guardrails/pii/collections/{id}` · `…/mask` | 문서별 개인정보 수 / 문서 글 가리기(원본 파일은 남음, 바뀐 문서로 표시) |
+| GET | `/api/guardrails/acl/collections/{id}` | 문서별 권한 그룹 |
+| POST | `/api/guardrails/acl/leak-test` | 권한 누출 시험(관리자) `{"config", "groups", "queries" 또는 "eval_set_id", "max_queries"}` |
+| GET | `/api/guardrails/audit` · `/audit/export.csv` | 감사 로그 조회(관리자, `?user=&kind=&status=&document_id=&date_from=&date_to=&limit=`) · CSV(같은 거르기) |
+| GET | `/api/guardrails/audit/integrity` | 해시 체인 무결성 검사 → 처음 깨진 기록 |
+| POST | `/api/guardrails/audit/purge?confirm=true` | 보관 기간이 지난 기록 지우기 |
+| POST | `/api/guardrails/license` | 라이선스 점검 `{"collection_id", "index_id", "reranker_id", "llm_models"}` |
+| GET | `/api/guardrails/redteam/preset` | 공격 세트(37개) · 공격 재료 문서 |
+| POST | `/api/guardrails/redteam` | 레드팀 작업 `{"mode": "off"·"mask"·"enforce", "types": [], "provider"?, "model"?}` → 유형별 공격 성공률 · 정상 통과율 · 문항별 결과 |
+| GET | `/api/guardrails/redteam/runs` · `/runs/{id}` | 실행 기록 |
+
+## 평가 · 관측 (`/api/evalops`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/evalops/sets` · `/sets/{id}` | 평가 세트(버전 · 검토 상태 · 회귀 지정 · 기준선 · 변경 이력) |
+| POST | `/api/evalops/sets/{id}/review` | 문항 검토 `{"item_id", "status": "pending"·"ok"·"excluded", "note"}` (버전 +1) |
+| POST | `/api/evalops/sets/{id}/regression` | 회귀 세트 지정 `{"on": true}` |
+| POST | `/api/evalops/sets/{id}/baseline` | 기준선 만들기 작업 `{"config": SearchConfig, "label"}` |
+| POST | `/api/evalops/regression/run` | 회귀 실행 작업 `{"set_ids": [] (비우면 회귀 세트 모두), "config"?: 바꾼 설정, "update_baseline": false}` → 세트별 기준선 대비 짝지은 차이 · 경보 · 유형별 · 가장 나빠진 질문 |
+| GET | `/api/evalops/regression/runs` | 회귀 실행 기록 |
+| GET | `/api/evalops/traces` · `/traces/{id}` | 요청 기록(`?days=&kind=&flag=느림·실패·차단·근거 약함·관련 없음·거절·싫어요&q=`) / 상세(단계 · 근거 · 검증 · 검사) |
+| GET | `/api/evalops/cost` | 대시보드: 전체 · 날짜 · 경로 · 모델 · 종류별 p50 · p95 지연 · 토큰 · 비용, 단계별 시간 |
+| POST | `/api/evalops/traces/{id}/feedback` | `{"rating": 1·0·-1, "reason", "note"}` |
+| GET | `/api/evalops/feedback` | 피드백 요약 · 자동 판정과 일치율 |
+| POST | `/api/evalops/traces/to-eval-set` | `{"trace_ids"}` → 평가 세트 후보로 |
+| POST | `/api/evalops/drift` | 드리프트 작업 `{"collection_id", "recent_days", "base_days", "eval_set_id"?, "recent_questions"?, "novel_sim": 0.6}` |
+| GET / POST | `/api/evalops/experiments` | A/B 실험 목록 / 만들기 `{"name", "collection_id", "a": ArmConfig, "b": ArmConfig, "split": 0.5}` (`ArmConfig`: `label · config · context_top · max_tokens · compress_keep · provider · model`) |
+| GET | `/api/evalops/experiments/{id}` | 실험 보고: `arms`(팔별 지표) · `arm_config`(팔 설정) · `diff`(B − A, 95% 구간) · `verdict` |
+| POST | `/api/evalops/experiments/{id}/ask` · `/replay` · `/stop` | 질문 하나(배정 키로 팔 고정) / 평가 세트 질문 재생 작업 `{"eval_set_id", "max_queries", "seed"}` / 멈춤 |
+| GET | `/api/evalops/loop` | 실패 유형별 기록(검색 실패 · 인용 · 질문과 다름 · 과잉 거절 · 정책) |
+| POST | `/api/evalops/loop/send` | `{"category", "days", "dest": "eval_set"·"gap_csv"}` |
+
+## 고객 AS 상담 (`/api/as`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET / POST | `/api/as/setup` | 예시 자료 상태 / 준비 작업 `{"model_id"?, "index": true}` (가상 제품 매뉴얼 · FAQ 컬렉션, BM25 + 의미 인덱스) |
+| POST / GET | `/api/as/sessions` | 상담 만들기 `{"collection_id"?, "customer", "product_model", "channel"}` / 목록(`?status=`) |
+| GET | `/api/as/sessions/{id}` | 상담 · 대화 |
+| POST | `/api/as/sessions/{id}/message` | multipart: `text`, `images`(최대 3), `audio`(STT_URL 필요), `provider`?, `model`? → `reply` · `steps`(AS1~AS7) · `triage` · `photo` · `sources` · `verify`(근거 일치 · 코드 일치) · `guard` · `mismatch` · `handoff` · `ticket` · `cached` · `trace_id` |
+| POST | `/api/as/sessions/{id}/feedback` | `{"resolved", "satisfaction": 1~5, "comment"}` — 미해결이면 티켓 |
+| GET / PATCH | `/api/as/tickets` · `/tickets/{id}` | 이관 티켓(`?status=`) / 상태 `{"status": "open"·"in_progress"·"done", "note"}` |
+| GET | `/api/as/metrics` | 해결률 · 이관률 · 만족도 · 의도별(`?days=30`) |
+| POST | `/api/as/eval/triage` · `/eval/photo` · `/eval/e2e` | 실측 작업: 분류(제로샷 vs 학습) / 사진 코드 읽기 `{"hard", "repeats"}` / 문의 세트 종단 `{"guard_mode", "filter_model", "limit"}` |
+| GET | `/api/as/eval/runs` · `/eval/runs/{id}` | 실측 기록 |

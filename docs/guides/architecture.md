@@ -11,12 +11,13 @@ app/
     crud.py            모델 카탈로그 DB 헬퍼, 실행 이력 기록(record_run), 중단 작업 정리
     schemas.py         공용 스키마만(LLMRef · BulkDelete) — 단계의 요청 스키마는 각 단계의 schemas.py
     jobs.py            백그라운드 작업 큐(스레드 풀) + 작업 기록(job_records, 재시작해도 남음)
-    auth.py            선택형 접근 토큰(API_TOKEN)
+    auth.py            선택형 접근 토큰(API_TOKEN = 관리자) · 사용자별 토큰 · 그룹 · 역할(API_USERS), /api/me
+    tracing.py         요청 기록(Trace): 단계별 시간 · 토큰 · 비용 · 검색 신호 · 검사 결과, 해시 체인(감사 무결성) · 보관 기간 정리
     runtime.py         디바이스 · dtype · 시스템 정보 · 메모리 표본
     stats.py           부트스트랩 신뢰구간 · 짝지은 비교
     llm.py · llm_api.py LLM 클라이언트(OpenAI 호환 · Claude, 스트리밍 · 그림 입력) · 연결 API
     korean.py          Kiwi 형태소 · 문장 분리 · 명사구
-    media_store.py     이미지 · 영상 프레임 파일 위치(data/media/doc-<id>/) · 안전한 경로 해석
+    media_store.py     이미지 · 영상 프레임 · 원본 파일(sha 별) 위치(data/media/doc-<id>/, data/uploads/) · 안전한 경로 해석
     vectorstores/      VectorStore 인터페이스 + Qdrant · pgvector · MariaDB (작은 인덱스는 정확 검색)
     system_api.py      작업 · 실행 이력 · 시스템 정보 API
   stages/            LLM 시스템 엔지니어링 맵의 단계 — 뒤 단계가 앞 단계를 가져다 쓴다
@@ -31,12 +32,21 @@ app/
     agent/ rl/         8a 에이전트 · 8b 강화학습
     multimodal/        M · 멀티모달: ingest(이미지 · 영상 수집, 프레임 추출 · 같은 장면 제외)
     apps/              A · 의미 응용: 추천 · 분류 · 군집 · 중복 · 이상 · 키워드, presets/
+    docintel/          문서 처리 맵(D1~D7): sources(폴더 수집) · parsing(점검 · OCR) · layout(표 · 그림) · clean(머리말 · 중복 · 판) ·
+                       meta(메타 · 필터) · incremental(바뀐 문서만 재색인) · quality(청크 품질 · 근거 보존)
+    guardrails/        보안 · 가드레일 맵(G1~G7): injection · pii · acl · policy · audit · license · redteam, presets/
+    evalops/           평가 · 관측 맵(E1~E8): sets(버전 · 검토) · regression · monitor(대시보드) · feedback · drift · ab · loop
+    as_service/        고객 AS 상담 맵(AS1~AS8): triage(의도 · 긴급도 · 코드) · photo(사진 코드 읽기) · flow(상담 흐름 · 캐시 · 티켓 · 지표) ·
+                       setup(예시 매뉴얼), presets/
     registry/          맵 · 단계 설명(데이터만, 다른 앱 모듈을 불러오지 않음)
       model.py           Map · Page · Stage 구조와 문서 경로 규칙
       maps/<맵>.py       맵 1개 = 파일 1개: MAP(흐름 · 원칙 · 예시) + STAGES
       __init__.py        MAP_MODULES 순서로 모으기 · 조회(map_stages · map_flow · stage_for_nav)
   pipeline/          단계 연결 계층 — 단계들을 이어 붙이는 진입점
-    search.py          run_search: 2 RAG 검색(+3 리랭킹)에 4 검색 향상을 끼움. 모든 검색 API 가 여기를 거침
+    search.py          run_search: 2 RAG 검색(+3 리랭킹)에 4 검색 향상을 끼움. 모든 검색 API 가 여기를 거침.
+                       restrict: 권한(G3) · 메타 필터(D6) → 허용 문서(doc_ids)
+    serve.py           서비스 답변: prepare(입력 방어 → 검색 → 근거 검사 · 격리 → 프롬프트) / finish(검증 → 출력 정책 · 개인정보 → 요청 기록),
+                       answer_once — 답변 화면 · AS 상담 · A/B · 레드팀이 모두 거침
     flow.py · api.py   연결 실행기(4 → 1 → 2 → 3 → 6 → 7·8 → 답변), 연결 비교(/api/flow/*)
     schemas.py         경로 · 연결 설정(FlowPath · FlowConfig · RoutingConfig · 라우터 평가 요청)
   web/               화면 (자세히: guides/ui.md)
@@ -56,6 +66,7 @@ tests/               app/ 와 같은 구조: core/ · pipeline/ · web/ · stage
 - 레지스트리는 데이터만 — 앱의 다른 모듈을 불러오지 않습니다(화면 · 문서 생성이 무거운 모델 코드를 끌고 오지 않게). `maps/` 의 모든 파일이 `MAP_MODULES` 에 있어야 합니다.
 - 화면 스크립트는 정적 파일로. 템플릿에는 서버 값 한 줄 설정(`const MODEL_ID = {{ model_id }};`)만 인라인으로 두고, `static/js/` 의 화면 파일은 짝이 되는 템플릿이 있어야 합니다(한 화면을 나누면 `<화면>_<부분>.js`).
 - 테스트는 `app/` 와 같은 구조. 최상위에는 `conftest.py` · `helpers.py` · `test_architecture.py` · `test_docs.py` 만.
+- 운영 맵 패키지는 LLM 맵 단계 뒤 순서: `docintel` → `guardrails` → `evalops` → `as_service`(AS 는 앞의 셋과 LLM 맵 단계를 씀). `rag` 는 이들을 모르므로 가드레일 · 기록은 `pipeline/serve.py` 가 붙입니다.
 - 화면: 모든 화면은 `ui.page_header`, 이름표는 입력란과 연결, 삭제 확인은 `ui.confirm`(브라우저 `confirm()` 금지), 인라인 style · 손으로 부르는 `esc()` 는 늘리지 않음, 화면 링크는 새 주소로 — [화면 가이드](ui.md).
 
 ### 확장 체크리스트
@@ -118,6 +129,38 @@ FastAPI 라우터 ── core/system_api · llm_api / stages/*/…_api / web/pag
      └ rag/bm25 (청크 세트별 메모리 캐시) ┴ rag/fusion(RRF/가중합) → ModelManager.rerank(CrossEncoder) → 결과
 ```
 
+## 서비스 답변 흐름 (`pipeline/serve.py`)
+
+```
+질문 ─ G1 입력 방어 ─ 검색(run_search: G3 권한 · D6 메타 필터 → doc_ids) ─ G1 근거 속 지시 검사 · <근거> 격리 ─ LLM
+     ─ 2 RAG 검증(근거 일치 · 질문 관련성 · 번호) ─ G4 출력 정책 · G2 개인정보 가리기 ─ E3 요청 기록(Trace, 해시 체인 G5)
+```
+
+- `GUARD_MODE`(요청마다 `guard_mode` 로 덮어쓰기): `off` 검사 · 기록만 / `mask` 개인정보 가림(기본) / `enforce` 인젝션 질문 차단 · 의심 근거 제외 · 정책 위반 수정 · 거절.
+- 스트리밍 답변은 문장 단위로 모아 가립니다(`pii.StreamMasker`) — 번호가 조각으로 나뉘어 새지 않게.
+- 화면마다 방어를 따로 붙이지 않는 이유: 한 곳만 빠져도 그 길로 샙니다. 답변 화면 · AS 상담 · A/B 실험 · 레드팀이 모두 같은 `prepare` / `finish` 를 거칩니다.
+- 앱 안의 주기 스레드(`main._periodic`, 1분)가 주기가 된 수집 소스(D1)를 돌리고 하루 한 번 보관 기간이 지난 요청 기록을 지웁니다.
+
+## DB 모델
+
+| 테이블 | 모델 | 내용 |
+|---|---|---|
+| `embedding_models` · `catalog_exclusions` | EmbeddingModel · CatalogExclusion | 모델 카탈로그 |
+| `verify_labels` | VerifyLabel | 답변 검증 사람 판정 |
+| `test_runs` · `job_records` | TestRun · JobRecord | 실행 이력 · 작업 기록 |
+| `collections` · `documents` · `chunk_sets` · `chunks` · `vector_indexes` | Collection · Document · ChunkSet · Chunk · VectorIndex | RAG 자료 · 청크 · 인덱스. 문서 메타(`meta`)에 종류 · 부서 · 제품 모델 · 날짜 · 권한(acl) · 판 · 원본 · 바뀐 시각 |
+| `eval_sets` | EvalSet | 평가 세트(+ 버전 · 회귀 지정 · 기준선 · 변경 이력, 0010) |
+| `finetune_runs` · `preference_pairs` · `app_models` | FinetuneRun · PreferencePair · AppModel | 파인튜닝 · 선호 쌍 · 의미 응용 모델 |
+| `traces` | Trace | 요청 기록 · 감사 로그(0010) |
+| `experiments` | Experiment | A/B 실험(0010) |
+| `answer_cache` | AnswerCache | AS 의미 캐시(0010) |
+| `as_sessions` | AsSession | AS 상담 · 티켓(0010) |
+| `ingest_sources` | IngestSource | 폴더 수집 소스(0010) |
+
+마이그레이션은 `migrations/versions/0001_initial` … `0010_maps_ops` 입니다.
+
+## 검색 저장 방식
+
 - 청크 id 를 벡터 DB 의 포인트 id 로 쓰고, 문서 id 를 함께 저장해 문서 필터에 씁니다. 벡터 DB 쪽 이름은 `el_vi_{인덱스 id}` 입니다.
 - BM25 는 문서 쪽 가중치를 미리 계산한 희소 행렬(scipy)로 메모리에 두고, 청크 수·최대 id 가 바뀌면 다시 만듭니다.
 - 청크 세트 생성·인덱스 구축은 백그라운드 작업(`jobs`)이고, 실패하면 상태가 `error` 로 남아 화면에서 다시 구축할 수 있습니다.
@@ -164,6 +207,9 @@ FastAPI 라우터 ── core/system_api · llm_api / stages/*/…_api / web/pag
 | 벡터 (Qdrant 로컬 모드) | `data/qdrant` (서버/pgvector/MariaDB 는 각 DB) |
 | DB 마이그레이션 | `migrations/` (Alembic) |
 | 앱 DB | `data/app.db` (`DATA_DIR`) |
+| 업로드 원본 (sha 별, 다시 파싱 · OCR 용) | `data/uploads/<sha 앞 2글자>/` |
+| 폴더 수집 기본 위치 | `data/inbox` (`INGEST_ROOTS` 로 더 허용) |
+| AS 예시 자료 · 레드팀 공격 세트 | `app/stages/as_service/presets/` · `app/stages/guardrails/presets/` |
 | 사용자 데이터셋 | `data/datasets/*.json` |
 | 내장 데이터셋 | `app/stages/embedding/datasets/*.json` |
 | 의미 응용 예시 데이터 | `app/stages/apps/presets/*.json` |

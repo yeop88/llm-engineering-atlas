@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}티켓 · 지표{% endblock %}
+{% block content %}
+{% call ui.page_header("티켓 · 지표") %}상담원에게 넘어온 티켓(안전 문의 · 답을 찾지 못한 문의 · 고객이 미해결로 응답한 문의)을 처리하고, 상담 전체의 해결률 · 이관률 · 만족도를 봅니다. 티켓에는 증상 · 오류 코드 · 이미 안내한 조치 · 사진 수가 담겨 있어 고객에게 처음부터 다시 묻지 않아도 됩니다.{% endcall %}
+
+<div id="metrics" class="card stack">
+  <div class="row between">
+    <h2 class="m-0">지표 (AS8)</h2>
+    <div class="field"><label for="m-days">기간</label><select id="m-days" class="w-lg"><option value="7">최근 7일</option><option value="30" selected>최근 30일</option><option value="90">최근 90일</option><option value="365">최근 1년</option></select></div>
+  </div>
+  <div id="m-out"><div class="loading" role="status">불러오는 중…</div></div>
+</div>
+
+<div class="grid cols-2 mt-4 items-start">
+  <div class="card stack">
+    <div class="row between">
+      <h2 class="m-0">티켓 (AS7)</h2>
+      <div class="field"><label for="t-status">상태</label><select id="t-status" class="w-lg"><option value="">전체</option><option value="open" selected>접수</option><option value="in_progress">처리 중</option><option value="done">완료</option></select></div>
+    </div>
+    <div id="t-list"></div>
+  </div>
+  <div class="card stack" id="t-detail"><div class="empty">왼쪽 목록에서 티켓을 고르세요.</div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/as/tickets.js') }}"></script>
+{% endblock %}

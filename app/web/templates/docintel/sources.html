@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}수집 · 메타 · 증분 갱신{% endblock %}
+{% block content %}
+{% call ui.page_header("수집 · 메타 · 증분 갱신") %}허용된 폴더(INGEST_ROOTS)를 컬렉션의 <b>수집 소스</b>로 등록하면 새 · 바뀐 · 지운 파일만 반영합니다(같은 내용은 해시로 건너뜀). 문서 글이 바뀌면 청크 세트가 '최신 아님'이 되고, <b>증분 갱신</b>은 바뀐 문서의 청크 · 벡터만 다시 만듭니다. 문서마다 종류 · 부서 · 날짜 · 제품 모델 · 권한 그룹을 붙이면 검색 필터와 권한별 검색에 쓰입니다.{% endcall %}
+
+<div class="card stack">
+  <div class="row">
+    <div class="field grow"><label for="d-col">컬렉션</label><select id="d-col"></select></div>
+  </div>
+</div>
+
+<div class="card stack mt-4">
+  <h2>수집 소스 (폴더)</h2>
+  <div class="small muted" id="s-roots"></div>
+  <div class="row">
+    <div class="field grow"><label for="s-path">폴더 경로</label><input id="s-path" placeholder="예: data/inbox/규정집"></div>
+    <div class="field"><label for="s-pattern">파일 패턴</label><input class="w-lg" id="s-pattern" value="*" title="예: *.pdf, 규정*.hwp (하위 폴더까지 찾음)"></div>
+    <div class="field"><label for="s-interval">주기(분, 0 = 손으로만)</label><input class="w-md" id="s-interval" type="number" value="0" min="0" max="10080"></div>
+    <div class="self-end"><button class="btn primary" id="s-add">소스 추가</button></div>
+  </div>
+  <label class="row small m-0"><input type="checkbox" id="s-refresh" checked> 동기화 뒤 청크 세트 · 인덱스 증분 갱신까지</label>
+  <div id="s-list"></div>
+  <div id="s-progress" hidden></div>
+  <div id="s-out"></div>
+</div>
+
+<div class="card stack mt-4">
+  <div class="row between"><h2 class="m-0">청크 세트 상태</h2><button class="btn sm" id="c-reload">다시 보기</button></div>
+  <div class="small muted">청크 세트마다 마지막 갱신 뒤 추가 · 삭제 · 글이 바뀐(OCR · 표 추출 · 정제) 문서를 셉니다. 증분 갱신은 그 문서의 청크만 다시 자르고, 그 세트의 모든 준비된 인덱스에 새 청크 벡터만 넣습니다.</div>
+  <div id="c-list"></div>
+  <div id="c-progress" hidden></div>
+  <div id="c-out"></div>
+</div>
+
+<div id="meta" class="card stack mt-4">
+  <h2>문서 메타데이터</h2>
+  <div class="small muted">칸을 고치고 '저장'을 누르면 그 문서만 바뀝니다. 제품 모델 · 볼 수 있는 그룹은 쉼표로 여럿. 그룹을 비우면 모두가 봅니다. '새 판에 밀림'인 문서는 검색 필터 '최신판만'에서 빠집니다.</div>
+  <div id="m-facets"></div>
+  <div class="row">
+    <div class="field grow"><label for="m-q">파일 이름으로 찾기</label><input id="m-q" placeholder="파일 이름 일부"></div>
+  </div>
+  <div id="m-list"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/docintel/sources.js') }}"></script>
+{% endblock %}

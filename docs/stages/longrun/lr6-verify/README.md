@@ -34,7 +34,7 @@
 이미 있는 단계 위에 짓습니다.
 
 - [MA7 품질 검증 에이전트](../../multi-agent/ma7-critic-agent/README.md) — 멀티에이전트 · 멀티모달 맵 · 🟡 기초 있음
-- [E2 오프라인 평가 · 회귀](../../evalops/e2-offline/README.md) — 평가 · 관측 (LLMOps) 맵 · 🟡 기초 있음
+- [E2 오프라인 평가 · 회귀](../../evalops/e2-offline/README.md) — 평가 · 관측 (LLMOps) 맵 · ✅ 구현됨
 
 ---
 

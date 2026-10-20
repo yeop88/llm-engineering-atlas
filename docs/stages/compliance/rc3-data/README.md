@@ -33,8 +33,8 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [G6 데이터 · 모델 라이선스 · 출처](../../guardrails/g6-license/README.md) — 보안 · 가드레일 · 거버넌스 맵 · 🟡 기초 있음
-- [D1 수집 · 연결](../../docintel/d1-ingest/README.md) — 문서 처리 (Document Intelligence) 맵 · 🟡 기초 있음
+- [G6 데이터 · 모델 라이선스 · 출처](../../guardrails/g6-license/README.md) — 보안 · 가드레일 · 거버넌스 맵 · ✅ 구현됨
+- [D1 수집 · 연결](../../docintel/d1-ingest/README.md) — 문서 처리 (Document Intelligence) 맵 · ✅ 구현됨
 
 ---
 

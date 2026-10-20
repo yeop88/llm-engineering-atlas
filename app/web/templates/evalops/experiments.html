@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}A/B 실험{% endblock %}
+{% block content %}
+{% call ui.page_header("A/B 실험") %}요청을 두 설정(A · B)에 나눠 보내고 피드백 좋아요율 · 근거 일치 · 질문 관련성 · 거절률 · 지연 · 비용을 비교합니다. 배정은 실험 id 와 요청 키(세션 · 사용자, 비우면 질문)의 해시라 같은 사람은 늘 같은 팔에 남습니다. 요청이 적으면 평가 세트 질문을 실제 요청처럼 흘려보내 미리 잴 수 있습니다(재생 — 피드백 없이 자동 지표만).{% endcall %}
+
+<div class="card stack">
+  <div class="row between"><h2 class="m-0">실험</h2><button class="btn sm" id="x-reload">새로 고침</button></div>
+  <div id="x-list"><div class="loading" role="status">불러오는 중…</div></div>
+</div>
+
+<div class="card stack mt-4" id="x-detail" hidden>
+  <div class="row between"><h2 class="m-0" id="x-title">실험</h2><div class="row"><span id="x-status"></span><button class="btn sm" id="x-stop">실험 멈추기</button></div></div>
+  <div id="x-arms"></div>
+  <div id="x-report"></div>
+  <h3>질문 하나 보내기</h3>
+  <div class="row nowrap-row">
+    <div class="field grow"><label for="x-q">질문</label><input id="x-q" placeholder="예: 세탁기 배수가 안 될 때 어떻게 하나요?"></div>
+    <div class="field"><label for="x-key">배정 키 (비우면 질문)</label><input class="w-lg" id="x-key" placeholder="예: user-17"></div>
+    <div class="self-end"><button class="btn primary" id="x-ask">보내기</button></div>
+  </div>
+  <div id="x-ask-out"></div>
+  <h3>기록 재생</h3>
+  <div class="row">
+    <div class="field grow"><label for="x-set">평가 세트</label><select id="x-set"></select></div>
+    <div class="field"><label for="x-n">질문 수</label><input class="w-md" id="x-n" type="number" value="20" min="2" max="500"></div>
+    <div class="field"><label for="x-seed">seed</label><input class="w-sm" id="x-seed" type="number" value="0"></div>
+    <div class="self-end"><button class="btn" id="x-replay">재생</button></div>
+  </div>
+  <div class="small muted">질문마다 배정된 팔로 검색 → 답변 → 검증을 실행합니다. 로컬 LLM 은 질문당 수십 초가 걸릴 수 있습니다.</div>
+  <div id="x-progress" hidden></div>
+</div>
+
+<details class="card mt-4" id="n-card">
+  <summary><b>새 실험 만들기</b></summary>
+  <div class="stack mt-2">
+    <div class="row">
+      <div class="field grow"><label for="n-name">이름</label><input id="n-name" maxlength="200" placeholder="예: 리랭커 켜기 vs 끄기"></div>
+      <div class="field"><label for="n-col">컬렉션</label><select id="n-col"></select></div>
+      <div class="field"><label for="n-split">B 로 보낼 비율</label><input class="w-md" id="n-split" type="number" value="0.5" step="0.05" min="0.05" max="0.95"></div>
+    </div>
+    <div class="grid cols-2">
+      {% for arm in ["a", "b"] %}
+      <div class="stack">
+        <b>팔 {{ arm | upper }}</b>
+        <div class="row">
+          <div class="field grow"><label for="n-{{ arm }}-label">이름표</label><input id="n-{{ arm }}-label" maxlength="100" placeholder="{{ '지금 설정' if arm == 'a' else '바꾼 설정' }}"></div>
+          <div class="field"><label for="n-{{ arm }}-mode">검색 방식</label><select id="n-{{ arm }}-mode" data-mode="{{ arm }}"><option value="hybrid">하이브리드</option><option value="dense">의미</option><option value="bm25">BM25</option></select></div>
+        </div>
+        <div class="row">
+          <div class="field" id="n-{{ arm }}-idx-wrap"><label for="n-{{ arm }}-idx">벡터 인덱스</label><select id="n-{{ arm }}-idx" data-idx></select></div>
+          <div class="field" id="n-{{ arm }}-cs-wrap" hidden><label for="n-{{ arm }}-cs">청크 세트</label><select id="n-{{ arm }}-cs" data-cs></select></div>
+          <div class="field"><label for="n-{{ arm }}-rr">리랭커</label><select id="n-{{ arm }}-rr" data-rr><option value="">사용 안 함</option></select></div>
+          <div class="field"><label for="n-{{ arm }}-enh">검색 향상</label><select id="n-{{ arm }}-enh"><option value="none">끔</option><option value="rewrite">질의 재작성</option><option value="hyde">HyDE</option><option value="multi">다중 질의</option></select></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="n-{{ arm }}-provider">LLM</label><select id="n-{{ arm }}-provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+          <div class="field grow"><label for="n-{{ arm }}-model">모델 (비우면 설정값)</label><input id="n-{{ arm }}-model"></div>
+          <div class="field"><label for="n-{{ arm }}-top">근거 수</label><input class="w-sm" id="n-{{ arm }}-top" type="number" value="5" min="1" max="20"></div>
+          <div class="field"><label for="n-{{ arm }}-max">최대 토큰</label><input class="w-md" id="n-{{ arm }}-max" type="number" value="500" min="50" max="4000"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="field"><label for="n-notes">메모 (가설 · 무엇을 바꿨나)</label><textarea id="n-notes" rows="2" maxlength="2000"></textarea></div>
+    <div class="row justify-end"><button class="btn primary" id="n-create">실험 만들기</button></div>
+  </div>
+</details>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/evalops/experiments.js') }}"></script>
+{% endblock %}

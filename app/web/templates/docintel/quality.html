@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}정제 · 품질 점검{% endblock %}
+{% block content %}
+{% call ui.page_header("정제 · 품질 점검") %}잡음 · 중복은 검색 상위를 차지해 정답을 밀어내고, 개정판이 섞이면 옛 조항으로 답합니다. <b>정제</b>는 여러 쪽에 반복되는 머리말 · 꼬리말 · 쪽 번호를 걷고, 거의 같은 문서와 개정판을 <b>판 묶음</b>으로 묶어 최신판만 검색되게 합니다. <b>청크 품질</b>은 길이 분포 · 짧은 · 똑같은 · 깨진 청크를, <b>근거 보존율</b>은 평가 세트의 근거 문장이 청크 하나에 온전히 들어 있는 비율을 봅니다.{% endcall %}
+
+<div class="card stack">
+  <div class="row">
+    <div class="field grow"><label for="q-col">컬렉션</label><select id="q-col"></select></div>
+  </div>
+</div>
+
+<div class="card stack mt-4">
+  <h2>정제 · 중복 · 판</h2>
+  <div class="small muted">분석은 문서를 바꾸지 않습니다. 거의 같은 문서는 글자 5-gram 자카드 유사도로 찾고, 판 묶음은 제목에서 날짜 · '개정' · 'v2' 같은 표기를 지운 이름이 같거나 거의 같은 문서입니다. 묶음 안에서는 문서 날짜(메타데이터), 없으면 올린 순서가 늦은 것이 최신입니다.</div>
+  <div class="row">
+    <div class="field"><label for="c-th">거의 같음 기준 (자카드)</label><input class="w-md" id="c-th" type="number" value="0.85" min="0.5" max="1" step="0.01"></div>
+    <div class="self-end"><button class="btn primary" id="c-run">분석</button></div>
+  </div>
+  <div id="c-out"></div>
+  <div class="row" id="c-apply-row" hidden>
+    <label class="row small m-0"><input type="checkbox" id="c-boiler" checked> 반복 줄 · 쪽 번호 지우기 (문서 글을 고침)</label>
+    <label class="row small m-0"><input type="checkbox" id="c-versions" checked> 판 묶음 표시 (옛 판 = '새 판에 밀림')</label>
+    <div class="self-end"><button class="btn" id="c-apply">적용</button></div>
+  </div>
+  <div id="c-applied"></div>
+</div>
+
+<div id="chunks" class="card stack mt-4">
+  <h2>청크 품질 · 근거 보존</h2>
+  <div class="row">
+    <div class="field grow"><label for="q-cs">청크 세트</label><select id="q-cs"></select></div>
+    <div class="self-end"><button class="btn primary" id="q-run">품질 보고</button></div>
+  </div>
+  <div id="q-out"></div>
+  <div class="row mt-2">
+    <div class="field grow"><label for="q-set">평가 세트</label><select id="q-set"></select></div>
+    <div class="self-end"><button class="btn primary" id="e-run">근거 보존율</button></div>
+  </div>
+  <div class="small muted">근거 문장마다 그 질문의 정답 문서 청크 중 하나가 근거 글자 n-gram 의 60% 이상을 담으면 '보존'입니다(2 RAG 평가와 같은 판정). 청크 경계가 근거를 자르면 어떤 청크를 찾아도 근거 전체를 LLM 에 줄 수 없습니다.</div>
+  <div id="e-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/docintel/quality.js') }}"></script>
+{% endblock %}

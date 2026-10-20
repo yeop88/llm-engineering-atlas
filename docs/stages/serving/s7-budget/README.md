@@ -34,7 +34,7 @@
 이미 있는 단계 위에 짓습니다.
 
 - [6 라우팅](../../llm/6-routing/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
-- [E4 비용 · 지연 대시보드](../../evalops/e4-cost/README.md) — 평가 · 관측 (LLMOps) 맵 · ⬜ 예정
+- [E4 비용 · 지연 대시보드](../../evalops/e4-cost/README.md) — 평가 · 관측 (LLMOps) 맵 · ✅ 구현됨
 
 ---
 

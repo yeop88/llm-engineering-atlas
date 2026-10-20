@@ -98,6 +98,8 @@ llama-server.exe -m C:\Users\<사용자>\llm-models\gemma-4-E4B_q4_0-it.gguf --m
 
 - OpenAI 호환은 `image_url`(data URI), Claude 는 `image`(base64) 블록으로 보냅니다. `--mmproj` 없이 띄운 서버는 그림을 거부하거나 무시합니다.
 - 한계: 문장별 근거 검증(글자 · 의미)은 그림 내용을 모르므로, 그림을 인용한 문장은 '근거 약함'으로 나올 수 있습니다 — LLM 판정을 함께 보세요.
+- 같은 비전 서버를 **스캔 PDF OCR**(문서 처리 D2, 쪽당 약 26초)과 **AS 오류 사진 진단**(AS4, 장당 3~4초)도 씁니다. 두 기능은 그림이 꼭 필요하므로 `--mmproj` 없이 띄운 서버면 실패로 끝납니다 — [파싱 · OCR](../stages/docintel/d2-parse/parsing.md), [분류 · 사진 진단](../stages/as-service/as2-triage/eval.md).
+- 음성 문의(AS1)는 LLM 이 아니라 별도 받아 적기 서버(`STT_URL`, OpenAI 호환 `/audio/transcriptions`)를 씁니다.
 
 ## 동작
 

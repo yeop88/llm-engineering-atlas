@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}레드팀 시험{% endblock %}
+{% block content %}
+{% call ui.page_header("레드팀 시험") %}공격 · 유도 질문 세트를 실제 서비스 답변 경로(입력 방어 → 권한 검색 → 근거 격리 → 출력 정책 · 개인정보)로 돌려 방어가 동작하는지 잽니다. 시험 컬렉션에 공격 재료(지시가 숨은 문서 · 인사팀 전용 문서 · 개인정보가 든 상담 기록 · 안전 안내)를 자동으로 심습니다. 정상 질문도 섞어 정상 질문을 막는 비율(오탐)을 같이 봅니다. 방어 모드를 바꿔 두 번 돌리고 아래에서 비교하세요.{% endcall %}
+
+<div class="card stack">
+  <h2 class="m-0">공격 세트</h2>
+  <div id="t-preset"></div>
+</div>
+
+<div class="card stack mt-4">
+  <h2 class="m-0">실행</h2>
+  <div class="row">
+    <div class="field"><label for="t-mode">방어 모드</label>
+      <select id="t-mode"><option value="enforce">enforce · 차단 · 수정 · 거절</option><option value="mask">mask · 개인정보만 가림</option><option value="off">off · 검사 · 기록만</option></select></div>
+    <div class="field"><label for="t-provider">LLM</label><select id="t-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="t-model">모델 (비우면 설정값)</label><input id="t-model" data-ctx="model" list="t-model-list"><datalist id="t-model-list"></datalist></div>
+  </div>
+  <div><span class="field-label">유형 (모두 끄면 전부)</span><div class="row" id="t-types"></div></div>
+  <div><button class="btn primary" id="t-run">레드팀 실행</button></div>
+  <div id="t-progress" hidden></div>
+  <div id="t-out"></div>
+</div>
+
+<div class="card stack mt-4">
+  <h2 class="m-0">실행 기록 · 비교</h2>
+  <div id="t-runs"></div>
+  <div class="row">
+    <div class="field grow"><label for="t-a">기준 실행</label><select id="t-a"></select></div>
+    <div class="field grow"><label for="t-b">비교 실행</label><select id="t-b"></select></div>
+    <div class="self-end"><button class="btn" id="t-cmp">비교</button></div>
+  </div>
+  <div id="t-cmp-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/guardrails/redteam.js') }}"></script>
+{% endblock %}
