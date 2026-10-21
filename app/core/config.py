@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     watch_regression_hours: float = 0
     # 정기 점검 경보를 보낼 주소(POST JSON). 비우면 화면(요청 기록 · 비용)에만 표시
     alert_webhook: str | None = None
+    # 고객 프로필(대화 · 메모리 C4: 보유 제품 · 지난 문의 요약) 보관 일수. 0 = 지우지 않음. 개인정보는 넣지 않지만 오래 두지 않는다
+    profile_retention_days: int = 90
     # 고객 AS 상담(AS1 · AS7): 음성 인식 서버(OpenAI 호환 /audio/transcriptions, 예: whisper.cpp server)와 티켓을 보낼 외부 접수 시스템 주소
     stt_url: str | None = None
     stt_model: str = "whisper-1"

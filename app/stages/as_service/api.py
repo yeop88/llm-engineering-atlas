@@ -17,9 +17,13 @@ from app.core.db import AsSession, ChunkSet, EmbeddingModel, SessionLocal, TestR
 from app.core.jobs import Job, jobs
 from app.core.vectorstores import get_store
 from app.pipeline import serve
+from app.pipeline.search import default_config
 from app.stages.apps import common as apps_common
 from app.stages.as_service import flow, photo, setup, triage
 from app.stages.as_service.schemas import E2EEvalIn, FeedbackIn, PhotoEvalIn, SessionIn, SetupIn, TicketUpdate, TriageEvalIn
+from app.stages.conversation import memory as conv_memory
+from app.stages.conversation import rewrite as conv_rewrite
+from app.stages.conversation import vocab as conv_vocab
 from app.stages.embedding.model_manager import ModelSpec
 from app.stages.guardrails import acl
 from app.stages.rag import service
@@ -45,17 +49,12 @@ def _triager(spec: ModelSpec) -> triage.Triage:
 
 
 def _search_cfg(db: Session, collection_id: int) -> tuple[dict[str, Any], ModelSpec | None]:
-    """컬렉션의 준비된 인덱스가 있으면 혼합 검색(BM25 + 의미), 없으면 BM25 — 오류 코드 같은 낱말은 BM25 가 잘 잡는다."""
-    cs = db.scalar(select(ChunkSet).where(ChunkSet.collection_id == collection_id, ChunkSet.status == "ready").order_by(ChunkSet.id.desc()))
-    if cs is None:
+    """컬렉션 기본 검색(연결 계층 default_config: 인덱스가 있으면 혼합, 없으면 BM25)과 그 인덱스의 임베딩 모델(분류 · 캐시에 씀)."""
+    cfg = default_config(db, collection_id)
+    if cfg is None:
         raise HTTPException(400, "준비된 청크 세트가 없습니다 — 예시 자료 준비를 먼저 실행하세요.")
-    idx = db.scalar(
-        select(VectorIndex).where(VectorIndex.chunk_set_id == cs.id, VectorIndex.status == "ready").order_by(VectorIndex.id.desc())
-    )
-    if idx is None:
-        return {"mode": "bm25", "chunk_set_id": cs.id, "top_k": 4}, None
-    spec = crud.get_spec(db, idx.model_id, "embedding") if idx.model_id else None
-    return {"mode": "hybrid", "index_id": idx.id, "top_k": 4}, spec
+    model_id = cfg.pop("model_id", None)
+    return cfg, (crud.get_spec(db, model_id, "embedding") if model_id else None)
 
 
 def _session(db: Session, sid: str) -> AsSession:
@@ -82,8 +81,20 @@ def _run(db: Session, s: AsSession, text: str, images: list[bytes], lcfg: llm.LL
     def embed_fn(q: str) -> np.ndarray:
         return apps_common.embed(spec, [q], "query")[0]
 
+    v = conv_vocab.of(db, s.collection_id)
+
+    def rewrite_fn(q: str, prior: list[dict[str, Any]]) -> dict[str, Any]:
+        start = conv_memory.empty() | ({"product_model": s.product_model} if s.product_model else {})
+        mem = conv_memory.from_messages(prior, v["models"], v["codes"], base=start, model_codes=v["model_codes"])
+        mem = conv_memory.update(mem, "user", q, v["models"], v["codes"], v["model_codes"])
+        try:
+            return conv_rewrite.rewrite(q, prior, mem, "auto", lcfg)
+        except llm.LLMError:
+            return conv_rewrite.rewrite(q, prior, mem, "rule")
+
     return flow.handle(db, s, text, images=images, triage_fn=_triager(spec), answer_fn=answer_fn, vision_fn=vision_fn,
-                       embed_fn=embed_fn if use_cache else None, model_hf=spec.hf_id, filter_model=filter_model)  # fmt: skip
+                       embed_fn=embed_fn if use_cache else None, model_hf=spec.hf_id, filter_model=filter_model,
+                       rewrite_fn=rewrite_fn)  # fmt: skip
 
 
 # ── 예시 자료 ──────────────────────────────────────────────────────────────

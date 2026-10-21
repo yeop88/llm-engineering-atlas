@@ -6,6 +6,7 @@ enhance · llm_rerank 만 넣으면 어느 화면에서든 같은 방식으로 �
 
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core import llm
@@ -28,6 +29,21 @@ def collection_of(db: Session, cfg: dict[str, Any]) -> int | None:
         cs_id = cfg.get("chunk_set_id")
     cs = db.get(ChunkSet, cs_id) if cs_id else None
     return cs.collection_id if cs else None
+
+
+def default_config(db: Session, collection_id: int, top_k: int = 4) -> dict[str, Any] | None:
+    """컬렉션의 기본 검색 설정: 최근 준비된 청크 세트에 준비된 인덱스가 있으면 혼합(BM25 + 의미), 없으면 BM25.
+    오류 코드 · 조문 번호 같은 낱말은 BM25 가, 바꿔 말한 질문은 의미 검색이 잡는다. 설정 화면이 없는 서비스(AS 상담 · 대화)가 쓴다.
+    → 설정(인덱스면 model_id 포함) 또는 준비된 청크 세트가 없으면 None."""
+    cs = db.scalar(select(ChunkSet).where(ChunkSet.collection_id == collection_id, ChunkSet.status == "ready").order_by(ChunkSet.id.desc()))
+    if cs is None:
+        return None
+    idx = db.scalar(
+        select(VectorIndex).where(VectorIndex.chunk_set_id == cs.id, VectorIndex.status == "ready").order_by(VectorIndex.id.desc())
+    )
+    if idx is None:
+        return {"mode": "bm25", "chunk_set_id": cs.id, "top_k": top_k}
+    return {"mode": "hybrid", "index_id": idx.id, "top_k": top_k, "model_id": idx.model_id}
 
 
 def restrict(db: Session, cfg: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:

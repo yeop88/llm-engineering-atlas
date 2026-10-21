@@ -1,0 +1,48 @@
+{
+  "name": "대화 평가 세트 v1",
+  "note": "후속 질문(앞 대화에 기대는 질문)의 검색을 잰다. 정답은 문서 이름(그 문서가 상위에 나오면 맞음). AS 는 가상 제품 예시 자료, 법률은 공개 법령 · 판례 자료(법령 파일이 정답).",
+  "collections": {
+    "as": "AS 매뉴얼 (예시)",
+    "legal": "근로 · 임대차 법률 (공개 자료)"
+  },
+  "dialogs": [
+    {"id": "as-1", "domain": "as", "turns": ["WM-200 세탁기에 E4 가 떠요", "필터는 어디 있어요?"], "gold": ["WM-200 드럼세탁기 사용 설명서.md"], "model": "WM-200", "codes": ["E4"]},
+    {"id": "as-2", "domain": "as", "turns": ["통돌이 WM-100 쓰는데 물이 안 빠져요", "필터 청소는 어떻게 해요?"], "gold": ["WM-100 통돌이 세탁기 사용 설명서.md"], "model": "WM-100", "codes": []},
+    {"id": "as-3", "domain": "as", "turns": ["DR-300 건조기 d80 이 떠요", "그거 자주 안 뜨게 하려면요?"], "gold": ["DR-300 건조기 사용 설명서.md"], "model": "DR-300", "codes": ["d80"]},
+    {"id": "as-4", "domain": "as", "turns": ["건조기 DR-300 물통 표시등이 켜졌어요", "그거 어디 있는 거예요?"], "gold": ["DR-300 건조기 사용 설명서.md"], "model": "DR-300", "codes": []},
+    {"id": "as-5", "domain": "as", "turns": ["WM-200 에 E1 이 떠요", "그럼 호스는 어떻게 확인해요?"], "gold": ["WM-200 드럼세탁기 사용 설명서.md"], "model": "WM-200", "codes": ["E1"]},
+    {"id": "as-6", "domain": "as", "turns": ["WM-100 세탁기 뚜껑 닫았는데 dE 가 나와요", "그거 계속 나오면요?"], "gold": ["WM-100 통돌이 세탁기 사용 설명서.md"], "model": "WM-100", "codes": ["dE"]},
+    {"id": "as-7", "domain": "as", "turns": ["WM-200 아기옷 코스 있나요?", "세제는 어느 칸에 넣어요?"], "gold": ["WM-200 드럼세탁기 사용 설명서.md"], "model": "WM-200", "codes": []},
+    {"id": "as-8", "domain": "as", "turns": ["DR-300 건조기에서 덜컹거리는 소리가 나요", "그 소리는 정상인가요?"], "gold": ["DR-300 건조기 사용 설명서.md"], "model": "DR-300", "codes": []},
+    {"id": "as-9", "domain": "as", "turns": ["WM-200 E6 오류가 떠요", "다른 모델 WM-100 은 어떻게 해요?"], "gold": ["WM-100 통돌이 세탁기 사용 설명서.md"], "model": "WM-100", "codes": ["E6"]},
+    {"id": "as-10", "domain": "as", "turns": ["세탁기 주문했는데 배송 언제 와요?", "설치도 해 주나요?"], "gold": ["고객센터 FAQ.md"], "model": "", "codes": []},
+    {"id": "as-11", "domain": "as", "turns": ["WM-100 LE 오류가 떠요", "그럼 방문 수리 출장비는 얼마예요?"], "gold": ["고객센터 FAQ.md"], "model": "WM-100", "codes": ["LE"]},
+    {"id": "as-12", "domain": "as", "turns": ["WM-200 통세척은 어떻게 해요?", "얼마나 자주 해야 돼요?"], "gold": ["WM-200 드럼세탁기 사용 설명서.md"], "model": "WM-200", "codes": []},
+
+    {"id": "lg-1", "domain": "legal", "turns": ["주휴수당은 어떤 조건에서 받을 수 있나요?", "그럼 단시간 근로자도 받나요?"], "gold": ["근로기준법.txt", "근로기준법 시행령.txt"]},
+    {"id": "lg-2", "domain": "legal", "turns": ["최저임금은 어떻게 정해지나요?", "수습 기간에도 그대로 적용되나요?"], "gold": ["최저임금법.txt", "최저임금법 시행령.txt"]},
+    {"id": "lg-3", "domain": "legal", "turns": ["전세 계약 후 확정일자는 왜 받아야 하나요?", "그건 어디서 받아요?"], "gold": ["주택임대차보호법.txt", "주택임대차보호법 시행령.txt"]},
+    {"id": "lg-4", "domain": "legal", "turns": ["주택 임대차 계약 갱신 요구는 언제 할 수 있나요?", "집주인이 거절할 수 있는 경우는요?"], "gold": ["주택임대차보호법.txt", "주택임대차보호법 시행령.txt"]},
+    {"id": "lg-5", "domain": "legal", "turns": ["해고 예고는 며칠 전에 해야 하나요?", "그걸 안 하면 어떻게 되나요?"], "gold": ["근로기준법.txt", "근로기준법 시행령.txt"]},
+    {"id": "lg-6", "domain": "legal", "turns": ["연장근로 수당은 얼마를 더 받나요?", "야간에도 똑같나요?"], "gold": ["근로기준법.txt", "근로기준법 시행령.txt"]},
+    {"id": "lg-7", "domain": "legal", "turns": ["연차휴가는 며칠인가요?", "1년이 안 된 신입은요?"], "gold": ["근로기준법.txt", "근로기준법 시행령.txt"]},
+    {"id": "lg-8", "domain": "legal", "turns": ["최저임금보다 적게 주면 어떻게 되나요?", "그 벌칙은 얼마인가요?"], "gold": ["최저임금법.txt", "최저임금법 시행령.txt"]},
+    {"id": "lg-9", "domain": "legal", "turns": ["전세 보증금을 돌려받지 못하면 어떻게 하나요?", "임차권등기명령은 어떻게 신청해요?"], "gold": ["주택임대차보호법.txt", "주택임대차보호법 시행령.txt"]},
+    {"id": "lg-10", "domain": "legal", "turns": ["근로계약서는 꼭 써야 하나요?", "안 쓰면 벌금이 있나요?"], "gold": ["근로기준법.txt", "근로기준법 시행령.txt"]},
+    {"id": "lg-11", "domain": "legal", "turns": ["월세를 올려 달라고 하면 얼마까지 올릴 수 있나요?", "그 한도는 매년 적용되나요?"], "gold": ["주택임대차보호법.txt", "주택임대차보호법 시행령.txt"]},
+    {"id": "lg-12", "domain": "legal", "turns": ["임금은 언제까지 줘야 하나요?", "퇴사하면요?"], "gold": ["근로기준법.txt", "근로기준법 시행령.txt"]}
+  ],
+  "clarify": [
+    {"question": "세탁기 물이 안 빠져요", "start_model": "", "ask": true},
+    {"question": "WM-200 물이 안 빠져요", "start_model": "", "ask": false},
+    {"question": "건조기 d80 이 떠요", "start_model": "", "ask": false},
+    {"question": "통돌이에서 IE 오류가 나요", "start_model": "", "ask": false},
+    {"question": "세탁기에 E4 가 떠요", "start_model": "", "ask": false},
+    {"question": "세탁기에서 소리가 나요", "start_model": "WM-200", "ask": false},
+    {"question": "배송은 며칠 걸려요?", "start_model": "", "ask": false},
+    {"question": "세제는 어느 칸에 넣어요?", "start_model": "", "ask": false},
+    {"question": "DR-300 건조가 안 돼요", "start_model": "", "ask": false},
+    {"question": "물이 새요", "start_model": "", "ask": true},
+    {"question": "환불은 어떻게 받나요?", "start_model": "", "ask": false}
+  ]
+}

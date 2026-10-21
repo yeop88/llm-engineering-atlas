@@ -445,3 +445,14 @@ def init_db() -> None:
 def get_db() -> Iterator[Session]:
     with SessionLocal() as session:
         yield session
+
+
+class Profile(Base):
+    """고객 프로필(대화 · 메모리 C4): 보유 제품 · 지난 문의 요약. 개인정보는 넣지 않고(가린 요약만), 보관 기간이 지나면 지운다."""
+
+    __tablename__ = "profiles"
+
+    key: Mapped[str] = mapped_column(String(100), primary_key=True)  # 고객 식별(사용자 이름 · 상담 고객 키)
+    data: Mapped[dict[str, Any]] = mapped_column(default=dict)  # {"products": [...], "issues": [{"at", "product", "codes", "summary"}]}
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow, index=True)

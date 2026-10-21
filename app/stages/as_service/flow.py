@@ -160,8 +160,10 @@ def handle(
     embed_fn: Callable[[str], np.ndarray] | None = None,
     model_hf: str = "",
     filter_model: bool = True,
+    rewrite_fn: Callable[[str, list[dict[str, Any]]], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     steps: list[dict[str, Any]] = []
+    prior = [m for m in s.messages or [] if not m.get("feedback")]  # 이번 문의 앞의 대화(후속 질문 재작성에 씀)
     _add(s, "user", text, images=len(images or []))
     steps.append({"stage": "AS1", "name": "접수", "detail": f"글 {len(text)}자 · 사진 {len(images or [])}장 · {s.channel}"})
     tri = triage_fn(text)
@@ -189,7 +191,12 @@ def handle(
                 "detail": f"코드 {photo.get('code') or '읽지 못함'}" + (" (비슷한 글자 고침)" if photo.get("snapped") else ""),
             }
         )
-    query = text + (f" (오류 코드 {', '.join(codes)})" if codes else "")
+    # 후속 질문('필터는 어디 있어요?')은 앞 대화로 풀어 쓴다(대화 · 메모리 C1) — 검색은 앞 대화를 모른다
+    rw = rewrite_fn(text, prior) if (rewrite_fn and prior) else None
+    base = rw["query"] if rw and rw.get("changed") else text
+    if rw and rw.get("changed"):
+        steps.append({"stage": "AS1", "name": "맥락 재작성", "detail": f"{rw['method']}: {rw['query']}"})
+    query = base + (f" (오류 코드 {', '.join(c for c in codes if c not in base)})" if any(c not in base for c in codes) else "")
     filters = model_scope(db, s) if filter_model else {}
     cached = None
     vec = None

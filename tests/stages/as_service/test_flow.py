@@ -260,3 +260,22 @@ def test_handle_uses_cache_second_time(env):
     # 다른 제품의 고객에게는 같은 답을 쓰지 않는다
     r3 = flow.handle(db, _session(env, "WM-100"), "E4 가 떠요", **kw)
     assert not r3["cached"] and len(calls) == 2
+
+
+def test_follow_up_question_is_rewritten(env):
+    """두 번째 문의부터 앞 대화로 질문을 풀어 쓴다(대화 · 메모리 C1) — 첫 문의는 그대로."""
+    db, wm200 = env["db"], env["doc"]["WM-200"]
+    calls, seen = [], []
+    ans = _ans("1. 필터를 씻습니다 [1].", [_src(wm200, "### E4 배수 오류")], calls=calls)
+
+    def rw(q, prior):
+        seen.append((q, len(prior)))
+        return {"query": f"WM-200 세탁기 {q}", "method": "rule", "changed": True}
+
+    s = _session(env, "WM-200")
+    kw = {"images": None, "triage_fn": _tri(codes=[]), "answer_fn": ans, "rewrite_fn": rw}
+    flow.handle(db, s, "세탁기에 E4 가 떠요", **kw)
+    assert seen == [] and calls[-1]["q"].startswith("세탁기에 E4")  # 앞 대화가 없으면 부르지 않는다
+    r = flow.handle(db, s, "필터는 어디 있어요?", **kw)
+    assert seen == [("필터는 어디 있어요?", 2)] and calls[-1]["q"] == "WM-200 세탁기 필터는 어디 있어요?"
+    assert any(x["name"] == "맥락 재작성" for x in r["steps"])
