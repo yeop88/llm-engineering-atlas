@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}생각 과정 검사 · 추론 증류{% endblock %}
+{% block content %}
+{% call ui.page_header("생각 과정 검사 · 추론 증류") %}생각 글도 출력입니다. 풀이 저장소의 생각마다 생각의 결론과 최종 답이 다른지, 자료에 없는 조문 번호 · 수를 주장하는지, 개인정보 · 숨은 지시를 받아 적었는지 보고, 각 표시가 붙은 풀이의 정답률을 따로 봅니다 — 검사가 쓸모 있는 신호인지 확인하려는 것입니다(RS5). 아래에서는 맞은 풀이(선택: 검사 표시 없는 것)만 골라 작은 모델을 학습할 SFT 데이터를 만듭니다. 생각을 함께 넣을지(풀이 증류) · 답만 넣을지(답 증류)를 골라 비교할 수 있고, 학습은 후학습 화면이 맡습니다(RS6).{% endcall %}
+
+<div class="card stack" id="trace">
+  <h2>생각 과정 검사 (RS5)</h2>
+  <div class="row">
+    <div class="field grow"><label for="t-bank">풀이 저장소</label><select id="t-bank"></select></div>
+    <div class="self-end"><button class="btn primary" id="t-run">검사</button></div>
+  </div>
+  <div id="t-out"></div>
+  <h3>풀이 보기</h3>
+  <div class="row">
+    <div class="field"><label for="t-task">과제 번호 (비우면 앞에서부터)</label><input id="t-task" class="w-md" placeholder="t12"></div>
+    <div class="self-end"><button class="btn" id="t-show">보기</button></div>
+  </div>
+  <div id="t-rows" class="stack"></div>
+</div>
+
+<div class="card stack mt-4" id="distill">
+  <h2>추론 증류 데이터 (RS6)</h2>
+  <div class="row">
+    <div class="field"><label for="d-name">데이터 이름</label><input id="d-name" value="reasoning-sft-1" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="d-think" checked> 생각 함께 (풀이 증류)</label>
+    <label class="row small m-0 self-end"><input type="checkbox" id="d-clean" checked> 검사 표시 없는 풀이만</label>
+    <div class="self-end"><button class="btn primary" id="d-run">만들기</button></div>
+  </div>
+  <p class="small muted">학습 과제(train)의 풀이만 씁니다 — 시험 과제는 학습한 모델을 평가할 때 남겨 둡니다.</p>
+  <div id="d-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/reasoning/trace.js') }}"></script>
+{% endblock %}

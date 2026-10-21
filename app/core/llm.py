@@ -122,6 +122,8 @@ def _request(
     stream: bool = False,
     no_cache: bool = False,
     images: list[bytes] | None = None,
+    thinking: bool | None = None,
+    thinking_budget: int | None = None,
 ) -> tuple[str, dict[str, str], dict[str, Any]]:
     """제공자별 (URL, 헤더, 본문)."""
     content = _user_content(cfg.provider, user, images)
@@ -136,8 +138,12 @@ def _request(
             body["temperature"] = temperature
         if json_mode:
             body["response_format"] = {"type": "json_object"}
-        if get_settings().llm_disable_thinking and "api.openai.com" not in cfg.base_url:
+        # thinking: None 이면 설정(LLM_DISABLE_THINKING)대로, True/False 면 요청이 정한다 — 추론 맵(RS1)이 같은 모델로 생각 켬/끔을 비교하려고
+        enable = (not get_settings().llm_disable_thinking) if thinking is None else thinking
+        if not enable and "api.openai.com" not in cfg.base_url:
             body["chat_template_kwargs"] = {"enable_thinking": False}  # llama.cpp·vLLM 이 템플릿에 전달
+        elif thinking and "api.openai.com" not in cfg.base_url:
+            body["chat_template_kwargs"] = {"enable_thinking": True}
         if no_cache and "api.openai.com" not in cfg.base_url:
             # llama-server 는 앞서 처리한 프롬프트를 재사용한다(cache_prompt). 속도를 비교할 때 한 모델만 이전 실행의 캐시를 쓰면
             # 읽기 시간이 거의 0 이 되어 비교가 무너진다 — 실측에서 Q4 만 6초로 나온 원인. 공식 API 는 모르는 인자를 거부해 보내지 않는다.
@@ -147,6 +153,12 @@ def _request(
         headers = {"Authorization": f"Bearer {cfg.api_key}"} if cfg.api_key else {}
         return f"{cfg.base_url}/chat/completions", headers, body
     body = {"model": cfg.model, "max_tokens": max_tokens, "system": system, "messages": [{"role": "user", "content": content}]}
+    if thinking:
+        # 확장 생각: 예산은 1024 이상이어야 하고 max_tokens 가 예산보다 커야 하며, temperature 는 기본값만 허용된다
+        budget = max(1024, thinking_budget or 2048)
+        body["thinking"] = {"type": "enabled", "budget_tokens": budget}
+        body["max_tokens"] = max(max_tokens, budget + 256)
+        temperature = None
     if temperature is not None:
         body["temperature"] = temperature
     if stream:
@@ -163,10 +175,15 @@ def chat(
     json_mode: bool = False,
     no_cache: bool = False,
     images: list[bytes] | None = None,
+    thinking: bool | None = None,
+    thinking_budget: int | None = None,
 ) -> dict[str, Any]:
-    """→ {"text", "usage": {"input_tokens", "output_tokens"}, "seconds"}. images = JPEG 바이트(비전 모델용)"""
+    """→ {"text", "reasoning", "usage": {"input_tokens", "output_tokens"}, "seconds"}. images = JPEG 바이트(비전 모델용).
+    reasoning = 생각 글(서버가 따로 주면 reasoning_content, 아니면 답 글 속 <think> 구간) — 답 글에서는 빠진다."""
     started = time.perf_counter()
-    url, headers, body = _request(cfg, system, user, max_tokens, temperature, json_mode, no_cache=no_cache, images=images)
+    url, headers, body = _request(cfg, system, user, max_tokens, temperature, json_mode, no_cache=no_cache, images=images,
+                                  thinking=thinking, thinking_budget=thinking_budget)  # fmt: skip
+    reasoning = ""
     if cfg.provider == "openai":
         data = _post(cfg, url, headers, body)
         try:
@@ -181,22 +198,27 @@ def chat(
             # 둘을 나눠 봐야 양자화 · 하드웨어의 속도 차이를 바르게 읽는다.
             usage |= {"prompt_tokens_evaluated": tm.get("prompt_n"), "prompt_ms": tm.get("prompt_ms"), "prompt_per_second": tm.get("prompt_per_second"),
                       "generation_ms": tm.get("predicted_ms"), "generation_per_second": tm.get("predicted_per_second")}  # fmt: skip
-        if not text.strip() and msg.get("reasoning_content"):
+        reasoning = msg.get("reasoning_content") or ""
+        if not text.strip() and reasoning:
             usage["reasoning_only"] = True  # 생각만 하다 토큰 한도에 걸림
         if data["choices"][0].get("finish_reason") == "length":
             usage["truncated"] = True
     else:
         data = _post(cfg, url, headers, body)
         text = "".join(b.get("text", "") for b in data.get("content") or [] if b.get("type") == "text")
+        reasoning = "\n".join(b.get("thinking", "") for b in data.get("content") or [] if b.get("type") == "thinking")
         u = data.get("usage") or {}
         usage = {"input_tokens": u.get("input_tokens"), "output_tokens": u.get("output_tokens")}
         if data.get("stop_reason") == "max_tokens":
             usage["truncated"] = True
     seconds = time.perf_counter() - started
-    text = _THINK.sub("", text).strip()
+    if not reasoning:  # 서버가 생각을 답 글 안에 <think> 로 섞어 주는 경우(추론 형식 옵션 없는 서버)
+        reasoning = "\n".join(m.strip() for m in re.findall(r"<think>(.*?)(?:</think>|$)", text, re.DOTALL))
+    text = re.sub(r"<think>.*$", "", _THINK.sub("", text), flags=re.DOTALL).strip()  # 닫히지 않은 생각(한도에 걸림)도 답에서 뺀다
     out_tok = usage.get("output_tokens")
     return {
         "text": text,
+        "reasoning": reasoning.strip(),
         "usage": usage,
         "seconds": round(seconds, 2),
         "tokens_per_second": round(out_tok / seconds, 1) if out_tok and seconds else None,

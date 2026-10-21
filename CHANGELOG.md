@@ -5,6 +5,12 @@
 ## [Unreleased]
 
 ### 추가
+- **추론 모델 · 테스트 시간 연산 맵 구현(RS1~RS6)** — 화면 `/reasoning/budget` · `/reasoning/sampling` · `/reasoning/trace`
+  - RLVR 과제로 생각 예산별 정답률 · 생각 토큰 · 시간 곡선과 유형별 꺾이는 점, 예산 강제(잘린 생각으로 답만 다시)
+  - 질문 글만 보는 생각 라우터(규칙 · LLM)를 늘 끔 · 늘 켬 · 이상적과 같은 풀이로 비교
+  - 여러 번 풀기 n 별 다수결 · 검증기 고르기 · pass@n, 정답을 모르는 검증기(형식 · 근거에 있음 · 과정 채점 · LLM 판정)의 AUROC
+  - 생각 과정 검사(생각-답 불일치 · 근거 밖 주장 · 개인정보 · 지시 따르기)와 맞은 풀이로 만든 증류 SFT 데이터
+  - 풀이 저장소(과제 × 모델 × 예산 × 온도)를 모든 실험이 다시 씀, 공용 LLM 호출에 `thinking` · `thinking_budget` · 생각 글(`reasoning`)
 - **새 맵 6개(예정 단계 37개)** — 추론 모델 · 테스트 시간 연산(RS1~RS6), 컨텍스트 엔지니어링(CX1~CX6), 데이터 분석 에이전트 · Text-to-SQL(DA1~DA7), 코딩 에이전트(CD1~CD6), 컴퓨터 사용 · 브라우저 에이전트(CU1~CU6), 해석 가능성 · 모델 내부(IP1~IP6) — 맵 24개 · 단계 169개
 - **실시간 음성 상담 맵 구현(VC1~VC7)** — 화면 `/voice/call` · `/voice/assist` · `/voice/eval`, 설정 `VOICE_STT_ENGINE` · `VOICE_STT_LOCAL_MODEL` · `VOICE_BUDGET_MS` · `VOICE_STORE_RAW` · `VOICE_RETENTION_DAYS`, 마이그레이션 0019
   - 마이크 16kHz PCM 조각 → 끝점 후보마다 인식(STT_URL · 로컬 Whisper), 용어 사전 앞 문맥 + 표기 복원(이 사 → E4), 이어질 말이면 더 기다림, 끼어들기 즉시 멈춤

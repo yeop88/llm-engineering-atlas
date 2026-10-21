@@ -474,6 +474,18 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 추론 모델 (`/api/reasoning`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/reasoning/overview` | RLVR 과제 목록 · 풀이 저장소(과제 × 모델 × 예산 × 온도, 정답률) · 검증기 |
+| POST | `/api/reasoning/budget` | 예산 곡선 작업 `{"tasks", "splits", "max_per_type", "budgets", "provider", "model", "tol"}` → 예산별 정답률 · 생각 토큰 · 시간 · 예산 강제 비율 · 유형별 꺾이는 점 |
+| POST | `/api/reasoning/route` | 생각 라우팅 작업 `{… "budget", "router": "rule"\|"llm"}` → 늘 끔 · 늘 켬 · 라우터 · 이상적 정답률 · 토큰 · 시간 |
+| POST | `/api/reasoning/sample` | 여러 번 풀기 작업 `{… "budget", "temperature", "n", "verifiers"}` → n 별 다수결 · 검증기 고르기 · pass@n, 검증기 AUROC |
+| GET | `/api/reasoning/banks/{key}` | 풀이 보기 `?task_id=&limit=` (생각 · 답 · 토큰 · 맞음) |
+| POST | `/api/reasoning/trace` | 생각 과정 검사 `{"tasks", "bank"}` → 표시별 비율 · 표시된 풀이 정답률 |
+| POST | `/api/reasoning/distill` | 증류 데이터 `{"tasks", "bank", "name", "include_thinking", "clean_only", "splits"}` → 후학습 SFT 데이터 |
+
 ## 실시간 음성 상담 (`/api/voice`)
 
 | 메서드 | 경로 | 설명 |

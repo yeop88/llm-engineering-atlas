@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}여러 번 풀기 · 검증기{% endblock %}
+{% block content %}
+{% call ui.page_header("여러 번 풀기 · 검증기") %}같은 과제를 온도를 두고 여러 번 풀어, 표본 수 n 마다 다수결(자기 일관성) · 검증기로 고르기(Best-of-n) · pass@n(하나라도 맞음, 고르기의 상한) 정답률을 한 번에 그립니다(RS3). 검증기는 정답을 모르는 채로 풀이를 채점합니다 — '정답:' 줄 여부, 답이 자료 · 집계에 있는지, 생각의 각 문장이 자료에서 왔는지(과정 채점), LLM 판정. 맞은 풀이와 틀린 풀이를 얼마나 잘 가르는지(AUROC)로 검증기 자체를 잽니다(RS4).{% endcall %}
+
+<div class="card stack" id="sampling">
+  <h2>표본 수별 정답률 (RS3)</h2>
+  <div class="row">
+    <div class="field"><label for="s-tasks">과제</label><select id="s-tasks"></select></div>
+    <div class="field"><label for="s-per">유형당 과제</label><input id="s-per" type="number" value="10" min="1" class="w-md"></div>
+    <div class="field"><label for="s-n">표본 수 n</label><input id="s-n" type="number" value="5" min="1" max="32" class="w-md"></div>
+    <div class="field"><label for="s-temp">온도</label><input id="s-temp" type="number" value="0.7" step="0.1" min="0.1" class="w-md"></div>
+    <div class="field"><label for="s-budget">생각 예산 (0 = 끔)</label><input id="s-budget" type="number" value="0" min="0" class="w-md"></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="s-provider">제공자</label><select id="s-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="s-model">모델</label><input id="s-model" data-ctx="model"></div>
+  </div>
+  <div class="row small" id="s-verifiers"></div>
+  <div><button class="btn primary" id="s-run">풀고 고르기</button></div>
+  <div id="s-progress" hidden></div>
+  <div id="s-out"></div>
+</div>
+
+<div class="card stack mt-4" id="verifier">
+  <h2>검증기 정확도 (RS4)</h2>
+  <div id="v-out" class="small muted">위에서 풀면 검증기마다 맞은 · 틀린 풀이를 가르는 정도(AUROC)와 0.5 기준 정확도가 여기에 나옵니다.</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/reasoning/sampling.js') }}"></script>
+{% endblock %}

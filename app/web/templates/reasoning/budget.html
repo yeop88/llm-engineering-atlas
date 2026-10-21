@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}생각 예산 · 라우팅{% endblock %}
+{% block content %}
+{% call ui.page_header("생각 예산 · 라우팅") %}정답을 자동으로 확인할 수 있는 과제(RLVR 과제: 조문 제목 · 번호 · 인용 수 · 계산)를 생각 예산별로 풀어 정답률 · 생각 토큰 · 시간 곡선을 그립니다. 최고 정답률에서 허용 폭 안에 드는 가장 작은 예산이 '꺾이는 점'이고, 유형마다 따로 봅니다(RS1). 생각이 예산을 넘으면 잘린 생각으로 답만 쓰게 합니다(예산 강제). 아래에서는 질문 글만 보고 생각을 켤지 정하는 라우터를 같은 풀이로 채점합니다 — 늘 끔 · 늘 켬 · 라우터 · 이상적(RS2).{% endcall %}
+
+<div class="card stack" id="budget">
+  <h2>예산 곡선 (RS1)</h2>
+  <div class="row">
+    <div class="field"><label for="b-tasks">과제</label><select id="b-tasks" data-tasks></select></div>
+    <div class="field"><label for="b-n">유형당 과제</label><input id="b-n" type="number" value="10" min="1" class="w-md"></div>
+    <div class="field grow"><label for="b-budgets">예산 (쉼표, 0 = 생각 끔)</label><input id="b-budgets" value="0, 256, 512, 1024, 2048" class="mono"></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="b-provider">제공자</label><select id="b-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="b-model">모델 (생각 모드가 있는 모델)</label><input id="b-model" data-ctx="model"></div>
+    <div class="self-end"><button class="btn primary" id="b-run">예산별로 풀기</button></div>
+  </div>
+  <div id="b-progress" hidden></div>
+  <div id="b-out"></div>
+</div>
+
+<div class="card stack mt-4" id="route">
+  <h2>생각할지 말지 라우팅 (RS2)</h2>
+  <div class="row">
+    <div class="field"><label for="r-budget">켤 때 예산</label><input id="r-budget" type="number" value="1024" min="1" class="w-md"></div>
+    <div class="field"><label for="r-router">라우터</label><select id="r-router"><option value="rule">규칙 (계산 · 집계 표현)</option><option value="llm">LLM (생각 없이 한 낱말)</option></select></div>
+    <div class="self-end"><button class="btn primary" id="r-run">라우터 채점</button></div>
+  </div>
+  <p class="small muted">위의 과제 · 유형당 과제 · 모델을 같이 씁니다. 생각 끔 · 켬 풀이가 저장소에 없으면 먼저 풉니다.</p>
+  <div id="r-progress" hidden></div>
+  <div id="r-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/reasoning/budget.js') }}"></script>
+{% endblock %}

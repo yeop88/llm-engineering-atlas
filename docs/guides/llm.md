@@ -31,6 +31,7 @@ OPENAI_MODEL=gemma-4-e4b
 - `-ngl 99`: 모든 층을 GPU 에 올림 (내장 GPU 는 시스템 메모리를 공유). `-c`: 문맥 길이(근거를 많이 넣으려면 크게). `-np 2`: 동시 요청 수. `--alias`: API 에서 쓸 모델 이름.
 - 모델 파일(GGUF)은 Hugging Face 에서 받습니다. 받은 뒤 Hub 의 SHA-256 과 대조하세요.
 - Qwen3 계열처럼 '생각(thinking)' 모드가 있는 모델은 앱이 생각을 끄라고 요청합니다(`LLM_DISABLE_THINKING=true`, 기본). 응답에 `<think>` 가 섞여 와도 걸러냅니다.
+- 추론 모델 맵(`/reasoning/budget`)은 요청마다 생각을 켜고(`llm.chat(..., thinking=True, thinking_budget=N)`) 생각 글을 따로 받습니다(서버의 `reasoning_content` 또는 답 글 속 `<think>`). OpenAI 호환 서버는 요청별 생각 예산을 받지 않아 max_tokens 와 예산 강제(잘린 생각으로 답만 다시)로 상한을 걸고, Claude API 는 확장 생각 예산(1024 이상)을 씁니다.
 
 ### 소형 모델 비교 (2026-10, 이 프로젝트 개발 PC)
 

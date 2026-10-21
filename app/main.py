@@ -40,6 +40,7 @@ from app.stages.platform import api as platform_api  # noqa: E402
 from app.stages.posttrain import api as posttrain_api  # noqa: E402
 from app.stages.quant import api as quant_api  # noqa: E402
 from app.stages.rag import answer_api, collections_api, eval_api, verify_api  # noqa: E402
+from app.stages.reasoning import api as reasoning_api  # noqa: E402
 from app.stages.rerank import api as rerank_api  # noqa: E402
 from app.stages.rl import api as rl_api  # noqa: E402
 from app.stages.rlvr import api as rlvr_api  # noqa: E402
@@ -148,6 +149,7 @@ for module in (
     rlvr_api,  # RLVR — 검증 가능한 과제 · 환경 · 보상 · GRPO · 일반화
     edge_api,  # 온디바이스 · 엣지 — 기기 추천 · 기기용 팩 · 오프라인 · 동기화 · 국소 개인정보 처리
     voice_api,  # 실시간 음성 상담 — 인식 · 턴 관리 · 짧은 지연 RAG · 합성 · 감정 · 상담원 보조 · 통화 요약
+    reasoning_api,  # 추론 모델 — 생각 예산 · 라우팅 · 여러 번 풀기 · 검증기 · 생각 검사 · 추론 증류
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

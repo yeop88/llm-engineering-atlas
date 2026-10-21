@@ -22,12 +22,12 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| RS1 | [생각 예산](../stages/reasoning/rs1-budget/README.md) | ⬜ 예정 | 생각 토큰 상한을 바꿔 가며 정답률 · 지연 · 비용 곡선을 잰다 | [S7 예산](../stages/serving/s7-budget/README.md) | — |
-| RS2 | [생각할지 말지 라우팅](../stages/reasoning/rs2-route/README.md) | ⬜ 예정 | 질문 난이도를 보고 생각 모드 · 예산을 고른다 | [6 라우팅](../stages/llm/6-routing/README.md) | — |
-| RS3 | [여러 번 풀고 고르기](../stages/reasoning/rs3-sampling/README.md) | ⬜ 예정 | 같은 질문을 여러 번 풀어 다수결 · 점수로 고른다 | [8b 강화학습](../stages/llm/8b-rl/README.md) | — |
-| RS4 | [검증기 · 과정 보상](../stages/reasoning/rs4-verifier/README.md) | ⬜ 예정 | 답 · 풀이 단계를 검증기로 채점해 고른다 | [RV3 보상 설계](../stages/rlvr/rv3-reward/README.md) · [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) | — |
-| RS5 | [생각 과정 검사](../stages/reasoning/rs5-trace/README.md) | ⬜ 예정 | 생각과 답이 맞는지, 생각에 근거 밖 사실 · 개인정보가 없는지 본다 | [G4 출력 검사](../stages/guardrails/g4-output/README.md) | — |
-| RS6 | [추론 증류](../stages/reasoning/rs6-distill/README.md) | ⬜ 예정 | 큰 추론 모델의 풀이로 작은 모델을 학습해 싸게 생각하게 한다 | [7a 지식 증류](../stages/llm/7a-distill/README.md) · [P3 SFT](../stages/posttrain/p3-sft/README.md) | — |
+| RS1 | [생각 예산](../stages/reasoning/rs1-budget/README.md) | ✅ 구현됨 | 생각 토큰 상한을 바꿔 가며 정답률 · 지연 · 비용 곡선을 잰다 | [S7 예산](../stages/serving/s7-budget/README.md) | [추론 모델 — 생각 예산 · 라우팅 · 여러 번 풀기 · 검증기 · 생각 검사 · 추론 증류 · 실측](../stages/reasoning/rs1-budget/reasoning.md) |
+| RS2 | [생각할지 말지 라우팅](../stages/reasoning/rs2-route/README.md) | ✅ 구현됨 | 질문 난이도를 보고 생각 모드 · 예산을 고른다 | [6 라우팅](../stages/llm/6-routing/README.md) | [추론 모델 — 생각 예산 · 라우팅 · 여러 번 풀기 · 검증기 · 생각 검사 · 추론 증류 · 실측](../stages/reasoning/rs1-budget/reasoning.md) |
+| RS3 | [여러 번 풀고 고르기](../stages/reasoning/rs3-sampling/README.md) | ✅ 구현됨 | 같은 질문을 여러 번 풀어 다수결 · 점수로 고른다 | [8b 강화학습](../stages/llm/8b-rl/README.md) | [추론 모델 — 생각 예산 · 라우팅 · 여러 번 풀기 · 검증기 · 생각 검사 · 추론 증류 · 실측](../stages/reasoning/rs1-budget/reasoning.md) |
+| RS4 | [검증기 · 과정 보상](../stages/reasoning/rs4-verifier/README.md) | ✅ 구현됨 | 답 · 풀이 단계를 검증기로 채점해 고른다 | [RV3 보상 설계](../stages/rlvr/rv3-reward/README.md) · [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) | [추론 모델 — 생각 예산 · 라우팅 · 여러 번 풀기 · 검증기 · 생각 검사 · 추론 증류 · 실측](../stages/reasoning/rs1-budget/reasoning.md) |
+| RS5 | [생각 과정 검사](../stages/reasoning/rs5-trace/README.md) | ✅ 구현됨 | 생각과 답이 맞는지, 생각에 근거 밖 사실 · 개인정보가 없는지 본다 | [G4 출력 검사](../stages/guardrails/g4-output/README.md) | [추론 모델 — 생각 예산 · 라우팅 · 여러 번 풀기 · 검증기 · 생각 검사 · 추론 증류 · 실측](../stages/reasoning/rs1-budget/reasoning.md) |
+| RS6 | [추론 증류](../stages/reasoning/rs6-distill/README.md) | ✅ 구현됨 | 큰 추론 모델의 풀이로 작은 모델을 학습해 싸게 생각하게 한다 | [7a 지식 증류](../stages/llm/7a-distill/README.md) · [P3 SFT](../stages/posttrain/p3-sft/README.md) | [추론 모델 — 생각 예산 · 라우팅 · 여러 번 풀기 · 검증기 · 생각 검사 · 추론 증류 · 실측](../stages/reasoning/rs1-budget/reasoning.md) |
 
 ## 설계 원칙
 

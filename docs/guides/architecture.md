@@ -63,6 +63,8 @@ app/
                        reward(항목별 보상 · 해킹 감시) · policy(GRPO, posttrain.trainer 를 씀)
     edge/              온디바이스 · 엣지 맵(ED1~ED6): devices(기기 프로필 · 조합 추천) · pack(기기용 팩 · 압축 · 정확 검색 · 평가) ·
                        offline(기능 범위 · 미룸) · sync(판 증분 · 지문 확인 · 기기 상태) · privacy(전송 정책 · 서버 재검사)
+    reasoning/         추론 모델 맵(RS1~RS6): solve(예산 강제 · 풀이 저장소) · budget(예산 곡선 · 꺾이는 점 · 생각 라우터) ·
+                       select(다수결 · 검증기 고르기 · pass@n · AUROC) · trace(생각 검사 · 증류 데이터) — 과제 · 환경은 rlvr
     voice/             실시간 음성 상담 맵(VC1~VC7): audio(16kHz · 운율) · turn(말소리 감지 · 끝점 · 끼어들기) · stt(엔진 · 용어 사전 · 표기 복원 · 오류율) ·
                        fastrag(지연 예산 · 문장 스트리밍) · speech(읽기 규칙 · 합성) · emotion(불만 · 이관) · assist(추천 · 채택률) · summary(양식 · 전사 일치), presets/
     as_service/        고객 AS 상담 맵(AS1~AS8): triage(의도 · 긴급도 · 코드) · photo(사진 코드 읽기) · flow(상담 흐름 · 캐시 · 티켓 · 지표) ·
