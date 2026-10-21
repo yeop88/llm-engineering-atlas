@@ -31,7 +31,7 @@ docs/
 | **보안 · 가드레일 · 거버넌스 맵** | 입력 방어 → 개인정보 마스킹 → 권한별 검색 → 출력 정책 → 감사 로그 · 라이선스 · 레드팀 — 써도 되는 답인지 확인하는 흐름 | 7 — ✅ 7 | [guardrails.md](maps/guardrails.md) | `/maps/guardrails` |
 | **문서 처리 (Document Intelligence) 맵** | 수집 → 파싱(HWP · PDF · OCR) → 레이아웃 · 표 · 그림 → 정제 · 중복 · 버전 → 청킹 → 메타데이터 · 증분 갱신 → 품질 점검 — 자료를 제대로 읽는 흐름 | 7 — ✅ 7 | [docintel.md](maps/docintel.md) | `/maps/docintel` |
 | **서빙 · 추론 최적화 · 비용 맵** | 캐시 → 근거 길이 관리 → 경량 모델 → 추론 서버 · 배치 · 스트리밍 → KV 캐시 · 추측 디코딩 → 하드웨어 → 비용 · 지연 예산 — 싸고 빠르게 돌리는 흐름 | 7 — 🟡 5 · ⬜ 2 | [serving.md](maps/serving.md) | `/maps/serving` |
-| **대화 · 메모리 맵** | 대화 맥락 질의 재작성 → 되묻기 → 대화 요약 메모리 → 사용자 · 제품 프로필 → 긴 대화 압축 → 상담원 이관 — 한 번이 아니라 이어지는 상담을 다루는 흐름 | 6 — ⬜ 6 | [conversation.md](maps/conversation.md) | `/maps/conversation` |
+| **대화 · 메모리 맵** | 대화 맥락 질의 재작성 → 되묻기 → 대화 요약 메모리 → 사용자 · 제품 프로필 → 긴 대화 압축 → 상담원 이관 — 한 번이 아니라 이어지는 상담을 다루는 흐름 | 6 — ✅ 6 | [conversation.md](maps/conversation.md) | `/maps/conversation` |
 | **서비스 시나리오: 고객 AS 상담 맵** | 접수(텍스트 · 사진 · 음성) → 의도 · 긴급도 분류 → FAQ · 매뉴얼 답변 · 오류 사진 진단 → 조치 안내 → 검증 → 티켓 · 상담원 이관 → 피드백 — 기술 맵들을 실제 업무로 묶은 흐름 | 8 — ✅ 8 | [as-service.md](maps/as-service.md) | `/maps/as-service` |
 | **후학습 (Post-training) 맵** | 합성 데이터 → 선별 · 누수 방지 → SFT → 선호 학습(DPO) → 어댑터 · 병합 → 평가 · 안전성 → 배포 형식 변환 — 우리 데이터로 LLM 자체를 고치는 흐름 | 7 — 🟡 3 · ⬜ 4 | [posttrain.md](maps/posttrain.md) | `/maps/posttrain` |
 | **데이터 플라이휠 맵** | 서비스 로그 → 실패 분류 → 사람 검토 → 평가 · 학습 데이터 → 재학습 → 게이트 → 단계적 배포 → 다시 로그 — 평가 · 후학습 · 서빙 · 가드레일을 하나의 순환으로 | 7 — 🟡 4 · ⬜ 3 | [flywheel.md](maps/flywheel.md) | `/maps/flywheel` |

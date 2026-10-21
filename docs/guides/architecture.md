@@ -37,6 +37,8 @@ app/
     guardrails/        보안 · 가드레일 맵(G1~G7): injection · pii · acl · policy · audit · license · redteam, presets/
     evalops/           평가 · 관측 맵(E1~E8): sets(버전 · 검토) · regression · monitor(대시보드) · feedback · drift · ab · loop ·
                        watch(레드팀 · 드리프트 · 회귀 정기 점검과 경보)
+    conversation/      대화 · 메모리 맵(C1~C6): memory(규칙 사실 목록) · rewrite(후속 질문 풀어 쓰기) · clarify(되묻기) ·
+                       compress(긴 대화 · 인계 요약) · profile(고객 프로필) · vocab(컬렉션의 제품 · 코드) · chat(한 턴) · evaluate, presets/
     as_service/        고객 AS 상담 맵(AS1~AS8): triage(의도 · 긴급도 · 코드) · photo(사진 코드 읽기) · flow(상담 흐름 · 캐시 · 티켓 · 지표) ·
                        setup(예시 매뉴얼), presets/
     registry/          맵 · 단계 설명(데이터만, 다른 앱 모듈을 불러오지 않음)
@@ -67,7 +69,7 @@ tests/               app/ 와 같은 구조: core/ · pipeline/ · web/ · stage
 - 레지스트리는 데이터만 — 앱의 다른 모듈을 불러오지 않습니다(화면 · 문서 생성이 무거운 모델 코드를 끌고 오지 않게). `maps/` 의 모든 파일이 `MAP_MODULES` 에 있어야 합니다.
 - 화면 스크립트는 정적 파일로. 템플릿에는 서버 값 한 줄 설정(`const MODEL_ID = {{ model_id }};`)만 인라인으로 두고, `static/js/` 의 화면 파일은 짝이 되는 템플릿이 있어야 합니다(한 화면을 나누면 `<화면>_<부분>.js`).
 - 테스트는 `app/` 와 같은 구조. 최상위에는 `conftest.py` · `helpers.py` · `test_architecture.py` · `test_docs.py` 만.
-- 운영 맵 패키지는 LLM 맵 단계 뒤 순서: `docintel` → `guardrails` → `evalops` → `as_service`(AS 는 앞의 셋과 LLM 맵 단계를 씀). `rag` 는 이들을 모르므로 가드레일 · 기록은 `pipeline/serve.py` 가 붙입니다.
+- 운영 맵 패키지는 LLM 맵 단계 뒤 순서: `docintel` → `guardrails` → `evalops` → `conversation` → `as_service`(AS 는 앞의 넷과 LLM 맵 단계를 씀). `rag` 는 이들을 모르므로 가드레일 · 기록은 `pipeline/serve.py` 가 붙입니다.
 - 화면: 모든 화면은 `ui.page_header`, 이름표는 입력란과 연결, 삭제 확인은 `ui.confirm`(브라우저 `confirm()` 금지), 인라인 style · 손으로 부르는 `esc()` 는 늘리지 않음, 화면 링크는 새 주소로 — [화면 가이드](ui.md).
 
 ### 확장 체크리스트
@@ -157,8 +159,9 @@ FastAPI 라우터 ── core/system_api · llm_api / stages/*/…_api / web/pag
 | `answer_cache` | AnswerCache | AS 의미 캐시(0010) |
 | `as_sessions` | AsSession | AS 상담 · 티켓(0010) |
 | `ingest_sources` | IngestSource | 폴더 수집 소스(0010) |
+| `profiles` | Profile | 고객 프로필 — 보유 제품 · 지난 문의 요약(0011) |
 
-마이그레이션은 `migrations/versions/0001_initial` … `0010_maps_ops` 입니다.
+마이그레이션은 `migrations/versions/0001_initial` … `0011_profiles` 입니다.
 
 ## 검색 저장 방식
 

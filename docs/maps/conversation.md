@@ -22,12 +22,12 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| C1 | [대화 맥락 질의 재작성](../stages/conversation/c1-rewrite/README.md) | ⬜ 예정 | '그거 말고 다른 모델은요?' 처럼 앞 대화를 가리키는 질문을 혼자 읽혀도 되는 질문으로 바꿔 검색한다 | [4 검색 향상](../stages/llm/4-search-lab/README.md) | — |
-| C2 | [되묻기 (모호한 질문)](../stages/conversation/c2-clarify/README.md) | ⬜ 예정 | 질문이 모호하거나 정보가 모자라면 답하기 전에 필요한 것을 되묻는다 | [6 라우팅](../stages/llm/6-routing/README.md) | — |
-| C3 | [대화 요약 메모리](../stages/conversation/c3-memory/README.md) | ⬜ 예정 | 대화가 길어져도 중요한 사실(제품 · 증상 · 이미 해 본 조치)을 요약해 기억한다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
-| C4 | [사용자 · 제품 프로필](../stages/conversation/c4-profile/README.md) | ⬜ 예정 | 고객의 보유 제품 · 이전 문의 · 선호를 프로필로 두고 검색 · 답변에 쓴다 | [A 의미 응용](../stages/llm/a-apps/README.md) | — |
-| C5 | [긴 대화 압축](../stages/conversation/c5-compress/README.md) | ⬜ 예정 | 긴 대화 · 긴 근거를 품질을 지키며 줄여 문맥 한도 안에 넣는다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
-| C6 | [상담원 이관 · 인계 요약](../stages/conversation/c6-handoff/README.md) | ⬜ 예정 | 자동으로 풀 수 없거나 위험한 문의는 대화 요약과 함께 사람에게 넘긴다 | [A 의미 응용](../stages/llm/a-apps/README.md) · [6 라우팅](../stages/llm/6-routing/README.md) | — |
+| C1 | [대화 맥락 질의 재작성](../stages/conversation/c1-rewrite/README.md) | ✅ 구현됨 | '그거 말고 다른 모델은요?' 처럼 앞 대화를 가리키는 질문을 혼자 읽혀도 되는 질문으로 바꿔 검색한다 | [4 검색 향상](../stages/llm/4-search-lab/README.md) | [대화 · 메모리 — 재작성 · 되묻기 · 메모리 · 실측](../stages/conversation/c1-rewrite/conversation.md) |
+| C2 | [되묻기 (모호한 질문)](../stages/conversation/c2-clarify/README.md) | ✅ 구현됨 | 질문이 모호하거나 정보가 모자라면 답하기 전에 필요한 것을 되묻는다 | [6 라우팅](../stages/llm/6-routing/README.md) | [대화 · 메모리 — 재작성 · 되묻기 · 메모리 · 실측](../stages/conversation/c1-rewrite/conversation.md) |
+| C3 | [대화 요약 메모리](../stages/conversation/c3-memory/README.md) | ✅ 구현됨 | 대화가 길어져도 중요한 사실(제품 · 증상 · 이미 해 본 조치)을 요약해 기억한다 | [2 RAG](../stages/llm/2-rag/README.md) | [대화 · 메모리 — 재작성 · 되묻기 · 메모리 · 실측](../stages/conversation/c1-rewrite/conversation.md) |
+| C4 | [사용자 · 제품 프로필](../stages/conversation/c4-profile/README.md) | ✅ 구현됨 | 고객의 보유 제품 · 이전 문의 · 선호를 프로필로 두고 검색 · 답변에 쓴다 | [A 의미 응용](../stages/llm/a-apps/README.md) | [대화 · 메모리 — 재작성 · 되묻기 · 메모리 · 실측](../stages/conversation/c1-rewrite/conversation.md) |
+| C5 | [긴 대화 압축](../stages/conversation/c5-compress/README.md) | ✅ 구현됨 | 긴 대화 · 긴 근거를 품질을 지키며 줄여 문맥 한도 안에 넣는다 | [2 RAG](../stages/llm/2-rag/README.md) | [대화 · 메모리 — 재작성 · 되묻기 · 메모리 · 실측](../stages/conversation/c1-rewrite/conversation.md) |
+| C6 | [상담원 이관 · 인계 요약](../stages/conversation/c6-handoff/README.md) | ✅ 구현됨 | 자동으로 풀 수 없거나 위험한 문의는 대화 요약과 함께 사람에게 넘긴다 | [A 의미 응용](../stages/llm/a-apps/README.md) · [6 라우팅](../stages/llm/6-routing/README.md) | [대화 · 메모리 — 재작성 · 되묻기 · 메모리 · 실측](../stages/conversation/c1-rewrite/conversation.md) |
 
 ## 설계 원칙
 

@@ -33,7 +33,7 @@ AI 답을 사람이 한 판단으로 오해하면 위험합니다. 사람에게 
 
 이미 있는 단계 위에 짓습니다.
 
-- [C6 상담원 이관 · 인계 요약](../../conversation/c6-handoff/README.md) — 대화 · 메모리 맵 · ⬜ 예정
+- [C6 상담원 이관 · 인계 요약](../../conversation/c6-handoff/README.md) — 대화 · 메모리 맵 · ✅ 구현됨
 
 ---
 

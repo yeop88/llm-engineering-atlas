@@ -321,6 +321,21 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | GET | `/api/evalops/watch` | 정기 점검(레드팀 · 드리프트 · 회귀)의 주기 · 마지막 · 다음 실행과 최근 경보(`?days=30`), 웹훅 설정 여부 |
 | POST | `/api/evalops/watch/{kind}/run` | 지금 한 번 점검(`redteam` · `drift` · `regression`) — 작업, 끝나면 그 실행의 경보를 `ALERT_WEBHOOK` 으로 |
 
+## 대화 · 메모리 (`/api/conversation`)
+
+대화 기록은 화면이 들고 와서 매 턴 보냅니다(서버에 대화 표 없음). 메모리는 기록에서 매번 다시 계산합니다.
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/api/conversation/turn` | 한 턴 `{"collection_id", "question", "history": [{"role": "user"·"assistant", "text"}], "config"?: SearchConfig, "method": "auto"·"none"·"history"·"rule"·"llm", "clarify": true, "asked": [], "profile_key"?, "session_id"?, "guard_mode"?, "keep_turns": 4, "provider"?, "model"?}` → `reply` · `answered` · `rewrite`(query · method · changed · depends · reason) · `clarify`(ask · reason · prompt) · `memory`(product_model · codes · symptoms · tried · topic · turns) · `history_prompt` · `sources` · `verify` · `guard` · `trace_id` · `profile` |
+| GET | `/api/conversation/collections/{id}/vocab` | 메모리가 알아보는 제품 모델(문서 메타) · 오류 코드(문서 제목 줄) · 모델별 코드 |
+| POST | `/api/conversation/handoff` | 인계 요약 `{"collection_id", "history"}` → 제품 · 코드 · 증상 · 안내한 조치 · 처음과 마지막 질문 |
+| GET / DELETE | `/api/conversation/profiles/{key}` | 고객 프로필(보유 제품 · 지난 문의) / 지우기 |
+| POST | `/api/conversation/profiles/{key}/remember` | `{"collection_id", "history", "summary"?}` → 대화의 제품 · 문의 요약(가린 글)을 프로필에 |
+| GET | `/api/conversation/eval/preset` | 대화 평가 세트(후속 질문 24 · 되묻기 11)와 쓰는 컬렉션 |
+| POST | `/api/conversation/eval` | 실측 작업 `{"methods": ["none", "history", "rule", "llm"], "domains": ["as", "legal"], "top_k": 10}` → 분야 · 방법별 Hit@1 · Hit@3 · MRR · 풀어 쓰기 시간, 대화별 순위, 되묻기 정확도 · 메모리 정확도 |
+| GET | `/api/conversation/eval/runs` · `/eval/runs/{id}` | 실측 기록 |
+
 ## 고객 AS 상담 (`/api/as`)
 
 | 메서드 | 경로 | 설명 |
@@ -328,7 +343,7 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | GET / POST | `/api/as/setup` | 예시 자료 상태 / 준비 작업 `{"model_id"?, "index": true}` (가상 제품 매뉴얼 · FAQ 컬렉션, BM25 + 의미 인덱스) |
 | POST / GET | `/api/as/sessions` | 상담 만들기 `{"collection_id"?, "customer", "product_model", "channel"}` / 목록(`?status=`) |
 | GET | `/api/as/sessions/{id}` | 상담 · 대화 |
-| POST | `/api/as/sessions/{id}/message` | multipart: `text`, `images`(최대 3), `audio`(STT_URL 필요), `provider`?, `model`? → `reply` · `steps`(AS1~AS7) · `triage` · `photo` · `sources` · `verify`(근거 일치 · 코드 일치) · `guard` · `mismatch` · `handoff` · `ticket` · `cached` · `trace_id` |
+| POST | `/api/as/sessions/{id}/message` | multipart: `text`, `images`(최대 3), `audio`(STT_URL 필요), `provider`?, `model`? — 두 번째 문의부터 앞 대화로 질문을 풀어 씀(대화 · 메모리 C1) → `reply` · `steps`(AS1~AS7, 풀어 썼으면 '맥락 재작성') · `triage` · `photo` · `sources` · `verify`(근거 일치 · 코드 일치) · `guard` · `mismatch` · `handoff` · `ticket` · `cached` · `trace_id` |
 | POST | `/api/as/sessions/{id}/feedback` | `{"resolved", "satisfaction": 1~5, "comment"}` — 미해결이면 티켓 |
 | GET / PATCH | `/api/as/tickets` · `/tickets/{id}` | 이관 티켓(`?status=`) / 상태 `{"status": "open"·"in_progress"·"done", "note"}` |
 | GET | `/api/as/metrics` | 해결률 · 이관률 · 만족도 · 의도별(`?days=30`) |

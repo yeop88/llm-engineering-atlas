@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [C2 되묻기 (모호한 질문)](../../conversation/c2-clarify/README.md) — 대화 · 메모리 맵 · ⬜ 예정
+- [C2 되묻기 (모호한 질문)](../../conversation/c2-clarify/README.md) — 대화 · 메모리 맵 · ✅ 구현됨
 
 ---
 

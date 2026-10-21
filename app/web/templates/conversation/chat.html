@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}대화 상담{% endblock %}
+{% block content %}
+{% call ui.page_header("대화 상담") %}질문 하나가 아니라 이어지는 대화를 다룹니다. '필터는 어디 있어요?' 처럼 앞 대화에 기대는 질문은 검색 전에 혼자 읽히는 질문으로 풀어 쓰고(C1), 제품을 모르는 고장 문의나 너무 모호한 질문은 되묻고(C2), 대화에서 제품 · 오류 코드 · 증상 · 이미 안내한 조치를 기억합니다(C3). 긴 대화는 최근 턴만 원문으로 넣고 앞부분은 기억한 사실로 줄이며(C5), 해결이 안 되면 상담원 인계 요약을 만듭니다(C6). 고객 키를 주면 보유 제품을 다음 대화에서도 기억합니다(C4).{% endcall %}
+
+<div class="ans-layout">
+  <aside class="stack">
+    <div class="card stack">
+      <h2>설정</h2>
+      <div class="field"><label for="v-col">컬렉션</label><select id="v-col" data-ctx="col"></select></div>
+      <div class="field"><label for="v-method">질문 풀어 쓰기 (C1)</label><select id="v-method">
+        <option value="auto">자동 — 앞 대화에 기대는 질문만 LLM 으로</option><option value="rule">규칙 — 기억한 제품 · 주제를 덧붙임</option>
+        <option value="llm">LLM — 매번</option><option value="history">앞 질문 이어 붙이기</option><option value="none">그대로</option></select></div>
+      <label class="row small m-0"><input type="checkbox" id="v-clarify" checked> 필요하면 되묻기 (C2)</label>
+      <div class="field"><label for="v-profile">고객 키 (선택, C4)</label><input id="v-profile" maxlength="100" placeholder="예: 고객-1024 — 보유 제품을 다음 대화에서도 기억"></div>
+      <div class="field"><label for="v-guard">방어 모드</label><select id="v-guard"><option value="">기본 (GUARD_MODE)</option><option value="off">off</option><option value="mask">mask</option><option value="enforce">enforce</option></select></div>
+      <div class="field"><label for="v-provider">LLM 제공자</label><select id="v-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+      <div class="field"><label for="v-model">모델 (비우면 설정값)</label><input id="v-model" data-ctx="model" list="v-model-list"><datalist id="v-model-list"></datalist></div>
+      <button class="btn" id="v-new">새 대화</button>
+    </div>
+    <div class="card stack" id="memory">
+      <h2>기억한 사실 (C3)</h2>
+      <div id="v-memory" class="small"><span class="muted">대화를 시작하면 제품 · 오류 코드 · 증상 · 안내한 조치가 여기에 쌓입니다.</span></div>
+      <div id="v-vocab" class="small muted"></div>
+    </div>
+    <div class="card stack" id="profile">
+      <h2>고객 프로필 (C4)</h2>
+      <div id="v-profile-out" class="small muted">고객 키를 넣으면 보유 제품 · 지난 문의를 보여 줍니다.</div>
+      <div class="row gap-1"><button class="btn sm" id="v-remember">이 대화를 프로필에 남기기</button><button class="btn sm danger" id="v-forget">프로필 지우기</button></div>
+    </div>
+    <div class="card stack" id="handoff">
+      <h2>상담원 인계 (C6)</h2>
+      <button class="btn sm" id="v-handoff">인계 요약 만들기</button>
+      <div id="v-handoff-out" class="small"></div>
+    </div>
+  </aside>
+  <section class="stack">
+    <div id="v-thread" class="stack"><div class="card"><div class="empty">질문을 입력해 대화를 시작하세요. 예: 'WM-200 세탁기에 E4 가 떠요' → '필터는 어디 있어요?'</div></div></div>
+    <div class="card stack">
+      <div class="field"><label for="v-text">질문</label><textarea id="v-text" rows="2" placeholder="Ctrl+Enter 로 보내기"></textarea></div>
+      <div class="row between"><span class="small muted" id="v-status"></span><button class="btn primary" id="v-send">보내기</button></div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/conversation/chat.js') }}"></script>
+{% endblock %}

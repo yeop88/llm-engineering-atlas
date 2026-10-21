@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}대화 실측{% endblock %}
+{% block content %}
+{% call ui.page_header("대화 실측") %}앞 대화에 기대는 후속 질문을 질문 풀어 쓰기 방법별로 검색해, 정답 문서가 위에 나오는지 잽니다 — 그대로 · 앞 질문 이어 붙이기 · 규칙(기억한 제품 · 주제) · LLM. 함께 되묻기 판단(제품을 모르는 고장 문의)과 메모리(제품 · 오류 코드) 정확도를 잽니다. 평가 대화는 AS 예시 자료(상담 창에서 준비)와 법률 공개 자료(컬렉션 → 공개 자료 가져오기)를 씁니다.{% endcall %}
+
+<div class="card stack">
+  <h2>실행</h2>
+  <div class="row">
+    <span class="small muted">풀어 쓰기 방법:</span>
+    <label class="row small m-0"><input type="checkbox" name="e-method" value="none" checked> 그대로</label>
+    <label class="row small m-0"><input type="checkbox" name="e-method" value="history" checked> 앞 질문 이어 붙이기</label>
+    <label class="row small m-0"><input type="checkbox" name="e-method" value="rule" checked> 규칙</label>
+    <label class="row small m-0"><input type="checkbox" name="e-method" value="llm" checked> LLM</label>
+  </div>
+  <div class="row">
+    <span class="small muted">대화 분야:</span>
+    <label class="row small m-0"><input type="checkbox" name="e-domain" value="as" checked> AS 매뉴얼</label>
+    <label class="row small m-0"><input type="checkbox" name="e-domain" value="legal" checked> 법률</label>
+    <div class="field"><label for="e-provider">LLM 제공자</label><select id="e-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field"><label for="e-model">모델</label><input id="e-model" data-ctx="model" placeholder="비우면 설정값"></div>
+    <div class="self-end"><button class="btn primary" id="e-run">실행</button></div>
+  </div>
+  <div id="e-preset" class="small muted"></div>
+  <div id="e-progress" hidden></div>
+</div>
+
+<div class="card stack mt-4" id="retrieval">
+  <h2>후속 질문 검색</h2>
+  <div id="e-out"><div class="empty">실행하면 방법별 Hit@1 · Hit@3 · MRR 과 대화별 순위가 여기에 나옵니다.</div></div>
+</div>
+
+<div class="card stack mt-4">
+  <h2>실행 기록</h2>
+  <div id="e-runs"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/conversation/eval.js') }}"></script>
+{% endblock %}
