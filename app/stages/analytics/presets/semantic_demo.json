@@ -1,0 +1,18 @@
+{
+  "base": "inquiries i LEFT JOIN products p ON p.model = i.product_model LEFT JOIN tickets t ON t.inquiry_id = i.id",
+  "metrics": {
+    "접수 건수": {"sql": "COUNT(DISTINCT i.id)", "desc": "문의 건수"},
+    "해결률": {"sql": "ROUND(100.0 * SUM(i.resolved) / COUNT(i.id), 1)", "desc": "해결된 문의 비율(%) — 티켓이 여럿이어도 문의 기준", "unit": "%"},
+    "평균 만족도": {"sql": "ROUND(AVG(i.satisfaction), 2)", "desc": "응답한 문의의 만족도 평균(응답 없음은 빼고)"},
+    "티켓 수": {"sql": "COUNT(t.id)", "desc": "기사 방문 · 처리 티켓 수"},
+    "재방문율": {"sql": "ROUND(100.0 * SUM(t.revisit) / NULLIF(SUM(CASE WHEN t.status = 'closed' THEN 1 ELSE 0 END), 0), 1)", "desc": "처리 완료 티켓 중 같은 문제로 다시 방문한 비율(%)", "unit": "%"},
+    "상담원 처리 비율": {"sql": "ROUND(100.0 * SUM(CASE WHEN i.handled_by = 'agent' THEN 1 ELSE 0 END) / COUNT(i.id), 1)", "desc": "상담원이 처리한 문의 비율(%)", "unit": "%"}
+  },
+  "dimensions": {
+    "제품 모델": "i.product_model", "제품 종류": "p.kind", "채널": "i.channel", "의도": "i.intent", "오류 코드": "i.code", "긴급도": "i.urgency",
+    "처리": "i.handled_by", "월": "substr(i.created_at, 1, 7)"
+  },
+  "filters": {
+    "제품 모델": "i.product_model", "제품 종류": "p.kind", "채널": "i.channel", "의도": "i.intent", "오류 코드": "i.code", "긴급도": "i.urgency", "처리": "i.handled_by"
+  }
+}

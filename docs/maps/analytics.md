@@ -22,13 +22,13 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| DA1 | [스키마 연결](../stages/analytics/da1-schema/README.md) | ⬜ 예정 | 표 · 열 설명 · 예시 값으로 질문과 관련된 표 · 열을 고른다 | [K2 온톨로지](../stages/knowledge-graph/k2-ontology/README.md) | — |
-| DA2 | [지표 정의 (의미 계층)](../stages/analytics/da2-semantic/README.md) | ⬜ 예정 | '재방문 비율' 같은 업무 지표를 정의로 고정해 LLM 이 계산식을 만들지 않게 한다 | [K1 요구사항](../stages/knowledge-graph/k1-requirements/README.md) | — |
-| DA3 | [SQL 생성](../stages/analytics/da3-sql/README.md) | ⬜ 예정 | 질문 · 연결된 스키마 · 지표 정의로 SQL 을 만든다 | [K6 Text2Cypher](../stages/knowledge-graph/k6-text2cypher/README.md) | — |
-| DA4 | [실행 검증 · 고치기](../stages/analytics/da4-verify/README.md) | ⬜ 예정 | 읽기 전용으로 실행해 오류 · 빈 결과 · 이상 값이면 고쳐 다시 만든다 | [K6 Text2Cypher](../stages/knowledge-graph/k6-text2cypher/README.md) · [IO2 샌드박스](../stages/interop/io2-sandbox/README.md) | — |
-| DA5 | [결과 해석 · 차트](../stages/analytics/da5-explain/README.md) | ⬜ 예정 | 결과 표를 문장 · 차트로 바꾸고 숫자는 결과에서만 쓴다 | [MA5 분석 에이전트](../stages/multi-agent/ma5-analysis-agent/README.md) | — |
-| DA6 | [권한 · 안전](../stages/analytics/da6-guard/README.md) | ⬜ 예정 | 읽기 전용 · 행 · 열 권한 · 개인정보 열 · 무거운 질의를 막는다 | [G3 권한별 검색](../stages/guardrails/g3-acl/README.md) · [G2 개인정보](../stages/guardrails/g2-pii/README.md) | — |
-| DA7 | [실행 정확도 평가](../stages/analytics/da7-eval/README.md) | ⬜ 예정 | 정답 SQL 과 결과가 같은지(실행 정확도)를 질문 유형별로 잰다 | [E1 평가 세트](../stages/evalops/e1-sets/README.md) | — |
+| DA1 | [스키마 연결](../stages/analytics/da1-schema/README.md) | ✅ 구현됨 | 표 · 열 설명 · 예시 값으로 질문과 관련된 표 · 열을 고른다 | [K2 온톨로지](../stages/knowledge-graph/k2-ontology/README.md) | [데이터 분석 · Text-to-SQL — 분석 자료 · 스키마 연결 · 의미 계층 · 실행 검증 · 해석 · 권한 · 실행 정확도 · 실측](../stages/analytics/da1-schema/analytics.md) |
+| DA2 | [지표 정의 (의미 계층)](../stages/analytics/da2-semantic/README.md) | ✅ 구현됨 | '재방문 비율' 같은 업무 지표를 정의로 고정해 LLM 이 계산식을 만들지 않게 한다 | [K1 요구사항](../stages/knowledge-graph/k1-requirements/README.md) | [데이터 분석 · Text-to-SQL — 분석 자료 · 스키마 연결 · 의미 계층 · 실행 검증 · 해석 · 권한 · 실행 정확도 · 실측](../stages/analytics/da1-schema/analytics.md) |
+| DA3 | [SQL 생성](../stages/analytics/da3-sql/README.md) | ✅ 구현됨 | 질문 · 연결된 스키마 · 지표 정의로 SQL 을 만든다 | [K6 Text2Cypher](../stages/knowledge-graph/k6-text2cypher/README.md) | [데이터 분석 · Text-to-SQL — 분석 자료 · 스키마 연결 · 의미 계층 · 실행 검증 · 해석 · 권한 · 실행 정확도 · 실측](../stages/analytics/da1-schema/analytics.md) |
+| DA4 | [실행 검증 · 고치기](../stages/analytics/da4-verify/README.md) | ✅ 구현됨 | 읽기 전용으로 실행해 오류 · 빈 결과 · 이상 값이면 고쳐 다시 만든다 | [K6 Text2Cypher](../stages/knowledge-graph/k6-text2cypher/README.md) · [IO2 샌드박스](../stages/interop/io2-sandbox/README.md) | [데이터 분석 · Text-to-SQL — 분석 자료 · 스키마 연결 · 의미 계층 · 실행 검증 · 해석 · 권한 · 실행 정확도 · 실측](../stages/analytics/da1-schema/analytics.md) |
+| DA5 | [결과 해석 · 차트](../stages/analytics/da5-explain/README.md) | ✅ 구현됨 | 결과 표를 문장 · 차트로 바꾸고 숫자는 결과에서만 쓴다 | [MA5 분석 에이전트](../stages/multi-agent/ma5-analysis-agent/README.md) | [데이터 분석 · Text-to-SQL — 분석 자료 · 스키마 연결 · 의미 계층 · 실행 검증 · 해석 · 권한 · 실행 정확도 · 실측](../stages/analytics/da1-schema/analytics.md) |
+| DA6 | [권한 · 안전](../stages/analytics/da6-guard/README.md) | ✅ 구현됨 | 읽기 전용 · 행 · 열 권한 · 개인정보 열 · 무거운 질의를 막는다 | [G3 권한별 검색](../stages/guardrails/g3-acl/README.md) · [G2 개인정보](../stages/guardrails/g2-pii/README.md) | [데이터 분석 · Text-to-SQL — 분석 자료 · 스키마 연결 · 의미 계층 · 실행 검증 · 해석 · 권한 · 실행 정확도 · 실측](../stages/analytics/da1-schema/analytics.md) |
+| DA7 | [실행 정확도 평가](../stages/analytics/da7-eval/README.md) | ✅ 구현됨 | 정답 SQL 과 결과가 같은지(실행 정확도)를 질문 유형별로 잰다 | [E1 평가 세트](../stages/evalops/e1-sets/README.md) | [데이터 분석 · Text-to-SQL — 분석 자료 · 스키마 연결 · 의미 계층 · 실행 검증 · 해석 · 권한 · 실행 정확도 · 실측](../stages/analytics/da1-schema/analytics.md) |
 
 ## 설계 원칙
 

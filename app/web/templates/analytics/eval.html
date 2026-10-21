@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}실행 정확도{% endblock %}
+{% block content %}
+{% call ui.page_header("실행 정확도") %}예시 자료에 정답 SQL 이 있는 질문 24개(집계 · 날짜 · 조인 · 비율 · 상위 · NULL)로, 만든 SQL 의 실행 결과가 정답 SQL 의 결과와 같은지 채점합니다 — SQL 글자가 달라도 결과가 같으면 맞습니다. 방식(SQL 생성 · 연결 없이 전체 스키마 · 의미 계층)별로, 유형별 정답률 · 스키마 연결 재현율 · 고치기 횟수 · 고쳐서 맞힌 수를 봅니다(DA7).{% endcall %}
+
+<div class="card stack" id="eval">
+  <h2>평가 (DA7)</h2>
+  <div class="row">
+    <div class="field"><label for="e-source">자료 (예시 자료)</label><select id="e-source"></select></div>
+    <div class="field"><label for="e-provider">제공자</label><select id="e-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="e-model">모델</label><input id="e-model" data-ctx="model"></div>
+    <div class="field"><label for="e-tries">고치기 상한</label><input id="e-tries" type="number" value="3" min="1" max="6" class="w-md"></div>
+  </div>
+  <div class="row small">
+    <label class="row m-0"><input type="checkbox" data-mode="sql" checked> SQL 생성(연결한 스키마)</label>
+    <label class="row m-0"><input type="checkbox" data-mode="sql_full_schema"> SQL 생성(전체 스키마)</label>
+    <label class="row m-0"><input type="checkbox" data-mode="semantic" checked> 의미 계층</label>
+  </div>
+  <div><button class="btn primary" id="e-run">평가</button></div>
+  <div id="e-progress" hidden></div>
+  <div id="e-out"></div>
+  <details><summary class="small">평가 질문 보기</summary><div id="e-qs" class="small"></div></details>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/analytics/eval.js') }}"></script>
+{% endblock %}

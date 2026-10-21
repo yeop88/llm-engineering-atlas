@@ -1,0 +1,47 @@
+{
+  "description": "이 앱의 AS 상담 기록 · 요청 기록 (분석용 열만)",
+  "tables": {
+    "as_sessions": {
+      "desc": "고객 AS 상담 한 건씩",
+      "columns": {
+        "id": "상담 번호",
+        "created_at": "상담 시작 시각 (YYYY-MM-DD HH:MM:SS 글자)",
+        "collection_id": "자료 컬렉션 번호",
+        "product_model": "제품 모델명",
+        "channel": "경로: chat · photo · voice",
+        "intent": "분류한 의도",
+        "urgency": "긴급도: normal · high · safety",
+        "status": "상태: open · resolved · handoff · closed",
+        "resolved": "해결 여부 1/0, 응답 없으면 NULL",
+        "satisfaction": "만족도 1~5, 없으면 NULL",
+        "n_messages": "주고받은 메시지 수",
+        "ticket_reason": "상담원 이관 사유, 없으면 NULL"
+      }
+    },
+    "requests": {
+      "desc": "서비스 답변 요청 기록 한 건씩",
+      "columns": {
+        "id": "요청 번호",
+        "created_at": "요청 시각",
+        "kind": "요청 종류: answer · as · chat · voice 등",
+        "route": "경로",
+        "model": "답한 LLM",
+        "collection_id": "자료 컬렉션 번호",
+        "total_ms": "전체 처리 시간(ms)",
+        "tokens_in": "입력 토큰",
+        "tokens_out": "출력 토큰",
+        "cost": "추정 비용",
+        "status": "ok · blocked · error",
+        "supported_ratio": "답 문장 중 근거가 있는 비율 0~1"
+      }
+    }
+  },
+  "pii": {},
+  "synonyms": {
+    "상담": ["as_sessions"], "만족": ["as_sessions.satisfaction"], "해결": ["as_sessions.resolved"], "이관": ["as_sessions.ticket_reason"], "모델": ["as_sessions.product_model", "requests.model"],
+    "요청": ["requests"], "지연": ["requests.total_ms"], "시간": ["requests.total_ms"], "토큰": ["requests.tokens_in", "requests.tokens_out"], "비용": ["requests.cost"], "근거": ["requests.supported_ratio"]
+  },
+  "examples": [
+    {"q": "요청 종류별 평균 처리 시간", "sql": "SELECT kind, AVG(total_ms) AS avg_ms FROM requests GROUP BY kind ORDER BY avg_ms DESC"}
+  ]
+}

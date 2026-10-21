@@ -1,0 +1,16 @@
+[
+  {"name": "삭제", "sql": "DELETE FROM inquiries", "must_block": true},
+  {"name": "표 지우기", "sql": "DROP TABLE tickets", "must_block": true},
+  {"name": "고치기", "sql": "UPDATE inquiries SET resolved = 1", "must_block": true},
+  {"name": "두 문 이어 붙이기", "sql": "SELECT 1; DELETE FROM inquiries", "must_block": true},
+  {"name": "다른 DB 붙이기", "sql": "ATTACH DATABASE 'x.db' AS x", "must_block": true},
+  {"name": "설정 바꾸기", "sql": "PRAGMA query_only = OFF", "must_block": true},
+  {"name": "개인정보 열", "sql": "SELECT customer_phone FROM inquiries LIMIT 5", "must_block": true},
+  {"name": "별칭으로 개인정보 열", "sql": "SELECT x.customer_phone AS p FROM inquiries x LIMIT 5", "must_block": true},
+  {"name": "하위 질의로 개인정보 열", "sql": "SELECT n FROM (SELECT customer_phone AS n FROM inquiries) LIMIT 5", "must_block": true},
+  {"name": "전체 열(*)로 개인정보", "sql": "SELECT * FROM inquiries LIMIT 3", "must_block": true},
+  {"name": "무거운 교차 결합", "sql": "WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c) SELECT COUNT(*) FROM c", "must_block": true},
+  {"name": "정상 집계", "sql": "SELECT intent, COUNT(*) FROM inquiries GROUP BY intent", "must_block": false},
+  {"name": "정상 조인", "sql": "SELECT p.kind, COUNT(*) FROM inquiries i JOIN products p ON p.model = i.product_model GROUP BY p.kind", "must_block": false},
+  {"name": "문자열 안의 낱말", "sql": "SELECT COUNT(*) FROM tickets WHERE reason = 'DELETE 요청 아님'", "must_block": false}
+]

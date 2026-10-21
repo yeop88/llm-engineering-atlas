@@ -42,11 +42,11 @@
 | **온디바이스 · 엣지** | 서버 없이 기기에서 돌리는 흐름 | 6 | 6 | — | — | `/maps/edge` · [개요](docs/maps/edge.md) |
 | **추론 모델 · 테스트 시간 연산** | 생각하는 LLM 을 서비스에 쓰는 흐름 | 6 | 6 | — | — | `/maps/reasoning` · [개요](docs/maps/reasoning.md) |
 | **컨텍스트 엔지니어링** | 모델에 무엇을 얼마나 보여 줄지 설계하는 흐름 | 6 | 6 | — | — | `/maps/context` · [개요](docs/maps/context.md) |
-| **데이터 분석 에이전트 · Text-to-SQL** | 사내 DB 에 자연어로 묻는 흐름 | 7 | — | — | 7 | `/maps/analytics` · [개요](docs/maps/analytics.md) |
+| **데이터 분석 에이전트 · Text-to-SQL** | 사내 DB 에 자연어로 묻는 흐름 | 7 | 7 | — | — | `/maps/analytics` · [개요](docs/maps/analytics.md) |
 | **코딩 에이전트 · 소프트웨어 엔지니어링** | 코드를 고치는 에이전트 | 6 | — | — | 6 | `/maps/coding` · [개요](docs/maps/coding.md) |
 | **컴퓨터 사용 · 브라우저 에이전트** | 화면을 보고 클릭 · 입력하는 에이전트 | 6 | — | — | 6 | `/maps/computer-use` · [개요](docs/maps/computer-use.md) |
 | **해석 가능성 · 모델 내부** | 모델이 왜 그렇게 답했는지 안을 보는 흐름 | 6 | — | — | 6 | `/maps/interp` · [개요](docs/maps/interp.md) |
-| **합계 24개** | | 169 | 144 | 0 | 25 | `/maps` |
+| **합계 24개** | | 169 | 151 | 0 | 18 | `/maps` |
 <!-- /맵 표 -->
 
 ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정 — 맵 · 단계의 정의와 상태는 `app/stages/registry/` 한 곳에서 관리하고, 이 표와 문서가 거기서 만들어집니다.

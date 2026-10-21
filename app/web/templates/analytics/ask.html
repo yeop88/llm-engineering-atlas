@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}자연어로 데이터 묻기{% endblock %}
+{% block content %}
+{% call ui.page_header("자연어로 데이터 묻기") %}표에 있는 질문(접수 건수 · 해결률 · 재방문)을 SQL 로 답합니다. 질문 낱말을 표 · 열 설명 · 예시 값 · 동의어와 이어 관련 표만 고르고(DA1), 그 스키마로 SQL 을 만들어(DA3) 읽기 전용으로 실행한 뒤 오류 · 빈 결과 · 상식 밖 값이면 그 사실을 붙여 다시 만듭니다(DA4). 결과는 문장 · 막대로 바꾸고, 답의 숫자가 결과 표에 있는지 검사합니다(DA5). 분석 자료는 앱 DB 가 아니라 분석용 열만 옮긴 별도 파일입니다.{% endcall %}
+
+<div class="card stack" id="schema">
+  <h2>분석 자료 · 스키마 (DA1)</h2>
+  <div class="row">
+    <div class="field"><label for="a-source">자료</label><select id="a-source"></select></div>
+    <div class="field"><label for="a-new">새 자료 이름</label><input id="a-new" value="demo" class="w-md"></div>
+    <div class="field"><label for="a-kind">종류</label><select id="a-kind"><option value="demo">예시 AS 자료</option><option value="app">이 앱의 기록 (이름은 app…)</option></select></div>
+    <div class="self-end"><button class="btn" id="a-build">만들기</button></div>
+  </div>
+  <div id="a-schema" class="small"></div>
+</div>
+
+<div class="card stack mt-4" id="ask">
+  <h2>묻기 (DA3 · DA4 · DA5)</h2>
+  <div class="row">
+    <div class="field grow"><label for="a-q">질문</label><input id="a-q" value="WM-200 의 E4 오류 접수는 몇 건?"></div>
+    <div class="field"><label for="a-mode">방식</label><select id="a-mode"><option value="sql">SQL 생성</option><option value="semantic">의미 계층(지표 정의)</option></select></div>
+    <div class="field"><label for="a-role">역할</label><select id="a-role"><option value="analyst">분석가</option><option value="admin">관리자</option></select></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="a-provider">제공자</label><select id="a-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="a-model">모델</label><input id="a-model" data-ctx="model"></div>
+    <div class="field"><label for="a-tries">고치기 상한</label><input id="a-tries" type="number" value="3" min="1" max="6" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="a-full"> 전체 스키마(연결 없이)</label>
+    <div class="self-end"><button class="btn primary" id="a-run">묻기</button></div>
+  </div>
+  <div id="a-out"></div>
+  <h3>SQL 직접 실행</h3>
+  <div class="field"><label for="a-sql">SQL (같은 읽기 전용 · 권한 규칙)</label><textarea id="a-sql" rows="3" class="mono"></textarea></div>
+  <div><button class="btn" id="a-exec">실행</button></div>
+  <div id="a-exec-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/analytics/ask.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}지표 정의 · 권한{% endblock %}
+{% block content %}
+{% call ui.page_header("지표 정의 · 권한") %}'해결률' · '재방문율' 같은 업무 지표를 SQL 식으로 고정해 둔 의미 계층입니다. 의미 계층 방식으로 물으면 LLM 은 지표 · 차원 · 필터 · 기간만 JSON 으로 고르고, SQL 은 정해진 규칙으로 만들어집니다 — 같은 지표가 질문마다 다르게 계산되지 않게(DA2). 아래에서는 읽기 전용 · 문 하나 · 개인정보 열 · 시간 상한이 실행하는 쪽(DB 연결)에서 실제로 막히는지 위험 질의로 시험합니다(DA6).{% endcall %}
+
+<div class="card stack" id="semantic">
+  <h2>지표 · 차원 · 필터 (DA2)</h2>
+  <div id="s-defs" class="small"></div>
+</div>
+
+<div class="card stack mt-4" id="guard">
+  <h2>권한 · 안전 시험 (DA6)</h2>
+  <div class="row">
+    <div class="field"><label for="g-source">자료 (예시 자료)</label><select id="g-source"></select></div>
+    <div class="self-end"><button class="btn primary" id="g-run">위험 질의 시험</button></div>
+  </div>
+  <p class="small muted">분석가 역할로 실행합니다. 글 검사(문 하나 · SELECT 만 · 금지 낱말) → 읽기 전용 연결 → 허가 콜백(쓰기 · 개인정보 열 거부, 별칭 · 하위 질의 · * 도) → 시간 상한 순으로 막습니다.</p>
+  <div id="g-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/analytics/semantic.js') }}"></script>
+{% endblock %}

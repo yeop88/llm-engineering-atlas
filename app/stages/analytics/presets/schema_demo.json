@@ -1,0 +1,54 @@
+{
+  "description": "가전 AS 접수 예시 자료 (2026-04-01 ~ 2026-09-30)",
+  "tables": {
+    "products": {
+      "desc": "제품 모델 목록",
+      "columns": {
+        "model": "제품 모델명 (예: WM-200)",
+        "kind": "제품 종류: 세탁기 · 건조기 · 식기세척기",
+        "released": "출시일 (YYYY-MM-DD)"
+      }
+    },
+    "inquiries": {
+      "desc": "고객 문의(접수) 한 건씩",
+      "columns": {
+        "id": "문의 번호",
+        "created_at": "접수 시각 (YYYY-MM-DD HH:MM:SS 글자)",
+        "product_model": "문의한 제품 모델 → products.model",
+        "channel": "접수 경로: chat(채팅) · phone(전화) · photo(사진)",
+        "intent": "문의 의도: 고장 · 사용법 · 배송 · 환불 · 설치",
+        "code": "오류 코드 (예: E4, E1, OE, D80). 코드가 없으면 NULL",
+        "urgency": "긴급도: normal(보통) · high(높음) · safety(안전)",
+        "resolved": "해결 여부 1 = 해결, 0 = 미해결",
+        "satisfaction": "만족도 1~5점, 응답하지 않았으면 NULL",
+        "handled_by": "처리: auto(자동 응답) · agent(상담원)",
+        "customer_phone": "고객 전화번호 (개인정보)"
+      }
+    },
+    "tickets": {
+      "desc": "자동 응답으로 해결하지 못해 접수된 기사 방문 · 처리 티켓",
+      "columns": {
+        "id": "티켓 번호",
+        "inquiry_id": "원래 문의 → inquiries.id",
+        "created_at": "티켓 생성 시각",
+        "reason": "접수 사유",
+        "status": "상태: open(대기) · visit(방문 예정) · closed(처리 완료)",
+        "visit_date": "기사 방문일 (없으면 NULL)",
+        "revisit": "재방문 여부 1 = 같은 문제로 다시 방문, 0 = 아님"
+      }
+    }
+  },
+  "pii": {"inquiries": ["customer_phone"]},
+  "synonyms": {
+    "접수": ["inquiries"], "문의": ["inquiries"], "건수": ["inquiries"], "오류": ["inquiries.code"], "코드": ["inquiries.code"], "에러": ["inquiries.code"],
+    "만족": ["inquiries.satisfaction"], "해결": ["inquiries.resolved"], "채널": ["inquiries.channel"], "경로": ["inquiries.channel"], "전화": ["inquiries.channel"],
+    "의도": ["inquiries.intent"], "긴급": ["inquiries.urgency"], "안전": ["inquiries.urgency"], "상담원": ["inquiries.handled_by"], "자동": ["inquiries.handled_by"],
+    "모델": ["inquiries.product_model", "products.model"], "제품": ["products", "inquiries.product_model"], "종류": ["products.kind"], "세탁기": ["products.kind"],
+    "건조기": ["products.kind"], "식기세척기": ["products.kind"], "출시": ["products.released"],
+    "티켓": ["tickets"], "기사": ["tickets"], "방문": ["tickets.visit_date", "tickets.status"], "재방문": ["tickets.revisit"], "처리": ["tickets.status"]
+  },
+  "examples": [
+    {"q": "2026년 6월 채팅 접수 건수는?", "sql": "SELECT COUNT(*) AS n FROM inquiries WHERE channel = 'chat' AND created_at >= '2026-06-01' AND created_at < '2026-07-01'"},
+    {"q": "의도별 접수 건수", "sql": "SELECT intent, COUNT(*) AS n FROM inquiries GROUP BY intent ORDER BY n DESC"}
+  ]
+}

@@ -474,6 +474,18 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 데이터 분석 · Text-to-SQL (`/api/analytics`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST / GET | `/api/analytics/sources` | 분석 자료 만들기 `{"name", "kind": "demo"\|"app", "n", "seed"}`(앱 기록은 이름이 app 으로 시작) / 목록(표별 행 수) |
+| GET | `/api/analytics/sources/{name}/schema` · `/semantic` | 스키마 카드(설명 · 예시 값 · 개인정보 열) / 의미 계층 지표 · 차원 · 필터 |
+| POST | `/api/analytics/link` | 스키마 연결 `{"source", "question"}` → 표 · 열 · 점수 |
+| POST | `/api/analytics/ask` | 묻기 `{"source", "question", "mode": "sql"\|"semantic", "role", "max_tries", "full_schema", "explain", "provider", "model"}` → 시도별 SQL · 결과 · 답 · 숫자 검사 · 막대 |
+| POST | `/api/analytics/run` | SQL 직접 실행(같은 가드) `{"source", "sql", "role"}` |
+| POST | `/api/analytics/guard/test` | 위험 질의 시험 `{"source"}` → 기대대로 막힘 · 통과 수 |
+| POST / GET | `/api/analytics/eval` · `/eval/questions` | 실행 정확도 작업 `{"source", "modes", "max_tries", "ids"}` → 방식별 · 유형별 정답률 · 연결 재현율 / 평가 질문 |
+
 ## 컨텍스트 엔지니어링 (`/api/context`)
 
 모든 실험 요청은 `{"eval_set_id", "max_queries", "top_k", "max_chars", "max_tokens", "provider", "model", "seed"}` 를 함께 받습니다.
