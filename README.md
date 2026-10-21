@@ -77,7 +77,7 @@
 | 소형 · 저비트 모델은 | QAT Q4_0 이 Q8_0 과 같은 품질로 가장 빠름, 소형 E2B 는 지연 −21% 대신 품질 −13(유의) | [7b 양자화](docs/stages/llm/7b-quant/quant.md) |
 | 에이전트가 RAG 보다 나은가 | 조문 번호 질문에서 번호 조회를 LLM 판단 전에 먼저 하게 하자 정답 근거 인용 75% → 100% | [8a 에이전틱 AI](docs/stages/llm/8a-agent/agent.md) |
 | 근거를 줄이면 빨라지나 | 근거 압축은 지연 −19% 대신 품질 −10(정답 문장을 버림). A/B 재생에서도 −16초(유의) · 품질은 불확실 | [2 RAG](docs/stages/llm/2-rag/rag.md) · [E7 A/B](docs/stages/evalops/e7-ab/ab.md) |
-| 방어를 켜면 얼마나 막나 | 공격 31개 방어율 off 58% → mask(개인정보 가림 · 근거 격리) 90% → enforce 100%, 정상 질문 6개는 세 모드 모두 답함 | [G1 · G7 가드레일](docs/stages/guardrails/g1-injection/guards.md) |
+| 방어를 켜면 얼마나 막나 | 공격 31개 방어율 off 58% → mask(개인정보 가림 · 근거 격리) 87% → enforce 100%, 정상 질문 6개는 세 모드 모두 답함(처음엔 enforce 가 지시 섞인 청크를 통째로 빼 정상 질문 절반을 거절 — 문장 단위로 고침) | [G1 · G7 가드레일](docs/stages/guardrails/g1-injection/guards.md) |
 | 권한은 어디서 지키나 | 검색 전에 거르면 권한 없는 문서가 근거로 나올 질문 9/17 → 0, 방어 모드와 무관 | [G3 권한](docs/stages/guardrails/g3-acl/access.md) |
 | 설정을 바꾸면 회귀를 잡나 | 하이브리드 → BM25 만: 두 세트 모두 유의한 하락 경보(nDCG −0.12 · −0.09), 같은 설정은 차이 0 | [E2 회귀](docs/stages/evalops/e1-sets/regression.md) |
 | 바뀐 문서만 다시 색인하면 | 문서 1개 변경: 증분 42초 vs 전체 재구축 30분(1,613청크) | [D6 증분 갱신](docs/stages/docintel/d1-ingest/ingest.md) |

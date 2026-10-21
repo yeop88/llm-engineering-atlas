@@ -6,7 +6,7 @@
 답변 화면(스트리밍) · AS 상담 · 레드팀 · A/B 실험이 모두 prepare / finish 를 거치게 해서, 어느 화면에서 묻든 같은 방어와 같은 기록이
 남게 한다(화면마다 따로 붙이면 한 곳만 빠져도 그 길로 새어 나간다). 단계 내부 로직(rag · guardrails)은 서로를 모르고 여기서 잇는다.
 
-GUARD_MODE: off = 검사 · 기록만(답은 그대로), mask = 개인정보만 가림(기본), enforce = 인젝션 질문 차단 · 의심 근거 제외 · 정책 위반 수정 · 거절.
+GUARD_MODE: off = 검사 · 기록만(답은 그대로), mask = 개인정보만 가림(기본), enforce = 인젝션 질문 차단 · 근거 속 지시 문장 빼기 · 정책 위반 수정 · 거절.
 """
 
 from dataclasses import dataclass, field
@@ -96,9 +96,18 @@ def prepare(
         st["flagged"] = len(flagged)
         if flagged:
             p.guard["context"] = flagged
-            if p.mode == "enforce":  # 지시가 숨은 근거는 LLM 에 넣지 않는다(간접 인젝션)
+            if p.mode == "enforce":  # 지시가 숨은 문장은 LLM 에 넣지 않는다(간접 인젝션) — 같은 청크의 정상 내용은 남긴다
                 bad = {f["chunk_id"] for f in flagged}
-                p.results = [r for r in p.results if r.get("chunk_id") not in bad]
+                kept = []
+                for r in p.results:
+                    if r.get("chunk_id") in bad:
+                        clean, removed = injection.sanitize(r.get("text", ""))
+                        st["removed_sentences"] = st.get("removed_sentences", 0) + len(removed)
+                        if not clean.strip():  # 지시만 있던 청크는 통째로 뺀다
+                            continue
+                        r = r | {"text": clean}
+                    kept.append(r)
+                p.results = kept
     results = answer.compress(p.results, question, compress_keep) if compress_keep else p.results
     p.context, p.sources = answer.build_context(results, max_context_chars)
     note = ""
