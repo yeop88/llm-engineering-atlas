@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}기기용 팩 · 오프라인{% endblock %}
+{% block content %}
+{% call ui.page_header("기기용 팩 · 오프라인") %}담당 범위(제품 모델 · 문서 종류 · 최근 자료)의 청크만 골라 압축 벡터로 담은 기기용 팩을 만듭니다(ED3). 팩은 폴더 하나 — 기기는 벡터 DB 없이 전부 훑는 정확 검색을 합니다. 판을 올릴 때 바뀌지 않은 문서의 벡터는 앞 판에서 가져옵니다. 평가 세트로 팩 검색과 서버 검색을 비교하고, 정답이 범위 밖인 질문을 따로 세어 '압축 손실'과 '안 담아서 못 찾음'을 나눕니다. 아래에서 오프라인 기능 범위를 보고 기기에서 묻기를 흉내 냅니다 — 서버가 필요한 일은 미룬 요청으로 대기열에 쌓입니다(ED4).{% endcall %}
+
+<div class="card stack" id="index">
+  <h2>팩 만들기 (ED3)</h2>
+  <div class="row">
+    <div class="field"><label for="p-col">컬렉션</label><select id="p-col" data-ctx="col"></select></div>
+    <div class="field grow"><label for="p-idx">인덱스 (모델)</label><select id="p-idx"></select></div>
+    <div class="field"><label for="p-prec">벡터 정밀도</label><select id="p-prec"></select></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="p-name">팩 이름</label><input id="p-name" value="as-tablet" class="w-md"></div>
+    <div class="field"><label for="p-pm">제품 모델 (쉼표)</label><input id="p-pm" placeholder="WM-200, DR-300" class="w-md"></div>
+    <div class="field"><label for="p-dt">문서 종류 (쉼표)</label><input id="p-dt" placeholder="매뉴얼" class="w-md"></div>
+    <div class="field"><label for="p-days">최근 n일</label><input id="p-days" type="number" min="1" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="p-cache" checked> 자주 묻는 답</label>
+    <div class="self-end"><button class="btn primary" id="p-build">팩 만들기 (새 판)</button></div>
+  </div>
+  <div id="p-progress" hidden></div>
+  <div id="p-out"></div>
+  <div id="p-list"></div>
+</div>
+
+<div class="card stack mt-4" id="search">
+  <h2>팩으로 검색 · 평가 (ED3)</h2>
+  <div class="row">
+    <div class="field"><label for="q-pack">팩</label><select id="q-pack" data-pack></select></div>
+    <div class="field grow"><label for="q-text">질문</label><input id="q-text" value="WM-200 에서 E3 오류가 나요"></div>
+    <div class="self-end"><button class="btn" id="q-run">검색</button></div>
+  </div>
+  <div id="q-out"></div>
+  <div class="row">
+    <div class="field"><label for="e-set">평가 세트</label><select id="e-set" data-ctx="set"></select></div>
+    <div class="field"><label for="e-k">k</label><input id="e-k" type="number" value="5" min="1" class="w-md"></div>
+    <div class="field"><label for="e-n">질문 수</label><input id="e-n" type="number" value="100" min="1" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="e-run">팩 vs 서버</button></div>
+  </div>
+  <div id="e-progress" hidden></div>
+  <div id="e-out"></div>
+</div>
+
+<div class="card stack mt-4" id="offline">
+  <h2>오프라인 동작 (ED4)</h2>
+  <div class="row">
+    <div class="field"><label for="o-pack">팩</label><select id="o-pack" data-pack></select></div>
+    <div class="field"><label for="o-profile">기기</label><select id="o-profile"></select></div>
+    <div class="field grow"><label for="o-file">기기 LLM 파일</label><select id="o-file"><option value="">없음 (근거만)</option></select></div>
+    <div class="self-end"><button class="btn" id="o-cap">기능 범위</button></div>
+  </div>
+  <div id="o-cap-out"></div>
+  <div class="row">
+    <div class="field"><label for="o-provider">제공자</label><select id="o-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field"><label for="o-model">기기 LLM 이름 (비우면 근거만)</label><input id="o-model" data-ctx="model"></div>
+    <div class="field"><label for="o-device">기기 번호 (대기열)</label><input id="o-device" placeholder="tablet-01" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="o-online"> 연결됨</label>
+  </div>
+  <div class="row">
+    <div class="field grow"><label for="o-q">기기에서 묻기</label><input id="o-q" value="WM-200 배수 필터 청소는 어떻게 하나요?"></div>
+    <div class="self-end"><button class="btn primary" id="o-ask">묻기</button></div>
+  </div>
+  <div id="o-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/edge/pack.js') }}"></script>
+{% endblock %}

@@ -20,12 +20,12 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| ED1 | [기기별 모델 선택](../stages/edge/ed1-select/README.md) | 🟡 기초 있음 | 기기의 메모리 · 연산 능력에 맞는 임베딩 · LLM 크기를 고르고 품질 손실을 잰다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [1 임베딩](../stages/llm/1-embedding/README.md) | — |
-| ED2 | [극단적 양자화 · 증류](../stages/edge/ed2-compress/README.md) | 🟡 기초 있음 | 4비트 이하 · 이진 벡터 · 작은 학생 모델로 줄이고, 손실이 겹치는지 잰다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [7a 지식 증류](../stages/llm/7a-distill/README.md) | — |
-| ED3 | [기기 내 검색 (작은 색인)](../stages/edge/ed3-index/README.md) | 🟡 기초 있음 | 필요한 자료만 압축 색인으로 기기에 담아 서버 없이 검색한다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | — |
-| ED4 | [오프라인 동작](../stages/edge/ed4-offline/README.md) | ⬜ 예정 | 연결이 끊겨도 검색 · 답변이 되고, 할 수 없는 일(사진 진단 등)은 연결될 때로 미룬다 | [S1 캐시](../stages/serving/s1-cache/README.md) | — |
-| ED5 | [서버와 동기화 · 업데이트](../stages/edge/ed5-sync/README.md) | ⬜ 예정 | 바뀐 자료 · 모델만 기기로 보내고, 기기의 기록 · 피드백은 서버로 모은다 | [D6 증분 갱신](../stages/docintel/d6-meta/README.md) | — |
-| ED6 | [개인정보 국소 처리](../stages/edge/ed6-privacy/README.md) | ⬜ 예정 | 고객 정보 · 사진 · 음성은 기기 안에서 처리하고 서버로는 가린 결과 · 통계만 보낸다 | [G2 개인정보](../stages/guardrails/g2-pii/README.md) | — |
+| ED1 | [기기별 모델 선택](../stages/edge/ed1-select/README.md) | ✅ 구현됨 | 기기의 메모리 · 연산 능력에 맞는 임베딩 · LLM 크기를 고르고 품질 손실을 잰다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [1 임베딩](../stages/llm/1-embedding/README.md) | [온디바이스 · 엣지 — 기기 추천 · 경량화 조합 · 기기용 팩 · 오프라인 · 동기화 · 개인정보 · 실측](../stages/edge/ed3-index/edge.md) |
+| ED2 | [극단적 양자화 · 증류](../stages/edge/ed2-compress/README.md) | ✅ 구현됨 | 4비트 이하 · 이진 벡터 · 작은 학생 모델로 줄이고, 손실이 겹치는지 잰다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [7a 지식 증류](../stages/llm/7a-distill/README.md) | [온디바이스 · 엣지 — 기기 추천 · 경량화 조합 · 기기용 팩 · 오프라인 · 동기화 · 개인정보 · 실측](../stages/edge/ed3-index/edge.md) |
+| ED3 | [기기 내 검색 (작은 색인)](../stages/edge/ed3-index/README.md) | ✅ 구현됨 | 필요한 자료만 압축 색인으로 기기에 담아 서버 없이 검색한다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | [온디바이스 · 엣지 — 기기 추천 · 경량화 조합 · 기기용 팩 · 오프라인 · 동기화 · 개인정보 · 실측](../stages/edge/ed3-index/edge.md) |
+| ED4 | [오프라인 동작](../stages/edge/ed4-offline/README.md) | ✅ 구현됨 | 연결이 끊겨도 검색 · 답변이 되고, 할 수 없는 일(사진 진단 등)은 연결될 때로 미룬다 | [S1 캐시](../stages/serving/s1-cache/README.md) | [온디바이스 · 엣지 — 기기 추천 · 경량화 조합 · 기기용 팩 · 오프라인 · 동기화 · 개인정보 · 실측](../stages/edge/ed3-index/edge.md) |
+| ED5 | [서버와 동기화 · 업데이트](../stages/edge/ed5-sync/README.md) | ✅ 구현됨 | 바뀐 자료 · 모델만 기기로 보내고, 기기의 기록 · 피드백은 서버로 모은다 | [D6 증분 갱신](../stages/docintel/d6-meta/README.md) | [온디바이스 · 엣지 — 기기 추천 · 경량화 조합 · 기기용 팩 · 오프라인 · 동기화 · 개인정보 · 실측](../stages/edge/ed3-index/edge.md) |
+| ED6 | [개인정보 국소 처리](../stages/edge/ed6-privacy/README.md) | ✅ 구현됨 | 고객 정보 · 사진 · 음성은 기기 안에서 처리하고 서버로는 가린 결과 · 통계만 보낸다 | [G2 개인정보](../stages/guardrails/g2-pii/README.md) | [온디바이스 · 엣지 — 기기 추천 · 경량화 조합 · 기기용 팩 · 오프라인 · 동기화 · 개인정보 · 실측](../stages/edge/ed3-index/edge.md) |
 
 ## 설계 원칙
 

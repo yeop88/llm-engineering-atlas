@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}기기 동기화 · 개인정보{% endblock %}
+{% block content %}
+{% call ui.page_header("기기 동기화 · 개인정보") %}기기마다 받은 팩 · 판 · 마지막 동기화를 남겨 낡은 자료로 답하는 기기를 찾습니다. 동기화는 두 판의 문서별 지문을 비교해 바뀐 · 새 문서의 청크만 보내고 지울 청크 번호를 알려 줍니다 — 적용한 결과의 지문이 서버 최신 판과 같은지 계산으로 확인합니다(ED5). 기기가 올리는 기록 · 피드백 · 미룬 요청에는 항목별 전송 정책(원문 · 가림 · 집계만 · 보내지 않음)을 기기에서 적용하고, 서버는 받은 값을 다시 검사해 새어 들어온 개인정보는 가린 값만 저장하고 그 기기를 표시합니다(ED6).{% endcall %}
+
+<div class="card stack" id="sync">
+  <h2>기기 · 동기화 (ED5)</h2>
+  <div class="row">
+    <div class="field"><label for="d-id">기기 번호</label><input id="d-id" value="tablet-01" class="w-md"></div>
+    <div class="field"><label for="d-name">이름</label><input id="d-name" value="AS 기사 태블릿 1" class="w-md"></div>
+    <div class="field"><label for="d-profile">기기</label><select id="d-profile"></select></div>
+    <div class="field"><label for="d-pack">팩</label><select id="d-pack"></select></div>
+    <div class="self-end"><button class="btn" id="d-add">등록 · 고치기</button></div>
+  </div>
+  <div id="d-summary" class="small"></div>
+  <div id="d-list"></div>
+  <div id="d-out"></div>
+  <h3>판 사이 증분</h3>
+  <div class="row">
+    <div class="field"><label for="x-pack">팩</label><select id="x-pack"></select></div>
+    <div class="field"><label for="x-from">기기 판</label><input id="x-from" type="number" min="1" class="w-md" placeholder="없음 = 전체"></div>
+    <div class="field"><label for="x-to">받을 판</label><input id="x-to" type="number" min="1" class="w-md" placeholder="최신"></div>
+    <div class="self-end"><button class="btn" id="x-run">증분 계산</button></div>
+  </div>
+  <div id="x-out"></div>
+</div>
+
+<div class="card stack mt-4" id="privacy">
+  <h2>기기 → 서버 올리기 · 개인정보 (ED6)</h2>
+  <div id="u-policy" class="row small"></div>
+  <div class="field"><label for="u-events">올릴 기록 (JSON 목록 — kind · payload)</label><textarea id="u-events" rows="7" class="mono"></textarea></div>
+  <div class="row">
+    <div class="field"><label for="u-device">기기</label><select id="u-device"></select></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="u-prepare" checked> 기기에서 정책 적용</label>
+    <label class="row small m-0 self-end"><input type="checkbox" id="u-queued" checked> 대기열도 함께</label>
+    <div class="self-end"><button class="btn" id="u-preview">미리 보기</button></div>
+    <div class="self-end"><button class="btn primary" id="u-send">올리기</button></div>
+  </div>
+  <div id="u-out"></div>
+</div>
+
+<div class="card stack mt-4" id="events">
+  <h2>올라온 기록 · 미룬 요청 (ED4 · ED5)</h2>
+  <div class="row">
+    <div class="field"><label for="v-provider">제공자</label><select id="v-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field"><label for="v-model">서버 LLM (비우면 설정값)</label><input id="v-model" data-ctx="model"></div>
+    <div class="self-end"><button class="btn" id="v-process">미룬 요청 처리</button></div>
+    <div class="self-end"><button class="btn" id="v-reload">새로 고침</button></div>
+  </div>
+  <div id="v-progress" hidden></div>
+  <div id="v-list"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/edge/sync.js') }}"></script>
+{% endblock %}

@@ -707,3 +707,33 @@ class PfBudget(Base):
     monthly_usd: Mapped[float] = mapped_column(Float, default=0.0)
     alert_pct: Mapped[float] = mapped_column(Float, default=80.0)
     alerted: Mapped[str] = mapped_column(String(7), default="")  # 경보를 보낸 달(YYYY-MM) — 한 달에 한 번
+
+
+class EdgeDevice(Base):
+    """기기(온디바이스 · 엣지 ED5, 마이그레이션 0018): 받은 팩 · 판 · 마지막 동기화 — 어느 기기가 낡은 자료로 답하고 있는지 보려고."""
+
+    __tablename__ = "edge_devices"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[str] = mapped_column(String(200), default="")
+    profile: Mapped[str] = mapped_column(String(40), default="")
+    pack: Mapped[str] = mapped_column(String(80), default="")
+    version: Mapped[int] = mapped_column(Integer, default=0)
+    last_sync: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class EdgeEvent(Base):
+    """기기가 올린 기록 · 피드백 · 미뤄 둔 요청(ED4 · ED5 · ED6). 서버가 다시 검사한 개인정보 결과(violations)를 함께 둔다."""
+
+    __tablename__ = "edge_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    device_id: Mapped[str] = mapped_column(String(64), index=True)
+    kind: Mapped[str] = mapped_column(String(20), index=True)  # log · feedback · deferred
+    payload: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    status: Mapped[str] = mapped_column(String(20), default="received")  # received · processed · rejected
+    result: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    violations: Mapped[list[Any]] = mapped_column(default=list)
+    at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)  # 기기에서 생긴 시각(오프라인일 때)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)

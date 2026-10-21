@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}기기별 모델 · 경량화{% endblock %}
+{% block content %}
+{% call ui.page_header("기기별 모델 · 경량화") %}기기가 앱에 내줄 수 있는 메모리 안에서 임베딩 모델 × 벡터 정밀도 × LLM 조합을 고릅니다(ED1). 후보는 새로 재지 않고 이미 잰 실측(벡터 양자화 · LLM 양자화 비교)과 GGUF 파일 크기에서 모읍니다. 압축은 겹치면 손실이 누적되므로 조합 점수는 검색 recall × 답변 품질로, 같은 메모리에서 더 나은 조합이 없는 것만 파레토 앞줄로 표시합니다(ED2). 메모리는 추정입니다(파라미터 × 가중치 바이트 + 청크 수 × 벡터 바이트 + 파일 크기 + 맥락).{% endcall %}
+
+<div class="card stack" id="select">
+  <h2>기기 프로필 → 조합 (ED1 · ED2)</h2>
+  <div class="row">
+    <div class="field"><label for="s-profile">기기</label><select id="s-profile"></select></div>
+    <div class="field"><label for="s-budget">앱 메모리 예산 (GB)</label><input id="s-budget" type="number" step="0.5" min="0.5" class="w-md"></div>
+    <div class="field"><label for="s-chunks">담을 청크 수</label><input id="s-chunks" type="number" value="3000" min="1" class="w-md"></div>
+    <div class="field"><label for="s-ctx">맥락 (토큰)</label><input id="s-ctx" type="number" value="4096" min="512" step="512" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="s-run">추천</button></div>
+  </div>
+  <div id="s-profile-info" class="small muted"></div>
+  <div id="s-out"></div>
+</div>
+
+<div class="card stack mt-4" id="compress">
+  <h2>LLM 후보 (ED2)</h2>
+  <p class="small muted">GGUF 파일마다 메모리 추정과, LLM 양자화 비교에서 잰 품질 · 지연. 품질은 같은 평가 세트끼리만 비교할 수 있습니다. 품질을 재지 않은 파일은 점수를 매기지 않고 '재야 할 후보'로 남깁니다.</p>
+  <div id="s-llms"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/edge/select.js') }}"></script>
+{% endblock %}

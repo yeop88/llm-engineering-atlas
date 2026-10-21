@@ -474,6 +474,22 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 온디바이스 · 엣지 (`/api/edge`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/edge/profiles` · `/overview` | 기기 프로필 · 벡터 정밀도 / 팩 · 기록 상태 수 · GGUF 파일 |
+| POST | `/api/edge/recommend` | 조합 추천 `{"profile", "budget_gb", "n_chunks", "ctx"}` → 예산 안 조합(recall × 품질 · 파레토) · 검색만 · 가까운 초과 조합 · LLM 후보 |
+| GET / POST / DELETE | `/api/edge/packs` · `/packs/{name}` | 팩 목록 · 인덱스 / 새 판 만들기 작업 `{"name", "index_id", "precision", "product_model", "doc_type", "doc_ids", "since_days", "include_cache"}` / 삭제(관리자) |
+| POST | `/api/edge/packs/{name}/search` · `/eval` | 팩으로 검색(자주 묻는 답 포함) / 평가 작업 `{"eval_set_id", "k", "max_queries", "server"}` → 팩 · 서버 hit@k, 범위 안만 |
+| GET | `/api/edge/capabilities` | 오프라인 기능 범위 `?pack=&profile=&llm_file=&device_id=` → 기기에서 · 연결될 때 · 안 됨과 이유 |
+| POST | `/api/edge/ask` | 기기에서 묻기 흉내 `{"pack", "question", "provider", "model", "device_id", "online", "k", "use_llm"}` → faq · answer · sources · defer(대기열 번호) |
+| GET | `/api/edge/packs/{name}/delta` | 판 증분 `?from_version=&to_version=&content=` → 보낼 청크 · 지울 청크 번호 · 크기 · 지문 확인 |
+| GET / POST / DELETE | `/api/edge/devices` · `/devices/{id}` | 기기 목록(판 뒤처짐 · 오래 연결 안 됨 · 대기열 · 위반 수) / 등록 · 고치기 / 삭제 |
+| POST | `/api/edge/devices/{id}/sync` | 동기화 `{"pack", "apply"}` → 증분 · 기기 상태 · 대기열 수 |
+| POST | `/api/edge/privacy/preview` · `/devices/{id}/upload` | 전송 정책 미리 보기 / 올리기 `{"events", "policy", "prepare", "include_queued"}` → 저장 수 · 서버가 찾은 위반 |
+| GET / POST | `/api/edge/events` · `/events/process` | 올라온 기록 / 미룬 요청 처리 작업(질문은 서비스 답변, 그 밖은 담당자 확인) |
+
 ## RLVR (`/api/rlvr`)
 
 | 메서드 | 경로 | 설명 |

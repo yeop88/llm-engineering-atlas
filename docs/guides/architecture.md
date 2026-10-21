@@ -61,6 +61,8 @@ app/
                        local_llm(학습한 모델을 OpenAI 호환 끝점으로) · export(GGUF · 양자화)
     rlvr/              RLVR 맵(RV1~RV6): tasks(검증 가능한 과제 · 정답 확인) · env(기록 → 재생 · 환경-실제 차이) ·
                        reward(항목별 보상 · 해킹 감시) · policy(GRPO, posttrain.trainer 를 씀)
+    edge/              온디바이스 · 엣지 맵(ED1~ED6): devices(기기 프로필 · 조합 추천) · pack(기기용 팩 · 압축 · 정확 검색 · 평가) ·
+                       offline(기능 범위 · 미룸) · sync(판 증분 · 지문 확인 · 기기 상태) · privacy(전송 정책 · 서버 재검사)
     as_service/        고객 AS 상담 맵(AS1~AS8): triage(의도 · 긴급도 · 코드) · photo(사진 코드 읽기) · flow(상담 흐름 · 캐시 · 티켓 · 지표) ·
                        setup(예시 매뉴얼), presets/
     registry/          맵 · 단계 설명(데이터만, 다른 앱 모듈을 불러오지 않음)
@@ -188,8 +190,9 @@ FastAPI 라우터 ── core/system_api · llm_api / stages/*/…_api / web/pag
 | `lr_runs` · `lr_steps` | LrRun · LrStep | 장기 실행 업무(계획 · 범위 · 기록 · 판정) · 단계 체크포인트(결과 · 시도 · 멱등 키 · 승인자)(0015) |
 | `fw_versions` · `fw_reviews` | FwVersion · FwReview | 플라이휠 버전(설정 · 게이트 · 배포 비율 · 기록) · 사람 검토(판정 · 분배 · 누수)(0016) |
 | `pf_tenant_collections` · `pf_prompts` · `pf_flags` · `pf_budgets` | PfTenantCollection · PfPrompt · PfFlag · PfBudget | 컬렉션 테넌트 · 프롬프트 버전 · 기능 플래그 · 테넌트 월 예산(0017) |
+| `edge_devices` · `edge_events` | EdgeDevice · EdgeEvent | 기기(받은 팩 · 판 · 마지막 동기화) · 기기가 올린 기록 · 피드백 · 미룬 요청(서버 재검사 위반)(0018) |
 
-마이그레이션은 `migrations/versions/0001_initial` … `0017_platform` 입니다.
+마이그레이션은 `migrations/versions/0001_initial` … `0018_edge` 입니다.
 
 ## 검색 저장 방식
 

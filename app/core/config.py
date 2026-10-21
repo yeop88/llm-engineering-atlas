@@ -142,6 +142,8 @@ class Settings(BaseSettings):
     llama_convert_script: Path | None = None
     # 서빙 실측(S5): llama-server 실행 파일 — 있으면 앱이 KV 캐시 · 추측 디코딩 설정별로 서버를 직접 띄워 비교한다(빈 포트 18100~)
     llama_server_bin: Path | None = None
+    # 온디바이스(ED4 · ED5): 이 시간보다 오래 동기화하지 않은 기기는 '낡은 자료' — 오프라인 답에 자료 기준 시각을 붙이고 기기 목록에 표시
+    edge_stale_hours: float = 72.0
     anthropic_api_key: str | None = None
     anthropic_model: str = "claude-sonnet-5-5"
     llm_timeout: float = 120.0

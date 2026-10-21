@@ -25,6 +25,7 @@ from app.stages.compliance import api as compliance_api  # noqa: E402
 from app.stages.conversation import api as conversation_api  # noqa: E402
 from app.stages.distill import api as distill_api  # noqa: E402
 from app.stages.docintel import api as docintel_api  # noqa: E402
+from app.stages.edge import api as edge_api  # noqa: E402
 from app.stages.embedding import benchmarks_api, compat, models_api, playground_api  # noqa: E402
 from app.stages.embedding.model_manager import get_manager  # noqa: E402
 from app.stages.evalops import api as evalops_api  # noqa: E402
@@ -144,6 +145,7 @@ for module in (
     serving_api,  # 서빙 — 동시 부하 · 디코딩 설정 실측 · 예산 · 자원 현황
     posttrain_api,  # 후학습 — 데이터 · LoRA SFT · DPO · 병합 · 평가 · GGUF
     rlvr_api,  # RLVR — 검증 가능한 과제 · 환경 · 보상 · GRPO · 일반화
+    edge_api,  # 온디바이스 · 엣지 — 기기 추천 · 기기용 팩 · 오프라인 · 동기화 · 국소 개인정보 처리
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):
