@@ -202,7 +202,8 @@ class SimBrowser:
         e = self.element(int(act.get("eid") or 0))
         if not e:
             return None
-        if e["irreversible"] or re.search(r"삭제|결제|송금|보내기|전송|제출|접수|확정", e["name"]):
+        # 이름 규칙은 버튼에만 — 링크 '새 티켓 접수' 처럼 이동만 하는 요소까지 승인을 요구하면 쓸데없이 멈춘다
+        if e["irreversible"] or (e["role"] == "button" and re.search(r"삭제|결제|송금|보내기|전송|제출|접수|확정", e["name"])):
             return e["name"]
         return None
 
