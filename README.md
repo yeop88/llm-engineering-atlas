@@ -33,14 +33,14 @@
 | **서비스 시나리오: 고객 AS 상담** | 기술 맵들을 실제 업무로 묶은 흐름 | 8 | 8 | — | — | `/maps/as-service` · [개요](docs/maps/as-service.md) |
 | **후학습 (Post-training)** | 우리 데이터로 LLM 자체를 고치는 흐름 | 7 | — | 3 | 4 | `/maps/posttrain` · [개요](docs/maps/posttrain.md) |
 | **데이터 플라이휠** | 평가 · 후학습 · 서빙 · 가드레일을 하나의 순환으로 | 7 | 7 | — | — | `/maps/flywheel` · [개요](docs/maps/flywheel.md) |
-| **엔터프라이즈 AI 플랫폼 아키텍처** | 맵들을 실제 운영 시스템으로 묶는 흐름 | 7 | — | 3 | 4 | `/maps/platform` · [개요](docs/maps/platform.md) |
+| **엔터프라이즈 AI 플랫폼 아키텍처** | 맵들을 실제 운영 시스템으로 묶는 흐름 | 7 | 7 | — | — | `/maps/platform` · [개요](docs/maps/platform.md) |
 | **에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)** | 신뢰 경계를 넘나드는 에이전트 연결 | 6 | 6 | — | — | `/maps/interop` · [개요](docs/maps/interop.md) |
 | **실시간 음성 상담** | 전화 AS 상담 | 7 | — | — | 7 | `/maps/voice` · [개요](docs/maps/voice.md) |
 | **규제 대응 · 컴플라이언스** | 법 조항을 시스템 요구로 | 8 | 8 | — | — | `/maps/compliance` · [개요](docs/maps/compliance.md) |
 | **장기 실행 에이전트 · 업무 자동화** | 며칠짜리 업무를 맡기는 흐름 | 7 | 7 | — | — | `/maps/longrun` · [개요](docs/maps/longrun.md) |
 | **강화학습 기반 에이전트 학습 (RLVR)** | 정답을 확인할 수 있는 과제로 에이전트를 학습 | 6 | — | 3 | 3 | `/maps/rlvr` · [개요](docs/maps/rlvr.md) |
 | **온디바이스 · 엣지** | 서버 없이 기기에서 돌리는 흐름 | 6 | — | 3 | 3 | `/maps/edge` · [개요](docs/maps/edge.md) |
-| **합계 18개** | | 132 | 92 | 17 | 23 | `/maps` |
+| **합계 18개** | | 132 | 99 | 14 | 19 | `/maps` |
 <!-- /맵 표 -->
 
 ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정 — 맵 · 단계의 정의와 상태는 `app/stages/registry/` 한 곳에서 관리하고, 이 표와 문서가 거기서 만들어집니다.

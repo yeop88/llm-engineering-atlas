@@ -35,6 +35,7 @@ from app.stages.interop import api as interop_api  # noqa: E402
 from app.stages.kg import api as kg_api  # noqa: E402
 from app.stages.longrun import api as longrun_api  # noqa: E402
 from app.stages.multiagent import api as multiagent_api  # noqa: E402
+from app.stages.platform import api as platform_api  # noqa: E402
 from app.stages.quant import api as quant_api  # noqa: E402
 from app.stages.rag import answer_api, collections_api, eval_api, verify_api  # noqa: E402
 from app.stages.rerank import api as rerank_api  # noqa: E402
@@ -56,6 +57,7 @@ def _periodic(stop: threading.Event) -> None:
             evalops_api.run_watch()  # 레드팀 · 드리프트 · 회귀 정기 점검(설정한 주기가 됐을 때만)
             compliance_api.run_watch()  # 통제 감사(RC8, WATCH_AUDIT_HOURS)
             flywheel_api.run_watch()  # 배포 감시 · 자동 롤백(FW7, FLYWHEEL_WATCH_HOURS)
+            platform_api.run_watch()  # 테넌트 예산 경보(PF7)
             if (now := time.time()) - last_purge > 86400:  # 하루 한 번: 보관 기간(0 = 지우지 않음)이 지난 요청 기록 · 고객 프로필
                 with SessionLocal() as db:
                     n, m = tracing.purge(db), conversation_api.profile.purge(db)
@@ -100,6 +102,8 @@ app = FastAPI(
     version="1.4.0",
     lifespan=lifespan,
 )
+# 속도 제한(플랫폼 PF1)을 먼저 등록해야 안쪽에서 돈다 — 미들웨어는 나중에 등록한 것이 바깥이라, 인증이 사용자를 정한 뒤 센다
+app.middleware("http")(platform_api.middleware)
 app.middleware("http")(auth.middleware)  # API_TOKEN 이 있을 때만 막는다
 app.mount("/static", StaticFiles(directory=APP_DIR / "web" / "static"), name="static")
 # 공통 → 단계 순서 (흐름도 순서) → 화면
@@ -133,6 +137,7 @@ for module in (
     longrun_api,  # 장기 실행 업무 — 계획 · 체크포인트 · 승인 · 되돌리기
     multiagent_api,  # 멀티에이전트 — 오케스트레이터 · 전문가 에이전트 · 멀티모달 출력
     flywheel_api,  # 데이터 플라이휠 — 실패 분류 · 검토 · 게이트 · 단계적 배포
+    platform_api,  # 엔터프라이즈 플랫폼 — 게이트웨이 · 테넌트 · 프롬프트 · 플래그 · 장애 대응 · 비용
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

@@ -67,6 +67,11 @@ class Settings(BaseSettings):
     # 외부 MCP 서버 · A2A 상대 에이전트: [{"name", "url", "token"?}] (JSON). 이 앱 자신도 넣어 시험할 수 있다
     mcp_servers: list[dict[str, Any]] = []
     a2a_peers: list[dict[str, Any]] = []
+    # 엔터프라이즈 플랫폼(PF1): 사용자 · 테넌트당 분당 요청 상한(0 = 끔), 개별 상한 {"사용자" 또는 "tenant:이름": n}
+    rate_limit_per_min: int = 0
+    rate_limit_overrides: dict[str, int] = {}
+    # 장애 대응(PF6): 기본 LLM 이 멈추면 차례로 넘길 대체 모델 [{"provider", "model", "base_url"?}]
+    llm_fallbacks: list[dict[str, Any]] = []
     # 데이터 플라이휠(FW7): 배포 감시 주기(시간, 0 = 끔) — 나빠지면 자동 롤백. 좋을 때 다음 비율로 자동 진행할지(기본은 사람이)
     flywheel_watch_hours: float = 0
     flywheel_auto_advance: bool = False

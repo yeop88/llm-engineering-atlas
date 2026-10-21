@@ -45,6 +45,7 @@ def test_dependency_direction():
         "longrun": 270,
         "multiagent": 280,
         "flywheel": 290,  # 플라이휠은 평가 · 가드레일 · 서빙 기록을 순환으로 묶는다 — 앞의 운영 맵을 모두 쓴다
+        "platform": 300,  # 플랫폼은 운영 시스템의 바깥 틀(게이트웨이 · 테넌트 · 플래그) — 연결 계층이 부르는 것만 단계 로직에
     }
     # registry 는 단계가 아니라 맵 · 단계의 설명 데이터 — 아래 test_registry_is_data_only 에서 따로 본다
     stage_dirs = {p.name for p in (APP / "stages").iterdir() if p.is_dir() and not p.name.startswith("_") and p.name != "registry"}

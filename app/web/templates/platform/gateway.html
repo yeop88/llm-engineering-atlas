@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}게이트웨이 · 테넌트{% endblock %}
+{% block content %}
+{% call ui.page_header("게이트웨이 · 테넌트") %}모든 요청의 입구에서 사용자 · 테넌트별로 분당 요청 수를 세고 넘으면 429 로 돌려보냅니다(PF1, RATE_LIMIT_PER_MIN). 컬렉션을 테넌트(부서 · 고객사)에 묶으면, 그 테넌트 그룹('tenant:이름')이 아닌 사용자의 검색에서 그 컬렉션이 통째로 빠집니다 — 문서 권한과 같은 자리(검색 전)에서 막아 LLM 이 읽지도 않습니다(PF2). 누출 시험으로 실제로 막히는지 확인합니다.{% endcall %}
+
+<div class="card stack" id="gateway">
+  <h2>사용량 · 속도 제한 (PF1)</h2>
+  <div id="g-usage"><div class="loading" role="status">불러오는 중…</div></div>
+</div>
+
+<div class="card stack mt-4" id="tenancy">
+  <h2>테넌트 격리 (PF2)</h2>
+  <div id="g-users" class="small"></div>
+  <div id="g-tenants"></div>
+  <div class="row"><div class="field grow"><label for="g-q">누출 시험 질의 (쉼표)</label><input id="g-q" value="규정, 보증금, 오류 코드, 연차휴가"></div><div class="self-end"><button class="btn" id="g-leak">누출 시험</button></div></div>
+  <div id="g-leak-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/platform/gateway.js') }}"></script>
+{% endblock %}

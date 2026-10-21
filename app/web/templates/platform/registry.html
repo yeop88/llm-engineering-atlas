@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}프롬프트 · 기능 플래그{% endblock %}
+{% block content %}
+{% call ui.page_header("프롬프트 · 기능 플래그") %}서비스 답변의 시스템 프롬프트를 버전으로 쌓고 하나를 활성으로 둡니다 — 답마다 어느 버전이었는지 요청 기록에 남고, 이전 버전을 다시 활성으로 하면 바로 되돌아갑니다(PF3, 모델 카탈로그 · 실행 기록의 설정과 함께). 기능 플래그는 기본값 + 대상 규칙(테넌트 · 그룹 · 사용자 · 비율)으로 방어 모드 · AI 고지 · 관련성 검사를 배포 없이 바꾸고, 누가 언제 바꿨는지 남깁니다(PF4). 바꾼 뒤 길어야 10초 안에 적용됩니다.{% endcall %}
+
+<div class="card stack" id="prompts">
+  <h2>프롬프트 버전 (PF3)</h2>
+  <div id="p-list"></div>
+  <details class="small"><summary>새 버전</summary>
+    <div class="field mt-2"><label for="p-text">answer_system 프롬프트</label><textarea id="p-text" rows="8" class="mono"></textarea></div>
+    <div class="row"><div class="field grow"><label for="p-note">메모</label><input id="p-note"></div><label class="row small m-0 self-end"><input type="checkbox" id="p-act"> 바로 활성</label><div class="self-end"><button class="btn" id="p-add">버전 추가</button></div></div>
+  </details>
+</div>
+
+<div class="card stack mt-4" id="flags">
+  <h2>기능 플래그 (PF4)</h2>
+  <div id="f-list"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/platform/registry.js') }}"></script>
+{% endblock %}

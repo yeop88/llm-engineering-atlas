@@ -656,3 +656,54 @@ class FwReview(Base):
     routed: Mapped[dict[str, Any]] = mapped_column(default=dict)
     reviewer: Mapped[str] = mapped_column(String(100), default="local")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+
+
+class PfTenantCollection(Base):
+    """컬렉션 ↔ 테넌트(엔터프라이즈 플랫폼 PF2, 마이그레이션 0017). 테넌트에 묶인 컬렉션은 그 테넌트 그룹('tenant:<이름>')이나
+    전체 권한('*')인 사용자만 검색된다 — 연결 계층의 검색 제한(restrict)이 이 표를 본다."""
+
+    __tablename__ = "pf_tenant_collections"
+
+    collection_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant: Mapped[str] = mapped_column(String(60), index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class PfPrompt(Base):
+    """프롬프트 버전(PF3): 이름마다 버전을 쌓고 하나만 활성. 요청 기록 signals.prompt 에 '이름@버전'이 남는다."""
+
+    __tablename__ = "pf_prompts"
+    __table_args__ = (UniqueConstraint("name", "version", name="uq_pf_prompt"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(60), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    text: Mapped[str] = mapped_column(Text)
+    note: Mapped[str] = mapped_column(Text, default="")
+    active: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_by: Mapped[str] = mapped_column(String(100), default="local")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class PfFlag(Base):
+    """기능 플래그(PF4): 기본값 + 대상 규칙(테넌트 · 그룹 · 사용자 · 비율) — 첫 번째로 맞는 규칙의 값. history 에 누가 언제 바꿨는지."""
+
+    __tablename__ = "pf_flags"
+
+    key: Mapped[str] = mapped_column(String(60), primary_key=True)
+    description: Mapped[str] = mapped_column(Text, default="")
+    default: Mapped[Any] = mapped_column(JSON, default=None, nullable=True)
+    rules: Mapped[list[Any]] = mapped_column(default=list)
+    history: Mapped[list[Any]] = mapped_column(default=list)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class PfBudget(Base):
+    """테넌트 월 예산(PF7): 이번 달 비용이 alert_pct 에 닿으면 경보."""
+
+    __tablename__ = "pf_budgets"
+
+    tenant: Mapped[str] = mapped_column(String(60), primary_key=True)
+    monthly_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    alert_pct: Mapped[float] = mapped_column(Float, default=80.0)
+    alerted: Mapped[str] = mapped_column(String(7), default="")  # 경보를 보낸 달(YYYY-MM) — 한 달에 한 번

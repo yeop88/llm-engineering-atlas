@@ -20,6 +20,8 @@ from app.core.config import get_settings
 from app.core.db import Collection
 from app.pipeline.search import collection_of, run_search
 from app.stages.guardrails import injection, pii, policy
+from app.stages.platform import registry as pf_registry
+from app.stages.platform import resilience
 from app.stages.rag import answer, legal
 
 KEEP = ("rank", "chunk_id", "document_id", "filename", "title", "page", "heading", "text", "score", "media")
@@ -73,7 +75,11 @@ def prepare(
     relevance: bool = True,
 ) -> Prepared:
     """LLM 을 부르기 전까지: 입력 방어 → 검색 → 근거 검사 · 격리 → 프롬프트."""
-    p = Prepared(question=question, search_cfg=search_cfg, mode=guard_mode(mode), user=user, relevance=relevance)
+    # 기능 플래그(플랫폼 PF4): 테넌트 · 사용자 묶음별 방어 모드 · 관련성 검사 — 요청이 직접 고른 값이 먼저, 그다음 플래그, 그다음 설정
+    flag_mode = pf_registry.flag(db, "guard_mode", user)
+    flag_rel = pf_registry.flag(db, "answer_relevance", user)
+    p = Prepared(question=question, search_cfg=search_cfg, mode=guard_mode(mode or flag_mode), user=user,
+                 relevance=relevance and flag_rel is not False)  # fmt: skip
     p.collection_id = collection_of(db, search_cfg)
     col = db.get(Collection, p.collection_id) if p.collection_id else None
     p.domain = policy.domain_of(col.domain if col else None)
@@ -87,7 +93,9 @@ def prepare(
         res = run_search(db, question, search_cfg)
         st["n"] = len(res["results"])
     p.results = res["results"]
-    p.search_meta = {k: res.get(k) for k in ("timings_ms", "enhance", "restricted") if res.get(k)}
+    p.search_meta = {k: res.get(k) for k in ("timings_ms", "enhance", "restricted", "degraded") if res.get(k)}
+    if res.get("degraded"):  # 벡터 DB 가 멈춰 BM25 로 찾음(PF6) — 품질이 다를 수 있다는 것을 요청 기록에
+        p.guard["degraded"] = res["degraded"]
     if res.get("restricted"):
         p.guard["restricted"] = res["restricted"]
     p.signals = tracing.signals_of(p.results)
@@ -115,10 +123,14 @@ def prepare(
     note = ""
     if images and p.sources:
         p.images, note = answer.attach_images(db, p.sources, max_images)
+    # 시스템 프롬프트는 레지스트리(플랫폼 PF3)의 활성 버전 — 없으면 코드 기본값. 어느 버전으로 답했는지 요청 기록에 남긴다
+    act = pf_registry.active_prompt(db, "answer_system")
+    base_system = act[0] if act else answer.SYSTEM
+    p.signals["prompt"] = f"answer_system@{act[1]}" if act else "answer_system@code"
     if p.mode == "off":
-        system, ctx = answer.SYSTEM, p.context
+        system, ctx = base_system, p.context
     else:  # 근거를 데이터로 감싸 그 안의 지시를 따르지 않게(감지를 피한 간접 인젝션까지)
-        system, ctx = injection.isolate(answer.SYSTEM, p.context)
+        system, ctx = injection.isolate(base_system, p.context)
     # 답 형식 지시(AS 의 '번호 단계로')는 질문이 아니라 시스템에 — 질문에 붙이면 검색 · 관련성 검증이 지시문까지 질문으로 읽는다
     p.system, p.prompt = system + (f"\n{instruction}" if instruction else ""), answer.user_prompt(question, ctx, note)
     return p
@@ -172,6 +184,8 @@ def finish(
     # AI 응답 고지(규제 대응 RC6, 인공지능 기본법 제31조 사전 고지 · 생성물 표시): 답 글에 섞지 않고 따로 돌려줘 화면이 늘 같은 자리에
     # 보이게 하고, 고지했는지를 요청 기록에 남긴다 — 정기 감사(RC8)가 '실제로 고지했나'를 이 기록으로 확인한다.
     notice = get_settings().ai_notice
+    if pf_registry.flag(db, "ai_notice", p.user) is False:  # 플래그로 끈 대상(내부 시험 등)
+        notice = ""
     p.guard["notice"] = bool(notice)
     model = lcfg.model if lcfg else ""
     tin, tout = int(usage.get("input_tokens") or 0), int(usage.get("output_tokens") or 0)
@@ -207,6 +221,9 @@ def answer_once(
             p.blocked, p.block_reason = f"{answer.NOT_FOUND}.", "no_sources"
         out = finish(db, p, "", lcfg, **fin_kw)
     else:
-        r = llm.chat(lcfg, p.system, p.prompt, max_tokens, temperature, images=p.images or None)
-        out = finish(db, p, r["text"], lcfg, usage=r.get("usage"), llm_seconds=r.get("seconds", 0.0), **fin_kw)
+        # 장애 대응(플랫폼 PF6): 차단기 + 대체 모델 사슬 — 대체 모델로 답했으면 그 사실을 요청 기록(guard.fallback)에 남긴다
+        r, used, skipped = resilience.chat(lcfg, p.system, p.prompt, max_tokens, temperature, images=p.images or None)
+        if used is not lcfg:
+            p.guard["fallback"] = {"from": lcfg.model, "to": used.model, "skipped": skipped}
+        out = finish(db, p, r["text"], used, usage=r.get("usage"), llm_seconds=r.get("seconds", 0.0), **fin_kw)
     return out | {"sources": p.public_sources(), "search": p.search_meta}

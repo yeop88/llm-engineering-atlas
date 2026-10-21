@@ -53,6 +53,8 @@ app/
                        analysis(코드 → 샌드박스 계산 · 차트) · writer(난이도별 모델) · critic(통과 · 수정 · 반려) · output(차트 · 그림 · 음성)
     flywheel/          데이터 플라이휠 맵(FW1~FW7): triage(실패 분류 · 추이) · review(검토 순서 · 평가 / 학습 분배 · 누수) ·
                        release(처방 · 게이트 · 단계적 배포 · 감시 · 롤백 — pipeline.search.default_config 가 pick 을 부름)
+    platform/          엔터프라이즈 플랫폼 맵(PF1~PF7): gateway(속도 제한 · 사용량) · tenancy(테넌트 격리 — restrict 가 부름) ·
+                       registry(프롬프트 버전 · 기능 플래그 — serve 가 부름) · resilience(차단기 · 대체 사슬) · chargeback(비용 배분 · 예산)
     as_service/        고객 AS 상담 맵(AS1~AS8): triage(의도 · 긴급도 · 코드) · photo(사진 코드 읽기) · flow(상담 흐름 · 캐시 · 티켓 · 지표) ·
                        setup(예시 매뉴얼), presets/
     registry/          맵 · 단계 설명(데이터만, 다른 앱 모듈을 불러오지 않음)
@@ -179,8 +181,9 @@ FastAPI 라우터 ── core/system_api · llm_api / stages/*/…_api / web/pag
 | `interop_tasks` · `tool_calls` | InteropTask · ToolCall | A2A 위임 작업(멱등 키 · 시도) · 도구 호출 · 위임 감사(추적 id · 외부 결과)(0014) |
 | `lr_runs` · `lr_steps` | LrRun · LrStep | 장기 실행 업무(계획 · 범위 · 기록 · 판정) · 단계 체크포인트(결과 · 시도 · 멱등 키 · 승인자)(0015) |
 | `fw_versions` · `fw_reviews` | FwVersion · FwReview | 플라이휠 버전(설정 · 게이트 · 배포 비율 · 기록) · 사람 검토(판정 · 분배 · 누수)(0016) |
+| `pf_tenant_collections` · `pf_prompts` · `pf_flags` · `pf_budgets` | PfTenantCollection · PfPrompt · PfFlag · PfBudget | 컬렉션 테넌트 · 프롬프트 버전 · 기능 플래그 · 테넌트 월 예산(0017) |
 
-마이그레이션은 `migrations/versions/0001_initial` … `0016_flywheel` 입니다.
+마이그레이션은 `migrations/versions/0001_initial` … `0017_platform` 입니다.
 
 ## 검색 저장 방식
 

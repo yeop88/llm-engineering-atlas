@@ -435,6 +435,21 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/flywheel/versions/{id}/start` · `/step` · `/rollback` | 배포 시작(5%) · 단계(건강하면 다음 비율, 100% 다음은 승격, 나빠졌으면 롤백) · 롤백(관리자) |
 | GET | `/api/flywheel/versions/{id}/monitor` | 후보 팔 vs 나머지 지표 · 판단 |
 
+## 엔터프라이즈 플랫폼 (`/api/platform`)
+
+모든 요청은 속도 제한(`RATE_LIMIT_PER_MIN`, 넘으면 429 · `Retry-After`)을 거칩니다. 설정을 바꾸는 요청은 관리자만.
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/platform/gateway` | 사용량(테넌트 · 사용자 · 경로 묶음) · 상한 · 거절 수 |
+| GET / POST | `/api/platform/tenants` | 컬렉션 ↔ 테넌트 · 사용자의 테넌트 / 지정 `{"collection_id", "tenant"}`(비우면 공용) |
+| POST | `/api/platform/tenants/leak-test` | 누출 시험 `{"queries"}` → 테넌트마다 남의 컬렉션 검색 결과 수 |
+| GET / POST | `/api/platform/prompts` · `/prompts/{name}/activate` | 프롬프트 버전 · 코드 기본값 / 추가 `{"name", "text", "note", "activate"}` / 활성 `{"version"}`(비우면 코드 기본값) |
+| GET / POST | `/api/platform/flags` · `/flags/{key}` · `/flags/{key}/eval` | 플래그 · 기본값 · 규칙 · 기록 / 바꾸기 `{"default", "rules": [{"tenant"·"group"·"user"·"pct", "value"}]}` / 이 사용자면 어떤 값 |
+| GET | `/api/platform/ops` | 앱 버전 · 마이그레이션 · 벡터 DB · 그래프 엔진 · LLM 대체 사슬 · 차단기 |
+| POST | `/api/platform/ops/llm-check` | 대체 사슬의 모델마다 짧게 불러 보기(관리자) |
+| GET / POST | `/api/platform/chargeback` · `/budgets` | 이번 달 테넌트 · 기능별 요청 · 토큰 · 비용 · 예산 / 예산 `{"tenant", "monthly_usd", "alert_pct"}` |
+
 ## 고객 AS 상담 (`/api/as`)
 
 | 메서드 | 경로 | 설명 |

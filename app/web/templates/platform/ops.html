@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}배포 · 장애 대응 · 비용{% endblock %}
+{% block content %}
+{% call ui.page_header("배포 · 장애 대응 · 비용") %}지금 배포된 버전 · 마이그레이션 · 구성 요소 상태를 봅니다(PF5). 모델 서버가 멈추면 차단기가 열리고 대체 모델 사슬(LLM_FALLBACKS)로 넘어가며, 벡터 DB 가 멈추면 같은 청크 세트의 BM25 로 찾습니다 — 대체로 답한 사실은 요청 기록에 남습니다(PF6). 테넌트 · 기능별 요청 · 토큰 · 비용을 요청 기록에서 집계하고 월 예산에 닿기 전에 알립니다(PF7).{% endcall %}
+
+<div class="card stack" id="deploy">
+  <h2>배포 상태 (PF5)</h2>
+  <div id="o-deploy" class="small"><div class="loading" role="status">불러오는 중…</div></div>
+</div>
+
+<div class="card stack mt-4" id="resilience">
+  <h2>장애 대응 · 대체 모델 (PF6)</h2>
+  <div id="o-res"></div>
+  <div class="row"><button class="btn" id="o-check">대체 사슬 점검</button><span class="small muted">모델마다 아주 짧게 불러 봅니다(관리자)</span></div>
+  <div id="o-check-out"></div>
+</div>
+
+<div class="card stack mt-4" id="chargeback">
+  <h2>비용 배분 · 예산 (PF7)</h2>
+  <div id="o-charge"></div>
+  <div class="row">
+    <div class="field"><label for="o-tenant">테넌트</label><input id="o-tenant" class="w-md" placeholder="공용"></div>
+    <div class="field"><label for="o-usd">월 예산($)</label><input id="o-usd" type="number" min="0" step="0.01" class="w-md"></div>
+    <div class="field"><label for="o-pct">경보(%)</label><input id="o-pct" type="number" value="80" min="1" max="100" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="o-budget">예산 저장</button></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/platform/ops.js') }}"></script>
+{% endblock %}

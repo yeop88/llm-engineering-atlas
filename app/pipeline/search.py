@@ -11,9 +11,11 @@ from sqlalchemy.orm import Session
 
 from app.core import llm
 from app.core.db import ChunkSet, VectorIndex
+from app.core.vectorstores import StoreUnavailable
 from app.stages.docintel import meta as doc_meta
 from app.stages.flywheel import release as fw_release
 from app.stages.guardrails import acl
+from app.stages.platform import resilience, tenancy
 from app.stages.rag import service
 from app.stages.rerank import llm_rerank
 from app.stages.search_lab import enhance
@@ -60,6 +62,9 @@ def restrict(db: Session, cfg: dict[str, Any]) -> tuple[dict[str, Any], dict[str
     if cfg.get("doc_ids"):
         sets.append(set(cfg["doc_ids"]))
     cid = collection_of(db, cfg) if (cfg.get("acl_groups") or doc_meta.active(cfg.get("filters"))) else None
+    # 멀티테넌트 격리(플랫폼 PF2): 다른 테넌트에 묶인 컬렉션이면 아무것도 찾지 않는다 — 문서 권한과 같은 자리(검색 전)에서
+    if cfg.get("acl_groups") and (owner := tenancy.blocked(db, cid, cfg.get("acl_groups"))):
+        return cfg | {"doc_ids": [], "_restricted": True}, {"tenant": {"owner": owner, "groups": cfg.get("acl_groups")}}
     allowed = acl.allowed_doc_ids(db, cid, cfg.get("acl_groups"))
     if allowed is not None:
         sets.append(set(allowed))
@@ -85,12 +90,38 @@ def run_search(db: Session, query: str, cfg: dict[str, Any]) -> dict[str, Any]:
         # LLM 리랭커가 볼 후보를 확보하려고 1단계에서 top 개 이상 받는다
         cfg = cfg | {"top_k": max(int(cfg.get("top_k") or 10), int(lr.get("top") or 10))}
     # 기법을 끄면 이전과 완전히 같은 경로(service.search)로 간다 — 기준선 결과가 바뀌지 않게.
-    res = service.search(db, query, cfg) if tech == "none" else enhance.search(db, query, cfg)
+    res = _search_or_fallback(db, query, cfg, tech)
     if lr and res["results"]:
         res = _llm_rerank(query, res, lr, int(cfg.get("top_k") or 10))
     if restricted:
         res = res | {"restricted": restricted}
     return res
+
+
+def _search_or_fallback(db: Session, query: str, cfg: dict[str, Any], tech: str) -> dict[str, Any]:
+    """벡터 DB 가 멈추면 같은 청크 세트의 BM25 로(장애 대응 PF6) — 검색이 통째로 실패하는 것보다 낱말 검색이라도 하는 게 낫다.
+    품질이 다르므로 결과에 degraded 를 붙여 화면 · 요청 기록이 알 수 있게. 연달아 실패하면 차단기가 열려 벡터 DB 를 기다리지 않는다."""
+    key = f"store:{cfg.get('index_id')}"
+    if cfg.get("index_id") and cfg.get("mode", "hybrid") in ("dense", "hybrid") and not resilience.BREAKER.allow(key):
+        return _bm25(db, query, cfg, "차단기 열림")
+    try:
+        res = service.search(db, query, cfg) if tech == "none" else enhance.search(db, query, cfg)
+        if cfg.get("index_id"):
+            resilience.BREAKER.ok(key)
+        return res
+    except StoreUnavailable as exc:
+        resilience.BREAKER.fail(key, str(exc))
+        return _bm25(db, query, cfg, str(exc))
+
+
+def _bm25(db: Session, query: str, cfg: dict[str, Any], why: str) -> dict[str, Any]:
+    idx = db.get(VectorIndex, cfg["index_id"])
+    fb = {k: v for k, v in cfg.items() if k not in ("index_id", "model_id")} | {
+        "mode": "bm25",
+        "chunk_set_id": idx.chunk_set_id,
+        "reranker_id": None,
+    }
+    return service.search(db, query, fb) | {"degraded": {"from": cfg.get("mode", "hybrid"), "to": "bm25", "reason": why[:200]}}
 
 
 def _llm_rerank(query: str, res: dict[str, Any], lr: dict[str, Any], top_k: int) -> dict[str, Any]:
