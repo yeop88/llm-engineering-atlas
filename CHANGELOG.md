@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-21
+
 ### 수정
 - 방어 enforce 가 지시가 숨은 청크를 통째로 빼 같은 청크의 정상 정보까지 잃고 정상 질문을 거절하던 문제(레드팀 정상 질문 3/6 거절) — 지시가 든 문장만 빼고 넣음
 - 레드팀 채점이 정상 질문의 거절을 통과로 세던 문제 — 거절도 실패로 세고, 간접 인젝션 문항에는 답함 · 거절을 함께 표시. v1.1.0 의 'enforce 에서도 정상 질문 6개 모두 답함'은 틀린 결과였음(정정 기록: 입력 · 출력 방어 문서)
@@ -303,7 +305,8 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.1...v1.0.2
