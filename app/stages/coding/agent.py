@@ -46,6 +46,7 @@ def run(cfg: llm.LLMConfig, ws: Path, task: dict[str, Any], max_steps: int = 12,
     history = [f"[이슈]\n{task['issue'][-2500:]}", f"[계획]\n{json.dumps(p, ensure_ascii=False)}",
                "[코드 검색 상위]\n" + "\n".join(f"- {h['file']}:{h['start']}-{h['end']} {h['name']}" for h in hits[:6])]  # fmt: skip
     steps, tokens, passed, edits = [], 0, False, 0
+    edited: set[str] = set()
     for n in range(1, max_steps + 1):
         try:
             r = llm.chat(cfg, STEP_SYSTEM, "\n\n".join(history[-14:]), 700, 0.0, json_mode=True)
@@ -80,6 +81,7 @@ def run(cfg: llm.LLMConfig, ws: Path, task: dict[str, Any], max_steps: int = 12,
                     res = {"ok": False, "error": str(exc)}
                 if res["ok"]:
                     edits += 1
+                    edited.add(f)
                     t = wsp.run_tests(ws, [task["test"]])
                     passed = t["passed"]
                     obs = f"바꿈. 테스트 {'통과' if passed else '실패'}:\n{t['output'][-1200:]}"
@@ -110,4 +112,5 @@ def run(cfg: llm.LLMConfig, ws: Path, task: dict[str, Any], max_steps: int = 12,
     touched_tests = "+++ b/tests/" in d
     return {"task": task["id"], "resolved": final["passed"] and not touched_tests, "passed": final["passed"], "touched_tests": touched_tests, "steps": steps,
             "n_steps": len(steps), "edits": edits, "tokens": tokens, "diff": d, "diff_lines": sum(1 for x in d.splitlines() if x[:1] in "+-" and x[:3] not in ("+++", "---")),
-            "found_file": task["file"] in d, "seconds": round(time.perf_counter() - t0, 1)}  # fmt: skip
+            # 깨진 파일을 고쳤나는 실제로 교체한 파일로 — 원래 줄로 정확히 되돌리면 원본과의 차이(diff)는 비므로 diff 로 볼 수 없다
+            "found_file": task["file"] in edited, "edited": sorted(edited), "seconds": round(time.perf_counter() - t0, 1)}  # fmt: skip

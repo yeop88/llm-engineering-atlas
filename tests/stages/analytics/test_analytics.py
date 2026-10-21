@@ -17,7 +17,7 @@ NAME = "da_test_demo"
 
 @pytest.fixture(scope="module")
 def demo():
-    info = source.build_demo(NAME, 600, 7)
+    source.build_demo(NAME, 600, 7)
     yield source.path_of(NAME)
     source.path_of(NAME).unlink(missing_ok=True)
 
