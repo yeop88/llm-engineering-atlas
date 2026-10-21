@@ -71,7 +71,8 @@ def test_stage_and_map_pages(client):
 
 def test_maps():
     keys = ["llm", "kg", "agents", "evalops", "guardrails", "docintel", "serving", "conversation", "as_service", "posttrain",
-            "flywheel", "platform", "interop", "voice", "compliance", "longrun", "rlvr", "edge"]  # fmt: skip
+            "flywheel", "platform", "interop", "voice", "compliance", "longrun", "rlvr", "edge",
+            "reasoning", "context", "analytics", "coding", "computer_use", "interp"]  # fmt: skip
     assert [m.key for m in registry.MAPS] == keys and {s.map for s in registry.STAGES} == set(keys)
     for m in registry.MAPS:
         # 공통 화면 맵은 흐름 묶음이 그 맵의 단계를 빠짐없이 한 번씩 담아야 한다(화면 흐름도에서 빠지는 단계가 없게)
