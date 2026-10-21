@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-21
+
 ### 추가
 - **규제 대응 · 컴플라이언스 맵 구현(RC1~RC8)** — 화면 `/compliance/scope` · `/compliance/controls` · `/compliance/records` · `/compliance/audit`
   - 국가법령정보 공동활용 API 로 법령의 시행일별 판을 받아 규제 자료 컬렉션에(법령마다 한 판, 설정 `LAW_API_OC`) — 인공지능 기본법 · 시행령, 개인정보 보호법 · 시행령
@@ -340,7 +342,8 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.1.0...v1.1.1
