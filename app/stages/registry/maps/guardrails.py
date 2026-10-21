@@ -207,8 +207,9 @@ STAGES: list[Stage] = [
         how=[
             "공격 37개(직접 인젝션 10 · 간접 5 · 개인정보 6 · 권한 5 · 위험 조언 5 · 정상 6 — 정상은 과잉 차단 확인용)와 공격 재료 문서 4개로 만든 시험 컬렉션(BM25)",
             "같은 세트를 방어 off · mask · enforce 로 — 유형별 공격 성공률 · 정상 통과율, 실행 기록 비교",
+            "정기 점검(WATCH_REDTEAM_HOURS): 주기마다 다시 돌려 같은 모드의 직전 실행보다 방어율이 떨어지거나 정상 질문을 막으면 경보(ALERT_WEBHOOK)",
         ],
-        plans=["정기 실행(회귀처럼)", "공격 세트 늘리기"],
+        plans=["공격 세트 늘리기", "독립 채점(방어와 다른 탐지기)"],
         docs=[
             ("레드팀 시험", "docs/stages/guardrails/g7-redteam/redteam.md"),
             ("보안 · 가드레일 · 거버넌스 맵", "docs/maps/guardrails.md"),

@@ -183,31 +183,37 @@ def redteam_preset() -> dict:
             "documents": [{"filename": d["filename"], "acl": d.get("acl")} for d in p["documents"]]}  # fmt: skip
 
 
+def redteam_job(job: Job, body: RedTeamIn, lcfg: llm.LLMConfig, reason: str = "manual") -> dict[str, Any]:
+    """레드팀 한 번 — 화면 실행과 정기 점검(evalops 정기 점검)이 같은 함수를 쓴다(채점 · 기록이 갈리지 않게)."""
+    title = f"레드팀 · 방어 {body.mode} · {lcfg.model}" + (" (정기)" if reason == "schedule" else "")
+    with SessionLocal() as db:
+        job.update(0.01, "시험 컬렉션 준비")
+        col, cs = redteam.ensure_collection(db)
+        cfg = {"mode": "bm25", "chunk_set_id": cs.id, "top_k": 4}
+        items = [i for i in redteam.preset()["items"] if not body.types or i["type"] in body.types]
+
+        def answer_fn(q: str, groups: list[str]) -> dict[str, Any]:
+            u = User("redteam", tuple(groups), "user")
+            return serve.answer_once(db, q, cfg | {"acl_groups": groups}, lcfg, user=u, mode=body.mode, max_tokens=300, kind="redteam")
+
+        out = redteam.run(db, col.id, answer_fn, job, items) | {
+            "mode": body.mode,
+            "llm": lcfg.public(),
+            "collection_id": col.id,
+            "reason": reason,
+        }
+        run = crud.record_run(db, "redteam", [f"llm:{lcfg.model}"], title, body.model_dump(), out, 0)
+        out["run_id"] = run.id
+    return out
+
+
 @router.post("/redteam", status_code=202)
 def redteam_run(body: RedTeamIn) -> dict:
     try:
         lcfg = llm.resolve(body.provider, body.model)
     except llm.LLMError as exc:
         raise HTTPException(400, str(exc)) from exc
-    title = f"레드팀 · 방어 {body.mode} · {lcfg.model}"
-
-    def work(job: Job) -> dict[str, Any]:
-        with SessionLocal() as db:
-            job.update(0.01, "시험 컬렉션 준비")
-            col, cs = redteam.ensure_collection(db)
-            cfg = {"mode": "bm25", "chunk_set_id": cs.id, "top_k": 4}
-            items = [i for i in redteam.preset()["items"] if not body.types or i["type"] in body.types]
-
-            def answer_fn(q: str, groups: list[str]) -> dict[str, Any]:
-                u = User("redteam", tuple(groups), "user")
-                return serve.answer_once(db, q, cfg | {"acl_groups": groups}, lcfg, user=u, mode=body.mode, max_tokens=300, kind="redteam")
-
-            out = redteam.run(db, col.id, answer_fn, job, items) | {"mode": body.mode, "llm": lcfg.public(), "collection_id": col.id}
-            run = crud.record_run(db, "redteam", [f"llm:{lcfg.model}"], title, body.model_dump(), out, 0)
-            out["run_id"] = run.id
-        return out
-
-    return jobs.submit("redteam", title, work).to_dict()
+    return jobs.submit("redteam", f"레드팀 · 방어 {body.mode} · {lcfg.model}", lambda j: redteam_job(j, body, lcfg)).to_dict()
 
 
 @router.get("/redteam/runs")

@@ -12,6 +12,13 @@
   </div>
 </div>
 
+<div id="watch" class="card stack mt-4">
+  <h2>정기 점검 · 경보</h2>
+  <div class="small muted">레드팀 · 드리프트 · 회귀를 설정한 주기(<code>WATCH_*_HOURS</code>)마다 다시 돌리고, 나빠졌으면 경보를 냅니다 — 직전보다 공격 방어율이 떨어짐 · 정상 질문을 막음 · 새 유형 질문 증가 · 기준선보다 유의한 하락. <code>ALERT_WEBHOOK</code> 이 있으면 그 주소로도 보냅니다.</div>
+  <div id="w-out"><div class="loading" role="status">불러오는 중…</div></div>
+  <div id="w-progress" hidden></div>
+</div>
+
 <div id="dashboard" class="card stack mt-4">
   <h2>비용 · 지연</h2>
   <div id="c-out"><div class="loading" role="status">불러오는 중…</div></div>

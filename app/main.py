@@ -40,12 +40,13 @@ log = logging.getLogger("app")
 
 
 def _periodic(stop: threading.Event) -> None:
-    """1분마다: 주기가 된 문서 수집 소스(D1) · 하루 한 번 보관 기간 지난 요청 기록 정리(G5). 스케줄러 라이브러리 없이 —
-    할 일이 둘뿐이고, 앱이 꺼지면 같이 멈춰야 해서(따로 도는 cron 은 앱 없이 DB 를 건드린다)."""
+    """1분마다: 주기가 된 문서 수집 소스(D1) · 정기 점검(레드팀 · 드리프트 · 회귀) · 하루 한 번 보관 기간 지난 요청 기록 정리(G5).
+    스케줄러 라이브러리 없이 — 할 일이 몇 가지뿐이고, 앱이 꺼지면 같이 멈춰야 해서(따로 도는 cron 은 앱 없이 DB 를 건드린다)."""
     last_purge = 0.0
     while not stop.wait(60):
         try:
             docintel_api.run_due()
+            evalops_api.run_watch()  # 레드팀 · 드리프트 · 회귀 정기 점검(설정한 주기가 됐을 때만)
             if get_settings().trace_retention_days and (now := time.time()) - last_purge > 86400:
                 with SessionLocal() as db:
                     n = tracing.purge(db)

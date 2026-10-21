@@ -37,6 +37,14 @@ class Settings(BaseSettings):
     ingest_roots: list[Path] = []
     # 라이브러리 업그레이드를 감지하면 시작할 때 회귀 세트를 자동으로 다시 잰다(평가 · 관측 E2). 임베딩 · 검색만이라 LLM 은 쓰지 않는다
     regression_on_upgrade: bool = False
+    # 정기 점검(평가 · 관측): 몇 시간마다 다시 돌릴지(0 = 끔). 레드팀은 로컬 LLM 으로 37문항 약 2~6분, 드리프트 · 회귀는 임베딩만
+    watch_redteam_hours: float = 0
+    watch_redteam_mode: str = "enforce"
+    watch_drift_hours: float = 0
+    watch_drift_collection_id: int | None = None  # 비우면 모든 요청 기록
+    watch_regression_hours: float = 0
+    # 정기 점검 경보를 보낼 주소(POST JSON). 비우면 화면(요청 기록 · 비용)에만 표시
+    alert_webhook: str | None = None
     # 고객 AS 상담(AS1 · AS7): 음성 인식 서버(OpenAI 호환 /audio/transcriptions, 예: whisper.cpp server)와 티켓을 보낼 외부 접수 시스템 주소
     stt_url: str | None = None
     stt_model: str = "whisper-1"

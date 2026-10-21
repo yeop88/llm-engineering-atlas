@@ -1,5 +1,5 @@
 // 평가 · 관측 E3 · E4: 비용 · 지연 대시보드, 요청 목록(표시 · 검색으로 거르기), 한 건 상세(단계 시간 · 근거 · 검증 · 가드레일)
-const KIND = { answer: "답변 생성", as: "AS 상담", ab: "A/B 실험", flow: "연결 실행", agent: "에이전트" };
+const KIND = { answer: "답변 생성", as: "AS 상담", ab: "A/B 실험", flow: "연결 실행", agent: "에이전트", redteam: "레드팀" };
 const STEP = { guard_input: "입력 방어", search: "검색", guard_context: "근거 검사", llm: "LLM 답변", verify: "검증", guard_output: "출력 정책" };
 const FLAG_CLS = { 느림: "warn", 실패: "err", 차단: "err", "근거 약함": "warn", "관련 없음": "warn", 거절: "muted", 싫어요: "err" };
 const FAIL = { retrieval: "검색 실패", citation: "인용 · 근거 실패", off_topic: "질문과 상관없는 답", over_refusal: "과도한 거절", policy: "정책 위반 · 차단" };
@@ -121,7 +121,29 @@ async function openTrace(id) {
 }
 const num3 = v => (v == null ? "-" : Number(v).toFixed(3));
 
-function reload() { loadCost(); loadList(); }
+// 정기 점검 · 경보: 주기 · 마지막 · 다음 실행, 지금 돌리기, 최근 경보(실행 기록에서 계산)
+const RUN_PAGE = { redteam: "/guardrails/redteam", drift: "/evalops/drift", regression: "/evalops/sets#regression" };
+async function loadWatch() {
+  const box = $("#w-out");
+  try {
+    const w = await api("/api/evalops/watch?days=30");
+    const sched = html`<div class="table-wrap"><table><tr><th>점검</th><th>주기</th><th>마지막 실행</th><th>다음 실행</th><th></th></tr>
+      ${html.join(w.schedules.map(s => html`<tr><td><b>${s.label}</b>${s.mode ? html` <span class="small muted">방어 ${s.mode}</span>` : ""}</td>
+        <td>${s.enabled ? `${s.every_hours}시간마다` : html`<span class="badge">꺼짐</span>`}</td>
+        <td class="small">${s.last_at ? html`<a href="${RUN_PAGE[s.kind]}">${fmtDate(s.last_at)}</a>` : "-"}</td>
+        <td class="small">${s.not_ready ? html`<span class="badge warn">준비 안 됨</span> ${s.not_ready}` : s.next_at ? fmtDate(s.next_at) : "-"}</td>
+        <td><button class="btn sm" data-watch="${s.kind}">지금 점검</button></td></tr>`), "")}</table></div>`;
+    const alerts = w.alerts.length
+      ? html`<ul class="stack">${html.join(w.alerts.map(a => html`<li><span class="badge err">경보</span> <b>${a.label}</b> · ${a.message}
+          <span class="small muted">— ${fmtDate(a.at)} · ${a.title}${a.scheduled ? " · 정기" : ""}</span></li>`), "")}</ul>`
+      : html`<div class="small"><span class="badge ok">경보 없음</span> 최근 30일 점검에서 나빠진 것이 없습니다.</div>`;
+    box.innerHTML = html`${sched}<h3 class="mt-2">최근 경보 (30일)</h3>${alerts}
+      <div class="small muted">${w.webhook ? "경보를 ALERT_WEBHOOK 으로도 보냅니다." : "ALERT_WEBHOOK 이 없어 이 화면에만 표시합니다."}</div>`;
+    $$("[data-watch]", box).forEach(b => { b.onclick = () => runJobInto(b, `/api/evalops/watch/${b.dataset.watch}/run`, {}, $("#w-progress"), () => { toast("점검을 마쳤습니다"); loadWatch(); }); });
+  } catch (e) { ui.error(box, e); }
+}
+
+function reload() { loadCost(); loadList(); loadWatch(); }
 $("#t-reload").onclick = reload;
 $("#t-days").onchange = reload;
 $("#t-kind").onchange = reload;

@@ -17,7 +17,7 @@ from app.core.jobs import Job, jobs
 from app.pipeline import serve
 from app.pipeline.search import run_search
 from app.stages.embedding.model_manager import ModelSpec
-from app.stages.evalops import ab, drift, feedback, loop, monitor, regression, sets
+from app.stages.evalops import ab, drift, feedback, loop, monitor, regression, sets, watch
 from app.stages.evalops.schemas import (
     AskIn,
     BaselineIn,
@@ -32,6 +32,8 @@ from app.stages.evalops.schemas import (
     TraceIds,
 )  # fmt: skip
 from app.stages.guardrails import acl
+from app.stages.guardrails.api import redteam_job
+from app.stages.guardrails.schemas import RedTeamIn
 
 router = APIRouter(prefix="/api/evalops", tags=["evalops"])
 DB = Annotated[Session, Depends(get_db)]
@@ -191,35 +193,36 @@ def traces_to_eval(body: TraceIds, db: DB) -> dict:
 
 
 # ── E6 드리프트 ─────────────────────────────────────────────────────────────
+def drift_job(job: Job, body: DriftIn, reason: str = "manual") -> dict[str, Any]:
+    """드리프트 한 번 — 화면 실행과 정기 점검이 같은 함수."""
+    model_hf = get_settings().verify_model
+    with SessionLocal() as db:
+        row = db.scalar(select(EmbeddingModel).where(EmbeddingModel.hf_id == model_hf))
+        if row is None:
+            raise ValueError(f"질문 임베딩 모델 {model_hf} 이 카탈로그에 없습니다(VERIFY_MODEL).")
+        spec = ModelSpec.from_row(row)
+        recent = [t for t in monitor.load(db, body.recent_days, None, body.collection_id) if t.question]
+        sig = lambda t: dict(t.signals or {}) | {"refused": bool((t.verify or {}).get("refused"))}  # noqa: E731
+        if body.eval_set_id:  # 기준 = 평가 세트 질문 (신호는 없음)
+            s = _set(db, body.eval_set_id)
+            base_q, base_sig = [it["query"] for it in s.items], None
+        else:
+            rid = {t.id for t in recent}
+            base = [t for t in monitor.load(db, body.base_days, None, body.collection_id) if t.id not in rid and t.question]
+            base_q, base_sig = [t.question for t in base], [sig(t) for t in base]
+        recent_q = list(body.recent_questions) or [t.question for t in recent]
+        recent_sig = None if body.recent_questions else [sig(t) for t in recent]
+        res = drift.analyze(spec, base_q, recent_q, base_sig, recent_sig if base_sig else None, body.novel_sim, job)
+        res["reason"] = reason
+        title = f"드리프트 · 기준 {len(base_q)} · 최근 {len(recent_q)}" + (" (정기)" if reason == "schedule" else "")
+        run = crud.record_run(db, "drift", [model_hf], title, body.model_dump(), res, 0)
+        res["run_id"] = run.id
+        return res
+
+
 @router.post("/drift", status_code=202)
 def drift_run(body: DriftIn) -> dict:
-    model_hf = get_settings().verify_model
-
-    def work(job: Job) -> dict[str, Any]:
-        with SessionLocal() as db:
-            row = db.scalar(select(EmbeddingModel).where(EmbeddingModel.hf_id == model_hf))
-            if row is None:
-                raise ValueError(f"질문 임베딩 모델 {model_hf} 이 카탈로그에 없습니다(VERIFY_MODEL).")
-            spec = ModelSpec.from_row(row)
-            recent = [t for t in monitor.load(db, body.recent_days, None, body.collection_id) if t.question]
-            sig = lambda t: dict(t.signals or {}) | {"refused": bool((t.verify or {}).get("refused"))}  # noqa: E731
-            if body.eval_set_id:  # 기준 = 평가 세트 질문 (신호는 없음)
-                s = _set(db, body.eval_set_id)
-                base_q, base_sig = [it["query"] for it in s.items], None
-            else:
-                rid = {t.id for t in recent}
-                base = [t for t in monitor.load(db, body.base_days, None, body.collection_id) if t.id not in rid and t.question]
-                base_q, base_sig = [t.question for t in base], [sig(t) for t in base]
-            recent_q = list(body.recent_questions) or [t.question for t in recent]
-            recent_sig = None if body.recent_questions else [sig(t) for t in recent]
-            res = drift.analyze(spec, base_q, recent_q, base_sig, recent_sig if base_sig else None, body.novel_sim, job)
-            run = crud.record_run(
-                db, "drift", [model_hf], f"드리프트 · 기준 {len(base_q)} · 최근 {len(recent_q)}", body.model_dump(), res, 0
-            )
-            res["run_id"] = run.id
-            return res
-
-    return jobs.submit("drift", "드리프트 감지", work).to_dict()
+    return jobs.submit("drift", "드리프트 감지", lambda j: drift_job(j, body)).to_dict()
 
 
 # ── E7 A/B 실험 ────────────────────────────────────────────────────────────
@@ -327,3 +330,85 @@ def loop_send(body: LoopSendIn, db: DB) -> Any:
         return Response(loop.gap_list_csv(rows), media_type="text/csv; charset=utf-8",
                         headers={"Content-Disposition": f"attachment; filename=gap-{body.category}.csv"})  # fmt: skip
     return feedback.to_eval_set(db, rows, f"loop:{body.category}") | {"n": len(rows)}
+
+
+# ── 정기 점검 · 경보 (G7 · E6 · E2) ───────────────────────────────────────
+def _watch_job(kind: str, reason: str = "schedule") -> tuple[str, Any] | str:
+    """점검 종류 → (작업 제목, 작업 함수). 준비가 안 됐으면 그 이유(글) — 주기마다 실패 기록을 쌓지 않고, '지금 점검'에는 이유를 보여 준다."""
+    st = get_settings()
+    if kind == "redteam":
+        try:
+            lcfg = llm.resolve()
+        except llm.LLMError as exc:
+            return f"LLM 연결이 필요합니다: {exc}"
+        body = RedTeamIn(mode=st.watch_redteam_mode if st.watch_redteam_mode in ("off", "mask", "enforce") else "enforce")
+        return f"정기 레드팀 · 방어 {body.mode}", lambda j: redteam_job(j, body, lcfg, reason)
+    if kind == "drift":
+        body = DriftIn(collection_id=st.watch_drift_collection_id)
+        with SessionLocal() as db:  # 기준 기간(최근 7일 앞의 30일)에 질문이 없으면 비교할 수 없다 — 쓰기 시작한 첫 주가 그렇다
+            recent = {t.id for t in monitor.load(db, body.recent_days, None, body.collection_id) if t.question}
+            n_base = sum(1 for t in monitor.load(db, body.base_days, None, body.collection_id) if t.question and t.id not in recent)
+        if len(recent) < 3 or n_base < 3:
+            return f"요청 기록이 모자랍니다(최근 {body.recent_days}일 {len(recent)}건 · 그 앞 기준 기간 {n_base}건, 각각 3건 이상 필요)"
+        return "정기 드리프트 감지", lambda j: drift_job(j, body, reason)
+    if kind == "regression":
+        with SessionLocal() as db:
+            if db.scalar(select(func.count()).select_from(EvalSet).where(EvalSet.regression.is_(True))) == 0:
+                return "회귀로 지정한 평가 세트가 없습니다(평가 세트 · 회귀 화면)"
+        return "정기 회귀 평가", lambda j: run_regressions(j, reason=reason)
+    raise ValueError(f"알 수 없는 점검: {kind}")
+
+
+def _with_alerts(fn: Any) -> Any:
+    """작업이 끝나면 그 실행의 경보를 보낸다(ALERT_WEBHOOK). 실패해도 작업 결과는 남긴다."""
+
+    def work(job: Job) -> dict[str, Any]:
+        out = fn(job)
+        rid = (out or {}).get("run_id")
+        if rid:
+            with SessionLocal() as db:
+                run = db.get(TestRun, rid)
+                msgs = watch.run_alerts(db, run) if run else []
+            items = [{"kind": run.kind, "run_id": rid, "title": run.title, "message": m} for m in msgs] if run else []
+            out["alerts_sent"] = watch.notify(items)
+        return out
+
+    return work
+
+
+def run_watch() -> list[str]:
+    """주기가 된 점검을 작업으로 띄운다(main.py 의 1분 주기 스레드). 같은 종류가 도는 중이면 건너뛴다."""
+    started = []
+    with SessionLocal() as db:
+        due = [s["kind"] for s in watch.schedules() if watch.due(db, s["kind"], s["every_hours"])]
+    for kind in due:
+        if jobs.active_for(kind):
+            continue
+        spec = _watch_job(kind)
+        if isinstance(spec, str):  # 준비 안 됨 — 다음 주기에 다시 본다
+            continue
+        title, fn = spec
+        jobs.submit(kind, title, _with_alerts(fn))
+        started.append(kind)
+    return started
+
+
+@router.get("/watch")
+def watch_status(db: DB, days: int = 30) -> dict:
+    """정기 점검 설정 · 마지막 실행 · 다음 실행과 최근 경보."""
+    rows = [s | {"not_ready": r if isinstance(r := _watch_job(s["kind"]), str) else None} for s in watch.status(db)]
+    return {"schedules": rows, "alerts": watch.alerts(db, days), "webhook": bool(get_settings().alert_webhook)}
+
+
+@router.post("/watch/{kind}/run", status_code=202)
+def watch_run_now(kind: str) -> dict:
+    """주기를 기다리지 않고 지금 한 번 — 경보 판정 · 알림은 정기 실행과 같다."""
+    if kind not in watch.KINDS:
+        raise HTTPException(404, "점검 종류는 redteam · drift · regression 입니다.")
+    if jobs.active_for(kind):
+        raise HTTPException(409, "이미 도는 중입니다.")
+    spec = _watch_job(kind, reason="manual")
+    if isinstance(spec, str):
+        raise HTTPException(400, spec)
+    title, fn = spec
+    return jobs.submit(kind, title, _with_alerts(fn)).to_dict()

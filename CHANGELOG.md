@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### 추가
+- 정기 점검 · 경보: 레드팀 · 드리프트 · 회귀를 설정한 주기(`WATCH_REDTEAM_HOURS` · `WATCH_DRIFT_HOURS` · `WATCH_REGRESSION_HOURS`)마다 앱 안에서 다시 돌리고, 직전보다 방어율이 떨어짐 · 정상 질문 차단 · 드리프트 경보 · 회귀 하락이면 경보(`ALERT_WEBHOOK`). 요청 기록 화면의 '정기 점검 · 경보' 카드에서 주기 · 다음 실행 · 최근 경보를 보고 지금 점검. API `/api/evalops/watch`
+
 ## [1.1.1] - 2026-10-21
 
 ### 수정

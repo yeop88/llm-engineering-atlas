@@ -35,7 +35,8 @@ app/
     docintel/          문서 처리 맵(D1~D7): sources(폴더 수집) · parsing(점검 · OCR) · layout(표 · 그림) · clean(머리말 · 중복 · 판) ·
                        meta(메타 · 필터) · incremental(바뀐 문서만 재색인) · quality(청크 품질 · 근거 보존)
     guardrails/        보안 · 가드레일 맵(G1~G7): injection · pii · acl · policy · audit · license · redteam, presets/
-    evalops/           평가 · 관측 맵(E1~E8): sets(버전 · 검토) · regression · monitor(대시보드) · feedback · drift · ab · loop
+    evalops/           평가 · 관측 맵(E1~E8): sets(버전 · 검토) · regression · monitor(대시보드) · feedback · drift · ab · loop ·
+                       watch(레드팀 · 드리프트 · 회귀 정기 점검과 경보)
     as_service/        고객 AS 상담 맵(AS1~AS8): triage(의도 · 긴급도 · 코드) · photo(사진 코드 읽기) · flow(상담 흐름 · 캐시 · 티켓 · 지표) ·
                        setup(예시 매뉴얼), presets/
     registry/          맵 · 단계 설명(데이터만, 다른 앱 모듈을 불러오지 않음)
@@ -139,7 +140,7 @@ FastAPI 라우터 ── core/system_api · llm_api / stages/*/…_api / web/pag
 - `GUARD_MODE`(요청마다 `guard_mode` 로 덮어쓰기): `off` 검사 · 기록만 / `mask` 개인정보 가림(기본) / `enforce` 인젝션 질문 차단 · 의심 근거 제외 · 정책 위반 수정 · 거절.
 - 스트리밍 답변은 문장 단위로 모아 가립니다(`pii.StreamMasker`) — 번호가 조각으로 나뉘어 새지 않게.
 - 화면마다 방어를 따로 붙이지 않는 이유: 한 곳만 빠져도 그 길로 샙니다. 답변 화면 · AS 상담 · A/B 실험 · 레드팀이 모두 같은 `prepare` / `finish` 를 거칩니다.
-- 앱 안의 주기 스레드(`main._periodic`, 1분)가 주기가 된 수집 소스(D1)를 돌리고 하루 한 번 보관 기간이 지난 요청 기록을 지웁니다.
+- 앱 안의 주기 스레드(`main._periodic`, 1분)가 주기가 된 수집 소스(D1)와 정기 점검(레드팀 · 드리프트 · 회귀, `WATCH_*_HOURS`)을 작업으로 띄우고, 하루 한 번 보관 기간이 지난 요청 기록을 지웁니다.
 
 ## DB 모델
 

@@ -317,6 +317,8 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/evalops/experiments/{id}/ask` · `/replay` · `/stop` | 질문 하나(배정 키로 팔 고정) / 평가 세트 질문 재생 작업 `{"eval_set_id", "max_queries", "seed"}` / 멈춤 |
 | GET | `/api/evalops/loop` | 실패 유형별 기록(검색 실패 · 인용 · 질문과 다름 · 과잉 거절 · 정책) |
 | POST | `/api/evalops/loop/send` | `{"category", "days", "dest": "eval_set"·"gap_csv"}` |
+| GET | `/api/evalops/watch` | 정기 점검(레드팀 · 드리프트 · 회귀)의 주기 · 마지막 · 다음 실행과 최근 경보(`?days=30`), 웹훅 설정 여부 |
+| POST | `/api/evalops/watch/{kind}/run` | 지금 한 번 점검(`redteam` · `drift` · `regression`) — 작업, 끝나면 그 실행의 경보를 `ALERT_WEBHOOK` 으로 |
 
 ## 고객 AS 상담 (`/api/as`)
 
