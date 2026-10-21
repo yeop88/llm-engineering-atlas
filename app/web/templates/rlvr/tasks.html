@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}과제 · 환경 · 보상{% endblock %}
+{% block content %}
+{% call ui.page_header("과제 · 환경 · 보상") %}정답을 자동으로 확인할 수 있는 과제를 자료에서 만듭니다(RV1) — 조문 제목 · 번호 조회(법령 문서), 판례 인용 수(지식 그래프 집계), 두 수를 더하는 계산. 계산 유형은 시험에만 둬 학습하지 않은 유형에서도 나아지는지 봅니다. 도구 결과는 처음에 기록해 두고 다시 돌려줘 학습이 빠르고 재현되게 하고, 기록과 지금 실제가 얼마나 다른지 점검합니다(RV2). 보상은 정답 · 형식 · 길이 · 여러 답 항목의 합으로, 항목별 기여를 보입니다(RV3).{% endcall %}
+
+<div class="card stack" id="tasks">
+  <h2>과제 만들기 (RV1)</h2>
+  <div class="row">
+    <div class="field"><label for="k-name">과제 이름</label><input id="k-name" value="legal-rlvr-1" class="w-md"></div>
+    <div class="field"><label for="k-col">법률 컬렉션</label><select id="k-col" data-ctx="col"></select></div>
+    <div class="field"><label for="k-graph">지식 그래프</label><input id="k-graph" value="legal" class="w-md"></div>
+    <div class="field"><label for="k-n">유형당 수</label><input id="k-n" type="number" value="30" min="2" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="k-build">만들기</button></div>
+  </div>
+  <div id="k-out"></div>
+  <div id="k-list"></div>
+</div>
+
+<div class="card stack mt-4" id="env">
+  <h2>환경 · 도구 시뮬레이터 (RV2)</h2>
+  <div class="row"><div class="field"><label for="k-env-tasks">과제</label><select id="k-env-tasks" data-tasks></select></div><div class="self-end"><button class="btn" id="k-env">환경-실제 차이 점검</button></div></div>
+  <div id="k-env-out"></div>
+</div>
+
+<div class="card stack mt-4" id="reward">
+  <h2>보상 (RV3)</h2>
+  <div id="k-weights" class="small"></div>
+  <div class="row"><div class="field"><label for="k-r-tasks">과제</label><select id="k-r-tasks" data-tasks></select></div><div class="field"><label for="k-r-id">과제 번호</label><input id="k-r-id" value="t1" class="w-md"></div></div>
+  <div class="field"><label for="k-r-text">답 (마지막 줄 '정답: …')</label><textarea id="k-r-text" rows="3">…
+정답: 제23조</textarea></div>
+  <div><button class="btn" id="k-score">보상 보기</button></div>
+  <div id="k-score-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/rlvr/tasks.js') }}"></script>
+{% endblock %}

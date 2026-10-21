@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}GRPO 학습 · 보상 해킹{% endblock %}
+{% block content %}
+{% call ui.page_header("GRPO 학습 · 보상 해킹") %}같은 과제에 답을 여러 개(묶음) 만들고, 묶음 평균보다 나은 답의 확률을 올립니다(RV5, GRPO — 가치 모델 없이, 기준 모델 KL 은 어댑터를 끈 같은 모델). 묶음의 보상이 모두 같으면 건너뜁니다. 걸음마다 평균 보상 · 정답률 · 길이 · 여러 답 비율을 남기고, 보상은 오르는데 정답률은 그대로이거나 길이만 늘면 보상 해킹으로 표시합니다(RV4). 학습한 정책은 후학습 끝점의 pt-번호로 불립니다.{% endcall %}
+
+<div class="card stack" id="policy">
+  <h2>정책 학습 (RV5)</h2>
+  <div class="row">
+    <div class="field"><label for="g-name">정책 이름</label><input id="g-name" value="GRPO 법률 조회"></div>
+    <div class="field"><label for="g-tasks">과제</label><select id="g-tasks"></select></div>
+    <div class="field"><label for="g-steps">걸음</label><input id="g-steps" type="number" value="30" min="1" class="w-md"></div>
+    <div class="field"><label for="g-group">묶음 크기</label><input id="g-group" type="number" value="4" min="2" max="16" class="w-md"></div>
+    <div class="field"><label for="g-beta">KL beta</label><input id="g-beta" type="number" value="0.02" min="0" step="0.01" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="g-run">학습</button></div>
+  </div>
+  <div id="g-progress" hidden></div>
+  <div id="g-out"></div>
+</div>
+
+<div class="card stack mt-4" id="hacking">
+  <h2>학습한 정책 · 보상 해킹 감시 (RV4)</h2>
+  <div id="g-list"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/rlvr/train.js') }}"></script>
+{% endblock %}

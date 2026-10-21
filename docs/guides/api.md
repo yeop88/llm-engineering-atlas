@@ -474,6 +474,17 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## RLVR (`/api/rlvr`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/rlvr/overview` | 과제 목록 · 보상 항목 · 학습한 정책(곡선 · 해킹 감시) |
+| POST / GET | `/api/rlvr/tasks` · `/tasks/{name}` | 과제 만들기 `{"name", "collection_id", "graph": "legal", "n_per_type"}` → 학습 / 시험 · 유형별 수 · 예 |
+| POST | `/api/rlvr/score` | 보상 보기 `{"tasks", "task_id", "text"}` → 보상 · 항목별 기여 · 맞음 |
+| POST | `/api/rlvr/env/check` | 환경-실제 차이 `{"tasks", "n"}` → 근거 겹침 · 집계 같음 |
+| POST | `/api/rlvr/train` | GRPO 작업(관리자) `{"name", "tasks", "steps", "group", "lr", "beta", "max_new", "temperature"}` |
+| POST | `/api/rlvr/eval` | 평가 작업 `{"tasks", "models", "splits", "max_per_split", "redteam"}` → 학습 / 시험 · 유형별 정답률 · 레드팀 · 외움 표시 |
+
 ## 고객 AS 상담 (`/api/as`)
 
 | 메서드 | 경로 | 설명 |

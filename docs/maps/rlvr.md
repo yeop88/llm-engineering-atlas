@@ -22,12 +22,12 @@ RLVR(검증 가능한 보상의 강화학습)은 정답을 자동으로 확인�
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| RV1 | [검증 가능한 과제 설계](../stages/rlvr/rv1-tasks/README.md) | 🟡 기초 있음 | 정답을 자동으로 확인할 수 있는 과제(조문 조회 · 계산 · 쿼리 결과)를 모아 학습 과제로 만든다 | [E1 평가 세트](../stages/evalops/e1-sets/README.md) · [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | — |
-| RV2 | [환경 · 도구 시뮬레이터](../stages/rlvr/rv2-env/README.md) | ⬜ 예정 | 학습 중 에이전트가 쓸 도구 · 자료 환경을 실제와 같게, 빠르고 재현 가능하게 만든다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) · [IO1 MCP 도구](../stages/interop/io1-tools/README.md) | — |
-| RV3 | [보상 설계](../stages/rlvr/rv3-reward/README.md) | 🟡 기초 있음 | 정답 확인 · 근거 일치 · 질문 관련성 · 비용을 합친 보상을 설명 가능하게 설계한다 | [8b 강화학습](../stages/llm/8b-rl/README.md) | — |
-| RV4 | [보상 해킹 감시](../stages/rlvr/rv4-hacking/README.md) | 🟡 기초 있음 | 보상은 오르는데 실제 품질 · 사람 판정은 그대로인 경우를 찾아낸다 | [8b 강화학습](../stages/llm/8b-rl/README.md) · [E5 피드백](../stages/evalops/e5-feedback/README.md) | — |
-| RV5 | [정책 학습 (GRPO · PPO)](../stages/rlvr/rv5-policy/README.md) | ⬜ 예정 | 같은 과제에 여러 답을 만들어 보상을 비교하며 모델이 더 나은 행동을 하도록 학습한다 | [P4 선호 학습](../stages/posttrain/p4-pref/README.md) | — |
-| RV6 | [일반화 · 안전성 평가](../stages/rlvr/rv6-eval/README.md) | ⬜ 예정 | 학습에 없던 유형 · 자료에서도 나아졌는지, 안전성이 나빠지지 않았는지 확인한다 | [P6 후학습 평가](../stages/posttrain/p6-eval/README.md) · [G7 레드팀](../stages/guardrails/g7-redteam/README.md) | — |
+| RV1 | [검증 가능한 과제 설계](../stages/rlvr/rv1-tasks/README.md) | ✅ 구현됨 | 정답을 자동으로 확인할 수 있는 과제(조문 조회 · 계산 · 쿼리 결과)를 모아 학습 과제로 만든다 | [E1 평가 세트](../stages/evalops/e1-sets/README.md) · [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | [RLVR — 검증 가능한 과제 · 환경 · 보상 · GRPO · 보상 해킹 · 일반화 · 실측](../stages/rlvr/rv5-policy/rlvr.md) |
+| RV2 | [환경 · 도구 시뮬레이터](../stages/rlvr/rv2-env/README.md) | ✅ 구현됨 | 학습 중 에이전트가 쓸 도구 · 자료 환경을 실제와 같게, 빠르고 재현 가능하게 만든다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) · [IO1 MCP 도구](../stages/interop/io1-tools/README.md) | [RLVR — 검증 가능한 과제 · 환경 · 보상 · GRPO · 보상 해킹 · 일반화 · 실측](../stages/rlvr/rv5-policy/rlvr.md) |
+| RV3 | [보상 설계](../stages/rlvr/rv3-reward/README.md) | ✅ 구현됨 | 정답 확인 · 근거 일치 · 질문 관련성 · 비용을 합친 보상을 설명 가능하게 설계한다 | [8b 강화학습](../stages/llm/8b-rl/README.md) | [RLVR — 검증 가능한 과제 · 환경 · 보상 · GRPO · 보상 해킹 · 일반화 · 실측](../stages/rlvr/rv5-policy/rlvr.md) |
+| RV4 | [보상 해킹 감시](../stages/rlvr/rv4-hacking/README.md) | ✅ 구현됨 | 보상은 오르는데 실제 품질 · 사람 판정은 그대로인 경우를 찾아낸다 | [8b 강화학습](../stages/llm/8b-rl/README.md) · [E5 피드백](../stages/evalops/e5-feedback/README.md) | [RLVR — 검증 가능한 과제 · 환경 · 보상 · GRPO · 보상 해킹 · 일반화 · 실측](../stages/rlvr/rv5-policy/rlvr.md) |
+| RV5 | [정책 학습 (GRPO · PPO)](../stages/rlvr/rv5-policy/README.md) | ✅ 구현됨 | 같은 과제에 여러 답을 만들어 보상을 비교하며 모델이 더 나은 행동을 하도록 학습한다 | [P4 선호 학습](../stages/posttrain/p4-pref/README.md) · [8b 강화학습](../stages/llm/8b-rl/README.md) | [RLVR — 검증 가능한 과제 · 환경 · 보상 · GRPO · 보상 해킹 · 일반화 · 실측](../stages/rlvr/rv5-policy/rlvr.md) |
+| RV6 | [일반화 · 안전성 평가](../stages/rlvr/rv6-eval/README.md) | ✅ 구현됨 | 학습에 없던 유형 · 자료에서도 나아졌는지, 안전성이 나빠지지 않았는지 확인한다 | [P6 후학습 평가](../stages/posttrain/p6-eval/README.md) · [G7 레드팀](../stages/guardrails/g7-redteam/README.md) | [RLVR — 검증 가능한 과제 · 환경 · 보상 · GRPO · 보상 해킹 · 일반화 · 실측](../stages/rlvr/rv5-policy/rlvr.md) |
 
 ## 설계 원칙
 
