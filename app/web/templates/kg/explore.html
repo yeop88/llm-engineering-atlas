@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}그래프 탐색 · Cypher{% endblock %}
+{% block content %}
+{% call ui.page_header("그래프 탐색 · Cypher") %}만든 그래프의 노드를 찾아 이웃(인용 · 참조 · 속함)을 따라가고(K5), Cypher 엔진(Neo4j · FalkorDB)으로 옮겨 Cypher 를 실행합니다. Text2Cypher(K6)는 질문을 LLM 이 Cypher 로 바꿔 실행하고, 오류 · 빈 결과면 이유를 알려 다시 씁니다(쓰기 쿼리는 실행 전에 막음). 역량 질문(K1)은 그래프가 답해야 할 질문과 기대 Cypher 로, Text2Cypher 정확도를 잽니다.{% endcall %}
+
+<div class="card stack">
+  <div class="row">
+    <div class="field"><label for="x-graph">그래프</label><select id="x-graph"></select></div>
+    <div id="x-stats" class="small self-end"></div>
+  </div>
+</div>
+
+<div class="grid cols-2 mt-4">
+  <div class="card stack">
+    <h2>노드 찾기</h2>
+    <div class="row nowrap-row"><label for="x-q" class="sr-only">이름</label><input class="grow" id="x-q" placeholder="예: 근로기준법 제23조 · 2016다32193 · 임금">
+      <label for="x-label" class="sr-only">클래스</label><select id="x-label"><option value="">모든 클래스</option><option value="Article">조문</option><option value="Precedent">판례</option><option value="Statute">법령</option><option value="Issue">쟁점</option><option value="Community">커뮤니티</option></select>
+      <button class="btn" id="x-find">찾기</button></div>
+    <div id="x-list" class="scroll-md"></div>
+  </div>
+  <div class="card stack">
+    <h2>이웃</h2>
+    <div id="x-node"><div class="empty">왼쪽에서 노드를 고르세요.</div></div>
+  </div>
+</div>
+
+<div class="card stack mt-4" id="cypher">
+  <h2>Cypher 엔진 · Cypher (K6)</h2>
+  <div id="x-neo" class="small"></div>
+  <div class="row">
+    <div class="field"><label for="x-engine">엔진</label><select id="x-engine"><option value="neo4j">Neo4j</option><option value="falkordb">FalkorDB</option></select></div>
+    <div class="self-end"><button class="btn" id="x-sync">이 그래프를 이 엔진으로 옮기기</button></div>
+  </div>
+  <div class="field"><label for="x-ask">질문 → Cypher (Text2Cypher)</label><div class="row nowrap-row"><input class="grow" id="x-ask" placeholder="예: 근로기준법 제23조를 인용한 판례는?"><button class="btn primary" id="x-ask-run">질문</button></div></div>
+  <div class="field"><label for="x-cypher">Cypher (읽기 쿼리만)</label><textarea id="x-cypher" rows="3" class="mono" placeholder="MATCH (p:Precedent)-[:CITES]->(a:Article) RETURN a.key, count(p) AS n ORDER BY n DESC LIMIT 5"></textarea></div>
+  <div class="row"><button class="btn" id="x-run">실행</button><span class="small muted" id="x-status"></span></div>
+  <div id="x-out"></div>
+</div>
+
+<div class="card stack mt-4" id="cq">
+  <h2>역량 질문 (K1) · Text2Cypher 정확도</h2>
+  <div id="x-cq" class="small"></div>
+  <div class="row">
+    <div class="field"><label for="x-provider">LLM 제공자</label><select id="x-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field"><label for="x-model">모델</label><input id="x-model" data-ctx="model" placeholder="비우면 설정값"></div>
+    <div class="self-end"><button class="btn primary" id="x-cq-run">역량 질문 모두 실행</button></div>
+  </div>
+  <div id="x-cq-progress" hidden></div>
+  <div id="x-cq-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/kg/explore.js') }}"></script>
+{% endblock %}

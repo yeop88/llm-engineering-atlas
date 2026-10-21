@@ -34,8 +34,8 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [K3 데이터 추출](../../knowledge-graph/k3-extract/README.md) — 지식 그래프 · GraphRAG 맵 · ⬜ 예정
-- [K5 그래프 DB](../../knowledge-graph/k5-graph-db/README.md) — 지식 그래프 · GraphRAG 맵 · ⬜ 예정
+- [K3 데이터 추출](../../knowledge-graph/k3-extract/README.md) — 지식 그래프 · GraphRAG 맵 · ✅ 구현됨
+- [K5 그래프 DB](../../knowledge-graph/k5-graph-db/README.md) — 지식 그래프 · GraphRAG 맵 · ✅ 구현됨
 
 ---
 

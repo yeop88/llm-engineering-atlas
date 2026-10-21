@@ -4,7 +4,7 @@
 판례마다 참조조문이 있어 '판례 -인용-> 조문' 관계를 추출 없이 바로 만들 수 있다.
 """
 
-from app.stages.registry.model import PLANNED, Map, Stage
+from app.stages.registry.model import DONE, Map, Page, Stage
 
 MAP = Map("kg", "지식 그래프 · GraphRAG 맵", "/maps/knowledge-graph", "docs/maps/knowledge-graph.md", template="maps/knowledge_graph.html", summary=
         "온톨로지 설계 → 추출 · 융합 → 그래프 DB → GraphRAG — 개념과 관계를 구조로 저장해 다단계 · 집계 · 전체 요약 질문에 답하는 흐름",
@@ -17,11 +17,13 @@ MAP = Map("kg", "지식 그래프 · GraphRAG 맵", "/maps/knowledge-graph", "do
 STAGES: list[Stage] = [
     Stage(
         key="kg_requirements",
+        pages=[Page("kg_cq", "/kg/explore#cq", "역량 질문", "그래프가 답해야 할 질문 15개 · 기대 Cypher")],
         no="K1",
         title="요구사항 정의",
         short="요구사항",
         en="Competency questions",
-        status=PLANNED,
+        status=DONE,
+        builds_on=["ev_sets"],
         flow="kg",
         map="kg",
         summary="지식 그래프가 답해야 할 업무 질문 10~15개로 그래프의 범위를 정한다",
@@ -30,20 +32,24 @@ STAGES: list[Stage] = [
         why="범위를 정하지 않고 '문서에 있는 것을 전부' 그래프로 만들면 개념이 끝없이 늘고 관계 이름이 제각각이 되어 쿼리할 수 없는 그래프가 됩니다. "
         "질문이 먼저 있어야 온톨로지를 작게 시작해 필요할 때 넓힐 수 있습니다.",
         how=[
-            "(예정) 도메인별 역량 질문 목록과 기대 답(쿼리 결과)을 평가 세트처럼 저장 — 예: '근로기준법 제23조를 인용한 대법원 판례 중 해고가 무효로 판단된 사건은?'",
-            "(예정) 질문마다 필요한 개념 · 관계를 표시해 온톨로지 설계(K2)의 입력으로 사용",
-            "(예정) 벡터 RAG 로 답하기 어려운 질문(다단계 · 집계 · 전체 요약)을 따로 표시 — GraphRAG(K6~K8)의 효과를 잴 대상",
+            "법률 역량 질문 15개(한 단계 조회 · 여러 단계 · 집계 · 없는 것 찾기)와 기대 Cypher — 벡터 RAG 가 답하지 못하는 집계 · 없는 것 찾기를 따로 표시",
+            "질문마다 쓰는 클래스 · 관계가 온톨로지(K2)의 범위, 기대 Cypher 결과가 Text2Cypher(K6)의 정답",
         ],
-        plans=["법률 자료로 역량 질문 15개 작성(판례-조문 인용 · 쟁점별 집계 · 법령 간 위임 관계)", "질문 → 기대 Cypher · 기대 답 기록"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
+        plans=["역량 질문을 실제 업무 질문으로 늘리기"],
+        docs=[
+            ("지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측", "docs/stages/knowledge-graph/k5-graph-db/graphrag.md"),
+            ("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md"),
+        ],
     ),
     Stage(
         key="ontology",
+        pages=[Page("kg_build", "/kg/build", "그래프 구축", "온톨로지 · 추출 · 쟁점 합치기 · 적재", "kg/build.html")],
         no="K2",
         title="온톨로지 설계",
         short="온톨로지",
         en="Ontology design",
-        status=PLANNED,
+        status=DONE,
+        builds_on=["rag"],
         flow="kg",
         map="kg",
         summary="도메인의 개념(클래스) · 속성 · 관계와 그 규칙을 기계가 읽는 스키마로 정의한다",
@@ -53,21 +59,24 @@ STAGES: list[Stage] = [
         why="추출(K3)과 융합(K4)이 같은 설계도를 따라야 '판례가 조문을 인용한다'는 사실이 문서마다 다른 이름의 관계로 흩어지지 않습니다. "
         "검증 규칙이 있어야 잘못 추출된 관계(조문이 판례를 인용 등)를 저장 전에 걸러 정합성을 지킬 수 있습니다.",
         how=[
-            "(예정) 원칙: 명확성(개념마다 정의 한 줄) · 정합성(검증 규칙) · 확장성(나중에 개념을 더해도 기존 관계가 깨지지 않게)",
-            "(예정) 법률 예시 — 클래스: 법령 · 조문 · 항 · 판례 · 쟁점 · 당사자 유형 / 관계: 판례 -인용-> 조문, 조문 -속함-> 법령, 시행령 조문 -위임 근거-> 법률 조문, 판례 -다룸-> 쟁점",
-            "(예정) 설계를 YAML(또는 OWL · SHACL)로 저장하고, 추출 프롬프트 · 그래프 DB 제약 조건 · Text2Cypher 스키마 설명을 모두 여기서 만든다",
+            "법률 온톨로지 v1(presets/legal_ontology.json): 클래스 5(법령 · 조문 · 판례 · 쟁점 · 커뮤니티) · 관계 6(속함 · 참조 · 인용 · 판례 인용 · 다룸 · 구성원)",
+            "추출 결과 검증(클래스 · 관계 방향 · 필수 속성), Text2Cypher 스키마 설명 · 화면이 모두 이 파일에서 나옴",
         ],
-        plans=["법률 온톨로지 v1 (클래스 6 · 관계 6 안팎)", "검증 규칙(관계 방향 · 필수 속성)으로 추출 결과 거르기"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
+        plans=["다른 도메인 온톨로지(AS 매뉴얼: 제품 · 오류 코드 · 조치)"],
+        docs=[
+            ("지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측", "docs/stages/knowledge-graph/k5-graph-db/graphrag.md"),
+            ("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md"),
+        ],
     ),
     Stage(
         key="kg_extract",
+        pages=[Page("kg_extract", "/kg/build#extract", "데이터 추출", "정형 매핑 + LLM 쟁점")],
         builds_on=["rag"],
         no="K3",
         title="데이터 추출",
         short="추출",
         en="ETL & LLM extraction",
-        status=PLANNED,
+        status=DONE,
         flow="kg",
         map="kg",
         summary="정형 데이터는 스키마 매핑으로, 비정형 문서는 LLM 으로 [주어-관계-목적어] 트리플을 뽑는다",
@@ -76,21 +85,25 @@ STAGES: list[Stage] = [
         why="그래프의 품질은 추출에서 정해집니다. 정형 데이터가 있으면 추출보다 매핑이 정확하고 싸므로 먼저 쓰고, LLM 추출은 매핑으로 얻을 수 없는 관계에만 씁니다. "
         "근거를 남겨야 GraphRAG 답변이 RAG 처럼 출처를 댈 수 있습니다.",
         how=[
-            "(예정) 정형: 판례 메타데이터의 참조조문 · 사건번호 · 선고일 → 판례 · 조문 노드와 '인용' 관계 (추출 없이 바로 — 이미 수집한 자료)",
-            "(예정) 비정형: 판결요지 · 조문 본문에서 LLM(로컬 Gemma 4) 으로 쟁점 · 요건 · 효과 관계 추출, 온톨로지(K2)에 없는 관계 타입은 버림",
-            "(예정) 추출 정확도를 사람 판정 표본으로 측정(트리플 정밀도 · 재현율) — 답변 검증 보정과 같은 방식",
+            "정형: 법령 조문 머리 · 시행령의 '법 제N조' · 「법령」 제N조 · 판례 【참조조문】 · 【참조판례】 → 노드 · 관계(LLM 없이)",
+            "참조조문 전용 파서: 법령 이름 안의 띄어쓰기('여객자동차 운수사업법') · 개정 연혁 괄호 · 앞 조각의 법령 이어 쓰기 — 공용 인용 정규식은 이름이 잘려 법령이 잘못 묶였다",
+            "비정형: 판시사항에서 LLM 으로 쟁점 1~3개(형식이 어긋나면 버림), 자료에 본문이 없는 인용 대상은 바깥(external) 노드로",
         ],
-        plans=["정형 매핑으로 판례-조문 그래프 먼저 (LLM 없이)", "LLM 트리플 추출 + 검증 규칙 + 사람 판정 표본"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
+        plans=["LLM 추출 정확도 사람 판정 표본"],
+        docs=[
+            ("지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측", "docs/stages/knowledge-graph/k5-graph-db/graphrag.md"),
+            ("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md"),
+        ],
     ),
     Stage(
         key="kg_fusion",
+        pages=[Page("kg_fusion", "/kg/build#fusion", "지식 융합", "쟁점 합치기 · 이름 정규화")],
         builds_on=["rag", "apps"],
         no="K4",
         title="지식 융합 · 정제",
         short="융합 · 정제",
         en="Knowledge fusion",
-        status=PLANNED,
+        status=DONE,
         flow="kg",
         map="kg",
         summary="다른 이름의 같은 개체를 하나로 묶고(개체 정규화) 중복 · 충돌을 정리해 그래프를 완성한다",
@@ -99,21 +112,32 @@ STAGES: list[Stage] = [
         why="정규화하지 않으면 같은 조문이 '근로기준법 제23조' · '근기법 23조' · '같은 법 제23조 제1항' 처럼 여러 노드로 갈라져, "
         "다단계 탐색이 중간에 끊기고 집계가 틀립니다. 그래프의 연결이 곧 답이므로 여기서의 오류가 그대로 오답이 됩니다.",
         how=[
-            "(예정) 조문 번호 정규화는 이미 있는 파서(`rag/legal.py` — 시행령 · '의2' · 띄어쓰기 처리)를 그대로 사용",
-            "(예정) 이름이 다른 개체는 임베딩 유사도로 후보 → 규칙 · LLM 으로 확정, 합친 기록(어느 이름을 합쳤나)을 남김",
-            "(예정) 정제 결과를 역량 질문(K1)으로 점검 — 합치기 전후 답이 달라지는 질문을 확인",
+            "조문 · 법령 이름은 추출에서 규칙으로 정규화(띄어쓰기 · 가운뎃점 · '구' 법 · 조문 번호)",
+            "쟁점: 낱말 끝 조사 · 띄어쓰기를 뺀 글자가 같으면 합치고, 그 밖에는 임베딩 유사도 0.88 이상끼리 합침 — 합친 기록을 화면에",
         ],
-        plans=["조문 · 사건번호 정규화(파서 재사용)", "개체 연결 후보의 정밀도를 사람 판정으로 측정"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
+        plans=["합치기 정밀도 사람 판정"],
+        docs=[
+            ("지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측", "docs/stages/knowledge-graph/k5-graph-db/graphrag.md"),
+            ("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md"),
+        ],
     ),
     Stage(
         key="graph_db",
+        pages=[
+            Page(
+                "kg_explore",
+                "/kg/explore",
+                "그래프 탐색 · Cypher",
+                "노드 · 이웃 탐색, Cypher 엔진(Neo4j · FalkorDB) · Text2Cypher, 역량 질문",
+                "kg/explore.html",
+            )
+        ],
         builds_on=["rag"],
         no="K5",
         title="그래프 DB",
         short="그래프 DB",
-        en="Graph database (Neo4j)",
-        status=PLANNED,
+        en="Graph database (Neo4j · FalkorDB)",
+        status=DONE,
         flow="kg",
         map="kg",
         summary="노드와 관계로 저장하고, JOIN 없이 이웃을 따라가는 다단계 탐색과 벡터 검색을 한 곳에서 한다",
@@ -123,20 +147,24 @@ STAGES: list[Stage] = [
         why="관계형 DB 에서 '판례 → 인용 조문 → 그 조문을 위임한 시행령 → 그 시행령을 인용한 다른 판례' 같은 질의는 JOIN 이 단계마다 늘어 느려지고 쓰기도 어렵습니다. "
         "벡터 인덱스가 같은 DB 에 있으면 '비슷한 글 찾기'와 '연결 따라가기'를 한 질의로 합칠 수 있어 GraphRAG(K7)에 맞습니다.",
         how=[
-            "(예정) Neo4j 를 docker compose 프로필로 추가(벡터 DB 들과 같은 방식), 온톨로지(K2)에서 제약 조건 · 인덱스 생성",
-            "(예정) 그래프 저장소 인터페이스를 벡터 저장소처럼 두어 다른 그래프 DB 로 바꿀 수 있게",
-            "(예정) Cypher 실습 화면: 역량 질문(K1)의 기대 쿼리를 실행해 결과 · 시간 확인",
+            "내장 그래프 저장소(앱 DB 의 노드 · 관계 표, 마이그레이션 0012)가 원본 — 서버 없이도 이웃 확장 · 커뮤니티가 돈다",
+            "Neo4j(docker compose --profile neo4j, 5.26 LTS)로 통째로 옮겨 Cypher 실행, 같은 자료를 다시 적재해도 개체 · 관계가 늘지 않음",
+            "두 번째 엔진 FalkorDB(Redis 모듈, OpenCypher)에도 같은 그래프를 옮겨 같은 역량 질문으로 방언 · 속도 · 무게를 비교",
         ],
-        plans=["Neo4j docker 프로필 · 연결 설정 · 상태 확인", "법률 그래프 적재와 다단계 질의 실측(관계형 대비 시간)"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
+        plans=["ArangoDB 등 다른 그래프 DB 어댑터(보류)"],
+        docs=[
+            ("지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측", "docs/stages/knowledge-graph/k5-graph-db/graphrag.md"),
+            ("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md"),
+        ],
     ),
     Stage(
         key="text2cypher",
+        pages=[Page("kg_cypher", "/kg/explore#cypher", "Text2Cypher", "질문 → Cypher → 결과")],
         builds_on=["agent"],
         no="K6",
         title="Text2Cypher",
         en="Natural language to graph query",
-        status=PLANNED,
+        status=DONE,
         flow="kg",
         map="kg",
         summary="질문을 LLM 이 Cypher 쿼리로 바꿔 그래프 DB 가 정확한 결과 · 집계를 돌려준다",
@@ -145,21 +173,24 @@ STAGES: list[Stage] = [
         why="'작년에 가장 많이 제기된 결함 유형은?', '제23조를 인용한 판례는 몇 건?' 같은 집계 · 필터 질문은 문서 조각을 읽는 벡터 RAG 로는 정확히 답하기 어렵습니다. "
         "대신 쿼리가 틀리면(없는 관계 이름 · 잘못된 방향) 결과가 비거나 엉뚱하므로, 생성한 쿼리를 검증하고 실패하면 다시 만드는 절차가 필요합니다.",
         how=[
-            "(예정) 스키마 설명은 온톨로지(K2)에서 자동 생성, 읽기 전용 쿼리만 허용(쓰기 · 삭제 키워드 차단)",
-            "(예정) 쿼리 검증: 문법 · 스키마에 있는 레이블 · 관계인지 확인, 결과가 비면 오류를 알려 다시 생성(최대 횟수 제한)",
-            "(예정) 평가: 역량 질문의 기대 결과와 실행 결과 비교(정확 일치 · 집합 일치), 작은 로컬 LLM 과 큰 모델 비교",
+            "스키마 설명은 온톨로지에서 자동, 예시 2개, 읽기 쿼리만(실행 전에 EXPLAIN 으로 쿼리 종류 확인 — 키워드 검사는 우회가 쉬움)",
+            "오류 · 빈 결과면 이유를 알려 다시 씀(최대 2번), 역량 질문 15개로 정확 일치 · 겹침 측정",
         ],
-        plans=["읽기 전용 Text2Cypher + 재시도", "역량 질문으로 쿼리 정확도 측정, LLM 크기별 비교"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
+        plans=["큰 모델과 비교", "자주 틀리는 유형 예시 보강"],
+        docs=[
+            ("지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측", "docs/stages/knowledge-graph/k5-graph-db/graphrag.md"),
+            ("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md"),
+        ],
     ),
     Stage(
         key="graph_hybrid",
+        pages=[Page("kg_rag", "/kg/rag", "GraphRAG", "그래프 확장 검색 · 답변, 벡터 대비 비교, 커뮤니티 요약", "kg/rag.html")],
         builds_on=["rag", "rerank"],
         no="K7",
         title="그래프 하이브리드 검색",
         short="하이브리드 검색",
         en="Vector + graph retrieval",
-        status=PLANNED,
+        status=DONE,
         flow="kg",
         map="kg",
         summary="벡터 검색으로 찾은 청크에서 연결된 개체 · 관계(서브그래프)를 함께 가져와 답변 맥락을 넓힌다",
@@ -168,21 +199,26 @@ STAGES: list[Stage] = [
         why="벡터 RAG 는 질문과 글이 비슷한 조각만 가져와, 답에 필요한 연결된 사실(다른 문서에 있는 관련 조문 · 판례)을 놓칩니다. "
         "법률 재측정에서 여러 문서 질문의 검색 nDCG 가 37 로 가장 낮았던 것이 이 한계입니다.",
         how=[
-            "(예정) 1단계는 기존 RAG 검색(KURE · 하이브리드)을 그대로 쓰고, 결과 청크의 문서 노드에서 이웃(인용 조문 · 같은 쟁점 판례)을 확장",
-            "(예정) 확장한 서브그래프를 근거에 '관계 요약' 으로 붙이고, 답변은 같은 인용 · 검증(근거 일치 · 질문 관련성) 규칙을 따름",
-            "(예정) 평가: 여러 문서 질문 · 다단계 질문에서 벡터 RAG 와 짝지어 비교 — LLM 맵의 연결 비교에 경로로 추가",
+            "검색 상위 문서 → 그래프 노드 → 2단계 이웃: 인용한 조문 · 판례, 같은 조문을 인용한 다른 판례(공동 인용), 같은 쟁점",
+            "넓힌 문서는 연결 수로 줄 세워 벡터 결과 뒤에 붙이고, 문서 사이 관계를 '관계 요약'으로 답변 프롬프트에(검증 · 가드레일 · 요청 기록은 같음)",
+            "평가 세트로 '벡터 상위 k' vs '벡터 k−3 + 그래프 3' 비교(정답 하나라도 · 정답 모두 · MRR)",
         ],
-        plans=["법률 그래프로 '검색 + 1단계 이웃 확장' 경로", "여러 문서 질문에서 벡터 RAG 대비 실측"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md"), ("LLM 맵 · 2 RAG 검색", "docs/stages/llm/2-rag/rag.md")],
+        plans=["답변 품질 비교(LLM 판정)"],
+        docs=[
+            ("지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측", "docs/stages/knowledge-graph/k5-graph-db/graphrag.md"),
+            ("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md"),
+            ("LLM 맵 · 2 RAG 검색", "docs/stages/llm/2-rag/rag.md"),
+        ],
     ),
     Stage(
         key="community_summary",
+        pages=[Page("kg_communities", "/kg/rag#communities", "커뮤니티 요약", "묶음 요약 · 전체 질문")],
         builds_on=["apps"],
         no="K8",
         title="글로벌 커뮤니티 요약",
         short="커뮤니티 요약",
         en="Global community summaries (GraphRAG)",
-        status=PLANNED,
+        status=DONE,
         flow="kg",
         map="kg",
         summary="그래프를 계층적 커뮤니티로 나눠 미리 요약해 두고, 전체 주제 · 추세 질문은 요약들을 모아 답한다",
@@ -191,11 +227,13 @@ STAGES: list[Stage] = [
         why="벡터 RAG 와 Text2Cypher 는 모두 '어딘가에 있는 특정 사실'을 찾는 방식이라, 책 한 권 분량 전체를 훑어야 하는 요약 · 추세 질문에는 약합니다. "
         "대신 요약을 미리 만드는 비용이 크고(LLM 호출이 커뮤니티 수만큼), 자료가 바뀌면 다시 만들어야 합니다.",
         how=[
-            "(예정) 커뮤니티 탐지 → 계층별 요약 생성(로컬 LLM, 작업으로 백그라운드 실행) → 요약 저장 · 색인",
-            "(예정) 전체 질문은 커뮤니티 요약에서 답을 모으는 map-reduce, 근거로는 요약과 그 요약의 원문 노드를 인용",
-            "(예정) 평가: '전체 요약' 질문을 따로 만들어 벡터 RAG 와 비교, 요약 생성 비용(시간 · 토큰) 기록",
+            "조문 · 판례 · 쟁점 그래프의 Louvain 커뮤니티(법령 노드 · '속함'은 빼야 법령 목차가 아닌 '같은 문제' 묶음이 됨), 큰 묶음부터 LLM 요약을 커뮤니티 노드로 저장",
+            "전체 질문은 질문과 가까운 요약 4개를 골라 한 번에 답하고 [C1] 처럼 묶음을 인용",
         ],
-        plans=["법률 그래프 커뮤니티 탐지 · 요약", "전체 요약 질문 평가 세트와 비용 측정"],
-        docs=[("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md")],
+        plans=["전체 요약 질문 평가 세트"],
+        docs=[
+            ("지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측", "docs/stages/knowledge-graph/k5-graph-db/graphrag.md"),
+            ("지식 그래프 · GraphRAG 맵", "docs/maps/knowledge-graph.md"),
+        ],
     ),
 ]

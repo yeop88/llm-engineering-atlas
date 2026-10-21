@@ -34,7 +34,7 @@
 이미 있는 단계 위에 짓습니다.
 
 - [2 RAG 검색](../../llm/2-rag/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
-- [K1 요구사항 정의](../../knowledge-graph/k1-requirements/README.md) — 지식 그래프 · GraphRAG 맵 · ⬜ 예정
+- [K1 요구사항 정의](../../knowledge-graph/k1-requirements/README.md) — 지식 그래프 · GraphRAG 맵 · ✅ 구현됨
 
 ---
 

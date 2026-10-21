@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}그래프 구축{% endblock %}
+{% block content %}
+{% call ui.page_header("그래프 구축") %}온톨로지(K2)에 맞춰 컬렉션 문서에서 노드 · 관계를 뽑고(K3), 같은 개체를 합쳐(K4) 내장 그래프 저장소에 적재합니다(K5). 법령의 조문 머리 · 시행령의 '법 제N조' · 판례의 【참조조문】 · 【참조판례】는 형식이 정해져 있어 LLM 없이 뽑고, 판례가 다루는 쟁점만 LLM 으로 뽑아 비슷한 이름을 합칩니다. 온톨로지에 없는 클래스 · 관계나 방향이 틀린 관계는 적재 전에 걸러 냅니다.{% endcall %}
+
+<div class="grid cols-2">
+  <div class="card stack" id="ontology">
+    <h2>온톨로지 (K2)</h2>
+    <div id="b-onto"><div class="loading" role="status">불러오는 중…</div></div>
+  </div>
+  <div class="card stack" id="extract">
+    <h2>구축 (K3 · K4 · K5)</h2>
+    <div class="field"><label for="b-col">컬렉션</label><select id="b-col" data-ctx="col"></select></div>
+    <div class="field"><label for="b-graph">그래프 이름</label><input id="b-graph" value="legal" pattern="[a-z0-9_-]+" maxlength="50"></div>
+    <div class="field"><label for="b-issues">LLM 쟁점 추출 판례 수 (0 = 안 함, -1 = 모두 — 판례당 5~10초)</label><input id="b-issues" type="number" value="0" min="-1" class="w-md"></div>
+    <label class="row small m-0"><input type="checkbox" id="b-reuse"> 앞선 구축의 쟁점을 다시 쓰기 (LLM 없이 합치기만 다시)</label>
+    <div class="field"><label for="b-provider">LLM 제공자</label><select id="b-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field"><label for="b-model">모델</label><input id="b-model" data-ctx="model" placeholder="비우면 설정값"></div>
+    <button class="btn primary" id="b-run">구축</button>
+    <div id="b-progress" hidden></div>
+  </div>
+</div>
+
+<div class="card stack mt-4" id="fusion">
+  <h2>결과 · 합친 쟁점 (K4)</h2>
+  <div id="b-out"><div class="empty">구축하면 노드 · 관계 수, 걸러 낸 것, 합친 쟁점이 여기에 나옵니다.</div></div>
+</div>
+
+<div class="card stack mt-4">
+  <h2>구축 기록</h2>
+  <div id="b-runs"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/kg/build.js') }}"></script>
+{% endblock %}

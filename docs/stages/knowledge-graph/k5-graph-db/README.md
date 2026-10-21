@@ -1,8 +1,8 @@
 <!-- 이 파일은 scripts/gen_docs.py 가 단계 레지스트리(app/stages/registry/)로 만듭니다. 내용을 바꾸려면 레지스트리를 고친 뒤 다시 실행하세요. -->
 
-# K5 · 그래프 DB (Graph database (Neo4j))
+# K5 · 그래프 DB (Graph database (Neo4j · FalkorDB))
 
-**상태: ⬜ 예정** — 노드와 관계로 저장하고, JOIN 없이 이웃을 따라가는 다단계 탐색과 벡터 검색을 한 곳에서 한다
+**상태: ✅ 구현됨** — 노드와 관계로 저장하고, JOIN 없이 이웃을 따라가는 다단계 탐색과 벡터 검색을 한 곳에서 한다
 
 ## 원리
 
@@ -14,21 +14,21 @@
 
 ## 어떻게 (이 앱에서)
 
-- (예정) Neo4j 를 docker compose 프로필로 추가(벡터 DB 들과 같은 방식), 온톨로지(K2)에서 제약 조건 · 인덱스 생성
-- (예정) 그래프 저장소 인터페이스를 벡터 저장소처럼 두어 다른 그래프 DB 로 바꿀 수 있게
-- (예정) Cypher 실습 화면: 역량 질문(K1)의 기대 쿼리를 실행해 결과 · 시간 확인
+- 내장 그래프 저장소(앱 DB 의 노드 · 관계 표, 마이그레이션 0012)가 원본 — 서버 없이도 이웃 확장 · 커뮤니티가 돈다
+- Neo4j(docker compose --profile neo4j, 5.26 LTS)로 통째로 옮겨 Cypher 실행, 같은 자료를 다시 적재해도 개체 · 관계가 늘지 않음
+- 두 번째 엔진 FalkorDB(Redis 모듈, OpenCypher)에도 같은 그래프를 옮겨 같은 역량 질문으로 방언 · 속도 · 무게를 비교
 
 ## 화면
 
-- 아직 테스트 화면이 없습니다. 단계 소개는 앱의 `/stages/graph_db` 에서 볼 수 있습니다.
+- `/kg/explore` — **그래프 탐색 · Cypher**: 노드 · 이웃 탐색, Cypher 엔진(Neo4j · FalkorDB) · Text2Cypher, 역량 질문
 
 ## 앞으로 할 일
 
-- Neo4j docker 프로필 · 연결 설정 · 상태 확인
-- 법률 그래프 적재와 다단계 질의 실측(관계형 대비 시간)
+- ArangoDB 등 다른 그래프 DB 어댑터(보류)
 
 ## 상세 문서
 
+- [지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측](graphrag.md)
 - [지식 그래프 · GraphRAG 맵](../../../maps/knowledge-graph.md)
 
 ## 기반 단계

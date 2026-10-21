@@ -1,0 +1,22 @@
+{
+  "name": "법률 역량 질문 v1",
+  "graph": "legal",
+  "note": "지식 그래프가 답해야 할 질문과 기대 Cypher. 종류: lookup(한 단계 조회) · multi(여러 단계) · aggregate(집계) · negative(없는 것 찾기). 벡터 RAG 는 집계 · 없는 것 찾기에 답하지 못한다 — 문서 몇 개를 읽어서는 '모든 판례 중 몇 개' 를 셀 수 없어서.",
+  "questions": [
+    {"id": "cq-1", "kind": "lookup", "question": "근로기준법 제23조를 인용한 판례의 사건번호는?", "cypher": "MATCH (p:Precedent)-[:CITES]->(a:Article {key: '근로기준법 제23조'}) RETURN p.case_no"},
+    {"id": "cq-2", "kind": "aggregate", "question": "판례가 가장 많이 인용한 조문 5개와 인용 수는?", "cypher": "MATCH (p:Precedent)-[:CITES]->(a:Article) RETURN a.key, count(p) AS n ORDER BY n DESC LIMIT 5"},
+    {"id": "cq-3", "kind": "aggregate", "question": "최저임금법 조문을 인용한 판례는 몇 개인가?", "cypher": "MATCH (p:Precedent)-[:CITES]->(:Article)-[:PART_OF]->(:Statute {key: '최저임금법'}) RETURN count(DISTINCT p) AS n"},
+    {"id": "cq-4", "kind": "multi", "question": "주택임대차보호법 제8조를 인용한 판례들이 함께 인용한 다른 조문은?", "cypher": "MATCH (p:Precedent)-[:CITES]->(:Article {key: '주택임대차보호법 제8조'}), (p)-[:CITES]->(o:Article) WHERE o.key <> '주택임대차보호법 제8조' RETURN DISTINCT o.key"},
+    {"id": "cq-5", "kind": "lookup", "question": "판례 2016다32193이 인용한 조문은?", "cypher": "MATCH (:Precedent {key: '2016다32193'})-[:CITES]->(a:Article) RETURN a.key"},
+    {"id": "cq-6", "kind": "aggregate", "question": "법령별 조문 수는? (본문이 자료에 있는 법령만)", "cypher": "MATCH (a:Article)-[:PART_OF]->(s:Statute) WHERE s.external = false RETURN s.key, count(a) AS n ORDER BY n DESC"},
+    {"id": "cq-7", "kind": "multi", "question": "근로기준법 시행령 조문이 참조하는 근로기준법 조문 중 판례에 인용된 조문은?", "cypher": "MATCH (d:Article)-[:PART_OF]->(:Statute {key: '근로기준법 시행령'}), (d)-[:REFERS_TO]->(a:Article)-[:PART_OF]->(:Statute {key: '근로기준법'}) WHERE (:Precedent)-[:CITES]->(a) RETURN DISTINCT a.key"},
+    {"id": "cq-8", "kind": "aggregate", "question": "2020년 이후에 선고된 판례 중 근로기준법 조문을 인용한 판례는 몇 개인가?", "cypher": "MATCH (p:Precedent)-[:CITES]->(:Article)-[:PART_OF]->(:Statute {key: '근로기준법'}) WHERE p.date >= '2020-01-01' RETURN count(DISTINCT p) AS n"},
+    {"id": "cq-9", "kind": "multi", "question": "근로기준법 제56조를 인용한 판례들이 참조한 다른 판례의 사건번호는?", "cypher": "MATCH (p:Precedent)-[:CITES]->(:Article {key: '근로기준법 제56조'}), (p)-[:CITES_CASE]->(q:Precedent) RETURN DISTINCT q.case_no"},
+    {"id": "cq-10", "kind": "aggregate", "question": "다른 판례를 가장 많이 참조한 판례 3개와 참조 수는?", "cypher": "MATCH (p:Precedent)-[:CITES_CASE]->(q:Precedent) RETURN p.case_no, count(q) AS n ORDER BY n DESC LIMIT 3"},
+    {"id": "cq-11", "kind": "negative", "question": "주택임대차보호법 조문 중 어떤 판례도 인용하지 않은 조문은 몇 개인가?", "cypher": "MATCH (a:Article)-[:PART_OF]->(:Statute {key: '주택임대차보호법'}) WHERE NOT (:Precedent)-[:CITES]->(a) RETURN count(a) AS n"},
+    {"id": "cq-12", "kind": "lookup", "question": "최저임금법 시행령 제5조가 참조하는 조문은?", "cypher": "MATCH (:Article {key: '최저임금법 시행령 제5조'})-[:REFERS_TO]->(a:Article) RETURN a.key"},
+    {"id": "cq-13", "kind": "multi", "question": "판례 2023다206138과 같은 조문을 인용한 다른 판례는?", "cypher": "MATCH (:Precedent {key: '2023다206138'})-[:CITES]->(a:Article)<-[:CITES]-(q:Precedent) WHERE q.key <> '2023다206138' RETURN DISTINCT q.case_no"},
+    {"id": "cq-14", "kind": "aggregate", "question": "판례들이 인용한 법령 가운데 이 자료에 본문이 없는 법령은 몇 개인가?", "cypher": "MATCH (:Precedent)-[:CITES]->(:Article)-[:PART_OF]->(s:Statute) WHERE s.external = true RETURN count(DISTINCT s) AS n"},
+    {"id": "cq-15", "kind": "negative", "question": "다른 판례를 하나도 참조하지 않은 판례는 몇 개인가? (본문이 자료에 있는 판례만)", "cypher": "MATCH (p:Precedent) WHERE p.external = false AND NOT (p)-[:CITES_CASE]->(:Precedent) RETURN count(p) AS n"}
+  ]
+}

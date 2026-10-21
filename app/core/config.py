@@ -74,6 +74,14 @@ class Settings(BaseSettings):
     pgvector_url: str | None = None  # 예: postgresql://embedding:embedding@localhost:5433/embedding_lab
     # MariaDB 11.7+ VECTOR (docker compose --profile mariadb up -d)
     mariadb_url: str | None = None  # 예: mysql://embedding:embedding@localhost:3307/embedding_lab
+    # 지식 그래프의 Cypher 실행(Text2Cypher K6)용 Neo4j. 비우면 앱 DB 의 내장 그래프만(이웃 확장 · 커뮤니티는 동작)
+    neo4j_url: str | None = None  # 예: bolt://localhost:7687 (docker compose --profile neo4j up -d)
+    neo4j_user: str = "neo4j"
+    neo4j_password: str | None = None
+    # 두 번째 Cypher 엔진 FalkorDB (docker compose --profile falkordb up -d). 예: redis://localhost:6380
+    falkordb_url: str | None = None
+    # Cypher 를 돌릴 엔진: neo4j | falkordb — 화면 · API 에서 요청마다 바꿀 수 있고, 비우면 설정된 쪽(둘 다면 neo4j)
+    graph_engine: str = ""
     # 벡터 수가 이 이하인 인덱스는 근사(HNSW) 대신 정확 검색 — 평가 결과가 근사 오차에 흔들리지 않게
     vector_exact_max: int = 20000
     # 근사 검색 탐색 폭 (클수록 정확, 느림). 실제로는 max(이 값, top_k × 4)

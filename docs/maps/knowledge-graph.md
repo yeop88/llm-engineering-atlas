@@ -2,7 +2,7 @@
 
 두 번째 맵입니다(세 번째는 [멀티에이전트 · 멀티모달 맵](multi-agent.md)). [LLM 시스템 엔지니어링 맵](llm.md)이 문서를 조각(청크)으로 나눠 벡터로 찾고 답하는 흐름이라면, 이 맵은 문서 속 **개념과 관계를 구조(그래프)로 저장**하고 LLM 과 결합(GraphRAG)해, 벡터 RAG 가 약한 **다단계 추론 · 정확한 집계 · 전체 요약** 질문에 답하는 흐름입니다.
 
-앱의 **맵 → 지식 그래프 · GraphRAG 맵**(`/maps/knowledge-graph`)과 단계 소개(`/stages/<단계>`)에 같은 내용이 있습니다. 화면 문구와 단계별 README 는 단계 레지스트리(`app/stages/registry/`)에서 만들어집니다. **지금은 모든 단계가 '예정'** 이고, 진행할 때 테스트 화면이 생깁니다.
+앱의 **맵 → 지식 그래프 · GraphRAG 맵**(`/maps/knowledge-graph`)과 단계 소개(`/stages/<단계>`)에 같은 내용이 있습니다. 화면 문구와 단계별 README 는 단계 레지스트리(`app/stages/registry/`)에서 만들어집니다. 8단계 모두 구현했습니다 — 화면은 **그래프 구축**(`/kg/build`) · **그래프 탐색 · Cypher**(`/kg/explore`) · **GraphRAG**(`/kg/rag`), 설계 이유와 실측은 [지식 그래프 · GraphRAG 상세](../stages/knowledge-graph/k5-graph-db/graphrag.md).
 
 ## 전체 흐름
 
@@ -25,14 +25,14 @@ LLM 맵과 만나는 곳: 1단계 검색은 2 RAG 검색 그대로, 답변은 �
 <!-- 단계 표: scripts/gen_docs.py 가 레지스트리로 채웁니다. 이 표시 사이는 고치지 마세요. -->
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| K1 | [요구사항 정의](../stages/knowledge-graph/k1-requirements/README.md) | ⬜ 예정 | 지식 그래프가 답해야 할 업무 질문 10~15개로 그래프의 범위를 정한다 | — | — |
-| K2 | [온톨로지 설계](../stages/knowledge-graph/k2-ontology/README.md) | ⬜ 예정 | 도메인의 개념(클래스) · 속성 · 관계와 그 규칙을 기계가 읽는 스키마로 정의한다 | — | — |
-| K3 | [데이터 추출](../stages/knowledge-graph/k3-extract/README.md) | ⬜ 예정 | 정형 데이터는 스키마 매핑으로, 비정형 문서는 LLM 으로 [주어-관계-목적어] 트리플을 뽑는다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
-| K4 | [지식 융합 · 정제](../stages/knowledge-graph/k4-fusion/README.md) | ⬜ 예정 | 다른 이름의 같은 개체를 하나로 묶고(개체 정규화) 중복 · 충돌을 정리해 그래프를 완성한다 | [2 RAG](../stages/llm/2-rag/README.md) · [A 의미 응용](../stages/llm/a-apps/README.md) | — |
-| K5 | [그래프 DB](../stages/knowledge-graph/k5-graph-db/README.md) | ⬜ 예정 | 노드와 관계로 저장하고, JOIN 없이 이웃을 따라가는 다단계 탐색과 벡터 검색을 한 곳에서 한다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
-| K6 | [Text2Cypher](../stages/knowledge-graph/k6-text2cypher/README.md) | ⬜ 예정 | 질문을 LLM 이 Cypher 쿼리로 바꿔 그래프 DB 가 정확한 결과 · 집계를 돌려준다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | — |
-| K7 | [그래프 하이브리드 검색](../stages/knowledge-graph/k7-graph-hybrid/README.md) | ⬜ 예정 | 벡터 검색으로 찾은 청크에서 연결된 개체 · 관계(서브그래프)를 함께 가져와 답변 맥락을 넓힌다 | [2 RAG](../stages/llm/2-rag/README.md) · [3 리랭킹](../stages/llm/3-rerank/README.md) | [LLM 맵 · 2 RAG 검색](../stages/llm/2-rag/rag.md) |
-| K8 | [글로벌 커뮤니티 요약](../stages/knowledge-graph/k8-community-summary/README.md) | ⬜ 예정 | 그래프를 계층적 커뮤니티로 나눠 미리 요약해 두고, 전체 주제 · 추세 질문은 요약들을 모아 답한다 | [A 의미 응용](../stages/llm/a-apps/README.md) | — |
+| K1 | [요구사항 정의](../stages/knowledge-graph/k1-requirements/README.md) | ✅ 구현됨 | 지식 그래프가 답해야 할 업무 질문 10~15개로 그래프의 범위를 정한다 | [E1 평가 세트](../stages/evalops/e1-sets/README.md) | [지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측](../stages/knowledge-graph/k5-graph-db/graphrag.md) |
+| K2 | [온톨로지 설계](../stages/knowledge-graph/k2-ontology/README.md) | ✅ 구현됨 | 도메인의 개념(클래스) · 속성 · 관계와 그 규칙을 기계가 읽는 스키마로 정의한다 | [2 RAG](../stages/llm/2-rag/README.md) | [지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측](../stages/knowledge-graph/k5-graph-db/graphrag.md) |
+| K3 | [데이터 추출](../stages/knowledge-graph/k3-extract/README.md) | ✅ 구현됨 | 정형 데이터는 스키마 매핑으로, 비정형 문서는 LLM 으로 [주어-관계-목적어] 트리플을 뽑는다 | [2 RAG](../stages/llm/2-rag/README.md) | [지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측](../stages/knowledge-graph/k5-graph-db/graphrag.md) |
+| K4 | [지식 융합 · 정제](../stages/knowledge-graph/k4-fusion/README.md) | ✅ 구현됨 | 다른 이름의 같은 개체를 하나로 묶고(개체 정규화) 중복 · 충돌을 정리해 그래프를 완성한다 | [2 RAG](../stages/llm/2-rag/README.md) · [A 의미 응용](../stages/llm/a-apps/README.md) | [지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측](../stages/knowledge-graph/k5-graph-db/graphrag.md) |
+| K5 | [그래프 DB](../stages/knowledge-graph/k5-graph-db/README.md) | ✅ 구현됨 | 노드와 관계로 저장하고, JOIN 없이 이웃을 따라가는 다단계 탐색과 벡터 검색을 한 곳에서 한다 | [2 RAG](../stages/llm/2-rag/README.md) | [지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측](../stages/knowledge-graph/k5-graph-db/graphrag.md) |
+| K6 | [Text2Cypher](../stages/knowledge-graph/k6-text2cypher/README.md) | ✅ 구현됨 | 질문을 LLM 이 Cypher 쿼리로 바꿔 그래프 DB 가 정확한 결과 · 집계를 돌려준다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | [지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측](../stages/knowledge-graph/k5-graph-db/graphrag.md) |
+| K7 | [그래프 하이브리드 검색](../stages/knowledge-graph/k7-graph-hybrid/README.md) | ✅ 구현됨 | 벡터 검색으로 찾은 청크에서 연결된 개체 · 관계(서브그래프)를 함께 가져와 답변 맥락을 넓힌다 | [2 RAG](../stages/llm/2-rag/README.md) · [3 리랭킹](../stages/llm/3-rerank/README.md) | [지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측](../stages/knowledge-graph/k5-graph-db/graphrag.md) · [LLM 맵 · 2 RAG 검색](../stages/llm/2-rag/rag.md) |
+| K8 | [글로벌 커뮤니티 요약](../stages/knowledge-graph/k8-community-summary/README.md) | ✅ 구현됨 | 그래프를 계층적 커뮤니티로 나눠 미리 요약해 두고, 전체 주제 · 추세 질문은 요약들을 모아 답한다 | [A 의미 응용](../stages/llm/a-apps/README.md) | [지식 그래프 · GraphRAG — 구축 · Cypher · 그래프 확장 · 실측](../stages/knowledge-graph/k5-graph-db/graphrag.md) |
 <!-- /단계 표 -->
 
 ## 1. 구축 — 지식 그래프 만들기와 온톨로지
@@ -71,16 +71,16 @@ LLM 맵과 만나는 곳: 1단계 검색은 2 RAG 검색 그대로, 답변은 �
 | [K7 그래프 하이브리드 검색](../stages/knowledge-graph/k7-graph-hybrid/README.md) | 벡터로 비슷한 청크를 찾고, 연결된 개체 · 관계(서브그래프)를 함께 가져옴 | 연결된 맥락이 필요한 질문 | 확장 범위(몇 단계까지)에 따라 근거가 길어짐 — 질문 관련성 검증과 함께 |
 | [K8 글로벌 커뮤니티 요약](../stages/knowledge-graph/k8-community-summary/README.md) | 그래프를 계층적 커뮤니티로 나눠 미리 요약, 질문엔 요약들을 모아 답(Microsoft GraphRAG 방식) | 전체 주제 · 추세 | 요약을 미리 만드는 비용(LLM 호출 = 커뮤니티 수), 자료가 바뀌면 다시 |
 
-## 이 프로젝트에 적용하는 순서 (계획)
+## 이 프로젝트에 적용한 것
 
-첫 도메인은 이미 있는 **법률 공개 자료**(법령 6 · 대법원 판례 164, [데이터 처리 기록](../guides/data-processing.md))입니다.
+첫 도메인은 이미 있는 **법률 공개 자료**(법령 6 · 대법원 판례 164, [데이터 처리 기록](../guides/data-processing.md))입니다. 설계 이유와 실측은 [지식 그래프 · GraphRAG 상세](../stages/knowledge-graph/k5-graph-db/graphrag.md)에 있습니다.
 
-1. **K1** 법률 역량 질문 15개 — 판례-조문 인용, 쟁점별 집계, 법령 간 위임 관계. 벡터 RAG 로 어려운 질문(여러 문서 · 집계 · 전체 요약)을 표시합니다. 법률 재측정에서 여러 문서 질문의 검색 nDCG 가 37 로 가장 낮았습니다.
-2. **K2** 법률 온톨로지 v1 — 법령 · 조문 · 항 · 판례 · 쟁점 · 당사자 유형 / 인용 · 속함 · 위임 근거 · 다룸.
-3. **K3 정형 먼저** — 판례 메타데이터의 참조조문으로 '판례 -인용→ 조문'을 LLM 없이 바로. 그다음 판결요지에서 LLM 트리플 추출.
-4. **K4** 조문 번호 정규화는 기존 파서(`app/stages/rag/legal.py`) 재사용.
-5. **K5** Neo4j 를 docker compose 프로필로 추가, 그래프 저장소 인터페이스.
-6. **K6~K8** 각각 역량 질문 · 여러 문서 질문 · 전체 요약 질문으로 벡터 RAG 와 짝지어 비교 — LLM 맵의 연결 비교에 경로로 넣습니다.
+1. **K1** 법률 역량 질문 15개(한 단계 조회 · 여러 단계 · 집계 · 없는 것 찾기)와 기대 Cypher — Text2Cypher 의 정답.
+2. **K2** 법률 온톨로지 — 클래스 5(법령 · 조문 · 판례 · 쟁점 · 커뮤니티) · 관계 6. 역량 질문이 묻는 것만 둡니다.
+3. **K3 정형 먼저** — 조문 머리 · 시행령의 '법 제N조' · 【참조조문】 · 【참조판례】는 LLM 없이(0.4초), 판례 쟁점만 LLM 으로(판례 164개 약 13분).
+4. **K4** 법령 · 조문 이름은 규칙으로, 쟁점은 임베딩 유사도로 합치되 반대 역할(임차인 ↔ 임대인)은 합치지 않습니다.
+5. **K5** 앱 DB 의 노드 · 관계 표가 원본, Cypher 엔진 둘(Neo4j · FalkorDB)에 통째로 옮겨 비교합니다.
+6. **K6~K8** 역량 질문 · 평가 세트 · 전체 질문으로 벡터 RAG 와 짝지어 쟀습니다 — 이 자료에서 그래프 이웃 확장은 검색을 낫게 하지 않았고, 관계를 묻는 질문은 Text2Cypher 가, 전체 주제 질문은 커뮤니티 요약이 맡습니다.
 
 각 단계는 LLM 맵과 같은 원칙을 따릅니다: 사람 판정으로 자동 판정을 보정하고, 실측(날짜 · 자료 · 설정 · 해석 · 한계)을 단계 문서에 남기며, 답변은 질문과 관련된 근거로만 합니다.
 

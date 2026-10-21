@@ -1,0 +1,25 @@
+{
+  "name": "법률 온톨로지 v1",
+  "graph": "legal",
+  "note": "근로 · 임대차 법령과 판례(공개 자료)를 위한 최소 온톨로지. 역량 질문(legal_cq.json)이 묻는 것만 둔다 — 개념이 늘수록 관계 이름이 흩어져 쿼리할 수 없는 그래프가 되므로.",
+  "classes": {
+    "Statute": {"label": "법령", "desc": "법률 · 시행령 하나(예: 근로기준법, 근로기준법 시행령). 자료에 없는 법령도 인용되면 external=true 로 둔다", "key": "법령 이름", "props": {"name": "법령 이름", "kind": "법률 | 시행령", "external": "자료에 본문이 없는 법령이면 true, 있으면 false"}},
+    "Article": {"label": "조문", "desc": "법령의 조문 하나(항은 나누지 않음)", "key": "'법령 이름 제N조(의M)'", "props": {"name": "'법령 제N조(제목)'", "law": "법령 이름", "no": "'제N조' · '제N조의M'", "title": "조문 제목(괄호 안)", "external": "본문이 자료에 없으면 true, 있으면 false"}},
+    "Precedent": {"label": "판례", "desc": "대법원 판결 하나", "key": "사건번호(예: 2019다12345)", "props": {"name": "사건명 (사건번호)", "case_no": "사건번호", "date": "선고일 YYYY-MM-DD", "court": "법원", "title": "사건명", "external": "자료에 본문이 없는 판례면 true, 있으면 false"}},
+    "Issue": {"label": "쟁점", "desc": "판례가 다루는 법적 쟁점(판시사항에서 LLM 으로 뽑아 비슷한 것을 합친 것)", "key": "대표 쟁점 이름", "props": {"name": "쟁점 이름", "aliases": "합친 다른 이름들"}},
+    "Community": {"label": "커뮤니티", "desc": "서로 많이 이어진 조문 · 판례 묶음(커뮤니티 탐지, K8) — 요약을 붙여 전체 질문에 쓴다", "key": "c-번호", "props": {"name": "묶음 이름", "summary": "LLM 요약", "size": "구성원 수"}}
+  },
+  "relations": {
+    "PART_OF": {"label": "속함", "from": "Article", "to": "Statute", "desc": "조문 -속함-> 법령"},
+    "REFERS_TO": {"label": "참조", "from": "Article", "to": "Article", "desc": "시행령 조문이 '법 제N조'처럼 법률 조문을 가리킴(위임 · 참조)"},
+    "CITES": {"label": "인용", "from": "Precedent", "to": "Article", "desc": "판례의 【참조조문】"},
+    "CITES_CASE": {"label": "판례 인용", "from": "Precedent", "to": "Precedent", "desc": "판례의 【참조판례】"},
+    "CONCERNS": {"label": "다룸", "from": "Precedent", "to": "Issue", "desc": "판례가 다루는 쟁점"},
+    "IN_COMMUNITY": {"label": "구성원", "from": "*", "to": "Community", "desc": "조문 · 판례 · 쟁점이 속한 커뮤니티"}
+  },
+  "rules": [
+    "관계의 양 끝 클래스는 relations 의 from · to 와 같아야 한다(IN_COMMUNITY 의 from 은 아무 클래스)",
+    "모든 노드는 key 가 있어야 하고, Article 은 law · no, Precedent 는 case_no 가 있어야 한다",
+    "Article key 는 '법령 이름 제N조' 로 정규화한다(항 · 호는 떼고, '23조' → '제23조', '의 2' → '의2')"
+  ]
+}

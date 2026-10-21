@@ -2,7 +2,20 @@ from collections.abc import Iterator
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, TypeDecorator, create_engine, event
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    TypeDecorator,
+    UniqueConstraint,
+    create_engine,
+    event,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
 from app.core.config import get_settings
@@ -456,3 +469,33 @@ class Profile(Base):
     data: Mapped[dict[str, Any]] = mapped_column(default=dict)  # {"products": [...], "issues": [{"at", "product", "codes", "summary"}]}
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow, index=True)
+
+
+class KgNode(Base):
+    """지식 그래프 노드(K5 내장 그래프 저장소). graph 로 그래프를 나누고, (graph, label, key) 가 개체 하나 — 다시 적재해도 같은 개체."""
+
+    __tablename__ = "kg_nodes"
+    __table_args__ = (UniqueConstraint("graph", "label", "key", name="uq_kg_node"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    graph: Mapped[str] = mapped_column(String(50), index=True)
+    label: Mapped[str] = mapped_column(String(40), index=True)  # 온톨로지 클래스: Statute · Article · Precedent · Issue …
+    key: Mapped[str] = mapped_column(String(200))  # 정규화한 식별자(예: '근로기준법 제23조', '2019다12345')
+    name: Mapped[str] = mapped_column(String(300), default="")
+    props: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    document_id: Mapped[int | None] = mapped_column(ForeignKey("documents.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class KgEdge(Base):
+    """지식 그래프 관계. (graph, src, dst, type) 는 한 번만 — 같은 인용을 여러 번 적재해도 관계 하나."""
+
+    __tablename__ = "kg_edges"
+    __table_args__ = (UniqueConstraint("graph", "src", "dst", "type", name="uq_kg_edge"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    graph: Mapped[str] = mapped_column(String(50), index=True)
+    src: Mapped[int] = mapped_column(ForeignKey("kg_nodes.id", ondelete="CASCADE"), index=True)
+    dst: Mapped[int] = mapped_column(ForeignKey("kg_nodes.id", ondelete="CASCADE"), index=True)
+    type: Mapped[str] = mapped_column(String(40), index=True)  # 온톨로지 관계: PART_OF · CITES · CITES_CASE · REFERS_TO · CONCERNS
+    props: Mapped[dict[str, Any]] = mapped_column(default=dict)

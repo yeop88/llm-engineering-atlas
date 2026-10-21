@@ -25,7 +25,7 @@ docs/
 | 맵 | 무엇을 | 단계 | 개요 | 화면 |
 |---|---|---|---|---|
 | **LLM 시스템 엔지니어링 맵** | 임베딩 → RAG 검색 → 리랭킹 → 라우팅 → 소형/대형 모델 · 에이전트 — 문서 지식을 싸고 빠르고 정확하게 서비스하는 흐름 | 12 — ✅ 12 | [llm.md](maps/llm.md) | `/maps/llm` |
-| **지식 그래프 · GraphRAG 맵** | 온톨로지 설계 → 추출 · 융합 → 그래프 DB → GraphRAG — 개념과 관계를 구조로 저장해 다단계 · 집계 · 전체 요약 질문에 답하는 흐름 | 8 — ⬜ 8 | [knowledge-graph.md](maps/knowledge-graph.md) | `/maps/knowledge-graph` |
+| **지식 그래프 · GraphRAG 맵** | 온톨로지 설계 → 추출 · 융합 → 그래프 DB → GraphRAG — 개념과 관계를 구조로 저장해 다단계 · 집계 · 전체 요약 질문에 답하는 흐름 | 8 — ✅ 8 | [knowledge-graph.md](maps/knowledge-graph.md) | `/maps/knowledge-graph` |
 | **멀티에이전트 · 멀티모달 맵** | 멀티모달 입력 · 검색 → 오케스트레이터가 전문가 에이전트(검색 · 분석 · 작성 · 검증)에게 분배 → 교차 검증 → 텍스트 · 차트 · 음성 출력 | 8 — 🟡 4 · ⬜ 4 | [multi-agent.md](maps/multi-agent.md) | `/maps/multi-agent` |
 | **평가 · 관측 (LLMOps) 맵** | 평가 세트 → 오프라인 평가 · 회귀 → 트레이싱 → 피드백 → 드리프트 감지 · A/B → 개선 반영 — 서비스가 지금 잘 되고 있는지 숫자로 아는 흐름 | 8 — ✅ 8 | [evalops.md](maps/evalops.md) | `/maps/evalops` |
 | **보안 · 가드레일 · 거버넌스 맵** | 입력 방어 → 개인정보 마스킹 → 권한별 검색 → 출력 정책 → 감사 로그 · 라이선스 · 레드팀 — 써도 되는 답인지 확인하는 흐름 | 7 — ✅ 7 | [guardrails.md](maps/guardrails.md) | `/maps/guardrails` |

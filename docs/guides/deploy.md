@@ -9,6 +9,8 @@ cp .env.example .env              # API_TOKEN 등 설정 (아래 2)
 docker compose --profile app up -d --build                       # 앱 + Qdrant (CPU)
 TORCH_EXTRA=cu130 docker compose --profile app up -d --build     # NVIDIA GPU (docs/guides/gpu.md)
 docker compose --profile app --profile pgvector up -d            # pgvector 도 함께
+docker compose --profile neo4j up -d                             # Neo4j(지식 그래프 Cypher) — .env 에 NEO4J_URL · NEO4J_PASSWORD
+docker compose --profile falkordb up -d                          # FalkorDB(두 번째 Cypher 엔진) — .env 에 FALKORDB_URL (기본 엔진은 GRAPH_ENGINE)
 ```
 
 - 이미지: `python:3.14-slim-trixie` + uv 0.12.0(로컬과 같은 버전 — `uv.lock` 해석이 달라지지 않게). 의존성 층을 코드보다 먼저 설치해, 코드만 바꾸면 torch(수 GB) 층은 다시 받지 않습니다.

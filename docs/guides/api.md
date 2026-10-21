@@ -336,6 +336,28 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/conversation/eval` | 실측 작업 `{"methods": ["none", "history", "rule", "llm"], "domains": ["as", "legal"], "top_k": 10}` → 분야 · 방법별 Hit@1 · Hit@3 · MRR · 풀어 쓰기 시간, 대화별 순위, 되묻기 정확도 · 메모리 정확도 |
 | GET | `/api/conversation/eval/runs` · `/eval/runs/{id}` | 실측 기록 |
 
+## 지식 그래프 · GraphRAG (`/api/kg`)
+
+원본 그래프는 앱 DB(내장 그래프 저장소), Cypher 는 엔진(Neo4j · FalkorDB)으로 옮겨서 실행합니다. `engine` 을 비우면 `GRAPH_ENGINE`(없으면 연결이 설정된 쪽, 둘 다면 Neo4j).
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/kg/ontology` | 온톨로지(클래스 · 관계 · 규칙)와 Text2Cypher 스키마 설명 |
+| POST | `/api/kg/build` | 구축 작업(관리자) `{"collection_id", "graph": "legal", "issue_limit": 0·N·-1, "provider"?, "model"?}` → 노드 · 관계 수, 걸러 낸 것, 쟁점 합치기 기록 |
+| GET | `/api/kg/builds` · `/api/kg/graphs` · `/api/kg/graphs/{g}/stats` | 구축 기록 · 그래프 목록 · 통계(클래스 · 관계별 수, 만든 컬렉션) |
+| GET | `/api/kg/graphs/{g}/nodes` · `/nodes/{id}` | 노드 찾기(`?q=&label=`) · 노드와 이웃(`?hops=1·2`) |
+| POST | `/api/kg/graphs/{g}/expand` | `{"question", "config"?, "max_docs": 3}` → 검색 결과 + 그래프로 넓힌 문서(연결 수 · 무엇으로 이어졌나) · 관계 요약 |
+| POST | `/api/kg/graphs/{g}/answer` | GraphRAG 답변 `{"question", "provider"?, "model"?}` — 검색 + 넓힌 문서를 근거로, 관계 요약을 시스템 프롬프트에 |
+| POST / GET | `/api/kg/graphs/{g}/communities` | 커뮤니티 요약 작업(관리자) `{"top": 12, "min_size": 4}` / 저장된 요약 |
+| POST | `/api/kg/graphs/{g}/global` | 전체 질문 `{"question"}` → 가까운 커뮤니티 요약 4개로 답(묶음 인용 [C1]) |
+| GET | `/api/kg/engines` | 엔진별 연결 상태 `{"default", "engines": [{"engine", "label", "ok", "url", "detail"?}]}` |
+| POST | `/api/kg/graphs/{g}/sync?engine=neo4j·falkordb` | 그래프를 엔진으로 옮기기(관리자, 그 엔진의 기존 그래프는 지움) → 노드 · 관계 수 · 걸린 초 |
+| POST | `/api/kg/cypher` | 읽기 Cypher 실행 `{"query", "engine"?}` — 쓰기 쿼리는 403(Neo4j 는 EXPLAIN 쿼리 종류, FalkorDB 는 GRAPH.RO_QUERY 로 차단) |
+| POST | `/api/kg/text2cypher` | `{"question", "engine"?, "provider"?, "model"?}` → Cypher · 결과 · 시도(오류 · 빈 결과면 다시 씀) |
+| GET / POST | `/api/kg/cq` · `/api/kg/cq/eval` | 역량 질문 15개 / Text2Cypher 정확도 작업 `{"engine"?, "ids"?}` → 정확 일치 · 같은 답 · 겹침 · 종류별(엔진에 연결이 안 되면 400) |
+| POST | `/api/kg/graphs/{g}/hybrid-eval` | `{"eval_set_id", "k": 10, "add": 3, "only_multi"}` → 벡터 상위 k vs 벡터 + 그래프 확장의 hit · all · MRR |
+| GET | `/api/kg/runs` · `/runs/{id}` | KG 실행 기록(구축 · 커뮤니티 · 역량 질문 · 하이브리드) |
+
 ## 고객 AS 상담 (`/api/as`)
 
 | 메서드 | 경로 | 설명 |

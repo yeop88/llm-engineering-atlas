@@ -66,9 +66,35 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
 
+  # 지식 그래프의 Cypher 실행(Text2Cypher). 원본 그래프는 앱 DB 에 있고 화면의 'Neo4j 로 옮기기'로 복사한다. 5.26 은 LTS
+  neo4j:
+    image: neo4j:5.26.32-community
+    profiles: ["neo4j"]
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/embedding-graph
+      NEO4J_server_memory_heap_max__size: 1G
+    ports:
+      - "${NEO4J_HTTP_PORT:-7474}:7474"   # 브라우저 콘솔
+      - "${NEO4J_BOLT_PORT:-7687}:7687"   # 앱 연결 (NEO4J_URL=bolt://localhost:7687)
+    volumes:
+      - neo4j_data:/data
+
+  # 지식 그래프 Cypher 엔진 두 번째 선택지(GRAPH_ENGINE=falkordb). Redis 모듈 기반 OpenCypher — 가볍고, 읽기 전용 명령(GRAPH.RO_QUERY)이 있다
+  falkordb:
+    image: falkordb/falkordb:v4.22.0
+    profiles: ["falkordb"]
+    restart: unless-stopped
+    ports:
+      - "${FALKORDB_PORT:-6380}:6379"   # 로컬 Redis(6379)와 겹치지 않게 6380 (FALKORDB_URL=redis://localhost:6380)
+    volumes:
+      - falkordb_data:/var/lib/falkordb/data
+
 volumes:
   app_data:
   hf_cache:
   qdrant_data:
   pg_data:
   mariadb_data:
+  neo4j_data:
+  falkordb_data:

@@ -29,6 +29,7 @@ from app.stages.embedding.model_manager import get_manager  # noqa: E402
 from app.stages.evalops import api as evalops_api  # noqa: E402
 from app.stages.finetune import api as finetune_api  # noqa: E402
 from app.stages.guardrails import api as guardrails_api  # noqa: E402
+from app.stages.kg import api as kg_api  # noqa: E402
 from app.stages.quant import api as quant_api  # noqa: E402
 from app.stages.rag import answer_api, collections_api, eval_api, verify_api  # noqa: E402
 from app.stages.rerank import api as rerank_api  # noqa: E402
@@ -118,6 +119,7 @@ for module in (
     evalops_api,
     conversation_api,
     as_api,
+    kg_api,  # 지식 그래프 · GraphRAG — RAG 검색 · 서비스 답변 위에 그래프를 얹는다
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

@@ -23,7 +23,7 @@
 | 맵 | 무엇을 | 단계 | ✅ | 🟡 | ⬜ | 화면 · 개요 |
 |---|---|---|---|---|---|---|
 | **LLM 시스템 엔지니어링** | 문서 지식을 싸고 빠르고 정확하게 서비스하는 흐름 | 12 | 12 | — | — | `/maps/llm` · [개요](docs/maps/llm.md) |
-| **지식 그래프 · GraphRAG** | 개념과 관계를 구조로 저장해 다단계 · 집계 · 전체 요약 질문에 답하는 흐름 | 8 | — | — | 8 | `/maps/knowledge-graph` · [개요](docs/maps/knowledge-graph.md) |
+| **지식 그래프 · GraphRAG** | 개념과 관계를 구조로 저장해 다단계 · 집계 · 전체 요약 질문에 답하는 흐름 | 8 | 8 | — | — | `/maps/knowledge-graph` · [개요](docs/maps/knowledge-graph.md) |
 | **멀티에이전트 · 멀티모달** | 멀티모달 입력 · 검색 → 오케스트레이터가 전문가 에이전트(검색 · 분석 · 작성 · 검증)에게 분배 → 교차 검증 → 텍스트 · 차트 · 음성 출력 | 8 | — | 4 | 4 | `/maps/multi-agent` · [개요](docs/maps/multi-agent.md) |
 | **평가 · 관측 (LLMOps)** | 서비스가 지금 잘 되고 있는지 숫자로 아는 흐름 | 8 | 8 | — | — | `/maps/evalops` · [개요](docs/maps/evalops.md) |
 | **보안 · 가드레일 · 거버넌스** | 써도 되는 답인지 확인하는 흐름 | 7 | 7 | — | — | `/maps/guardrails` · [개요](docs/maps/guardrails.md) |
@@ -40,7 +40,7 @@
 | **장기 실행 에이전트 · 업무 자동화** | 며칠짜리 업무를 맡기는 흐름 | 7 | — | 1 | 6 | `/maps/longrun` · [개요](docs/maps/longrun.md) |
 | **강화학습 기반 에이전트 학습 (RLVR)** | 정답을 확인할 수 있는 과제로 에이전트를 학습 | 6 | — | 3 | 3 | `/maps/rlvr` · [개요](docs/maps/rlvr.md) |
 | **온디바이스 · 엣지** | 서버 없이 기기에서 돌리는 흐름 | 6 | — | 3 | 3 | `/maps/edge` · [개요](docs/maps/edge.md) |
-| **합계 18개** | | 132 | 48 | 28 | 56 | `/maps` |
+| **합계 18개** | | 132 | 56 | 28 | 48 | `/maps` |
 <!-- /맵 표 -->
 
 ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정 — 맵 · 단계의 정의와 상태는 `app/stages/registry/` 한 곳에서 관리하고, 이 표와 문서가 거기서 만들어집니다.
@@ -76,18 +76,21 @@
 | 라우팅으로 아낄 수 있나 | 학습 라우터가 항상 전체 경로와 같은 품질로 지연 −25%(73.0 → 55.1초) — 다만 '어려움' 라벨 5개로 낸 결과라 기준값에 민감 | [6 라우팅](docs/stages/llm/6-routing/routing.md) |
 | 소형 · 저비트 모델은 | QAT Q4_0 이 Q8_0 과 같은 품질로 가장 빠름, 소형 E2B 는 지연 −21% 대신 품질 −13(유의) | [7b 양자화](docs/stages/llm/7b-quant/quant.md) |
 | 에이전트가 RAG 보다 나은가 | 조문 번호 질문에서 번호 조회를 LLM 판단 전에 먼저 하게 하자 정답 근거 인용 75% → 100% | [8a 에이전틱 AI](docs/stages/llm/8a-agent/agent.md) |
-| 근거를 줄이면 빨라지나 | 근거 압축은 지연 −19% 대신 품질 −10(정답 문장을 버림). A/B 재생에서도 −16초(유의) · 품질은 불확실 | [2 RAG](docs/stages/llm/2-rag/rag.md) · [E7 A/B](docs/stages/evalops/e7-ab/ab.md) |
+| 근거를 줄이면 빨라지나 | 근거 압축은 지연 −19% 대신 품질 −10(정답 문장을 버림). A/B 재생 120문항에서는 −19초(유의) · 근거 일치는 차이 없음(+0.017, 불확실) | [2 RAG](docs/stages/llm/2-rag/rag.md) · [E7 A/B](docs/stages/evalops/e7-ab/ab.md) |
 | 방어를 켜면 얼마나 막나 | 공격 31개 방어율 off 58% → mask(개인정보 가림 · 근거 격리) 87% → enforce 100%, 정상 질문 6개는 세 모드 모두 답함(처음엔 enforce 가 지시 섞인 청크를 통째로 빼 정상 질문 절반을 거절 — 문장 단위로 고침) | [G1 · G7 가드레일](docs/stages/guardrails/g1-injection/guards.md) |
 | 권한은 어디서 지키나 | 검색 전에 거르면 권한 없는 문서가 근거로 나올 질문 9/17 → 0, 방어 모드와 무관 | [G3 권한](docs/stages/guardrails/g3-acl/access.md) |
 | 설정을 바꾸면 회귀를 잡나 | 하이브리드 → BM25 만: 두 세트 모두 유의한 하락 경보(nDCG −0.12 · −0.09), 같은 설정은 차이 0 | [E2 회귀](docs/stages/evalops/e1-sets/regression.md) |
 | 바뀐 문서만 다시 색인하면 | 문서 1개 변경: 증분 42초 vs 전체 재구축 30분(1,613청크) | [D6 증분 갱신](docs/stages/docintel/d1-ingest/ingest.md) |
 | 스캔 PDF · 표는 | 비전 LLM OCR 본문 99.4% · 표 셀 100%, pdfplumber 표 추출 셀 36/36 (만든 PDF) | [D2 · D3 파싱](docs/stages/docintel/d2-parse/parsing.md) |
 | AS 상담에 제품 범위가 필요한가 | 끄면 맞는 매뉴얼은 잡지만 다른 모델 매뉴얼이 79% 답의 근거에 섞이고 5.6초 느려짐 | [AS 상담 흐름](docs/stages/as-service/as1-intake/console.md) |
+| 후속 질문은 어떻게 검색하나 | '그럼 단시간 근로자도 받나요?' 같은 후속 질문 24개: 그대로 Hit@1 54% → LLM 으로 풀어 쓰기 79%(법률 33 → 67%), 제품 매뉴얼은 규칙(기억한 제품 덧붙임)만으로 92% | [대화 · 메모리](docs/stages/conversation/c1-rewrite/conversation.md) |
+| 지식 그래프로 검색이 나아지나 | 법률 자료(판례 164)에서 벡터 결과에 그래프 이웃을 붙이면 hit 98.2 → 97.2(k=10) · 93.6 → 88.5(k=5) — 나아지지 않음. 관계를 묻는 질문은 Text2Cypher 가 맞힘(한 단계 조회 100%, 역량 질문 정확 일치 40 → 53%) | [K5 · GraphRAG](docs/stages/knowledge-graph/k5-graph-db/graphrag.md) |
+| Neo4j 와 FalkorDB 는 | 같은 그래프 · 기대 Cypher 15개 결과 모두 같음, FalkorDB 가 메모리 77 vs 810MiB · 지연 5 vs 15ms. Text2Cypher 정확도는 엔진이 아니라 LLM 이 가름(방언 두 가지는 변환으로 해결) | [K5 · GraphRAG](docs/stages/knowledge-graph/k5-graph-db/graphrag.md#k6-cypher-엔진-비교--neo4j-526-vs-falkordb-422) |
 | AS 의도는 무엇으로 나누나 | 라벨 48개에서는 임베딩 제로샷 95.8% > 학습 분류기 85.4% — 라벨이 쌓이기 전엔 제로샷 | [AS2 분류](docs/stages/as-service/as2-triage/eval.md) |
 
 ## 기술 스택 (2026-10 최신 안정 버전)
 
-Python 3.14.6 · FastAPI 0.143.3 · Uvicorn 0.54.0 · Starlette 1.8 · Pydantic 2.14 · SQLAlchemy 2.1.5 · Alembic 1.20 · sentence-transformers 6.1.0 (+ train: datasets 5.1 · accelerate 1.15) · transformers 5.20.1 · PyTorch 2.14.1 (CPU / CUDA 12.6·13.0 / ROCm 7.2) · huggingface-hub 1.33.0 · pyarrow 26 · httpx 0.28 · Qdrant 1.19 (qdrant-client 1.19) · pgvector 0.8.7 (PostgreSQL 18) · MariaDB 13.0 · Kiwi 0.24 (한국어 형태소) · PyAV 19 (영상 프레임) · pdfplumber 0.11 · pypdfium2 5 (PDF 표 · 쪽 그림) · Jinja2 · Chart.js 4.5.1 (CDN) · pytest 9.1 · ruff 0.17 · uv 0.12
+Python 3.14.6 · FastAPI 0.143.3 · Uvicorn 0.54.0 · Starlette 1.8 · Pydantic 2.14 · SQLAlchemy 2.1.5 · Alembic 1.20 · sentence-transformers 6.1.0 (+ train: datasets 5.1 · accelerate 1.15) · transformers 5.20.1 · PyTorch 2.14.1 (CPU / CUDA 12.6·13.0 / ROCm 7.2) · huggingface-hub 1.33.0 · pyarrow 26 · httpx 0.28 · Qdrant 1.19 (qdrant-client 1.19) · pgvector 0.8.7 (PostgreSQL 18) · MariaDB 13.0 · Kiwi 0.24 (한국어 형태소) · PyAV 19 (영상 프레임) · pdfplumber 0.11 · pypdfium2 5 (PDF 표 · 쪽 그림) · Neo4j 5.26 LTS (neo4j 드라이버 6.4, 선택) · networkx 3.7 (커뮤니티 탐지) · Jinja2 · Chart.js 4.5.1 (CDN) · pytest 9.1 · ruff 0.17 · uv 0.12
 
 로컬 LLM(선택): llama.cpp `llama-server` b11669(v0.7.0, Vulkan) + Gemma 4 E4B QAT q4_0(비전 프로젝터 `--mmproj` 를 붙이면 OCR · AS 사진 진단도) — [docs/guides/llm.md](docs/guides/llm.md)
 
@@ -113,6 +116,8 @@ copy .env.example .env      # gated 모델용 HF_TOKEN, 접근 토큰 API_TOKEN,
 # 4) (선택) 벡터 DB 서버 — 없어도 Qdrant 로컬 파일 모드로 동작
 docker compose up -d                                        # Qdrant
 docker compose --profile pgvector --profile mariadb up -d   # + pgvector, MariaDB
+docker compose --profile neo4j up -d                        # + Neo4j (지식 그래프 Cypher, 선택)
+docker compose --profile falkordb up -d                     # + FalkorDB (두 번째 Cypher 엔진, 선택)
 
 # 5) 실행 (DB 마이그레이션은 시작할 때 자동 적용)
 uv run uvicorn app.main:app --port 8000
@@ -142,8 +147,9 @@ uv run uvicorn app.main:app --port 8000
 5. **5 파인튜닝**에서 임베딩 모델을 컬렉션에 맞게 학습하고 전후를 비교합니다.
 6. **맵 → LLM 시스템 엔지니어링 맵**(`/maps/llm`) 아래 **연결 실행**에서 단계들을 이어 붙여 한 질문을 처리하고, 평가 세트로 `검색만` · `검색 → 답변` · `전체 연결`을 비교합니다.
 7. **운영 · 서비스 → 대화 · 메모리 → 대화 상담**에서 'WM-200 세탁기에 E4 가 떠요' → '필터는 어디 있어요?'처럼 이어 물어, 후속 질문을 어떻게 풀어 쓰고 무엇을 기억하는지 봅니다.
-8. **운영 · 서비스 → 고객 AS 상담 → 상담 창**에서 예시 자료를 준비하고 오류 코드 · 사진으로 문의해 분류 · 답변 · 검증 · 티켓 흐름을 봅니다. 답변 화면 · 상담에서 남은 요청 기록은 **평가 · 관측 → 요청 기록 · 비용**, 방어는 **보안 · 가드레일 → 레드팀 시험**에서 확인합니다.
-9. **모든 맵**에서 다른 관점의 맵을 열어, 각 단계가 어떤 기반 단계(이미 있는 기능)로 이어지는지 따라갑니다.
+8. **운영 · 서비스 → 지식 그래프 · GraphRAG → 그래프 구축**에서 법률 컬렉션으로 그래프를 만들고, **그래프 탐색 · Cypher**에서 '근로기준법 제23조를 인용한 판례는?'을 Cypher 로, **GraphRAG**에서 같은 조문을 인용한 판례로 근거를 넓혀 봅니다.
+9. **운영 · 서비스 → 고객 AS 상담 → 상담 창**에서 예시 자료를 준비하고 오류 코드 · 사진으로 문의해 분류 · 답변 · 검증 · 티켓 흐름을 봅니다. 답변 화면 · 상담에서 남은 요청 기록은 **평가 · 관측 → 요청 기록 · 비용**, 방어는 **보안 · 가드레일 → 레드팀 시험**에서 확인합니다.
+10. **모든 맵**에서 다른 관점의 맵을 열어, 각 단계가 어떤 기반 단계(이미 있는 기능)로 이어지는지 따라갑니다.
 
 ## 문서
 

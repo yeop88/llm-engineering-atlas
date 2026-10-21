@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}GraphRAG{% endblock %}
+{% block content %}
+{% call ui.page_header("GraphRAG") %}벡터 · BM25 검색으로 찾은 문서의 그래프 이웃(같은 조문을 인용한 판례 · 인용한 조문 · 같은 쟁점)을 따라 근거를 넓히고, 문서 사이 관계를 답변에 '관계 요약'으로 붙입니다(K7). 전체 · 추세를 묻는 질문은 청크가 아니라 커뮤니티(서로 많이 이어진 조문 · 판례 묶음)의 미리 만든 요약들로 답합니다(K8). 같은 평가 세트로 벡터 검색과 그래프 확장을 비교합니다.{% endcall %}
+
+<div class="card stack">
+  <div class="row">
+    <div class="field"><label for="r-graph">그래프</label><select id="r-graph"></select></div>
+    <div class="field"><label for="r-provider">LLM 제공자</label><select id="r-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field"><label for="r-model">모델</label><input id="r-model" data-ctx="model" placeholder="비우면 설정값"></div>
+  </div>
+</div>
+
+<div class="card stack mt-4" id="hybrid">
+  <h2>그래프 하이브리드 검색 · 답변 (K7)</h2>
+  <div class="row nowrap-row"><label for="r-q" class="sr-only">질문</label><input class="grow" id="r-q" placeholder="예: 노동조합과의 합의로 이미 발생한 임금을 포기할 수 있나요?">
+    <button class="btn" id="r-expand">검색 + 확장</button><button class="btn primary" id="r-answer">GraphRAG 답변</button></div>
+  <div id="r-out"></div>
+</div>
+
+<div class="card stack mt-4" id="compare">
+  <h2>벡터 vs 그래프 확장 비교</h2>
+  <div class="small muted">같은 질문을 '검색 상위 k 문서'와 '검색 상위 k−3 문서 + 그래프로 넓힌 3 문서'로 비교합니다. 여러 문서 질문(정답 문서가 둘 이상)에서는 정답이 모두 들어왔는지(all@k)가 핵심입니다. LLM 없이 돕니다.</div>
+  <div class="row">
+    <div class="field grow"><label for="r-set">평가 세트</label><select id="r-set"></select></div>
+    <label class="row small m-0"><input type="checkbox" id="r-multi"> 여러 문서 질문만</label>
+    <div class="self-end"><button class="btn primary" id="r-eval">비교 실행</button></div>
+  </div>
+  <div id="r-eval-progress" hidden></div>
+  <div id="r-eval-out"></div>
+</div>
+
+<div class="card stack mt-4" id="communities">
+  <h2>커뮤니티 요약 · 전체 질문 (K8)</h2>
+  <div class="row"><div class="field"><label for="r-top">요약할 커뮤니티 수</label><input id="r-top" type="number" value="12" min="1" max="100" class="w-sm"></div>
+    <div class="self-end"><button class="btn" id="r-comm">커뮤니티 요약 만들기</button></div></div>
+  <div id="r-comm-progress" hidden></div>
+  <div id="r-comm-out"></div>
+  <div class="row nowrap-row"><label for="r-gq" class="sr-only">전체 질문</label><input class="grow" id="r-gq" placeholder="예: 이 자료의 판례들은 전체적으로 어떤 쟁점을 다루나요?"><button class="btn primary" id="r-global">전체 질문</button></div>
+  <div id="r-global-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/kg/rag.js') }}"></script>
+{% endblock %}
