@@ -189,6 +189,10 @@ def test_ocr_fills_empty_pages_and_measures_text_pages(client, pdf_collection, s
     d = client.get(f"/api/docintel/documents/{did}/parsing").json()
     assert d["pages"][0] == before and "배수 필터" in d["pages"][1]
     assert d["ocr"]["accuracy"] == pages[1]["accuracy"]
+    # 다른 쪽만 다시 재도 앞선 기록(2쪽을 채운 것)은 남는다
+    res2 = wait_job(client, client.post(f"/api/docintel/documents/{did}/ocr", json={"pages": [1]}).json())
+    assert {p["page"] for p in res2["result"]["pages"]} == {1, 2}
+    assert 2 not in client.get(f"/api/docintel/documents/{did}/parsing").json()["empty_pages"]
 
 
 def test_ocr_rejects_non_pdf(client, rag_collection, scripted_llm):

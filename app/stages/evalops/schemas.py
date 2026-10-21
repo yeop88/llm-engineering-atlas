@@ -37,6 +37,14 @@ class TraceIds(BaseModel):
     trace_ids: list[int] = Field(min_length=1, max_length=500)
 
 
+class QuestionsIn(BaseModel):
+    """요청 기록이 아닌 질문(드리프트의 새 유형 묶음 · 직접 넣은 질문)을 평가 세트 후보로."""
+
+    collection_id: int
+    questions: list[str] = Field(min_length=1, max_length=500)
+    source: str = Field(default="drift", max_length=40)
+
+
 class DriftIn(BaseModel):
     collection_id: int | None = None
     recent_days: int = Field(default=7, ge=1, le=365)

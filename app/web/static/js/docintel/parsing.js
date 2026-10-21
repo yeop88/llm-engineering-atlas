@@ -58,6 +58,7 @@ async function dOpen(id) {
   $("#d-info").innerHTML = html`<div class="kv small">
       <div>형식</div><div>${d.mime || "-"} · ${d.page_kind || "-"} · ${d.n_pages}쪽 · ${fmtNum(d.n_chars)}자</div>
       <div>빈 쪽</div><div>${d.empty_pages.length ? html.join(d.empty_pages.map(n => `p.${n}`), ", ") : "없음"}</div>
+      ${(d.ocr_sparse_pages || []).length ? html`<div>OCR 했지만 글이 적은 쪽</div><div>${html.join(d.ocr_sparse_pages.map(n => `p.${n}`), ", ")} <span class="small muted">(그림 · 쪽 번호만 있는 쪽일 수 있음 — 다시 OCR 대상에서 뺌)</span></div>` : ""}
       <div>깨진 글자</div><div>${brokenBadge(d.broken_ratio)}</div>
       <div>원본</div><div>${d.has_original ? "있음" : html`<span class="badge warn">없음 — OCR · 표 추출을 하려면 다시 올리세요</span>`}</div>
       ${d.ocr ? html`<div>OCR</div><div>${d.ocr.engine} · ${d.ocr.pages.length}쪽 · ${d.ocr.seconds}초${d.ocr.accuracy != null ? html` · 글자 정확도 <b>${pct(d.ocr.accuracy)}%</b>` : ""}</div>` : ""}

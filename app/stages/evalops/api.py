@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.core import crud, llm, tracing
 from app.core.auth import current_user
 from app.core.config import get_settings
-from app.core.db import EmbeddingModel, EvalSet, Experiment, SessionLocal, TestRun, Trace, get_db
+from app.core.db import Collection, EmbeddingModel, EvalSet, Experiment, SessionLocal, TestRun, Trace, get_db
 from app.core.jobs import Job, jobs
 from app.pipeline import serve
 from app.pipeline.search import run_search
@@ -25,6 +25,7 @@ from app.stages.evalops.schemas import (
     ExperimentIn,
     FeedbackIn,
     LoopSendIn,
+    QuestionsIn,
     RegressionFlag,
     RegressionRunIn,
     ReplayIn,
@@ -218,6 +219,14 @@ def drift_job(job: Job, body: DriftIn, reason: str = "manual") -> dict[str, Any]
         run = crud.record_run(db, "drift", [model_hf], title, body.model_dump(), res, 0)
         res["run_id"] = run.id
         return res
+
+
+@router.post("/questions/to-eval-set")
+def questions_to_eval(body: QuestionsIn, db: DB) -> dict:
+    """드리프트가 찾은 새 유형 질문을 평가 세트 후보(검토 전)로 — 요청 기록을 거치지 않고 바로."""
+    if db.get(Collection, body.collection_id) is None:
+        raise HTTPException(404, "컬렉션을 찾을 수 없습니다.")
+    return feedback.questions_to_eval_set(db, body.collection_id, body.questions, body.source)
 
 
 @router.post("/drift", status_code=202)

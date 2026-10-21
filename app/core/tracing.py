@@ -132,6 +132,9 @@ def out(t: Trace, full: bool = False) -> dict[str, Any]:
     d["question"] = t.question if full else t.question[:200]
     d["answer"] = t.answer if full else t.answer[:200]
     d["verify"], d["signals"], d["guard"] = t.verify, t.signals, t.guard
+    # 목록에도 근거 문서 이름 — 감사에서 '무엇을 근거로 나갔나'를 행마다 보려고(전체 근거는 상세에)
+    files = [s.get("filename") for s in t.sources or [] if s.get("filename")]
+    d["n_sources"], d["source_files"] = len(t.sources or []), list(dict.fromkeys(files))[:3]
     if full:
         d |= {"steps": t.steps, "sources": t.sources, "groups": t.groups, "client": t.client, "feedback_note": t.feedback_note,
               "error": t.error, "hash": t.hash, "prev_hash": t.prev_hash}  # fmt: skip

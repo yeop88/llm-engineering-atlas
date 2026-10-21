@@ -73,6 +73,16 @@ def candidate_set(db: Session, collection_id: int, name: str = "피드백 · 실
     return s
 
 
+def questions_to_eval_set(db: Session, collection_id: int, questions: list[str], source: str = "drift") -> dict[str, Any]:
+    """질문만 있는 후보(드리프트 새 유형 · 직접 넣은 질문) — 정답 문서는 비워 '검토 전'으로 넣는다. 사람이 정답을 붙이기 전에는
+    검색 지표에 쓰이지 않으므로(정답 문서 없는 문항은 빠짐) 기준이 흔들리지 않는다."""
+    s = candidate_set(db, collection_id)
+    qs = list(dict.fromkeys(q.strip() for q in questions if q and q.strip()))
+    n = sets.add_items(s, [{"query": q, "doc_ids": [], "evidence": "", "type": source, "needs_label": True} for q in qs], source)
+    db.commit()
+    return {"eval_set_id": s.id, "name": s.name, "added": n, "skipped": len(qs) - n}
+
+
 def to_eval_set(db: Session, traces: list[Trace], source: str = "feedback") -> dict[str, Any]:
     by_col: dict[int, list[Trace]] = {}
     for t in traces:

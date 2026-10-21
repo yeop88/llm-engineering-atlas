@@ -34,7 +34,11 @@ def report(doc: Document) -> dict[str, Any]:
     pages = doc.pages or []
     chars = [len(p.strip()) for p in pages]
     meta = doc.meta or {}
-    empty = [i + 1 for i, c in enumerate(chars) if c < EMPTY_CHARS]
+    # OCR 을 이미 한 쪽은 글이 짧아도(쪽 번호 · 그림만 있는 쪽) '빈 쪽'에서 뺀다 — 넣어 두면 OCR 을 다시 돌려도 계속 빈 쪽으로 남아
+    # 같은 쪽을 몇 번이고 다시 OCR 하게 된다. 그런 쪽은 'OCR 했지만 글이 적은 쪽'으로 따로 보여 준다
+    ocr_done = {p["page"] for p in (meta.get("ocr") or {}).get("pages", []) if not p.get("measured_only")}
+    empty = [i + 1 for i, c in enumerate(chars) if c < EMPTY_CHARS and i + 1 not in ocr_done]
+    sparse = [i + 1 for i, c in enumerate(chars) if c < EMPTY_CHARS and i + 1 in ocr_done]
     text = "\n".join(pages)
     issues = []
     if meta.get("warning"):
@@ -47,7 +51,7 @@ def report(doc: Document) -> dict[str, Any]:
         issues.append(f"깨진 글자 {br:.1%} — 인코딩 · 파서 문제일 수 있습니다.")
     return {
         "document_id": doc.id, "filename": doc.filename, "mime": doc.mime, "page_kind": meta.get("page_kind"), "n_pages": len(pages),
-        "n_chars": doc.n_chars, "chars_per_page": chars, "empty_pages": empty, "broken_ratio": broken_ratio(text),
+        "n_chars": doc.n_chars, "chars_per_page": chars, "empty_pages": empty, "ocr_sparse_pages": sparse, "broken_ratio": broken_ratio(text),
         "has_original": bool(meta.get("original")), "ocr": meta.get("ocr"), "layout": meta.get("layout"), "issues": issues,
         "ocr_possible": bool(meta.get("original")) and doc.filename.lower().endswith(".pdf") and bool(empty),
         "preview": [p[:300] for p in pages[:3]],
@@ -111,17 +115,22 @@ def ocr_document(doc: Document, lcfg: llm.LLMConfig, pages: list[int] | None = N
         done.append(row)
     doc.pages = new_pages
     doc.n_chars = sum(len(p) for p in new_pages)
+    filled = any(not d.get("measured_only") for d in done)  # 이번 실행이 빈 쪽을 채웠나(합치기 전에 — 앞선 기록이 섞이면 안 됨)
+    # 앞선 OCR 기록과 합친다(쪽 번호별 최신) — 쪽을 나눠 여러 번 돌려도 어느 쪽을 했는지 잃지 않게
+    prev = {p["page"]: p for p in ((doc.meta or {}).get("ocr") or {}).get("pages", [])}
+    done = sorted((prev | {d["page"]: d for d in done}).values(), key=lambda d: d["page"])
     accs = [d["accuracy"] for d in done if "accuracy" in d]
     acc = round(sum(accs) / len(accs), 4) if accs else None
     seconds = round(time.perf_counter() - started, 1)
-    if any(not d.get("measured_only") for d in done):
-        touch(doc, ocr={"pages": done, "engine": lcfg.model, "seconds": seconds, "accuracy": acc})
+    ocr = {"pages": done, "engine": lcfg.model, "seconds": seconds, "accuracy": acc}
+    if filled:
+        touch(doc, ocr=ocr)
         if any(
             (p or "").strip() for p in new_pages
         ):  # 글이 생겼으면 업로드 때의 'OCR 필요' 표시를 지운다(화면 · 점검이 계속 경고하지 않게)
             doc.meta = {k: v for k, v in doc.meta.items() if k not in ("needs_ocr", "warning")}
     else:  # 재기만 했으면 글은 그대로 — 증분 갱신 대상으로 표시하지 않는다
-        doc.meta = dict(doc.meta or {}) | {"ocr": {"pages": done, "engine": lcfg.model, "seconds": seconds, "accuracy": acc}}
+        doc.meta = dict(doc.meta or {}) | {"ocr": ocr}
     return {"pages": done, "n_chars": doc.n_chars, "seconds": seconds, "accuracy": acc}
 
 

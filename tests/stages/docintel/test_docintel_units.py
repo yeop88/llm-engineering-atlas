@@ -66,6 +66,10 @@ def test_report_flags_empty_pages():
     assert any("빈 쪽 2개" in i for i in r["issues"])
     all_empty = parsing.report(Document(id=2, filename="a.pdf", n_chars=0, pages=["", ""], meta={"page_kind": "page"}))
     assert any("OCR 이 필요" in i for i in all_empty["issues"]) and not all_empty["ocr_possible"]  # 원본이 없으면 OCR 불가
+    # OCR 을 한 쪽은 글이 짧아도 빈 쪽에서 빠진다(다시 OCR 하지 않게) — 'OCR 했지만 글이 적은 쪽'으로 따로
+    d.meta = d.meta | {"ocr": {"pages": [{"page": 3, "chars": 3}, {"page": 1, "chars": 40, "measured_only": True}]}}
+    r = parsing.report(d)
+    assert r["empty_pages"] == [2] and r["ocr_sparse_pages"] == [3]
 
 
 # ── D3 표 ──────────────────────────────────────────────────────────────

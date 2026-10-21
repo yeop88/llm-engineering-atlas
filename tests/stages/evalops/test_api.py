@@ -76,3 +76,23 @@ def test_drift_job_needs_enough_questions(client, rag_collection):
     job = client.post("/api/evalops/drift", json={"eval_set_id": rag_collection["set"], "recent_questions": ["하나", "둘", "셋"]}).json()
     done = wait_job(client, job)
     assert done["status"] == "error" and "질문이 너무 적습니다" in done["error"]  # 평가 세트 질문이 2개뿐
+
+
+def test_questions_to_eval_set_and_audit_sources(client, rag_collection):
+    """드리프트의 새 유형 질문을 평가 세트 후보로 바로 — 정답 문서 없이 검토 전, 같은 질문은 한 번만."""
+    cid = rag_collection["cid"]
+    body = {"collection_id": cid, "questions": ["건조기에서 소리가 나요", "건조기에서 소리가 나요", " "], "source": "drift"}
+    r = client.post("/api/evalops/questions/to-eval-set", json=body).json()
+    assert r["added"] == 1 and r["skipped"] == 0
+    again = client.post("/api/evalops/questions/to-eval-set", json=body).json()
+    assert again["added"] == 0 and again["skipped"] == 1 and again["eval_set_id"] == r["eval_set_id"]
+    item = next(it for it in client.get(f"/api/evalops/sets/{r['eval_set_id']}").json()["items"] if it["query"] == "건조기에서 소리가 나요")
+    assert item["review"] == "pending" and item["doc_ids"] == [] and item["type"] == "drift"
+    assert client.post("/api/evalops/questions/to-eval-set", json=body | {"collection_id": 99999}).status_code == 404
+    # 감사 · 요청 목록 행에도 근거 문서 이름(겹치면 한 번, 최대 3개)
+    from app.core import tracing
+    from app.core.db import Trace, utcnow
+
+    srcs = [{"filename": f} for f in ("a.txt", "a.txt", "b.txt", "c.txt", "d.txt")]
+    row = tracing.out(Trace(id=1, kind="answer", question="q", answer="a", sources=srcs, created_at=utcnow()))
+    assert row["n_sources"] == 5 and row["source_files"] == ["a.txt", "b.txt", "c.txt"]

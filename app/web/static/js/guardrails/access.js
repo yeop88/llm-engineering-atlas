@@ -59,9 +59,10 @@ function renderAudit() {
   if (!rows.length) return ui.empty($("#g-out"), "조건에 맞는 기록이 없습니다");
   const act = t => (t.guard?.output?.action || t.guard?.action || "");
   $("#g-out").innerHTML = html`<div class="small muted">${rows.length}행 (최근 순)</div>
-    <div class="table-wrap scroll-lg"><table><tr><th>#</th><th>시각</th><th>사용자</th><th>종류</th><th>질문</th><th>답변</th><th>상태</th><th>정책</th></tr>
+    <div class="table-wrap scroll-lg"><table><tr><th>#</th><th>시각</th><th>사용자</th><th>종류</th><th>질문</th><th>답변</th><th>근거 문서</th><th>상태</th><th>정책</th></tr>
     ${rows.map(t => html`<tr><td class="num small">${t.id}</td><td class="small nowrap">${fmtDate(t.created_at)}</td><td class="small">${t.user}</td><td class="small">${t.kind}</td>
       <td class="small">${t.question}</td><td class="small muted">${t.answer}</td>
+      <td class="small">${html.join((t.source_files || []).map(f => html`<div>${f}</div>`), "")}${t.n_sources > (t.source_files || []).length ? html`<span class="muted">외 ${t.n_sources - t.source_files.length}개</span>` : ""}</td>
       <td><span class="badge ${(ST[t.status] || ["", "muted"])[1]}">${(ST[t.status] || [t.status])[0]}</span></td>
       <td class="small">${act(t) ? html`<span class="badge ${act(t) === "block" ? "err" : act(t) === "fix" ? "warn" : "muted"}">${act(t)}</span>` : ""}
         ${t.guard?.input?.suspicious ? html`<span class="badge warn" title="입력 인젝션 의심">⚠ 입력</span>` : ""}

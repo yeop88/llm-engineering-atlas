@@ -264,7 +264,7 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | GET / POST | `/api/docintel/sources` | 폴더 수집 소스 목록(`?collection_id=`) / 추가 `{"collection_id", "path", "pattern": "*", "interval_min": 0}` — `INGEST_ROOTS`(기본 `data/inbox`) 밖 경로는 400 |
 | DELETE | `/api/docintel/sources/{id}` | 소스 삭제(문서는 그대로) |
 | POST | `/api/docintel/sources/{id}/sync` | 동기화 작업 `{"refresh": true}` → 새 · 바뀜 · 지움 · 그대로 + 청크 세트 증분 갱신 결과. 이미 도는 중이면 409 |
-| GET | `/api/docintel/collections/{id}/parsing` · `/api/docintel/documents/{id}/parsing` | 파싱 점검(깨진 글자 비율 · 빈 · 짧은 쪽) |
+| GET | `/api/docintel/collections/{id}/parsing` · `/api/docintel/documents/{id}/parsing` | 파싱 점검(깨진 글자 비율 · 빈 쪽 `empty_pages` · OCR 했지만 글이 적은 쪽 `ocr_sparse_pages`) |
 | POST | `/api/docintel/documents/{id}/ocr` | OCR 작업(PDF, 비전 LLM) `{"pages": [], "provider"?, "model"?}` — 빈 쪽은 채우고, 글이 있는 쪽은 덮어쓰지 않고 글자 정확도만 잼 |
 | POST | `/api/docintel/documents/{id}/layout` | 표 · 그림 추출 작업 `{"figures": true}` — 표는 마크다운으로 페이지 글에, 그림은 미디어 청크로 |
 | GET | `/api/docintel/documents/{id}/tables` | 추출한 표 · 그림 목록 |
@@ -288,7 +288,7 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | GET / POST | `/api/guardrails/pii/collections/{id}` · `…/mask` | 문서별 개인정보 수 / 문서 글 가리기(원본 파일은 남음, 바뀐 문서로 표시) |
 | GET | `/api/guardrails/acl/collections/{id}` | 문서별 권한 그룹 |
 | POST | `/api/guardrails/acl/leak-test` | 권한 누출 시험(관리자) `{"config", "groups", "queries" 또는 "eval_set_id", "max_queries"}` |
-| GET | `/api/guardrails/audit` · `/audit/export.csv` | 감사 로그 조회(관리자, `?user=&kind=&status=&document_id=&date_from=&date_to=&limit=`) · CSV(같은 거르기) |
+| GET | `/api/guardrails/audit` · `/audit/export.csv` | 감사 로그 조회(관리자, `?user=&kind=&status=&document_id=&date_from=&date_to=&limit=`) · CSV(같은 거르기). 행마다 `n_sources` · `source_files`(근거 문서 이름 최대 3개) |
 | GET | `/api/guardrails/audit/integrity` | 해시 체인 무결성 검사 → 처음 깨진 기록 |
 | POST | `/api/guardrails/audit/purge?confirm=true` | 보관 기간이 지난 기록 지우기 |
 | POST | `/api/guardrails/license` | 라이선스 점검 `{"collection_id", "index_id", "reranker_id", "llm_models"}` |
@@ -311,6 +311,7 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/evalops/traces/{id}/feedback` | `{"rating": 1·0·-1, "reason", "note"}` |
 | GET | `/api/evalops/feedback` | 피드백 요약 · 자동 판정과 일치율 |
 | POST | `/api/evalops/traces/to-eval-set` | `{"trace_ids"}` → 평가 세트 후보로 |
+| POST | `/api/evalops/questions/to-eval-set` | `{"collection_id", "questions", "source": "drift"}` → 질문만(정답 문서 없이 검토 전) 평가 세트 후보로, 같은 질문은 한 번만 |
 | POST | `/api/evalops/drift` | 드리프트 작업 `{"collection_id", "recent_days", "base_days", "eval_set_id"?, "recent_questions"?, "novel_sim": 0.6}` |
 | GET / POST | `/api/evalops/experiments` | A/B 실험 목록 / 만들기 `{"name", "collection_id", "a": ArmConfig, "b": ArmConfig, "split": 0.5}` (`ArmConfig`: `label · config · context_top · max_tokens · compress_keep · provider · model`) |
 | GET | `/api/evalops/experiments/{id}` | 실험 보고: `arms`(팔별 지표) · `arm_config`(팔 설정) · `diff`(B − A, 95% 구간) · `verdict` |

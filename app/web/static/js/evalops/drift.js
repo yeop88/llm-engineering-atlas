@@ -46,10 +46,22 @@ function render(r) {
       ${rows.map(([k, a, b, d, why]) => html`<tr><td>${k}</td><td class="num">${a}</td><td class="num">${b}</td><td>${d}</td><td class="small muted">${why}</td></tr>`)}</table></div>
     ${!r.top1 ? html`<div class="small muted">검색 신호 · 거절률은 기준과 최근이 모두 요청 기록일 때만 비교합니다(평가 세트 · 직접 넣은 질문에는 신호가 없음).</div>` : ""}
     <h3>새로운 질문 묶음 <span class="small muted">서로 비슷한 것끼리 — 평가 세트가 따라가야 할 유형</span></h3>
-    ${r.novel_groups.length ? html`<div class="table-wrap scroll-md"><table><tr><th>대표 질문</th><th class="num">수</th><th>예시</th></tr>
-      ${r.novel_groups.map(g => html`<tr><td class="small"><b>${g.representative}</b></td><td class="num">${g.n}</td><td class="small">${html.join(g.examples, "<br>")}</td></tr>`)}</table></div>
-      <div class="small muted">이 질문들이 요청 기록에 있으면 피드백 · 개선 루프 화면에서 골라 평가 세트 후보로 보낼 수 있습니다.</div>` : html`<div class="small muted">새로운 질문이 없습니다.</div>`}
+    ${r.novel_groups.length ? html`<div class="table-wrap scroll-md"><table><tr><th>대표 질문</th><th class="num">수</th><th>예시</th><th></th></tr>
+      ${r.novel_groups.map((g, i) => html`<tr><td class="small"><b>${g.representative}</b></td><td class="num">${g.n}</td><td class="small">${html.join(g.examples, "<br>")}</td>
+        <td><button class="btn sm" data-send="${i}">평가 세트로</button></td></tr>`)}</table></div>
+      <div class="row"><button class="btn" id="d-send-all">새 질문 모두 평가 세트로</button>
+        <span class="small muted">위에서 고른 컬렉션의 '피드백 · 실패 후보' 세트에 정답 문서 없이(검토 전) 넣습니다 — 평가 세트 화면에서 정답을 붙여 통과시키면 기준이 됩니다.</span></div>` : html`<div class="small muted">새로운 질문이 없습니다.</div>`}
     <div class="small muted">${r.stat_note}</div>`;
+  $$("[data-send]").forEach(b => { b.onclick = () => sendQuestions(b, r.novel_groups[+b.dataset.send].examples); });
+  if ($("#d-send-all")) $("#d-send-all").onclick = e => sendQuestions(e.target, r.novel_groups.flatMap(g => g.examples));
+}
+
+async function sendQuestions(btn, questions) {
+  const cid = +$("#d-col").value;
+  if (!cid) return toast("보낼 컬렉션을 위에서 고르세요", "err");
+  const r = await busy(btn, () => api("/api/evalops/questions/to-eval-set", { method: "POST", body: { collection_id: cid, questions, source: "drift" } }));
+  toast(`${r.name} 에 ${r.added}개 추가${r.skipped ? ` (이미 있는 ${r.skipped}개 제외)` : ""}`);
+  btn.disabled = true;
 }
 
 loadCols().catch(e => ui.error($("#d-out"), e));
