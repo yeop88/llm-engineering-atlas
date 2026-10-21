@@ -1,0 +1,32 @@
+{
+  "note": "서비스 기능(규제 적용 판단의 단위). attrs 는 규칙이 보는 특성, rubric 은 위험 등급 기준표(rubric.json)의 값 제안 — 확정은 사람이 한다.",
+  "attrs": {
+    "generative_ai": "생성형 AI 로 글을 만들어 이용자에게 보인다",
+    "personal_data": "개인정보를 받거나 남긴다(질문 원문 · 연락처 · 증상)",
+    "sensitive_data": "민감정보(건강 · 노동조합 가입 등)가 들어올 수 있다",
+    "automated_decision": "사람 개입 없이 권리 · 의무에 영향을 주는 결정을 한다",
+    "high_impact_area": "인공지능 기본법 제2조제4호의 고영향 영역(채용 · 대출 심사 · 의료 등)에서 쓴다",
+    "retention": "기록을 저장해 두고 다시 쓴다"
+  },
+  "profiles": [
+    {"key": "as_answer", "name": "고객 AS 상담 답변", "screen": "/as/console",
+     "description": "제품 매뉴얼 · FAQ 를 근거로 고장 · 사용 문의에 답하고, 안 되면 상담원에게 넘긴다.",
+     "attrs": ["generative_ai", "personal_data", "retention"], "rubric": {"impact": 1, "autonomy": 2, "data": 2}},
+    {"key": "legal_answer", "name": "법률 상담 답변", "screen": "/rag/answer",
+     "description": "법령 · 판례를 근거로 임금 · 해고 · 보증금 같은 일상 법률 질문에 답한다(법률 자문 아님 고지).",
+     "attrs": ["generative_ai", "personal_data", "sensitive_data", "retention"], "rubric": {"impact": 2, "autonomy": 2, "data": 3}},
+    {"key": "doc_search", "name": "사내 문서 검색 · 답변", "screen": "/rag/answer",
+     "description": "사내 문서를 권한에 맞게 찾아 답한다.",
+     "attrs": ["generative_ai", "personal_data", "retention"], "rubric": {"impact": 1, "autonomy": 2, "data": 2}},
+    {"key": "customer_memory", "name": "대화 메모리 · 고객 프로필", "screen": "/conversation/chat",
+     "description": "대화에서 제품 · 오류 코드 · 지난 문의를 기억해 다음 상담에 쓴다(개인정보는 가려서).",
+     "attrs": ["personal_data", "retention"], "rubric": {"impact": 1, "autonomy": 3, "data": 2}},
+    {"key": "request_log", "name": "요청 기록 · 감사 로그", "screen": "/guardrails/audit",
+     "description": "질문 · 근거 · 답 · 검사 결과를 요청마다 남긴다.",
+     "attrs": ["personal_data", "retention"], "rubric": {"impact": 1, "autonomy": 3, "data": 2}},
+    {"key": "example_hiring", "name": "채용 서류 평가 (예시 — 이 앱에 없는 기능)", "screen": "",
+     "description": "지원서를 읽고 서류 합격 여부를 자동으로 정한다고 가정한 기능. 고영향 경로가 어떻게 달라지는지 보이려는 예시다.",
+     "attrs": ["generative_ai", "personal_data", "automated_decision", "high_impact_area", "retention"], "rubric": {"impact": 3, "autonomy": 3, "data": 2},
+     "example": true}
+  ]
+}

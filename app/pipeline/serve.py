@@ -167,6 +167,10 @@ def finish(
     }
     if (c := check.get("citations")) and c.get("n"):
         summary["citations"] = {"n": c.get("n"), "not_found": sum(1 for r in c.get("refs", []) if r.get("status") == "not_found")}
+    # AI 응답 고지(규제 대응 RC6, 인공지능 기본법 제31조 사전 고지 · 생성물 표시): 답 글에 섞지 않고 따로 돌려줘 화면이 늘 같은 자리에
+    # 보이게 하고, 고지했는지를 요청 기록에 남긴다 — 정기 감사(RC8)가 '실제로 고지했나'를 이 기록으로 확인한다.
+    notice = get_settings().ai_notice
+    p.guard["notice"] = bool(notice)
     model = lcfg.model if lcfg else ""
     tin, tout = int(usage.get("input_tokens") or 0), int(usage.get("output_tokens") or 0)
     t = tracing.record(
@@ -177,7 +181,7 @@ def finish(
         verify=summary | (extra or {}), signals=p.signals, guard=p.guard, experiment_id=experiment_id, arm=arm, status=status,
     )  # fmt: skip
     return {"answer": final, "raw_answer": text, "verify": check, "guard": p.guard, "trace_id": t.id, "status": status,
-            "signals": p.signals, "steps": p.tracer.steps, "total_ms": p.tracer.total_ms, "usage": usage}  # fmt: skip
+            "signals": p.signals, "steps": p.tracer.steps, "total_ms": p.tracer.total_ms, "usage": usage, "notice": notice}  # fmt: skip
 
 
 def answer_once(

@@ -164,7 +164,7 @@ def graph_answer(graph: str, body: QuestionIn, request: Request, db: DB) -> dict
     docs = list(dict.fromkeys([r["document_id"] for r in first["results"][:5]] + [d["document_id"] for d in ex["docs"]]))
     out = serve.answer_once(db, body.question, cfg | {"doc_ids": docs, "top_k": 8}, lcfg, user=user,
                             instruction=(GRAPH_RULE + "\n".join(ex["relations"])) if ex["relations"] else "", kind="graphrag", route="graph")  # fmt: skip
-    return {k: out.get(k) for k in ("answer", "sources", "verify", "guard", "trace_id")} | {"expand": ex}
+    return {k: out.get(k) for k in ("answer", "sources", "verify", "guard", "trace_id", "notice")} | {"expand": ex}
 
 
 # ── K8 커뮤니티 · 전체 질문 ────────────────────────────────────────────────

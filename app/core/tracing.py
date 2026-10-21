@@ -113,6 +113,13 @@ def verify_chain(db: Session, limit: int | None = None) -> dict[str, Any]:
     return {"ok": not broken, "checked": len(rows), "broken": broken[:20], "first_id": rows[0].id if rows else None}
 
 
+def check_row(db: Session, t: Trace) -> dict[str, Any]:
+    """한 행만: 내용으로 다시 만든 hash 가 같은지, 바로 앞 행의 hash 와 이어지는지 — 결정 기록(규제 대응 RC4)이 그 답 하나의
+    기록이 고쳐지지 않았음을 보일 때. 앞 행이 보관 기간으로 지워졌으면 이음은 확인할 수 없다(None)."""
+    prev = db.scalar(select(Trace.hash).where(Trace.id < t.id).order_by(Trace.id.desc()).limit(1))
+    return {"body": _digest(t.prev_hash, t) == t.hash, "link": (prev == t.prev_hash) if prev is not None else None}
+
+
 def purge(db: Session, days: int | None = None) -> int:
     """보관 기간이 지난 기록을 지운다(TRACE_RETENTION_DAYS, 0 이면 지우지 않음)."""
     days = get_settings().trace_retention_days if days is None else days

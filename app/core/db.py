@@ -499,3 +499,24 @@ class KgEdge(Base):
     dst: Mapped[int] = mapped_column(ForeignKey("kg_nodes.id", ondelete="CASCADE"), index=True)
     type: Mapped[str] = mapped_column(String(40), index=True)  # 온톨로지 관계: PART_OF · CITES · CITES_CASE · REFERS_TO · CONCERNS
     props: Mapped[dict[str, Any]] = mapped_column(default=dict)
+
+
+class ComplianceRecord(Base):
+    """규제 대응 맵의 사람 판단 기록(RC2 위험 등급 · RC3 처리 근거 등록 · RC5 영향 평가 · RC6 사람 검토 요청) — 마이그레이션 0013.
+
+    네 가지를 한 표에 두는 이유: 모두 '무엇(subject)에 대해 누가 어떤 판단을 했고 지금 어떤 상태인가'라는 같은 모양이고, 정기 감사(RC8)가
+    통제별 증적으로 이 기록을 그대로 읽는다. 내용(data)은 종류마다 달라 JSON 으로 둔다. 자동 분류는 제안만 하고, 확정 · 승인은
+    사람이 한다(맵 원칙) — 그래서 created_by 와 reviewed_by 를 따로 남긴다.
+    """
+
+    __tablename__ = "compliance_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    kind: Mapped[str] = mapped_column(String(20), index=True)  # risk | register | impact | review
+    subject: Mapped[str] = mapped_column(String(200), index=True)  # 서비스 기능 키 · 'collection:3' · 'trace:120'
+    status: Mapped[str] = mapped_column(String(20), default="draft", index=True)  # draft · confirmed · approved · open · resolved
+    data: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    created_by: Mapped[str] = mapped_column(String(100), default="local")
+    reviewed_by: Mapped[str] = mapped_column(String(100), default="")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

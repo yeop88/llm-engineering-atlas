@@ -358,6 +358,29 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/kg/graphs/{g}/hybrid-eval` | `{"eval_set_id", "k": 10, "add": 3, "only_multi"}` → 벡터 상위 k vs 벡터 + 그래프 확장의 hit · all · MRR |
 | GET | `/api/kg/runs` · `/runs/{id}` | KG 실행 기록(구축 · 커뮤니티 · 역량 질문 · 하이브리드) |
 
+## 규제 대응 · 컴플라이언스 (`/api/compliance`)
+
+기술 설계를 위한 정리이며 법률 자문이 아닙니다. 법령 판 받기 · 개정 감시는 `LAW_API_OC`(국가법령정보 공동활용) 가 필요합니다. 사람 판단(확정 · 승인 · 처리 · 등록 · 파기)은 관리자만.
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/compliance/catalog` | 규제 목록 · 서비스 기능 · 특성 · 적용 규칙 · 통제 · 등급 기준표, 법령 API 사용 여부 · AI 응답 고지 문구 |
+| POST | `/api/compliance/corpus/{cid}/import` | 법령 판 받기 작업(관리자) `{"laws"?: [...], "date"?: "YYYYMMDD"}` — 그날 시행 중이던 판(비우면 현행), 이미 있는 법령은 건너뜀 |
+| GET | `/api/compliance/corpus/{cid}/articles` · `/revisions` | 조항 목록(`?q=`) · 개정 감시(현행 · 시행예정 판과 조항 비교 → 바뀜 · 새로 생김 · 없어짐, 그래프가 있으면 영향받는 통제 · 기능) |
+| GET | `/api/compliance/scope/{profile}` | 기능의 적용 조항 · 의무 요지 · 통제 · 원문(`?collection_id=`), 규칙에 없는 검색 후보 |
+| POST | `/api/compliance/scope/eval` | 의무 질문 22개 검색 실측 작업 `{"collection_id", "k": 10, "mode": "default·bm25"}` → 조항 단위 hit@k · MRR |
+| GET / POST | `/api/compliance/risk` · `/risk/{profile}` | 기능별 제안 등급 · 기록 · 없는 통제 / 초안 저장 `{"values", "grade"?, "reason"}`(제안과 다르면 이유 필수) |
+| POST | `/api/compliance/records/{id}/confirm` | 위험 등급 확정 · 영향 평가 승인(관리자) |
+| GET / POST | `/api/compliance/data` · `/data/register` | 처리 목록(컬렉션 · 요청 기록 · 프로필 · AS 대화) / 처리 근거 등록 `{"subject": "collection:3·log:traces", "purpose", "basis", "retention_days", "owner"}` |
+| POST | `/api/compliance/data/purge?confirm=true` | 보관 기한 지난 요청 기록 · 프로필 · 컬렉션 문서 파기(관리자, confirm 없으면 400) |
+| GET | `/api/compliance/decisions` · `/decisions/{trace_id}` | 최근 서비스 답 · 결정 기록(근거 청크 · 검증 · 조치 · 모델 · 단계 · 행 무결성 · 검토 요청), 남의 기록은 관리자만 |
+| POST / GET | `/api/compliance/reviews` · `/reviews/{id}/resolve` | 사람 검토 요청 `{"trace_id", "reason": "wrong·source·human·other", "note"}`(누구나) / 목록(관리자) / 처리 `{"outcome": "upheld·corrected·handoff", "note"}` |
+| GET / POST | `/api/compliance/impact/draft` · `/impact` | 측정 기록으로 영향 평가 초안(`?collection_id=`) · 약한 집단 / 저장 `{"profile", "collection_id", "affected", "mitigations", "decision"}`(증적은 서버가 다시 모음) |
+| POST / GET | `/api/compliance/graph/build` · `/graph` · `/graph/impact` | 조항-통제 그래프 만들기(관리자) `{"collection_id"}` · 통제별 근거 조항 · 기능 · 조항 → 영향 `{"keys": [...]}` |
+| POST / GET | `/api/compliance/audit/run` · `/audit/runs` · `/audit/runs/{id}` | 통제 감사(관리자, 통제 15개 증적 · 통과 · 실패 · 부분 · 없음 · 수동) · 기록 |
+
+서비스 답변(`/api/rag/answer` 스트림의 `done`, AS 상담 · 대화 · GraphRAG 답)에는 AI 응답 고지 `notice` 가 함께 옵니다.
+
 ## 고객 AS 상담 (`/api/as`)
 
 | 메서드 | 경로 | 설명 |

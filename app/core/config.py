@@ -51,6 +51,12 @@ class Settings(BaseSettings):
     stt_url: str | None = None
     stt_model: str = "whisper-1"
     as_ticket_webhook: str | None = None
+    # 규제 대응(RC1 · RC7): 국가법령정보 공동활용 API 키(open.law.go.kr 에서 신청한 이메일 아이디). 비우면 법령 판 받기 · 개정 감시를 끔
+    law_api_oc: str = ""
+    # 규제 대응(RC6): 서비스 답변에 붙이는 AI 응답 고지(인공지능 기본법 제31조 — 사전 고지 · 생성물 표시). 비우면 고지를 붙이지 않음
+    ai_notice: str = "AI 가 자료를 찾아 작성한 답변입니다. 법률 자문이 아니며, 사람의 검토를 요청할 수 있습니다."
+    # 규제 대응(RC8): 통제 감사(증적 모으기)를 몇 시간마다 다시 돌릴지(0 = 끔). LLM 없이 기록만 본다
+    watch_audit_hours: float = 0
 
     # 라이브러리(sentence-transformers · transformers · torch) 버전이 지난 점검 때와 다르면 시작할 때 내려받은 모델을 자동 점검.
     # 모델을 하나씩 올려 보므로 CPU 에서는 몇 분 걸린다 — 기본은 끄고 화면에서 '점검 권장'만 알린다.

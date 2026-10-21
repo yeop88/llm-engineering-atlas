@@ -39,4 +39,4 @@ def turn(
     res = answer_fn(rw["query"], mem, hist["text"])
     mem = mem_mod.update(mem, "assistant", res.get("answer", ""), known_models, known_codes)
     return {"reply": res.get("answer", ""), "clarify": cl, "rewrite": rw, "memory": mem, "answered": True, "history_prompt": hist,
-            "sources": res.get("sources"), "verify": res.get("verify"), "guard": res.get("guard"), "trace_id": res.get("trace_id")}  # fmt: skip
+            "sources": res.get("sources"), "verify": res.get("verify"), "guard": res.get("guard"), "trace_id": res.get("trace_id"), "notice": res.get("notice")}  # fmt: skip

@@ -32,7 +32,7 @@ def test_dependency_direction():
     # 운영 맵 패키지는 LLM 맵의 단계 뒤: 문서 처리 → 보안 · 가드레일 → 평가 · 관측 → 서비스 시나리오(AS 는 앞의 셋을 쓴다)
     # 대화 · 메모리는 가드레일(개인정보 가리기) 뒤, AS(후속 질문 재작성에 씀) 앞
     # 지식 그래프는 RAG 검색 · 임베딩 · 가드레일 위에 그래프를 얹는다
-    order |= {"docintel": 200, "guardrails": 210, "evalops": 220, "conversation": 225, "as_service": 230, "kg": 240}
+    order |= {"docintel": 200, "guardrails": 210, "evalops": 220, "conversation": 225, "as_service": 230, "kg": 240, "compliance": 250}
     # registry 는 단계가 아니라 맵 · 단계의 설명 데이터 — 아래 test_registry_is_data_only 에서 따로 본다
     stage_dirs = {p.name for p in (APP / "stages").iterdir() if p.is_dir() and not p.name.startswith("_") and p.name != "registry"}
     bad = []

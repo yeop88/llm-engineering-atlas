@@ -242,9 +242,11 @@ def handle(
         reply += "\n\n" + ASK_RESOLVED
     _add(s, "assistant", reply, trace_id=res.get("trace_id"), codes=codes, cached=bool(cached), mismatch=bool(mismatch), photo=photo)
     db.commit()
+    # 캐시한 답도 AI 가 만든 답이라 고지는 같다(규제 대응 RC6) — 캐시 경로에는 서비스 답변 결과가 없어 설정에서 직접
     return {"reply": reply, "handoff": bool(ticket), "ticket": ticket, "steps": steps, "triage": tri, "photo": photo, "mismatch": mismatch,
             "sources": res.get("sources"), "verify": {k: v.get(k) for k in ("supported_ratio", "relevant_ratio", "refused")} | {"codes": codes_found},
-            "guard": out_guard, "trace_id": res.get("trace_id"), "cached": bool(cached)}  # fmt: skip
+            "guard": out_guard, "trace_id": res.get("trace_id"), "cached": bool(cached),
+            "notice": res.get("notice", get_settings().ai_notice)}  # fmt: skip
 
 
 # ── AS7 티켓 ───────────────────────────────────────────────────────────────

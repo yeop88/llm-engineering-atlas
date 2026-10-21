@@ -16,6 +16,7 @@ os.environ["MAX_LOADED_MODELS"] = "3"
 os.environ["QDRANT_URL"] = ":memory:"  # 테스트는 서버 없이 메모리 Qdrant
 os.environ["VECTOR_STORE"] = "qdrant"
 os.environ["FALKORDB_URL"] = ""  # FalkorDB 도 마찬가지
+os.environ["LAW_API_OC"] = ""  # 국가법령정보 API 를 부르지 않게 — 법령 판 받기 · 개정 감시는 테스트에서 가짜 응답으로
 os.environ["NEO4J_URL"] = ""  # 로컬 .env 의 Neo4j 와 상관없이 — Neo4j 가 필요한 경로는 테스트에서 가짜로 바꾼다
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 

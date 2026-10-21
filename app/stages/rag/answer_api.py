@@ -78,7 +78,7 @@ def generate_answer(collection_id: int, body: AnswerRequest, request: Request) -
             if p.blocked:
                 fin = serve.finish(db, p, "", cfg, client=client)
                 yield _event("guard", **fin["guard"], answer=fin["answer"])
-                yield _event("done", answer=fin["answer"], timings=timings, trace_id=fin["trace_id"], blocked=True)
+                yield _event("done", answer=fin["answer"], timings=timings, trace_id=fin["trace_id"], blocked=True, notice=fin["notice"])
                 return
             if not p.sources:
                 yield _event(
@@ -138,6 +138,7 @@ def generate_answer(collection_id: int, body: AnswerRequest, request: Request) -
                 timings=timings,
                 run_id=run.id,
                 trace_id=fin["trace_id"],
+                notice=fin["notice"],  # AI 응답 고지(규제 대응 RC6) — 화면이 답 아래 같은 자리에 보인다
             )
 
     return StreamingResponse(stream(), media_type="application/x-ndjson")

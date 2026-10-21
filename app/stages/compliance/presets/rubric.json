@@ -1,0 +1,13 @@
+{
+  "note": "위험 등급 기준표(RC2). 점수는 제안이고, 등급 확정은 사람이 한다. 고영향 영역(인공지능 기본법 제2조제4호)이면 점수와 상관없이 '높음'.",
+  "dimensions": [
+    {"key": "impact", "name": "결정의 영향", "levels": {"1": "안내 · 정보 제공", "2": "권고 · 판단에 가까운 안내", "3": "권리 · 의무를 정하는 결정"}},
+    {"key": "autonomy", "name": "사람의 개입", "levels": {"1": "사람이 매번 확인", "2": "이용자가 사람 검토를 요청할 수 있음", "3": "사람 개입 없이 자동"}},
+    {"key": "data", "name": "데이터 민감도", "levels": {"1": "공개 자료", "2": "개인정보", "3": "민감정보 · 고유식별정보"}}
+  ],
+  "grades": [
+    {"grade": "높음", "min": 8, "controls": ["notice", "pii_mask", "acl", "injection", "audit_log", "integrity", "retention", "register", "explain", "review", "handoff", "risk", "impact", "subject_access", "breach_procedure"]},
+    {"grade": "중간", "min": 6, "controls": ["notice", "pii_mask", "acl", "injection", "audit_log", "integrity", "retention", "register", "explain", "review", "risk", "subject_access"]},
+    {"grade": "낮음", "min": 0, "controls": ["notice", "pii_mask", "audit_log", "retention", "register", "risk"]}
+  ]
+}

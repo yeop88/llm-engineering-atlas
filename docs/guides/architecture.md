@@ -42,6 +42,9 @@ app/
                        compress(긴 대화 · 인계 요약) · profile(고객 프로필) · vocab(컬렉션의 제품 · 코드) · chat(한 턴) · evaluate, presets/
     kg/                지식 그래프 · GraphRAG 맵(K1~K8): ontology · extract(정형 + LLM 쟁점) · fusion(쟁점 합치기) · build ·
                        text2cypher · graphrag(이웃 확장 · 커뮤니티 요약 · 전체 질문) · evaluate, presets/(온톨로지 · 역량 질문)
+    compliance/        규제 대응 맵(RC1~RC8): lawapi(국가법령정보 판) · corpus(조항 · 개정 비교) · scope(적용 규칙) · risk(등급) ·
+                       register(처리 근거 · 파기) · explain(결정 기록) · reviews(사람 검토) · impact(영향 평가) · graph(조항-통제) ·
+                       audit(통제 증적), catalog + presets/(규제 · 기능 · 규칙 · 통제 · 기준표 · 의무 질문)
     as_service/        고객 AS 상담 맵(AS1~AS8): triage(의도 · 긴급도 · 코드) · photo(사진 코드 읽기) · flow(상담 흐름 · 캐시 · 티켓 · 지표) ·
                        setup(예시 매뉴얼), presets/
     registry/          맵 · 단계 설명(데이터만, 다른 앱 모듈을 불러오지 않음)
@@ -164,8 +167,9 @@ FastAPI 라우터 ── core/system_api · llm_api / stages/*/…_api / web/pag
 | `ingest_sources` | IngestSource | 폴더 수집 소스(0010) |
 | `profiles` | Profile | 고객 프로필 — 보유 제품 · 지난 문의 요약(0011) |
 | `kg_nodes` · `kg_edges` | KgNode · KgEdge | 지식 그래프 노드 · 관계 — (graph, label, key) · (graph, src, dst, type) 유일(0012) |
+| `compliance_records` | ComplianceRecord | 규제 대응의 사람 판단 — 위험 등급 · 처리 근거 등록 · 영향 평가 · 사람 검토 요청(0013) |
 
-마이그레이션은 `migrations/versions/0001_initial` … `0012_kg` 입니다.
+마이그레이션은 `migrations/versions/0001_initial` … `0013_compliance` 입니다.
 
 ## 검색 저장 방식
 

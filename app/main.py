@@ -21,6 +21,7 @@ from app.pipeline import api as flow_api  # noqa: E402
 from app.stages.agent import api as agent_api  # noqa: E402
 from app.stages.apps import api as apps_api  # noqa: E402
 from app.stages.as_service import api as as_api  # noqa: E402
+from app.stages.compliance import api as compliance_api  # noqa: E402
 from app.stages.conversation import api as conversation_api  # noqa: E402
 from app.stages.distill import api as distill_api  # noqa: E402
 from app.stages.docintel import api as docintel_api  # noqa: E402
@@ -42,13 +43,14 @@ log = logging.getLogger("app")
 
 
 def _periodic(stop: threading.Event) -> None:
-    """1분마다: 주기가 된 문서 수집 소스(D1) · 정기 점검(레드팀 · 드리프트 · 회귀) · 하루 한 번 보관 기간 지난 요청 기록(G5) · 고객 프로필(C4) 정리.
+    """1분마다: 주기가 된 문서 수집 소스(D1) · 정기 점검(레드팀 · 드리프트 · 회귀) · 통제 감사(RC8) · 하루 한 번 보관 기간 지난 요청 기록(G5) · 고객 프로필(C4) 정리.
     스케줄러 라이브러리 없이 — 할 일이 몇 가지뿐이고, 앱이 꺼지면 같이 멈춰야 해서(따로 도는 cron 은 앱 없이 DB 를 건드린다)."""
     last_purge = 0.0
     while not stop.wait(60):
         try:
             docintel_api.run_due()
             evalops_api.run_watch()  # 레드팀 · 드리프트 · 회귀 정기 점검(설정한 주기가 됐을 때만)
+            compliance_api.run_watch()  # 통제 감사(RC8, WATCH_AUDIT_HOURS)
             if (now := time.time()) - last_purge > 86400:  # 하루 한 번: 보관 기간(0 = 지우지 않음)이 지난 요청 기록 · 고객 프로필
                 with SessionLocal() as db:
                     n, m = tracing.purge(db), conversation_api.profile.purge(db)
@@ -120,6 +122,7 @@ for module in (
     conversation_api,
     as_api,
     kg_api,  # 지식 그래프 · GraphRAG — RAG 검색 · 서비스 답변 위에 그래프를 얹는다
+    compliance_api,  # 규제 대응 — 가드레일 · 평가 · 대화 · 지식 그래프의 기록을 통제 증적으로 읽는다
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):
