@@ -437,7 +437,12 @@ def process_events(body: ProcessIn, db: DB) -> dict:
                 job.update(i / len(ids), f"{i + 1}/{len(ids)} · {e.payload.get('type')}")
                 q = e.payload.get("question") or ""
                 if e.payload.get("type") in ("question", "law", "graph") and q and d and d.pack:
-                    cid = pk.manifest(d.pack)["collection_id"]
+                    try:
+                        cid = pk.manifest(d.pack)["collection_id"]
+                    except ValueError:  # 기기에 등록된 팩이 지워졌으면 그 요청만 표시하고 나머지는 계속 처리
+                        e.result, e.status = {"error": f"팩 {d.pack} 이 서버에 없습니다"}, "error"
+                        sdb.commit()
+                        continue
                     e.result = _serve_question(sdb, cid, q, body.provider, body.model)
                     e.status = "processed" if "error" not in e.result else "error"
                 else:

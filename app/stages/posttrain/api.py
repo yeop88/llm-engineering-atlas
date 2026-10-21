@@ -100,7 +100,10 @@ class TrainIn(BaseModel):
 @router.post("/train", status_code=202)
 def train(body: TrainIn, request: Request, db: DB) -> dict:
     require_admin(request, "LLM 학습")
-    rows = data.load(body.dataset)
+    try:
+        rows = data.load(body.dataset)
+    except ValueError as exc:  # 없는 데이터 이름이 500(서버 오류)으로 보이지 않게
+        raise HTTPException(404, str(exc)) from exc
     if body.method == "dpo" and not rows[0].get("chosen"):
         raise HTTPException(400, "DPO 는 선호 쌍 데이터(kind=dpo)가 필요합니다")
     if body.method == "sft" and not rows[0].get("messages"):
@@ -259,9 +262,9 @@ def evaluate(body: EvalIn, request: Request, db: DB) -> dict:
     if cfg is None:
         raise HTTPException(400, "평가 세트 컬렉션에 청크 세트가 없습니다")
     cfgs = [_cfg(request, m) if m.startswith("pt-") else llm.resolve(None, m) for m in body.models]
-    items = random.Random(body.seed).sample(
-        [it for it in s.items if it.get("doc_ids") or it.get("answerable") is False], min(body.max_queries, len(s.items))
-    )
+    pool = [it for it in s.items if it.get("doc_ids") or it.get("answerable") is False]
+    # 표본 수는 거른 뒤 개수로 — 전체 개수로 정하면 정답 문서 없는 항목이 섞인 세트에서 sample 이 ValueError(500)
+    items = random.Random(body.seed).sample(pool, min(body.max_queries, len(pool)))
 
     def work(job: Job) -> dict[str, Any]:
         t0 = time.perf_counter()

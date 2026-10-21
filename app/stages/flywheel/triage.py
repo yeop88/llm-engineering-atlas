@@ -12,7 +12,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.db import Trace, utcnow
+from app.core.db import Collection, Trace, utcnow
 from app.stages.evalops import loop
 
 EXTRA = {"format": ("형식 오류", "LLM 서버 · 응답 형식 — 재시도 · 대체 모델 · 형식 규칙"),
@@ -36,6 +36,10 @@ def load(db: Session, days: int, kinds: tuple[str, ...] = SERVICE, collection_id
     q = select(Trace).where(Trace.created_at >= utcnow() - timedelta(days=days), Trace.kind.in_(kinds)).order_by(Trace.id.desc())
     if collection_id:
         q = q.where(Trace.collection_id == collection_id)
+        # 요청 기록은 해시 사슬이라 컬렉션을 지워도 고치지 않고 남는다 — SQLite 가 지운 컬렉션 번호를 새 컬렉션에 다시 주므로,
+        # 새 컬렉션이 만들어지기 전 기록(예전 컬렉션 것)이 섞이지 않게 만든 시각 뒤 기록만 본다
+        if (c := db.get(Collection, collection_id)) is not None:
+            q = q.where(Trace.created_at >= c.created_at)
     return list(db.scalars(q.limit(5000)))
 
 

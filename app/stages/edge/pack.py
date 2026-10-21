@@ -192,7 +192,8 @@ def build(
     )
     if not chunks:
         raise ValueError("범위 문서에 청크가 없습니다 — 청크 세트를 먼저 만드세요")
-    titles = {d.id: d.title or d.filename for d in docs}
+    # 마크다운 문서의 제목에는 '#' 이 남아 있어(파서가 첫 줄을 그대로 제목으로) 기기 화면 출처에서 뺀다
+    titles = {d.id: (d.title or d.filename).lstrip("#").strip() or d.filename for d in docs}
 
     prev_v = versions(name)[-1] if versions(name) else None
     prev = load(name, prev_v) if prev_v else None

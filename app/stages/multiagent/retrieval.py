@@ -17,7 +17,10 @@ STOP = {"무엇", "어떻게", "언제", "어디", "있나요", "인가요", "�
 
 
 def keywords(q: str) -> list[str]:
-    toks = [re.sub(r"(은|는|이|가|을|를|에|에서|의|도|로|으로|와|과|요)$", "", t) for t in re.findall(r"[가-힣A-Za-z0-9-]{2,}", q)]
+    # 불용어는 조사를 떼기 전 낱말로도 본다 — 떼고 나서만 보면 '주세요 → 주세' · '있나요 → 있나' 처럼 '요'로 끝나는 불용어가
+    # 빠지지 않고 핵심 낱말로 남아, 근거와 상관없이 덮음이 낮아진다(멀쩡한 검색이 '부족'으로 판정돼 재검색 비용이 든다).
+    raw = [t for t in re.findall(r"[가-힣A-Za-z0-9-]{2,}", q) if t not in STOP]
+    toks = [re.sub(r"(은|는|이|가|을|를|에|에서|의|도|로|으로|와|과|요)$", "", t) for t in raw]
     return [t for t in dict.fromkeys(toks) if len(t) >= 2 and t not in STOP]
 
 

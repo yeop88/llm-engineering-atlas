@@ -127,7 +127,10 @@ def draft_report(p: dict[str, Any], ctx: Ctx) -> dict[str, Any]:
     user = (f"제목: {p.get('title') or ctx.run.goal}\n절: {', '.join(sections)}\n\n[집계] 전체 {total}건\n"
             + "\n".join(f"- {k}: " + ", ".join(f"{a} {b}" for a, b in v.items()) for k, v in (agg or {}).items()) + f"\n\n[자료]\n{src or '(없음)'}")  # fmt: skip
     r = llm.chat(ctx.lcfg, DRAFT_SYSTEM, user, max_tokens=1200, temperature=0.2)
-    return {"report": r["text"], "sections": sections, "sources": sources[:8], "usage": r.get("usage"), "seconds": r.get("seconds")}
+    # 집계(counts · total)를 함께 넘긴다 — 완료 조건 검사는 초안 단계만 의존으로 받아(템플릿 deps=[초안]) 집계를 직접 보지 못해,
+    # 없으면 보고서의 모든 숫자가 '집계에 없는 숫자'가 된다
+    return {"report": r["text"], "sections": sections, "sources": sources[:8], "counts": agg or {}, "total": total,
+            "usage": r.get("usage"), "seconds": r.get("seconds")}  # fmt: skip
 
 
 def draft_simple(p: dict[str, Any], ctx: Ctx) -> dict[str, Any]:
@@ -146,7 +149,9 @@ def draft_simple(p: dict[str, Any], ctx: Ctx) -> dict[str, Any]:
     for k, v in agg.items():
         lines.append(f"- {k}: " + ", ".join(f"{a} {b}건" for a, b in v.items()))
     lines += ["", *(f"## {s}\n(사람이 채움)" for s in sections[2:])]
-    return {"report": "\n".join(lines), "sections": sections, "sources": _first_input(ctx, "sources") or [], "fallback": True}
+    # 집계를 함께 넘기는 이유는 draft_report 와 같다(완료 조건 검사가 숫자를 대 볼 수 있게)
+    return {"report": "\n".join(lines), "sections": sections, "sources": _first_input(ctx, "sources") or [], "counts": agg,
+            "total": total, "fallback": True}  # fmt: skip
 
 
 # ── 발송 · 보상 ─────────────────────────────────────────────────────────────
@@ -158,7 +163,13 @@ def _report_dir() -> Path:
 
 def deliver(p: dict[str, Any], ctx: Ctx) -> dict[str, Any]:
     """보고서 발송(되돌릴 수 없음): 파일로 남기거나 웹훅(ALERT_WEBHOOK)으로. 멱등 — 같은 열쇠로 이미 보냈으면 다시 보내지 않는다."""
-    report = _first_input(ctx, "report") or ""
+    report = _first_input(ctx, "report")
+    if report is None:
+        # 발송은 보통 승인 단계만 의존으로 받는다(템플릿 deps=[승인], 계획 검사가 끼운 승인도 같다) — 그러면 입력에 보고서가 없어
+        # 빈 파일을 보냈다. 앞에서 끝난 단계 중 가장 나중 보고서(= 승인받은 보고서)를 쓴다
+        prev = ctx.db.scalars(select(LrStep).where(LrStep.run_id == ctx.run.id, LrStep.idx < ctx.step.idx, LrStep.status == "done")
+                              .order_by(LrStep.idx.desc()))  # fmt: skip
+        report = next((s.output["report"] for s in prev if "report" in (s.output or {})), "")
     key = ctx.step.idem_key
     target = p.get("target") or "file"
     if target == "webhook":
@@ -218,4 +229,6 @@ def register(name: str, handler: Handler) -> None:
     ACTIONS[name].handler = handler
 
 
-NUM = re.compile(r"(?<![\w.])\d[\d,]*(?:\.\d+)?(?![\w.])")
+# 앞뒤 경계는 ASCII 글자 · 숫자만 본다 — \w 는 한글도 포함해 '17건' · '3개' 처럼 단위가 붙은 숫자(한국어 보고서의 거의 모든 숫자)를
+# 하나도 잡지 못했고, 그래서 지어낸 숫자 검사(numbers_grounded)가 늘 통과했다. 코드 · 모델 이름 속 숫자(E4 · WM200X)는 여전히 뺀다
+NUM = re.compile(r"(?<![A-Za-z0-9_.])\d[\d,]*(?:\.\d+)?(?![A-Za-z0-9_.])")

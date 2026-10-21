@@ -48,8 +48,8 @@ def _pair(tok: Any, prompt: list[dict[str, str]], reply: str, max_len: int) -> t
     """→ (전체 토큰, 답이 시작하는 위치). 길면 근거(앞쪽)를 잘라 답을 남긴다 — 답이 잘리면 학습할 것이 없다."""
     p = _prompt_ids(tok, prompt)
     a = tok(reply + (tok.eos_token or ""), add_special_tokens=False)["input_ids"]
-    if len(p) + len(a) > max_len:
-        keep = max(16, max_len - len(a))
+    keep = max(16, max_len - len(a))
+    if len(p) + len(a) > max_len and len(p) > keep:  # 프롬프트가 keep 보다 짧으면 앞 · 뒤 조각이 겹쳐 같은 토큰이 두 번 들어간다
         p = p[: keep // 2] + p[-(keep - keep // 2) :]
     ids = (p + a)[:max_len]
     return ids, min(len(p), len(ids) - 1)

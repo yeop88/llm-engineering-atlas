@@ -23,6 +23,18 @@ KV_LINE = re.compile(r"(?:KV self size|llama_kv_cache[^:]*:.*?size)\s*=\s*([\d.]
 SPEED_LINE = re.compile(r"draft acceptance rate\s*=\s*([\d.]+)", re.I)
 
 
+def kv_mib(lines: list[str]) -> float | None:
+    """로그의 KV 캐시 크기(MiB). llama.cpp 는 장치별 'KV buffer size' 줄과 합계 'size =' 줄을 함께 적어서, 둘을 모두 더하면
+    두 배로 잡힌다(비트를 바꾼 효과 비교는 맞아도 절대 크기가 틀림). 합계 줄이 있으면 합계만(SWA 모델은 캐시가 둘이라 둘을 더함),
+    없는 옛 형식이면 장치별 버퍼 줄을 더한다."""
+    total, bufs = [], []
+    for ln in lines:
+        if m := KV_LINE.search(ln):
+            (bufs if "buffer" in ln.lower() else total).append(float(m.group(1)))
+    v = total or bufs
+    return round(sum(v), 1) if v else None
+
+
 @dataclass
 class Variant:
     label: str
@@ -94,13 +106,13 @@ class Server:
         raise RuntimeError("서버 시작 시간 초과")
 
     def memory(self) -> dict[str, Any]:
-        kv = [float(m.group(1)) for ln in self.lines if (m := KV_LINE.search(ln))]
+        kv = kv_mib(self.lines)
         acc = [float(m.group(1)) for ln in self.lines if (m := SPEED_LINE.search(ln))]
         try:
             rss = psutil.Process(self.proc.pid).memory_info().rss / 2**20
         except psutil.Error:
             rss = None
-        return {"kv_cache_mib": round(sum(kv), 1) if kv else None, "rss_mib": round(rss, 1) if rss else None,
+        return {"kv_cache_mib": kv, "rss_mib": round(rss, 1) if rss else None,
                 "draft_acceptance": acc[-1] if acc else None}  # fmt: skip
 
     def stop(self) -> None:

@@ -154,6 +154,8 @@ def _purge(db: Session) -> int:
     old = list(db.scalars(select(VoiceCall).where(VoiceCall.created_at < cut)))
     for c in old:
         db.delete(c)
+        _LIVE.pop(c.id, None)  # 끝점 상태 · 잠금도 함께 — 남기면 통화마다 메모리에 쌓인다
+        _LOCKS.pop(c.id, None)
     if old:
         db.commit()
     return len(old)
@@ -176,6 +178,7 @@ def delete_call(call_id: str, db: DB) -> dict:
     db.delete(_call(db, call_id))
     db.commit()
     _LIVE.pop(call_id, None)
+    _LOCKS.pop(call_id, None)
     return {"deleted": call_id}
 
 
@@ -519,6 +522,7 @@ def end_call(call_id: str, body: EndIn, db: DB) -> dict:
     c = _call(db, call_id)
     c.status, c.ended_at = "ended", utcnow()
     _LIVE.pop(call_id, None)
+    _LOCKS.pop(call_id, None)
     out: dict[str, Any] = {}
     if body.summarize:
         try:

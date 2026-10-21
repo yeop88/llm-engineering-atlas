@@ -68,7 +68,10 @@ def choose(cands: list[dict[str, Any]], max_ms: float | None, max_cost: float | 
 
         for c in cs:
             c["over"] = within(c)
-        front = [c for c in cs if not any(o["quality"] >= c["quality"] and lat(o) < lat(c) for o in cs if o is not c)]
+        # 지배: 품질이 같거나 높고 지연이 같거나 짧으며 둘 중 하나는 엄격히 나은 후보가 있으면 앞줄이 아니다.
+        # (예전에는 지연이 '엄격히 짧은' 경우만 봐서, 지연이 같고 품질만 낮은 후보가 앞줄에 남았다)
+        front = [c for c in cs if not any(o["quality"] >= c["quality"] and lat(o) <= lat(c) and (o["quality"] > c["quality"] or lat(o) < lat(c))
+                                          for o in cs if o is not c)]  # fmt: skip
         ok = sorted([c for c in cs if not c["over"]], key=lambda c: (-c["quality"], lat(c)))
         best = ok[0] if ok else min(cs, key=lambda c: len(c["over"]))
         out.append({"eval_set": es, "best": best, "within": bool(ok), "front": sorted(front, key=lat), "n": len(cs)})

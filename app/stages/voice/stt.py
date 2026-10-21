@@ -96,8 +96,9 @@ def restore_terms(text: str, vocab: list[str]) -> tuple[str, list[dict[str, str]
     for sp, t in pairs:
         if re.fullmatch(r"[A-Za-z]{1,2}\d?", t) and not code_ctx:
             continue
-        # 앞뒤가 한글이면 낱말 안이라 바꾸지 않는다('이사' 는 '이사하다' 에서 바꾸면 안 됨) — 조사(가 · 는 · 에서)는 뒤에 붙어도 됨
-        pat = re.compile(rf"(?<![가-힣A-Za-z0-9]){re.escape(sp)}(?=$|[^가-힣A-Za-z0-9]|[이가은는을를에의도로와과])")
+        # 앞뒤가 한글이면 낱말 안이라 바꾸지 않는다('이사' 는 '이사하다' 에서 바꾸면 안 됨) — 조사(가 · 는 · 에서)는 뒤에 붙어도 됨.
+        # '이다' 활용(인데 · 입니다)과 랑 · 만 도 붙는다 — 빠져 있어 고객이 가장 자주 하는 'WM-200인데요' · 'WM-200입니다' 가 복원되지 않았다
+        pat = re.compile(rf"(?<![가-힣A-Za-z0-9]){re.escape(sp)}(?=$|[^가-힣A-Za-z0-9]|[이가은는을를에의도로와과인입랑만])")
         if pat.search(text):
             text = pat.sub(t, text)
             fixes.append({"from": sp, "to": t})

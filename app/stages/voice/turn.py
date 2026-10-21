@@ -49,6 +49,9 @@ class Endpointer:
     last_voice: int | None = None
     pending: tuple[int, int] | None = None  # 끝점 후보(시작, 끝) — 글을 보고 확정
     waited_long: bool = False
+    # 이 발화에서 이미 끼어들기를 알렸는지 — 화면은 합성 음성이 실제로 멈출 때까지 조각마다 speaking=true 를 보내므로,
+    # 조각마다 다시 알리면 한 번 끼어든 것이 사건 여러 개로 기록돼 보고(끼어들기 수)가 부풀었다
+    barged: bool = False
     total: int = 0
 
     def _ms(self, n: int) -> int:
@@ -70,9 +73,9 @@ class Endpointer:
                 if self.pending:  # 후보 뒤에 다시 말함 → 이어진 말
                     self.pending, self.waited_long = None, False
                     ev.append({"type": "resumed", "at_ms": self._ms(pos)})
-                if agent_speaking and self._ms(self.last_voice - self.speech_start) >= self.p.barge_ms:
+                if agent_speaking and not self.barged and self._ms(self.last_voice - self.speech_start) >= self.p.barge_ms:
                     ev.append({"type": "barge_in", "at_ms": self._ms(pos)})
-                    agent_speaking = False  # 한 번만
+                    self.barged = True  # 발화 하나에 한 번만(조각을 넘어서도)
             else:
                 self.noise = 0.98 * self.noise + 0.02 * float(d) if d < self.noise + 3 else self.noise
         if self.speech_start is not None and self.last_voice is not None:
@@ -89,6 +92,7 @@ class Endpointer:
                 ev.append({"type": "cut", "start_ms": self._ms(self.speech_start), "end_ms": self._ms(self.last_voice)})
             elif dur < self.p.min_speech_ms and sil >= self.p.short_ms:  # 기침 · 잡음 — 버림
                 self.speech_start = self.last_voice = None
+                self.barged = False
         return ev
 
     def segment(self, start: int, end: int) -> np.ndarray:
@@ -108,4 +112,4 @@ class Endpointer:
         keep = max(0, end - self.offset)
         self.buf, self.offset = self.buf[keep:], self.offset + keep
         self.speech_start = self.last_voice = self.pending = None
-        self.waited_long = False
+        self.waited_long = self.barged = False

@@ -57,9 +57,10 @@ def verify(summary: dict[str, Any], turns: list[dict[str, Any]], min_support: fl
         if v := summary.get(field):
             s = _support(v, turns)
             checks.append({"field": field, "value": v, "ok": s >= min_support, "support": round(s, 2), "how": "글자 겹침"})
-            for d in DATE.findall(v) if field == "promise" else []:
-                d = d if isinstance(d, str) else d[0]
-                if d:
+            # findall 은 묶음(내일|모레|…)이 있는 식에서 묶음 값만 돌려줘 '10월 3일' · '2시' 가 빈 글이 되어 검사에서 빠졌다 —
+            # 약속의 날짜 · 시각이 전사와 다른 것이 요약에서 가장 위험한 오류라 맞은 전체(group(0))로 확인한다
+            for m in DATE.finditer(v) if field == "promise" else []:
+                if d := m.group(0).strip():
                     exact("promise", d)
     for a in summary.get("actions") or []:
         s = _support(str(a), turns)

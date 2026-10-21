@@ -43,7 +43,9 @@ def run_python(code: str, timeout: float | None = None) -> dict[str, Any]:
         # 비밀(토큰 · API 키)이 든 환경 변수를 넘기지 않는다 — 실행 파일을 찾는 데 필요한 것만
         env = {k: v for k, v in os.environ.items() if k.upper() in ("PATH", "SYSTEMROOT", "TEMP", "TMP", "PYTHONIOENCODING")}
         env["PYTHONIOENCODING"] = "utf-8"
-        cmd, isolation = [sys.executable, "-I", "-"], "process"
+        # -I 는 -E 를 포함해 PYTHONIOENCODING 을 무시한다 — Windows 에서는 출력이 로캘(cp949)로 나와 UTF-8 로 읽으면 한글이 깨졌다.
+        # -X utf8(UTF-8 모드)은 명령줄 옵션이라 -I 와 함께 써도 적용된다
+        cmd, isolation = [sys.executable, "-I", "-X", "utf8", "-"], "process"
     try:
         p = subprocess.run(
             cmd, input=code.encode("utf-8"), capture_output=True, timeout=timeout + (20 if isolation == "docker" else 0), env=env, cwd=cwd

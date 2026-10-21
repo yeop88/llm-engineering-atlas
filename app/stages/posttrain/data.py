@@ -34,8 +34,8 @@ def root() -> Path:
 
 def question_of(row: dict[str, Any]) -> str:
     user = next((m["content"] for m in row.get("messages") or row.get("prompt") or [] if m.get("role") == "user"), "")
-    m = re.search(r"질문:\s*(.+)$", user, re.S)
-    return (m.group(1) if m else user).strip()
+    # 마지막 '질문:' 뒤 — 근거(FAQ 문서 등)에 '질문:' 글이 있으면 첫 번째에서 자르면 근거까지 질문으로 읽혀 중복 · 누수 검사가 틀린다
+    return (user.rsplit("질문:", 1)[1] if "질문:" in user else user).strip()
 
 
 def from_distill(names: list[str]) -> list[dict[str, Any]]:

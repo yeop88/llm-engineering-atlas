@@ -26,14 +26,16 @@ POLITE_SOFT = re.compile(r"감사|고맙|네\s*알겠|괜찮")
 
 def text_score(text: str) -> dict[str, Any]:
     t = text or ""
-    hits = {"strong": STRONG.findall(t), "mild": MILD.findall(t)}
+    # findall 은 정규식에 묶음(괄호)이 있으면 묶음 값만 돌려준다 — '환불' 처럼 묶음 밖에서 맞은 표현이 빈 글('')로,
+    # '왜 자꾸' 가 '자꾸' 로 남아 화면의 근거 표시(cues)가 비거나 잘렸다. 그래서 맞은 전체(group(0))를 쓴다
+    hits = {"strong": [m.group(0) for m in STRONG.finditer(t)], "mild": [m.group(0) for m in MILD.finditer(t)]}
     # 강한 표현(환불 · 책임자 · 신고)은 하나만 있어도 이관 문턱(0.75) — 0.55 로 두었더니 라벨 문장 38개 중 강한 불만 6개를 놓쳤다(보정에 쓴 세트)
     s = min(1.0, 0.75 * bool(hits["strong"]) + 0.2 * len(hits["strong"][1:]) + 0.3 * bool(hits["mild"]) + 0.1 * len(hits["mild"][1:]))
     s += 0.1 * min(3, t.count("!")) + (0.1 if re.search(r"\?\s*\?|！", t) else 0)
     if POLITE_SOFT.search(t) and not hits["strong"]:
         s -= 0.2
     return {"score": round(max(0.0, min(1.0, s)), 3), "handoff_request": bool(HANDOFF.search(t)),
-            "cues": [str(x if isinstance(x, str) else x[0]) for x in hits["strong"] + hits["mild"]][:6]}  # fmt: skip
+            "cues": (hits["strong"] + hits["mild"])[:6]}  # fmt: skip
 
 
 def voice_score(p: dict[str, Any] | None, base: dict[str, Any] | None) -> float | None:

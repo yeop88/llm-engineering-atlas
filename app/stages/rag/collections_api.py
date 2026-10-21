@@ -12,7 +12,18 @@ from starlette.concurrency import run_in_threadpool
 
 from app.core import crud, media_store
 from app.core.config import get_settings
-from app.core.db import Chunk, ChunkSet, Collection, Document, EmbeddingModel, SessionLocal, VectorIndex, get_db
+from app.core.db import (
+    Chunk,
+    ChunkSet,
+    Collection,
+    Document,
+    EmbeddingModel,
+    FwVersion,
+    PfTenantCollection,
+    SessionLocal,
+    VectorIndex,
+    get_db,
+)
 from app.core.jobs import Job, jobs
 from app.core.vectorstores import STORE_KINDS, StoreUnavailable, get_store, stores_status
 from app.pipeline.search import run_search  # 검색 향상(enhance) 등 다음 단계를 끼워 넣는 연결점
@@ -152,6 +163,10 @@ def delete_collection(collection_id: int, db: DB) -> dict:
     for cs in db.scalars(select(ChunkSet).where(ChunkSet.collection_id == c.id)).all():
         service.delete_chunk_set(db, cs)
     doc_ids = list(db.scalars(select(Document.id).where(Document.collection_id == c.id)))
+    # 배포 버전(FW) · 테넌트 지정(PF)은 외래 키가 없어 연쇄 삭제되지 않는다 — 남기면 같은 번호를 다시 받은 새 컬렉션의
+    # 기본 검색 설정을 옛 배포 버전이 바꾸고, 옛 테넌트 지정이 다른 테넌트의 검색을 막는다
+    for model in (FwVersion, PfTenantCollection):
+        db.query(model).filter(model.collection_id == c.id).delete()
     db.delete(c)
     db.commit()
     for did in doc_ids:  # DB 는 연쇄 삭제되지만 디스크의 이미지 · 프레임 파일은 직접 지워야 한다

@@ -38,6 +38,14 @@ def _search(db: Session, cid: int) -> env_mod.SearchFn:
     return lambda q: run_search(db, q, cfg)["results"]
 
 
+def _tasks(name: str) -> dict[str, Any]:
+    """과제 묶음 읽기 — 없는 이름이 500(서버 오류)으로 보이지 않게 404 로."""
+    try:
+        return tk.load(name)
+    except ValueError as exc:
+        raise HTTPException(404, str(exc)) from exc
+
+
 @router.get("/overview")
 def overview(db: DB) -> dict:
     ms = db.scalars(select(AppModel).where(AppModel.kind == "llm_adapter", AppModel.method == "grpo").order_by(AppModel.id.desc())).all()
@@ -66,10 +74,7 @@ def build_tasks(body: TasksIn, db: DB) -> dict:
 
 @router.get("/tasks/{name}")
 def get_tasks(name: str) -> dict:
-    try:
-        return tk.load(name)
-    except ValueError as exc:
-        raise HTTPException(404, str(exc)) from exc
+    return _tasks(name)
 
 
 class ScoreIn(BaseModel):
@@ -80,7 +85,7 @@ class ScoreIn(BaseModel):
 
 @router.post("/score")
 def score(body: ScoreIn) -> dict:
-    ts = tk.load(body.tasks)
+    ts = _tasks(body.tasks)
     t = next((x for x in ts["train"] + ts["test"] if x["id"] == body.task_id), None)
     if t is None:
         raise HTTPException(404, "과제가 없습니다")
@@ -95,7 +100,7 @@ class EnvIn(BaseModel):
 @router.post("/env/check")
 def env_check(body: EnvIn, db: DB) -> dict:
     """환경-실제 차이(RV2): 기록해 둔 도구 결과와 지금 실제 결과의 겹침."""
-    ts = tk.load(body.tasks)
+    ts = _tasks(body.tasks)
     return env_mod.gap_check(body.tasks, _search(db, ts["collection_id"]), db, ts["graph"], (ts["train"] + ts["test"])[: body.n])
 
 
@@ -114,7 +119,7 @@ class TrainIn(BaseModel):
 @router.post("/train", status_code=202)
 def train(body: TrainIn, request: Request, db: DB) -> dict:
     require_admin(request, "GRPO 학습")
-    ts = tk.load(body.tasks)
+    ts = _tasks(body.tasks)
     base = get_settings().posttrain_base_model
     m = AppModel(
         kind="llm_adapter",
@@ -164,7 +169,7 @@ class EvalIn(BaseModel):
 @router.post("/eval", status_code=202)
 def evaluate(body: EvalIn, request: Request, db: DB) -> dict:
     """일반화 · 안전성(RV6): 학습 / 시험(학습 외 유형 포함) 정답률을 유형별로, 같은 공격 문항으로 레드팀 — 그리고 보상 해킹 감시."""
-    ts = tk.load(body.tasks)
+    ts = _tasks(body.tasks)
     cfgs = [_cfg(request, m) for m in body.models]
 
     def work(job: Job) -> dict[str, Any]:
