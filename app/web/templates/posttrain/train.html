@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}SFT · DPO · 병합{% endblock %}
+{% block content %}
+{% call ui.page_header("SFT · DPO · 병합") %}작은 LLM(POSTTRAIN_BASE_MODEL)에 LoRA 어댑터를 학습합니다 — SFT 는 답 부분에만 손실을 걸어 답 형식 · 인용 습관을 배우게 하고(P3), DPO 는 좋은 답 / 나쁜 답 쌍으로 좋은 쪽을 고르게 합니다(P4, 기준 모델 = 어댑터를 끈 같은 모델). 어댑터는 따로 두고 갈아 끼우거나, 가중 합 · TIES 로 합치거나, 기본 모델에 합쳐 GGUF 로 바꿀 수 있게 합니다(P5). CPU 에서는 걸음마다 수 초 — 걸음 수를 작게 시작하세요.{% endcall %}
+
+<div class="card stack" id="sft">
+  <h2>학습 (P3 SFT · P4 DPO)</h2>
+  <div id="t-env" class="small"></div>
+  <div class="row">
+    <div class="field"><label for="t-name">어댑터 이름</label><input id="t-name" value="법률 인용 SFT"></div>
+    <div class="field"><label for="t-data">데이터</label><select id="t-data"></select></div>
+    <div class="field"><label for="t-method">방법</label><select id="t-method"><option value="sft">SFT</option><option value="dpo">DPO</option></select></div>
+    <div class="field"><label for="t-init">DPO 시작 어댑터 (선택)</label><select id="t-init"><option value="">기본 모델에서</option></select></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="t-steps">최대 걸음 (0 = 데이터 전부)</label><input id="t-steps" type="number" value="20" min="0" class="w-md"></div>
+    <div class="field"><label for="t-epochs">에폭</label><input id="t-epochs" type="number" value="1" min="1" max="10" class="w-md"></div>
+    <div class="field"><label for="t-len">최대 길이(토큰)</label><input id="t-len" type="number" value="768" min="128" class="w-md"></div>
+    <div class="field"><label for="t-r">LoRA r</label><input id="t-r" type="number" value="8" min="2" max="64" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="t-run">학습</button></div>
+  </div>
+  <div id="t-progress" hidden></div>
+  <div id="t-out"></div>
+</div>
+
+<div class="card stack mt-4" id="pref">
+  <h2>학습한 모델</h2>
+  <div id="t-models"></div>
+</div>
+
+<div class="card stack mt-4" id="adapter">
+  <h2>어댑터 · 병합 (P5)</h2>
+  <div class="row">
+    <div class="field"><label for="m-name">병합 이름</label><input id="m-name" value="병합 1"></div>
+    <div class="field"><label for="m-method">방식</label><select id="m-method"><option value="linear">가중 합</option><option value="ties">TIES</option><option value="cat">이어 붙이기</option></select></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="m-base" checked> 기본 모델에 합치기(GGUF 변환용)</label>
+    <div class="self-end"><button class="btn" id="m-run">고른 어댑터 합치기</button></div>
+  </div>
+  <div id="m-progress" hidden></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/posttrain/train.js') }}"></script>
+{% endblock %}

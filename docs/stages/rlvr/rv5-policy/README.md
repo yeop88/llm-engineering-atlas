@@ -33,7 +33,7 @@ GRPO 는 같은 질문에 여러 답(그룹)을 만들고 그룹 안에서 상�
 
 이미 있는 단계 위에 짓습니다.
 
-- [P4 선호 학습 (DPO 등)](../../posttrain/p4-pref/README.md) — 후학습 (Post-training) 맵 · ⬜ 예정
+- [P4 선호 학습 (DPO 등)](../../posttrain/p4-pref/README.md) — 후학습 (Post-training) 맵 · ✅ 구현됨
 
 ---
 

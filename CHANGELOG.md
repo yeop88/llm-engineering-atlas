@@ -5,6 +5,10 @@
 ## [Unreleased]
 
 ### 추가
+- **후학습 맵 구현(P1~P7)** — 화면 `/posttrain/data` · `/posttrain/train` · `/posttrain/eval`
+  - 학습 데이터: 증류 · 플라이휠 학습 데이터 · 합성 거절 예시 · 선호 쌍, 단계별 선별(형식 · 중복 · 평가 누수)
+  - LoRA SFT(답 부분 손실) · DPO(기준 = 어댑터를 끈 같은 모델) · 어댑터 병합(가중 합 · TIES · 기본 모델에), 기본 모델 `POSTTRAIN_BASE_MODEL`
+  - 학습한 모델을 OpenAI 호환 끝점(`/api/posttrain/v1`)으로 올려 같은 조건의 품질 · 레드팀 비교, GGUF 변환 · 양자화(`LLAMA_CONVERT_SCRIPT`)
 - **서빙 · 추론 최적화 · 비용 맵 구현(S1~S7)** — 화면 `/serving/bench` · `/serving/budget`
   - 동시 부하(동시 수별 처리량 · p50 · p95), KV 캐시 비트 · 추측 디코딩 설정마다 llama-server 를 띄워 같은 질문 · 같은 근거로 품질 · 속도 · KV 메모리 비교(`LLAMA_SERVER_BIN`)
   - 비용 · 지연 예산(실측 후보에서 목표 안 최고 품질 · 파레토 앞줄 · 운영 경로별 준수), 캐시 · 모델 · 장치 · 메모리 현황

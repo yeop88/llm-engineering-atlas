@@ -26,9 +26,9 @@ GATE = {"ndcg@10": 0.02, "hit@5": 0.03, "attack_pass_rate": 0.0, "benign_pass_ra
 ROLLBACK = {"min_n": 20, "supported_drop": 0.05, "refused_rise": 0.10, "dislike_rise": 0.10}
 
 PRESCRIPTIONS = {
-    "retrieval": [("설정", "검색 설정: 혼합(BM25 + 의미) · top_k · 리랭커", "/rag/compare"), ("자료", "자료 보강 · 다시 청킹 · 재색인", "/rag/collections"),
+    "retrieval": [("설정", "검색 설정: 혼합(BM25 + 의미) · top_k · 리랭커", "/rag/collections"), ("자료", "자료 보강 · 다시 청킹 · 재색인", "/rag/collections"),
                   ("평가", "실패 질문을 평가 세트로 — 재발 방지", "/flywheel/review"), ("학습", "임베딩 파인튜닝 · 증류", "/finetune")],
-    "citation": [("규칙", "답변 규칙 · 근거 격리 확인, 검증 기준 보정", "/rag/answer"), ("평가", "평가 세트로", "/flywheel/review"), ("학습", "SFT(인용 습관)", "/posttrain/sft")],
+    "citation": [("규칙", "답변 규칙 · 근거 격리 확인, 검증 기준 보정", "/rag/answer"), ("평가", "평가 세트로", "/flywheel/review"), ("학습", "SFT(인용 습관)", "/posttrain/train")],
     "off_topic": [("규칙", "질문 관련성 기준 · 답변 규칙 5번", "/rag/verify"), ("설정", "리랭커로 상관없는 근거 줄이기", "/rerank")],
     "over_refusal": [("설정", "거절 기준(확신도) · 검색 설정", "/routing"), ("평가", "답이 있는 질문을 평가 세트로", "/flywheel/review")],
     "policy": [("규칙", "가드레일 정책 검토 · 레드팀 다시", "/guardrails/redteam")],

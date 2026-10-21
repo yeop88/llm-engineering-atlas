@@ -137,6 +137,9 @@ class Settings(BaseSettings):
     openai_model_urls: dict[str, str] = {}
     # 로컬 GGUF 파일 폴더 — 양자화 화면이 파일 목록 · 크기를 보여 주고 llama-server 실행 명령을 만들 때 쓴다(선택)
     llm_models_dir: Path | None = None
+    # 후학습(P3~P7): LoRA SFT · DPO 의 기본 모델(Hub id) — CPU 에서도 돌도록 작은 모델. GGUF 변환은 llama.cpp 의 convert_hf_to_gguf.py
+    posttrain_base_model: str = "Qwen/Qwen3-0.6B"
+    llama_convert_script: Path | None = None
     # 서빙 실측(S5): llama-server 실행 파일 — 있으면 앱이 KV 캐시 · 추측 디코딩 설정별로 서버를 직접 띄워 비교한다(빈 포트 18100~)
     llama_server_bin: Path | None = None
     anthropic_api_key: str | None = None

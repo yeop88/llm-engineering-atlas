@@ -36,6 +36,7 @@ from app.stages.kg import api as kg_api  # noqa: E402
 from app.stages.longrun import api as longrun_api  # noqa: E402
 from app.stages.multiagent import api as multiagent_api  # noqa: E402
 from app.stages.platform import api as platform_api  # noqa: E402
+from app.stages.posttrain import api as posttrain_api  # noqa: E402
 from app.stages.quant import api as quant_api  # noqa: E402
 from app.stages.rag import answer_api, collections_api, eval_api, verify_api  # noqa: E402
 from app.stages.rerank import api as rerank_api  # noqa: E402
@@ -140,6 +141,7 @@ for module in (
     flywheel_api,  # 데이터 플라이휠 — 실패 분류 · 검토 · 게이트 · 단계적 배포
     platform_api,  # 엔터프라이즈 플랫폼 — 게이트웨이 · 테넌트 · 프롬프트 · 플래그 · 장애 대응 · 비용
     serving_api,  # 서빙 — 동시 부하 · 디코딩 설정 실측 · 예산 · 자원 현황
+    posttrain_api,  # 후학습 — 데이터 · LoRA SFT · DPO · 병합 · 평가 · GGUF
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [P6 후학습 평가 · 안전성](../../posttrain/p6-eval/README.md) — 후학습 (Post-training) 맵 · ⬜ 예정
+- [P6 후학습 평가 · 안전성](../../posttrain/p6-eval/README.md) — 후학습 (Post-training) 맵 · ✅ 구현됨
 - [G7 레드팀 · 안전성 평가](../../guardrails/g7-redteam/README.md) — 보안 · 가드레일 · 거버넌스 맵 · ✅ 구현됨
 
 ---

@@ -2,7 +2,7 @@
 
 # P7 · 배포 형식 변환 (GGUF · 양자화) (Export & quantize)
 
-**상태: 🟡 기초 있음** — 학습한 모델을 GGUF 로 바꾸고 양자화해 llama-server 에 올린다
+**상태: ✅ 구현됨** — 학습한 모델을 GGUF 로 바꾸고 양자화해 llama-server 에 올린다
 
 ## 원리
 
@@ -15,18 +15,15 @@
 ## 어떻게 (이 앱에서)
 
 - (있음) GGUF 비트별 품질 · 속도 비교(QAT Q4_0 ≈ Q8_0), llama-server 실행 명령 생성
-- (예정) 변환 · 양자화 파이프라인, 학습 효과 유지 확인
+- 병합 모델 → GGUF(LLAMA_CONVERT_SCRIPT, 없으면 실행할 명령) → llama-quantize(Q4_0 · Q4_K_M · Q5_K_M · Q8_0) → 서빙 실측(S5) · LLM 비교로 학습 효과가 남았는지
 
 ## 화면
 
-- 아직 테스트 화면이 없습니다. 단계 소개는 앱의 `/stages/pt_export` 에서 볼 수 있습니다.
-
-## 앞으로 할 일
-
-- 변환 · 양자화 파이프라인
+- `/posttrain/eval#export` — **배포 형식 변환**: GGUF · 양자화
 
 ## 상세 문서
 
+- [후학습 — 데이터 · 선별 · LoRA SFT · DPO · 병합 · 학습 전후 평가 · GGUF · 실측](../p3-sft/posttrain.md)
 - [후학습 (Post-training) 맵](../../../maps/posttrain.md)
 
 ## 기반 단계

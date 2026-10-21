@@ -459,6 +459,21 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/serving/decode` | 디코딩 설정 비교 작업(관리자) `{"model": GGUF 이름, "variants": [{"label", "kv_k", "kv_v", "draft"?}], "eval_set_id", "max_queries"}` → 설정별 품질 · 기준 대비 · 생성 속도 · KV 캐시 · RSS |
 | POST | `/api/serving/budget` | 예산 `{"max_ms", "max_cost", "min_quality", "days"}` → 평가 세트별 목표 안 최고 품질 · 파레토 앞줄 · 운영 경로별 p95 · 비용 |
 
+## 후학습 (`/api/posttrain`)
+
+학습 · 병합 · 변환 · 데이터 만들기는 관리자만.
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/posttrain/overview` | 기본 모델 · 장치 · 증류 파일 · 데이터 · 학습한 모델 · 변환 스크립트 유무 |
+| POST | `/api/posttrain/datasets` | 데이터 만들기 `{"name", "kind": "sft·dpo", "distill": [...], "flywheel", "refusal_sets", "exclude_sets", "collection_id"?}` → 단계별 남은 건수 |
+| POST | `/api/posttrain/train` | LoRA 학습 작업 `{"name", "dataset", "method": "sft·dpo", "init_adapter_id"?, "max_steps", "epochs", "max_len", "r", "beta"}` |
+| POST | `/api/posttrain/merge` | 병합 작업 `{"name", "adapters": [...], "weights"?, "method": "linear·ties·cat", "into_base"}` |
+| DELETE | `/api/posttrain/models/{id}` | 학습한 모델 지우기 |
+| POST | `/api/posttrain/v1/chat/completions` | OpenAI 호환(비스트리밍) — `model`: `pt-base` · `pt-<번호>` |
+| POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
+| POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
+
 ## 고객 AS 상담 (`/api/as`)
 
 | 메서드 | 경로 | 설명 |

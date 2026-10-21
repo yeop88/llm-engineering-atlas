@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}학습 데이터 · 선별{% endblock %}
+{% block content %}
+{% call ui.page_header("학습 데이터 · 선별") %}LLM 증류 데이터(교사 답 중 검증을 통과한 것) · 플라이휠 학습 데이터(사람이 고친 답) · 합성 거절 예시(평가 세트의 답 없는 질문 → '근거에서 찾을 수 없습니다')를 모으고(P1), 형식 오류 → 거의 같은 예시 → 평가 세트 누수 순서로 걸러 단계별로 남은 건수를 남깁니다(P2). 선호 학습(DPO)용은 모은 선호 쌍(8b)에서 같은 선별을 거칩니다.{% endcall %}
+
+<div class="card stack" id="synth">
+  <h2>모으기 (P1)</h2>
+  <div class="row">
+    <div class="field"><label for="d-name">데이터 이름 (영문 · 숫자 · _ · -)</label><input id="d-name" value="sft-legal-1" class="w-md"></div>
+    <div class="field"><label for="d-kind">종류</label><select id="d-kind"><option value="sft">SFT (대화형)</option><option value="dpo">DPO (선호 쌍)</option></select></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="d-fw" checked> 플라이휠 학습 데이터 포함</label>
+  </div>
+  <fieldset class="small"><legend>LLM 증류 파일</legend><div id="d-distill"></div></fieldset>
+  <div class="row">
+    <div class="field"><label for="d-col">평가 세트 컬렉션</label><select id="d-col" data-ctx="col"></select></div>
+    <div class="field"><label for="d-set">평가 세트 (거절 예시 · 누수 검사)</label><select id="d-set" data-ctx="set"></select></div>
+  </div>
+  <div class="row"><label class="row small m-0"><input type="checkbox" id="d-refuse" checked> 이 세트의 답 없는 질문으로 거절 예시 만들기</label>
+    <label class="row small m-0"><input type="checkbox" id="d-leak" checked> 이 세트와 겹치는 질문 빼기(학습 전후 비교에 쓸 세트)</label></div>
+  <div><button class="btn primary" id="d-build">모으고 거르기</button></div>
+  <div id="d-out"></div>
+</div>
+
+<div class="card stack mt-4" id="select">
+  <h2>데이터 목록 · 선별 결과 (P2)</h2>
+  <div id="d-list"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/posttrain/data.js') }}"></script>
+{% endblock %}

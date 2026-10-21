@@ -22,13 +22,13 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| P1 | [합성 데이터 생성](../stages/posttrain/p1-synth/README.md) | 🟡 기초 있음 | 큰 모델 · 규칙으로 질문 · 답 · 거절 예시를 만들어 학습 데이터를 늘린다 | [7a 지식 증류](../stages/llm/7a-distill/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | — |
-| P2 | [선별 · 누수 방지](../stages/posttrain/p2-select/README.md) | 🟡 기초 있음 | 검증을 통과한 좋은 예시만 남기고, 평가 세트의 근거가 학습에 섞이지 않게 한다 | [5 파인튜닝](../stages/llm/5-finetune/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | — |
-| P3 | [SFT (지도 미세조정)](../stages/posttrain/p3-sft/README.md) | ⬜ 예정 | 좋은 질문-답 예시로 LLM 을 추가 학습해 답 형식 · 인용 습관 · 도메인 말투를 맞춘다 | [7a 지식 증류](../stages/llm/7a-distill/README.md) | — |
-| P4 | [선호 학습 (DPO 등)](../stages/posttrain/p4-pref/README.md) | ⬜ 예정 | 좋은 답 / 나쁜 답 쌍으로 모델이 좋은 쪽을 고르도록 학습한다 | [8b 강화학습](../stages/llm/8b-rl/README.md) | — |
-| P5 | [어댑터 (LoRA) · 모델 병합](../stages/posttrain/p5-adapter/README.md) | ⬜ 예정 | 분야별 어댑터를 따로 학습해 갈아 끼우거나, 여러 모델을 합쳐 장점을 모은다 | [5 파인튜닝](../stages/llm/5-finetune/README.md) | — |
-| P6 | [후학습 평가 · 안전성](../stages/posttrain/p6-eval/README.md) | ⬜ 예정 | 학습 전후를 같은 평가 세트 · 같은 조건으로 비교하고, 안전성 회귀가 없는지 본다 | [2 RAG](../stages/llm/2-rag/README.md) · [E2 회귀 평가](../stages/evalops/e2-offline/README.md) · [G7 레드팀](../stages/guardrails/g7-redteam/README.md) | — |
-| P7 | [배포 형식 변환 (GGUF · 양자화)](../stages/posttrain/p7-export/README.md) | 🟡 기초 있음 | 학습한 모델을 GGUF 로 바꾸고 양자화해 llama-server 에 올린다 | [7b 양자화](../stages/llm/7b-quant/README.md) | — |
+| P1 | [합성 데이터 생성](../stages/posttrain/p1-synth/README.md) | ✅ 구현됨 | 큰 모델 · 규칙으로 질문 · 답 · 거절 예시를 만들어 학습 데이터를 늘린다 | [7a 지식 증류](../stages/llm/7a-distill/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | [후학습 — 데이터 · 선별 · LoRA SFT · DPO · 병합 · 학습 전후 평가 · GGUF · 실측](../stages/posttrain/p3-sft/posttrain.md) |
+| P2 | [선별 · 누수 방지](../stages/posttrain/p2-select/README.md) | ✅ 구현됨 | 검증을 통과한 좋은 예시만 남기고, 평가 세트의 근거가 학습에 섞이지 않게 한다 | [5 파인튜닝](../stages/llm/5-finetune/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | [후학습 — 데이터 · 선별 · LoRA SFT · DPO · 병합 · 학습 전후 평가 · GGUF · 실측](../stages/posttrain/p3-sft/posttrain.md) |
+| P3 | [SFT (지도 미세조정)](../stages/posttrain/p3-sft/README.md) | ✅ 구현됨 | 좋은 질문-답 예시로 LLM 을 추가 학습해 답 형식 · 인용 습관 · 도메인 말투를 맞춘다 | [7a 지식 증류](../stages/llm/7a-distill/README.md) · [5 파인튜닝](../stages/llm/5-finetune/README.md) | [후학습 — 데이터 · 선별 · LoRA SFT · DPO · 병합 · 학습 전후 평가 · GGUF · 실측](../stages/posttrain/p3-sft/posttrain.md) |
+| P4 | [선호 학습 (DPO 등)](../stages/posttrain/p4-pref/README.md) | ✅ 구현됨 | 좋은 답 / 나쁜 답 쌍으로 모델이 좋은 쪽을 고르도록 학습한다 | [8b 강화학습](../stages/llm/8b-rl/README.md) | [후학습 — 데이터 · 선별 · LoRA SFT · DPO · 병합 · 학습 전후 평가 · GGUF · 실측](../stages/posttrain/p3-sft/posttrain.md) |
+| P5 | [어댑터 (LoRA) · 모델 병합](../stages/posttrain/p5-adapter/README.md) | ✅ 구현됨 | 분야별 어댑터를 따로 학습해 갈아 끼우거나, 여러 모델을 합쳐 장점을 모은다 | [5 파인튜닝](../stages/llm/5-finetune/README.md) | [후학습 — 데이터 · 선별 · LoRA SFT · DPO · 병합 · 학습 전후 평가 · GGUF · 실측](../stages/posttrain/p3-sft/posttrain.md) |
+| P6 | [후학습 평가 · 안전성](../stages/posttrain/p6-eval/README.md) | ✅ 구현됨 | 학습 전후를 같은 평가 세트 · 같은 조건으로 비교하고, 안전성 회귀가 없는지 본다 | [2 RAG](../stages/llm/2-rag/README.md) · [E2 회귀 평가](../stages/evalops/e2-offline/README.md) · [G7 레드팀](../stages/guardrails/g7-redteam/README.md) | [후학습 — 데이터 · 선별 · LoRA SFT · DPO · 병합 · 학습 전후 평가 · GGUF · 실측](../stages/posttrain/p3-sft/posttrain.md) |
+| P7 | [배포 형식 변환 (GGUF · 양자화)](../stages/posttrain/p7-export/README.md) | ✅ 구현됨 | 학습한 모델을 GGUF 로 바꾸고 양자화해 llama-server 에 올린다 | [7b 양자화](../stages/llm/7b-quant/README.md) | [후학습 — 데이터 · 선별 · LoRA SFT · DPO · 병합 · 학습 전후 평가 · GGUF · 실측](../stages/posttrain/p3-sft/posttrain.md) |
 
 ## 설계 원칙
 
