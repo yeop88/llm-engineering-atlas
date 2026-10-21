@@ -22,6 +22,7 @@ from app.stages.agent import api as agent_api  # noqa: E402
 from app.stages.analytics import api as analytics_api  # noqa: E402
 from app.stages.apps import api as apps_api  # noqa: E402
 from app.stages.as_service import api as as_api  # noqa: E402
+from app.stages.coding import api as coding_api  # noqa: E402
 from app.stages.compliance import api as compliance_api  # noqa: E402
 from app.stages.context import api as context_api  # noqa: E402
 from app.stages.conversation import api as conversation_api  # noqa: E402
@@ -154,6 +155,7 @@ for module in (
     reasoning_api,  # 추론 모델 — 생각 예산 · 라우팅 · 여러 번 풀기 · 검증기 · 생각 검사 · 추론 증류
     context_api,  # 컨텍스트 엔지니어링 — 배치 · 긴 맥락 vs RAG · 압축 · 캐시 · 노트 · 오염 방지
     analytics_api,  # 데이터 분석 · Text-to-SQL — 스키마 연결 · 의미 계층 · 실행 검증 · 해석 · 권한 · 실행 정확도
+    coding_api,  # 코딩 에이전트 — 코드 검색 · 계획 · 패치 · 테스트 실행 · 리뷰 · 해결률
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

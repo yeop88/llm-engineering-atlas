@@ -52,6 +52,7 @@ def test_dependency_direction():
         "reasoning": 298,  # 추론 맵은 RLVR 과제 · 환경 · 후학습 데이터 · 가드레일 검사를 쓴다
         "context": 299,  # 컨텍스트 맵은 RAG 검색 · 채점(evaluate_one)을 쓴다
         "analytics": 299,  # 분석 맵은 RAG 채점 도구(글자 n-gram) · LLM 만 쓴다
+        "coding": 299,  # 코딩 맵은 RAG 의 BM25 와 LLM 만 쓴다(작업 공간은 저장소 복사본)
         "serving": 295,  # 서빙 실측은 양자화(7b) 채점 · 검색 향상 캐시 · 임베딩 관리자를 쓴다(플랫폼보다 앞 — 플랫폼이 서빙을 감쌈)
         "platform": 300,  # 플랫폼은 운영 시스템의 바깥 틀(게이트웨이 · 테넌트 · 플래그) — 연결 계층이 부르는 것만 단계 로직에
     }

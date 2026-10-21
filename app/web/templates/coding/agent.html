@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}코딩 에이전트{% endblock %}
+{% block content %}
+{% call ui.page_header("코딩 에이전트") %}테스트가 부르는 모듈의 함수에 작은 돌연변이(비교 뒤집기 · and/or · 상수 ±1)를 넣고, 테스트가 실제로 실패하는 것만 과제로 둡니다 — 학습 데이터에 섞였을 수 없는 과제입니다(CD6). 에이전트는 실패 출력과 코드 검색으로 계획을 세우고(CD2), 한 걸음에 도구 하나씩 찾기 · 읽기 · 정확한 문자열 교체(CD3) · 테스트 실행(CD4)을 하며, 고칠 때마다 테스트 결과를 다음 걸음에 받습니다. 모든 일은 저장소 복사본(작업 공간)에서만 하고, 테스트 파일은 고칠 수 없습니다.{% endcall %}
+
+<div class="card stack" id="plan">
+  <h2>깬 코드 과제 (CD6)</h2>
+  <div class="row">
+    <div class="field"><label for="t-name">과제 이름</label><input id="t-name" value="mut-1" class="w-md"></div>
+    <div class="field"><label for="t-n">과제 수</label><input id="t-n" type="number" value="10" min="1" class="w-md"></div>
+    <div class="field grow"><label for="t-tests">대상 테스트 (쉼표)</label><input id="t-tests" class="mono"></div>
+    <div class="self-end"><button class="btn" id="t-build">만들기</button></div>
+    <div class="self-end"><button class="btn" id="t-refresh">복사본 새로</button></div>
+  </div>
+  <div id="t-progress" hidden></div>
+  <div id="t-out"></div>
+</div>
+
+<div class="card stack mt-4" id="patch">
+  <h2>에이전트 실행 (CD2 · CD3 · CD4)</h2>
+  <div class="row">
+    <div class="field"><label for="r-tasks">과제</label><select id="r-tasks"></select></div>
+    <div class="field"><label for="r-ids">과제 번호 (쉼표, 비우면 모두)</label><input id="r-ids" class="w-md" placeholder="c1, c2"></div>
+    <div class="field"><label for="r-steps">걸음 상한</label><input id="r-steps" type="number" value="12" min="1" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="r-llm-review"> LLM 리뷰</label>
+  </div>
+  <div class="row">
+    <div class="field"><label for="r-provider">제공자</label><select id="r-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="r-model">모델</label><input id="r-model" data-ctx="model"></div>
+    <div class="self-end"><button class="btn primary" id="r-run">실행</button></div>
+  </div>
+  <div id="r-progress" hidden></div>
+  <div id="r-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/coding/agent.js') }}"></script>
+{% endblock %}

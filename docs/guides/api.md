@@ -474,6 +474,17 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 코딩 에이전트 (`/api/coding`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/coding/overview` | 깬 코드 과제 목록 · 기본 대상 테스트 · 색인한 함수 수 |
+| POST | `/api/coding/refresh` | 작업 공간 원본을 저장소 지금 상태로 다시(관리자) |
+| POST | `/api/coding/search` · `/search/eval` | 코드 검색 `{"query", "method": "bm25"\|"symbol"\|"graph", "k"}` / 깬 코드 과제로 방법별 hit@k · MRR `{"tasks", "k"}` |
+| POST / GET | `/api/coding/tasks` · `/tasks/{name}` | 깬 코드 과제 만들기 작업(관리자) `{"name", "tests", "n", "seed"}` → 과제 · 시도 · 살아남은 돌연변이 / 과제 보기 |
+| POST | `/api/coding/run` | 에이전트 실행 작업(관리자) `{"tasks", "ids", "max_steps", "llm_review", "provider", "model"}` → 해결률 · 걸음 · 토큰 · diff · 리뷰 지적 |
+| POST | `/api/coding/review` · `/review/eval` | diff 검사 `{"diff", "use_llm"}` / 좋은 · 나쁜 diff 로 규칙 · LLM 리뷰 정밀도 · 재현율 |
+
 ## 데이터 분석 · Text-to-SQL (`/api/analytics`)
 
 | 메서드 | 경로 | 설명 |

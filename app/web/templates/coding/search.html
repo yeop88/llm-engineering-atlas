@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}코드 검색{% endblock %}
+{% block content %}
+{% call ui.page_header("코드 검색") %}저장소 복사본의 코드를 함수 · 클래스 단위로 나눠 찾습니다. BM25 는 식별자를 snake_case · CamelCase 로 쪼갠 낱말로, 기호 일치는 질문에 나온 함수 이름 · 파일 경로에 크게 더하고, 호출 그래프는 실패한 테스트가 부른 함수와 그 함수가 부르는 함수를 이웃으로 더합니다. 깬 코드 과제의 이슈(실패한 테스트 출력)로 찾아 깨뜨린 함수가 상위 k 안에 있는지 방법별로 잽니다(CD1).{% endcall %}
+
+<div class="card stack" id="search">
+  <h2>찾기 (CD1)</h2>
+  <div id="s-info" class="small muted"></div>
+  <div class="row">
+    <div class="field grow"><label for="s-q">질문 · 실패 출력</label><input id="s-q" value="restore_terms 가 'WM-200인데요' 를 복원하지 못함"></div>
+    <div class="field"><label for="s-method">방법</label><select id="s-method"><option value="graph">BM25 + 기호 + 호출 그래프</option><option value="symbol">BM25 + 기호</option><option value="bm25">BM25 만</option></select></div>
+    <div class="self-end"><button class="btn primary" id="s-run">찾기</button></div>
+  </div>
+  <div id="s-out"></div>
+</div>
+
+<div class="card stack mt-4" id="search-eval">
+  <h2>검색 정확도 (CD1)</h2>
+  <div class="row">
+    <div class="field"><label for="e-tasks">깬 코드 과제</label><select id="e-tasks" data-tasks></select></div>
+    <div class="field"><label for="e-k">k</label><input id="e-k" type="number" value="5" min="1" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="e-run">방법별 hit@k</button></div>
+  </div>
+  <div id="e-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/coding/search.js') }}"></script>
+{% endblock %}

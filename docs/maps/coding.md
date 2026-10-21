@@ -22,12 +22,12 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| CD1 | [코드 검색 · 저장소 이해](../stages/coding/cd1-index/README.md) | ⬜ 예정 | 함수 · 파일 단위로 나누고 기호 · 호출 관계로 관련 코드를 찾는다 | [2 RAG](../stages/llm/2-rag/README.md) · [K3 추출](../stages/knowledge-graph/k3-extract/README.md) | — |
-| CD2 | [작업 계획](../stages/coding/cd2-plan/README.md) | ⬜ 예정 | 이슈를 바꿀 파일 · 단계 · 확인할 테스트로 나눈다 | [LR1 목표 분해](../stages/longrun/lr1-goal/README.md) | — |
-| CD3 | [수정 · 패치](../stages/coding/cd3-patch/README.md) | ⬜ 예정 | 정확한 문자열 교체 · diff 로 고치고 형식 검사를 통과시킨다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | — |
-| CD4 | [테스트 실행 · 고치기](../stages/coding/cd4-test/README.md) | ⬜ 예정 | 샌드박스에서 테스트를 돌려 실패 출력으로 다시 고친다 | [IO2 샌드박스](../stages/interop/io2-sandbox/README.md) | — |
-| CD5 | [리뷰 · 보안 검사](../stages/coding/cd5-review/README.md) | ⬜ 예정 | 비밀 · 위험 함수 · 구조 규칙을 검사하고 LLM 이 리뷰한다 | [G4 출력 검사](../stages/guardrails/g4-output/README.md) · [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) | — |
-| CD6 | [해결률 평가](../stages/coding/cd6-eval/README.md) | ⬜ 예정 | 일부러 깬 코드와 테스트로 과제를 만들어 해결률 · 걸음 · 토큰을 잰다 | [RV1 과제 설계](../stages/rlvr/rv1-tasks/README.md) · [E2 회귀 평가](../stages/evalops/e2-offline/README.md) | — |
+| CD1 | [코드 검색 · 저장소 이해](../stages/coding/cd1-index/README.md) | ✅ 구현됨 | 함수 · 파일 단위로 나누고 기호 · 호출 관계로 관련 코드를 찾는다 | [2 RAG](../stages/llm/2-rag/README.md) · [K3 추출](../stages/knowledge-graph/k3-extract/README.md) | [코딩 에이전트 — 코드 검색 · 깬 코드 과제 · 계획 · 패치 · 테스트 주도 고치기 · 리뷰 · 해결률 · 실측](../stages/coding/cd1-index/coding.md) |
+| CD2 | [작업 계획](../stages/coding/cd2-plan/README.md) | ✅ 구현됨 | 이슈를 바꿀 파일 · 단계 · 확인할 테스트로 나눈다 | [LR1 목표 분해](../stages/longrun/lr1-goal/README.md) | [코딩 에이전트 — 코드 검색 · 깬 코드 과제 · 계획 · 패치 · 테스트 주도 고치기 · 리뷰 · 해결률 · 실측](../stages/coding/cd1-index/coding.md) |
+| CD3 | [수정 · 패치](../stages/coding/cd3-patch/README.md) | ✅ 구현됨 | 정확한 문자열 교체 · diff 로 고치고 형식 검사를 통과시킨다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | [코딩 에이전트 — 코드 검색 · 깬 코드 과제 · 계획 · 패치 · 테스트 주도 고치기 · 리뷰 · 해결률 · 실측](../stages/coding/cd1-index/coding.md) |
+| CD4 | [테스트 실행 · 고치기](../stages/coding/cd4-test/README.md) | ✅ 구현됨 | 샌드박스에서 테스트를 돌려 실패 출력으로 다시 고친다 | [IO2 샌드박스](../stages/interop/io2-sandbox/README.md) | [코딩 에이전트 — 코드 검색 · 깬 코드 과제 · 계획 · 패치 · 테스트 주도 고치기 · 리뷰 · 해결률 · 실측](../stages/coding/cd1-index/coding.md) |
+| CD5 | [리뷰 · 보안 검사](../stages/coding/cd5-review/README.md) | ✅ 구현됨 | 비밀 · 위험 함수 · 구조 규칙을 검사하고 LLM 이 리뷰한다 | [G4 출력 검사](../stages/guardrails/g4-output/README.md) · [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) | [코딩 에이전트 — 코드 검색 · 깬 코드 과제 · 계획 · 패치 · 테스트 주도 고치기 · 리뷰 · 해결률 · 실측](../stages/coding/cd1-index/coding.md) |
+| CD6 | [해결률 평가](../stages/coding/cd6-eval/README.md) | ✅ 구현됨 | 일부러 깬 코드와 테스트로 과제를 만들어 해결률 · 걸음 · 토큰을 잰다 | [RV1 과제 설계](../stages/rlvr/rv1-tasks/README.md) · [E2 회귀 평가](../stages/evalops/e2-offline/README.md) | [코딩 에이전트 — 코드 검색 · 깬 코드 과제 · 계획 · 패치 · 테스트 주도 고치기 · 리뷰 · 해결률 · 실측](../stages/coding/cd1-index/coding.md) |
 
 ## 설계 원칙
 

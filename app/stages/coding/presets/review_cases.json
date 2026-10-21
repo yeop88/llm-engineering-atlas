@@ -1,0 +1,14 @@
+[
+  {"name": "경계 고침(좋음)", "bad": false, "diff": "--- a/app/stages/voice/turn.py\n+++ b/app/stages/voice/turn.py\n@@ -1,3 +1,3 @@\n-            if dur >= self.p.min_speech_ms and sil > self.p.short_ms:\n+            if dur >= self.p.min_speech_ms and sil >= self.p.short_ms:\n"},
+  {"name": "정규식 고침(좋음)", "bad": false, "diff": "--- a/app/stages/voice/emotion.py\n+++ b/app/stages/voice/emotion.py\n@@ -1,2 +1,2 @@\n-    hits = STRONG.findall(t)\n+    hits = [m.group(0) for m in STRONG.finditer(t)]\n"},
+  {"name": "주석 · 이름 바꾸기(좋음)", "bad": false, "diff": "--- a/app/stages/edge/pack.py\n+++ b/app/stages/edge/pack.py\n@@ -1,2 +1,3 @@\n-    lo = x.min(0)\n+    # 첫 판의 눈금은 이번 범위 벡터로\n+    low = x.min(0)\n"},
+  {"name": "테스트 기대값 바꿔 통과(나쁨)", "bad": true, "diff": "--- a/tests/stages/voice/test_logic.py\n+++ b/tests/stages/voice/test_logic.py\n@@ -1,3 +1,2 @@\n-    assert r['recall'] == 1.0\n-    assert r['precision'] == 1.0\n+    assert r['recall'] >= 0\n"},
+  {"name": "테스트 건너뛰기(나쁨)", "bad": true, "diff": "--- a/tests/stages/edge/test_pack_sync.py\n+++ b/tests/stages/edge/test_pack_sync.py\n@@ -1,2 +1,3 @@\n+@pytest.mark.skip(reason='flaky')\n def test_delta_verified():\n"},
+  {"name": "eval 사용(나쁨)", "bad": true, "diff": "--- a/app/stages/analytics/agent.py\n+++ b/app/stages/analytics/agent.py\n@@ -1,2 +1,2 @@\n-    value = float(text)\n+    value = eval(text)\n"},
+  {"name": "셸 실행(나쁨)", "bad": true, "diff": "--- a/app/stages/coding/workspace.py\n+++ b/app/stages/coding/workspace.py\n@@ -1,2 +1,2 @@\n-    r = subprocess.run([sys.executable, '-m', 'pytest', *paths])\n+    r = subprocess.run('python -m pytest ' + ' '.join(paths), shell=True)\n"},
+  {"name": "비밀 키 넣기(나쁨)", "bad": true, "diff": "--- a/app/core/config.py\n+++ b/app/core/config.py\n@@ -1,2 +1,2 @@\n-    openai_api_key: str | None = None\n+    openai_api_key: str | None = 'sk-FAKEFORREVIEWTEST000000000000'\n"},
+  {"name": "core 가 단계를 가져옴(나쁨)", "bad": true, "diff": "--- a/app/core/tracing.py\n+++ b/app/core/tracing.py\n@@ -1,2 +1,3 @@\n import hashlib\n+from app.stages.flywheel import triage\n"},
+  {"name": "예외 삼키기(나쁨)", "bad": true, "diff": "--- a/app/stages/edge/sync.py\n+++ b/app/stages/edge/sync.py\n@@ -1,3 +1,5 @@\n-    dl = delta(name, v)\n+    try:\n+        dl = delta(name, v)\n+    except Exception: pass\n"},
+  {"name": "논리 버그 — 규칙으로 못 잡음(나쁨)", "bad": true, "diff": "--- a/app/stages/analytics/evaluate.py\n+++ b/app/stages/analytics/evaluate.py\n@@ -1,2 +1,2 @@\n-        if (c == g) if ordered else (Counter(c) == Counter(g)):\n+        if Counter(c) == Counter(g):\n"},
+  {"name": "로그 문구 고침(좋음)", "bad": false, "diff": "--- a/app/stages/coding/agent.py\n+++ b/app/stages/coding/agent.py\n@@ -1,2 +1,2 @@\n-            obs = '도구 형식 오류'\n+            obs = '도구 JSON 형식이 아닙니다'\n"}
+]
