@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}기록 압축 · 노트{% endblock %}
+{% block content %}
+{% call ui.page_header("기록 압축 · 노트") %}긴 작업을 흉내 낸 기록 — 하위 질문 여러 개의 도구 결과가 쌓인 뒤, 처음 단계에서 본 사실을 묻습니다. 오래된 결과를 그대로 두기 · 지우기 · LLM 으로 요약하기 · 노트(그 단계에서 알게 된 문장)만 남기기를 같은 질문으로 비교해, 압축이 무엇을 잃는지 정답률 · 맥락 글자 수 · 시간으로 봅니다(CX3). 노트는 외부 메모리로도 씁니다 — 에이전트가 세션마다 노트를 적고, 필요할 때 질문과 겹치는 노트만 다시 읽습니다(CX5).{% endcall %}
+
+<div class="card stack" id="compact">
+  <h2>압축 방법 비교 (CX3)</h2>
+  <div class="row">
+    <div class="field"><label for="k-col">컬렉션</label><select id="k-col" data-ctx="col"></select></div>
+    <div class="field"><label for="k-set">평가 세트</label><select id="k-set" data-ctx="set"></select></div>
+    <div class="field"><label for="k-n">질문 수</label><input id="k-n" type="number" value="20" min="1" class="w-md"></div>
+    <div class="field"><label for="k-provider">제공자</label><select id="k-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="k-model">모델</label><input id="k-model" data-ctx="model"></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="k-steps">기록 단계 수</label><input id="k-steps" type="number" value="6" min="2" class="w-md"></div>
+    <div class="field"><label for="k-keep">남길 최근 단계</label><input id="k-keep" type="number" value="2" min="0" class="w-md"></div>
+    <div class="field"><label for="k-gold">정답 단계 위치 (0 = 처음)</label><input id="k-gold" type="number" value="0" min="0" class="w-md"></div>
+    <div class="field"><label for="k-chars">맥락 글자 한도</label><input id="k-chars" type="number" value="6000" min="500" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="k-run">비교</button></div>
+  </div>
+  <div id="k-progress" hidden></div>
+  <div id="k-out"></div>
+</div>
+
+<div class="card stack mt-4" id="memory">
+  <h2>외부 메모리 · 노트 (CX5)</h2>
+  <div class="row">
+    <div class="field"><label for="n-session">세션</label><input id="n-session" value="demo" class="w-md"></div>
+    <div class="field grow"><label for="n-text">노트</label><input id="n-text" value="WM-200 E4 는 배수 필터 막힘 — 필터 청소 후 해결됨"></div>
+    <div class="field"><label for="n-source">출처</label><input id="n-source" value="2단계 검색" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="n-add">적기</button></div>
+  </div>
+  <div class="row">
+    <div class="field grow"><label for="n-q">질문과 겹치는 노트 읽기</label><input id="n-q" placeholder="비우면 모두"></div>
+    <div class="self-end"><button class="btn" id="n-read">읽기</button></div>
+    <div class="self-end"><button class="btn danger" id="n-clear">세션 노트 지우기</button></div>
+  </div>
+  <div id="n-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/context/compact.js') }}"></script>
+{% endblock %}

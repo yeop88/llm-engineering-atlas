@@ -22,12 +22,12 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| CX1 | [맥락 예산 · 배치](../stages/context/cx1-budget/README.md) | ⬜ 예정 | 시스템 · 대화 · 근거 · 도구 결과의 몫과 순서를 정하고 위치별 정답률을 잰다 | [S2 근거 길이](../stages/serving/s2-context/README.md) | — |
-| CX2 | [긴 맥락 vs RAG](../stages/context/cx2-long/README.md) | ⬜ 예정 | 문서를 통째로 넣는 것과 검색 근거를 넣는 것을 같은 질문으로 비교한다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
-| CX3 | [도구 결과 · 기록 압축](../stages/context/cx3-compact/README.md) | ⬜ 예정 | 오래된 도구 결과 · 대화를 지우거나 요약해 맥락을 비운다 | [C5 대화 압축](../stages/conversation/c5-compress/README.md) · [LR3 체크포인트](../stages/longrun/lr3-state/README.md) | — |
-| CX4 | [프롬프트 캐시](../stages/context/cx4-cache/README.md) | ⬜ 예정 | 바뀌지 않는 앞부분을 캐시해 읽기 시간 · 비용을 줄인다 | [S1 캐시](../stages/serving/s1-cache/README.md) | — |
-| CX5 | [외부 메모리 · 노트](../stages/context/cx5-memory/README.md) | ⬜ 예정 | 에이전트가 노트에 적어 두고 필요할 때 다시 읽는다 | [C3 대화 메모리](../stages/conversation/c3-memory/README.md) | — |
-| CX6 | [맥락 오염 방지](../stages/context/cx6-hygiene/README.md) | ⬜ 예정 | 틀린 중간 결과 · 낡은 정보 · 숨은 지시가 맥락에 남지 않게 한다 | [G1 입력 방어](../stages/guardrails/g1-injection/README.md) | — |
+| CX1 | [맥락 예산 · 배치](../stages/context/cx1-budget/README.md) | ✅ 구현됨 | 시스템 · 대화 · 근거 · 도구 결과의 몫과 순서를 정하고 위치별 정답률을 잰다 | [S2 근거 길이](../stages/serving/s2-context/README.md) | [컨텍스트 엔지니어링 — 배치 · 바늘 위치 · 긴 맥락 vs RAG · 압축 · 캐시 · 노트 · 오염 방지 · 실측](../stages/context/cx1-budget/context.md) |
+| CX2 | [긴 맥락 vs RAG](../stages/context/cx2-long/README.md) | ✅ 구현됨 | 문서를 통째로 넣는 것과 검색 근거를 넣는 것을 같은 질문으로 비교한다 | [2 RAG](../stages/llm/2-rag/README.md) | [컨텍스트 엔지니어링 — 배치 · 바늘 위치 · 긴 맥락 vs RAG · 압축 · 캐시 · 노트 · 오염 방지 · 실측](../stages/context/cx1-budget/context.md) |
+| CX3 | [도구 결과 · 기록 압축](../stages/context/cx3-compact/README.md) | ✅ 구현됨 | 오래된 도구 결과 · 대화를 지우거나 요약해 맥락을 비운다 | [C5 대화 압축](../stages/conversation/c5-compress/README.md) · [LR3 체크포인트](../stages/longrun/lr3-state/README.md) | [컨텍스트 엔지니어링 — 배치 · 바늘 위치 · 긴 맥락 vs RAG · 압축 · 캐시 · 노트 · 오염 방지 · 실측](../stages/context/cx1-budget/context.md) |
+| CX4 | [프롬프트 캐시](../stages/context/cx4-cache/README.md) | ✅ 구현됨 | 바뀌지 않는 앞부분을 캐시해 읽기 시간 · 비용을 줄인다 | [S1 캐시](../stages/serving/s1-cache/README.md) | [컨텍스트 엔지니어링 — 배치 · 바늘 위치 · 긴 맥락 vs RAG · 압축 · 캐시 · 노트 · 오염 방지 · 실측](../stages/context/cx1-budget/context.md) |
+| CX5 | [외부 메모리 · 노트](../stages/context/cx5-memory/README.md) | ✅ 구현됨 | 에이전트가 노트에 적어 두고 필요할 때 다시 읽는다 | [C3 대화 메모리](../stages/conversation/c3-memory/README.md) | [컨텍스트 엔지니어링 — 배치 · 바늘 위치 · 긴 맥락 vs RAG · 압축 · 캐시 · 노트 · 오염 방지 · 실측](../stages/context/cx1-budget/context.md) |
+| CX6 | [맥락 오염 방지](../stages/context/cx6-hygiene/README.md) | ✅ 구현됨 | 틀린 중간 결과 · 낡은 정보 · 숨은 지시가 맥락에 남지 않게 한다 | [G1 입력 방어](../stages/guardrails/g1-injection/README.md) | [컨텍스트 엔지니어링 — 배치 · 바늘 위치 · 긴 맥락 vs RAG · 압축 · 캐시 · 노트 · 오염 방지 · 실측](../stages/context/cx1-budget/context.md) |
 
 ## 설계 원칙
 

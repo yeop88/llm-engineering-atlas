@@ -474,6 +474,20 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 컨텍스트 엔지니어링 (`/api/context`)
+
+모든 실험 요청은 `{"eval_set_id", "max_queries", "top_k", "max_chars", "max_tokens", "provider", "model", "seed"}` 를 함께 받습니다.
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/context/options` | 배치 · 압축 방법 · 오염 막는 방법 이름 |
+| POST | `/api/context/layout` | 배치 작업 `{… "orders", "needle", "needle_k", "positions"}` → 배치별 · 정답 위치별 정답률 · 입력 토큰 · 시간 |
+| POST | `/api/context/long` | 긴 맥락 vs RAG 작업 `{… "limits"}` → RAG · 한도별 통째로의 정답률 · 정답 문서 들어감 |
+| POST | `/api/context/cache` | 프롬프트 캐시 작업 `{… "groups", "per_group"}` → 근거 앞 / 질문 앞의 재사용 비율 · 읽기 시간(llama-server) |
+| POST | `/api/context/compact` | 기록 압축 작업 `{… "strategies", "steps", "keep", "gold_at"}` → 방법별 정답률 · 맥락 글자 · 시간 |
+| GET / POST / DELETE | `/api/context/notes/{session}` | 노트 읽기 `?q=&k=`(질문과 겹치는 노트만) / 쓰기 `{"text", "tags", "source"}` / 지우기 |
+| POST | `/api/context/hygiene` | 맥락 오염 작업 `{… "mitigations"}` → 막는 방법별 오염률 · 정답률 |
+
 ## 추론 모델 (`/api/reasoning`)
 
 | 메서드 | 경로 | 설명 |

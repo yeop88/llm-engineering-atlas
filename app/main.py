@@ -22,6 +22,7 @@ from app.stages.agent import api as agent_api  # noqa: E402
 from app.stages.apps import api as apps_api  # noqa: E402
 from app.stages.as_service import api as as_api  # noqa: E402
 from app.stages.compliance import api as compliance_api  # noqa: E402
+from app.stages.context import api as context_api  # noqa: E402
 from app.stages.conversation import api as conversation_api  # noqa: E402
 from app.stages.distill import api as distill_api  # noqa: E402
 from app.stages.docintel import api as docintel_api  # noqa: E402
@@ -150,6 +151,7 @@ for module in (
     edge_api,  # 온디바이스 · 엣지 — 기기 추천 · 기기용 팩 · 오프라인 · 동기화 · 국소 개인정보 처리
     voice_api,  # 실시간 음성 상담 — 인식 · 턴 관리 · 짧은 지연 RAG · 합성 · 감정 · 상담원 보조 · 통화 요약
     reasoning_api,  # 추론 모델 — 생각 예산 · 라우팅 · 여러 번 풀기 · 검증기 · 생각 검사 · 추론 증류
+    context_api,  # 컨텍스트 엔지니어링 — 배치 · 긴 맥락 vs RAG · 압축 · 캐시 · 노트 · 오염 방지
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

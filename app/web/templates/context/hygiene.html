@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}맥락 오염 방지{% endblock %}
+{% block content %}
+{% call ui.page_header("맥락 오염 방지") %}맥락에 들어간 틀린 중간 결과는 다음 답의 근거가 됩니다. 정답 근거에 수가 있는 질문마다, 그 수를 바꾼 '틀린 이전 단계 결과'를 하나 넣고 답이 그 틀린 수를 따르는지(오염률)와 정답률을 잽니다. 그대로 섞기 · 출처와 '검증 실패' 표시 붙이기 · 검증에 떨어진 결과 빼기 · 원문 근거를 앞에 두고 이전 결과는 뒤에 '참고'로 두기를 비교해, 표시만으로 막히는지 빼야만 막히는지 봅니다(CX6).{% endcall %}
+
+<div class="card stack" id="hygiene">
+  <h2>오염 시험 (CX6)</h2>
+  <div class="row">
+    <div class="field"><label for="h-col">컬렉션</label><select id="h-col" data-ctx="col"></select></div>
+    <div class="field"><label for="h-set">평가 세트</label><select id="h-set" data-ctx="set"></select></div>
+    <div class="field"><label for="h-n">질문 수</label><input id="h-n" type="number" value="30" min="1" class="w-md"></div>
+    <div class="field"><label for="h-provider">제공자</label><select id="h-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="h-model">모델</label><input id="h-model" data-ctx="model"></div>
+    <div class="self-end"><button class="btn primary" id="h-run">시험</button></div>
+  </div>
+  <div id="h-progress" hidden></div>
+  <div id="h-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/context/hygiene.js') }}"></script>
+{% endblock %}

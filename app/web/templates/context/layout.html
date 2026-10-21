@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}맥락 배치 · 긴 맥락 · 캐시{% endblock %}
+{% block content %}
+{% call ui.page_header("맥락 배치 · 긴 맥락 · 캐시") %}같은 평가 질문 · 같은 채점(정답 근거를 인용했나)으로 맥락만 바꿔 봅니다. 근거를 관련도 순 · 역순 · 샌드위치로 넣어 비교하고, 정답 근거 하나를 다른 근거 사이 위치별로 넣어 중간을 놓치는지 잽니다(CX1). 검색 근거 대신 정답 문서를 통째로 다른 문서들과 섞어 넣는 '긴 맥락'을 글자 한도별로 비교합니다(CX2). 같은 근거로 질문을 연달아 할 때 근거를 앞에 두는지 · 질문을 앞에 두는지에 따라 서버가 다시 읽는 토큰을 셉니다(CX4).{% endcall %}
+
+<div class="card stack">
+  <div class="row">
+    <div class="field"><label for="l-col">컬렉션</label><select id="l-col" data-ctx="col"></select></div>
+    <div class="field"><label for="l-set">평가 세트</label><select id="l-set" data-ctx="set"></select></div>
+    <div class="field"><label for="l-n">질문 수</label><input id="l-n" type="number" value="20" min="1" class="w-md"></div>
+    <div class="field"><label for="l-provider">제공자</label><select id="l-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="l-model">모델</label><input id="l-model" data-ctx="model"></div>
+  </div>
+</div>
+
+<div class="card stack mt-4" id="order">
+  <h2>배치 · 바늘 위치 (CX1)</h2>
+  <div class="row">
+    <div class="field"><label for="o-k">근거 수</label><input id="o-k" type="number" value="6" min="2" class="w-md"></div>
+    <div class="field"><label for="o-pos">정답 위치 (쉼표, 0부터)</label><input id="o-pos" value="0, 2, 5" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="o-needle" checked> 바늘 위치</label>
+    <div class="self-end"><button class="btn primary" id="o-run">비교</button></div>
+  </div>
+  <div id="o-progress" hidden></div>
+  <div id="o-out"></div>
+</div>
+
+<div class="card stack mt-4" id="long">
+  <h2>긴 맥락 vs RAG (CX2)</h2>
+  <div class="row">
+    <div class="field grow"><label for="g-limits">통째로 넣을 글자 한도 (쉼표)</label><input id="g-limits" value="4000, 12000, 24000" class="mono"></div>
+    <div class="self-end"><button class="btn primary" id="g-run">비교</button></div>
+  </div>
+  <div id="g-progress" hidden></div>
+  <div id="g-out"></div>
+</div>
+
+<div class="card stack mt-4" id="cache">
+  <h2>프롬프트 캐시 (CX4)</h2>
+  <div class="row">
+    <div class="field"><label for="c-groups">근거 묶음 수</label><input id="c-groups" type="number" value="4" min="1" class="w-md"></div>
+    <div class="field"><label for="c-per">묶음당 질문</label><input id="c-per" type="number" value="3" min="2" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="c-run">재기</button></div>
+  </div>
+  <p class="small muted">llama-server 가 돌려주는 단계별 시간(다시 읽은 토큰)으로 셉니다 — 그 밖의 서버는 비어 있습니다.</p>
+  <div id="c-progress" hidden></div>
+  <div id="c-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/context/layout.js') }}"></script>
+{% endblock %}

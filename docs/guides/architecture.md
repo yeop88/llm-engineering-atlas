@@ -63,6 +63,8 @@ app/
                        reward(항목별 보상 · 해킹 감시) · policy(GRPO, posttrain.trainer 를 씀)
     edge/              온디바이스 · 엣지 맵(ED1~ED6): devices(기기 프로필 · 조합 추천) · pack(기기용 팩 · 압축 · 정확 검색 · 평가) ·
                        offline(기능 범위 · 미룸) · sync(판 증분 · 지문 확인 · 기기 상태) · privacy(전송 정책 · 서버 재검사)
+    context/           컨텍스트 엔지니어링 맵(CX1~CX6): layout(배치 · 바늘 위치 · 긴 맥락 vs RAG · 프롬프트 캐시) ·
+                       compact(기록 압축 · 세션 노트) · hygiene(맥락 오염 시험 · 막는 방법)
     reasoning/         추론 모델 맵(RS1~RS6): solve(예산 강제 · 풀이 저장소) · budget(예산 곡선 · 꺾이는 점 · 생각 라우터) ·
                        select(다수결 · 검증기 고르기 · pass@n · AUROC) · trace(생각 검사 · 증류 데이터) — 과제 · 환경은 rlvr
     voice/             실시간 음성 상담 맵(VC1~VC7): audio(16kHz · 운율) · turn(말소리 감지 · 끝점 · 끼어들기) · stt(엔진 · 용어 사전 · 표기 복원 · 오류율) ·
