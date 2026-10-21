@@ -98,12 +98,13 @@ def long_context(
     """정답 문서 + 다른 문서를 한도까지. 정답 문서 위치는 임의 — 늘 앞에 두면 긴 맥락에 유리하게 기운다."""
     pool = list(others)
     rnd.shuffle(pool)
-    picked, total = [], sum(len(d["text"]) for d in gold_docs)
+    # 고를 때도 자를 때와 같은 몫(글 + 근거 머리말 40자)으로 센다 — 머리말을 빼고 고르면 합이 한도를 넘어, 정답 문서가 뒤에 놓일 때 잘려 빠졌다
+    picked, total = [], sum(len(d["text"]) + 40 for d in gold_docs)
     for d in pool:
-        if total + len(d["text"]) > limit:
+        if total + len(d["text"]) + 40 > limit:
             continue
         picked.append(d)
-        total += len(d["text"])
+        total += len(d["text"]) + 40
     for g in gold_docs:
         picked.insert(rnd.randint(0, len(picked)), g)
     # 문서 하나를 근거 하나로 — build_context 가 한도를 넘는 뒤쪽 문서를 빼므로 정답 문서가 실제로 들어갔는지 다시 센다
