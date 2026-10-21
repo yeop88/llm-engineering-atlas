@@ -99,7 +99,8 @@ def probe_scores(rows: list[dict[str, Any]], layer: int) -> list[float]:
     x = np.array([r["hidden"][layer] for r in rows], dtype=np.float32)
     s = np.zeros(len(rows))
     idx = np.arange(len(rows))
-    for part in (idx % 2 == 0, idx % 2 == 1):
+    # 질문(짝) 단위로 나눈다 — 자료는 '있음 · 뺌'이 번갈아 쌓여, 짝수 · 홀수 번째로 나누면 한 갈래에 한 종류만 남아 학습이 안 된다
+    for part in ((idx // 2) % 2 == 0, (idx // 2) % 2 == 1):
         clf = LogisticRegression(max_iter=2000, C=0.5).fit(x[~part], y[~part])
         s[part] = clf.predict_proba(x[part])[:, 1]
     return s.tolist()
