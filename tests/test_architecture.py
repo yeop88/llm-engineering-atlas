@@ -32,6 +32,7 @@ def test_dependency_direction():
     # 운영 맵 패키지는 LLM 맵의 단계 뒤: 문서 처리 → 보안 · 가드레일 → 평가 · 관측 → 서비스 시나리오(AS 는 앞의 셋을 쓴다)
     # 대화 · 메모리는 가드레일(개인정보 가리기) 뒤, AS(후속 질문 재작성에 씀) 앞
     # 지식 그래프는 RAG 검색 · 임베딩 · 가드레일 위에 그래프를 얹는다
+    # 규제 대응 → 상호운용 → 장기 실행 → 멀티에이전트 → 플라이휠: 뒤 맵이 앞 맵의 기록 · 샌드박스 · 검증을 쓴다
     order |= {
         "docintel": 200,
         "guardrails": 210,
@@ -43,6 +44,7 @@ def test_dependency_direction():
         "interop": 260,
         "longrun": 270,
         "multiagent": 280,
+        "flywheel": 290,  # 플라이휠은 평가 · 가드레일 · 서빙 기록을 순환으로 묶는다 — 앞의 운영 맵을 모두 쓴다
     }
     # registry 는 단계가 아니라 맵 · 단계의 설명 데이터 — 아래 test_registry_is_data_only 에서 따로 본다
     stage_dirs = {p.name for p in (APP / "stages").iterdir() if p.is_dir() and not p.name.startswith("_") and p.name != "registry"}

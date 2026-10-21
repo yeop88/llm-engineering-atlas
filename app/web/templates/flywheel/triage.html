@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}실패 분류 · 처방{% endblock %}
+{% block content %}
+{% call ui.page_header("실패 분류 · 처방") %}서비스 요청 기록(FW1)을 실패 유형(검색 실패 · 인용 실패 · 질문과 상관없는 답 · 과도한 거절 · 정책 · 형식 오류 · 확신도 낮은 답)으로 자동 분류하고 날짜별 추이를 봅니다(FW2). 많이 나온 유형부터, 고칠 곳을 싼 것부터(설정 · 규칙 → 평가 세트 → 재색인 → 재학습) 추천합니다(FW5).{% endcall %}
+
+<div class="card stack" id="logs">
+  <h2>서비스 로그 (FW1)</h2>
+  <div class="row">
+    <div class="field"><label for="f-col">컬렉션 (비우면 모두)</label><select id="f-col"><option value="">모두</option></select></div>
+    <div class="field"><label for="f-days">기간(일)</label><input id="f-days" type="number" value="30" min="1" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="f-load">다시 보기</button></div>
+  </div>
+  <div id="f-logs" class="small"></div>
+</div>
+
+<div class="card stack mt-4" id="triage">
+  <h2>실패 유형 · 추이 (FW2)</h2>
+  <div id="f-cats"></div>
+  <div id="f-trend-box" hidden><canvas id="f-trend" role="img" aria-label="날짜별 실패 유형 추이"></canvas></div>
+  <div id="f-trend-table"></div>
+</div>
+
+<div class="card stack mt-4" id="retrain">
+  <h2>처방 — 싼 것부터 (FW5)</h2>
+  <div id="f-rx"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"
+        integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', path='js/flywheel/triage.js') }}"></script>
+{% endblock %}

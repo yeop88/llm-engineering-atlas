@@ -51,6 +51,8 @@ app/
                        runner(실행 · 체크포인트 · 재시도 · 재계획 · 승인 대기 · 범위 · 되돌리기 · 중단 표시) · verify(완료 조건)
     multiagent/        멀티에이전트 맵(MA1~MA8): orchestrator(규칙 계획 · 칠판 · 흐름) · retrieval(Self-RAG · 비전 리랭킹) ·
                        analysis(코드 → 샌드박스 계산 · 차트) · writer(난이도별 모델) · critic(통과 · 수정 · 반려) · output(차트 · 그림 · 음성)
+    flywheel/          데이터 플라이휠 맵(FW1~FW7): triage(실패 분류 · 추이) · review(검토 순서 · 평가 / 학습 분배 · 누수) ·
+                       release(처방 · 게이트 · 단계적 배포 · 감시 · 롤백 — pipeline.search.default_config 가 pick 을 부름)
     as_service/        고객 AS 상담 맵(AS1~AS8): triage(의도 · 긴급도 · 코드) · photo(사진 코드 읽기) · flow(상담 흐름 · 캐시 · 티켓 · 지표) ·
                        setup(예시 매뉴얼), presets/
     registry/          맵 · 단계 설명(데이터만, 다른 앱 모듈을 불러오지 않음)
@@ -176,8 +178,9 @@ FastAPI 라우터 ── core/system_api · llm_api / stages/*/…_api / web/pag
 | `compliance_records` | ComplianceRecord | 규제 대응의 사람 판단 — 위험 등급 · 처리 근거 등록 · 영향 평가 · 사람 검토 요청(0013) |
 | `interop_tasks` · `tool_calls` | InteropTask · ToolCall | A2A 위임 작업(멱등 키 · 시도) · 도구 호출 · 위임 감사(추적 id · 외부 결과)(0014) |
 | `lr_runs` · `lr_steps` | LrRun · LrStep | 장기 실행 업무(계획 · 범위 · 기록 · 판정) · 단계 체크포인트(결과 · 시도 · 멱등 키 · 승인자)(0015) |
+| `fw_versions` · `fw_reviews` | FwVersion · FwReview | 플라이휠 버전(설정 · 게이트 · 배포 비율 · 기록) · 사람 검토(판정 · 분배 · 누수)(0016) |
 
-마이그레이션은 `migrations/versions/0001_initial` … `0015_longrun` 입니다.
+마이그레이션은 `migrations/versions/0001_initial` … `0016_flywheel` 입니다.
 
 ## 검색 저장 방식
 

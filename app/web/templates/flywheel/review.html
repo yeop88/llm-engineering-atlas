@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}검토 · 자산 분배{% endblock %}
+{% block content %}
+{% call ui.page_header("검토 · 자산 분배") %}사람의 검토 시간을 가장 배울 것이 많은 사례에 먼저 씁니다(FW3) — 싫어요, 자동 판정이 기준값 근처인 답, 실패로 분류된 답, 확신도 낮은 답, 그리고 규칙 밖 실패를 찾기 위한 무작위 표본. 검토한 사례는 평가 세트(재발 방지)나 학습 데이터(교정)로 보내고, 같은 · 아주 비슷한 질문이 반대쪽에 있으면 누수로 막습니다(FW4).{% endcall %}
+
+<div class="card stack" id="review">
+  <h2>검토 순서 (FW3)</h2>
+  <div class="row">
+    <div class="field"><label for="v-col">컬렉션 (비우면 모두)</label><select id="v-col"><option value="">모두</option></select></div>
+    <div class="field"><label for="v-n">개수</label><input id="v-n" type="number" value="20" min="1" max="100" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="v-load">불러오기</button></div>
+  </div>
+  <div id="v-stats" class="small"></div>
+  <div id="v-queue"></div>
+</div>
+
+<div class="card stack mt-4" id="assets">
+  <h2>보낼 곳 (FW4)</h2>
+  <div class="small muted">평가 = 컬렉션의 '플라이휠 회귀 후보' 평가 세트(정답 문서를 골라야 함), 학습 = 학습 데이터 JSONL(고친 답 · 정답 문서). 회귀 세트로 쓰려면 평가 세트 화면에서 회귀로 지정하고 기준선을 만듭니다.</div>
+  <div id="v-routed"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/flywheel/review.js') }}"></script>
+{% endblock %}

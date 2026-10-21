@@ -20,13 +20,13 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| FW1 | [서비스 로그 수집](../stages/flywheel/fw1-logs/README.md) | 🟡 기초 있음 | 질문 · 단계 · 근거 · 답변 · 검증 결과 · 피드백을 요청마다 남겨 순환의 원료로 쓴다 | [E3 트레이싱](../stages/evalops/e3-tracing/README.md) | — |
-| FW2 | [실패 자동 분류](../stages/flywheel/fw2-triage/README.md) | ⬜ 예정 | 실패를 검색 실패 · 인용 실패 · 질문과 상관없는 답 · 거절 실패 · 형식 오류로 자동 분류한다 | [E8 개선 루프](../stages/evalops/e8-loop/README.md) · [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) | — |
-| FW3 | [사람 검토 우선순위](../stages/flywheel/fw3-review/README.md) | 🟡 기초 있음 | 사람의 검토 시간을 가장 배울 것이 많은 사례(자동 판정이 애매한 것 · 새 유형)에 먼저 쓴다 | [E5 피드백](../stages/evalops/e5-feedback/README.md) | — |
-| FW4 | [평가 세트 · 학습 데이터로 변환](../stages/flywheel/fw4-assets/README.md) | 🟡 기초 있음 | 검토한 사례를 평가 세트(재발 방지)와 학습 데이터(교정)로 나눠 보내고, 둘이 섞이지 않게 한다 | [E1 평가 세트](../stages/evalops/e1-sets/README.md) · [P2 선별](../stages/posttrain/p2-select/README.md) | — |
-| FW5 | [재학습 · 재색인](../stages/flywheel/fw5-retrain/README.md) | 🟡 기초 있음 | 고칠 곳에 따라 임베딩 재학습 · 재색인 · 프롬프트 · LLM 후학습 중 가장 싼 것부터 한다 | [5 파인튜닝](../stages/llm/5-finetune/README.md) · [P3 SFT](../stages/posttrain/p3-sft/README.md) | — |
-| FW6 | [회귀 · 안전성 게이트](../stages/flywheel/fw6-gate/README.md) | ⬜ 예정 | 새 버전은 고정 회귀 세트 · 레드팀 세트를 같은 조건으로 통과해야 배포 후보가 된다 | [E2 회귀 평가](../stages/evalops/e2-offline/README.md) · [G7 레드팀](../stages/guardrails/g7-redteam/README.md) | — |
-| FW7 | [단계적 배포 · 롤백](../stages/flywheel/fw7-rollout/README.md) | ⬜ 예정 | 게이트를 통과한 버전을 일부 사용자부터 내보내고, 지표가 나빠지면 즉시 이전 버전으로 되돌린다 | [E7 A/B 실험](../stages/evalops/e7-ab/README.md) | — |
+| FW1 | [서비스 로그 수집](../stages/flywheel/fw1-logs/README.md) | ✅ 구현됨 | 질문 · 단계 · 근거 · 답변 · 검증 결과 · 피드백을 요청마다 남겨 순환의 원료로 쓴다 | [E3 트레이싱](../stages/evalops/e3-tracing/README.md) | [데이터 플라이휠 — 실패 분류 · 검토 · 분배 · 처방 · 게이트 · 단계적 배포 · 실측](../stages/flywheel/fw1-logs/flywheel.md) |
+| FW2 | [실패 자동 분류](../stages/flywheel/fw2-triage/README.md) | ✅ 구현됨 | 실패를 검색 실패 · 인용 실패 · 질문과 상관없는 답 · 거절 실패 · 형식 오류로 자동 분류한다 | [E8 개선 루프](../stages/evalops/e8-loop/README.md) · [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) | [데이터 플라이휠 — 실패 분류 · 검토 · 분배 · 처방 · 게이트 · 단계적 배포 · 실측](../stages/flywheel/fw1-logs/flywheel.md) |
+| FW3 | [사람 검토 우선순위](../stages/flywheel/fw3-review/README.md) | ✅ 구현됨 | 사람의 검토 시간을 가장 배울 것이 많은 사례(자동 판정이 애매한 것 · 새 유형)에 먼저 쓴다 | [E5 피드백](../stages/evalops/e5-feedback/README.md) | [데이터 플라이휠 — 실패 분류 · 검토 · 분배 · 처방 · 게이트 · 단계적 배포 · 실측](../stages/flywheel/fw1-logs/flywheel.md) |
+| FW4 | [평가 세트 · 학습 데이터로 변환](../stages/flywheel/fw4-assets/README.md) | ✅ 구현됨 | 검토한 사례를 평가 세트(재발 방지)와 학습 데이터(교정)로 나눠 보내고, 둘이 섞이지 않게 한다 | [E1 평가 세트](../stages/evalops/e1-sets/README.md) · [P2 선별](../stages/posttrain/p2-select/README.md) | [데이터 플라이휠 — 실패 분류 · 검토 · 분배 · 처방 · 게이트 · 단계적 배포 · 실측](../stages/flywheel/fw1-logs/flywheel.md) |
+| FW5 | [재학습 · 재색인](../stages/flywheel/fw5-retrain/README.md) | ✅ 구현됨 | 고칠 곳에 따라 임베딩 재학습 · 재색인 · 프롬프트 · LLM 후학습 중 가장 싼 것부터 한다 | [5 파인튜닝](../stages/llm/5-finetune/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | [데이터 플라이휠 — 실패 분류 · 검토 · 분배 · 처방 · 게이트 · 단계적 배포 · 실측](../stages/flywheel/fw1-logs/flywheel.md) |
+| FW6 | [회귀 · 안전성 게이트](../stages/flywheel/fw6-gate/README.md) | ✅ 구현됨 | 새 버전은 고정 회귀 세트 · 레드팀 세트를 같은 조건으로 통과해야 배포 후보가 된다 | [E2 회귀 평가](../stages/evalops/e2-offline/README.md) · [G7 레드팀](../stages/guardrails/g7-redteam/README.md) | [데이터 플라이휠 — 실패 분류 · 검토 · 분배 · 처방 · 게이트 · 단계적 배포 · 실측](../stages/flywheel/fw1-logs/flywheel.md) |
+| FW7 | [단계적 배포 · 롤백](../stages/flywheel/fw7-rollout/README.md) | ✅ 구현됨 | 게이트를 통과한 버전을 일부 사용자부터 내보내고, 지표가 나빠지면 즉시 이전 버전으로 되돌린다 | [E7 A/B 실험](../stages/evalops/e7-ab/README.md) | [데이터 플라이휠 — 실패 분류 · 검토 · 분배 · 처방 · 게이트 · 단계적 배포 · 실측](../stages/flywheel/fw1-logs/flywheel.md) |
 
 ## 설계 원칙
 

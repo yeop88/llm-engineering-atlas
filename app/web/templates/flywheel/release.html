@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}게이트 · 단계적 배포{% endblock %}
+{% block content %}
+{% call ui.page_header("게이트 · 단계적 배포") %}바꾼 것(검색 설정 · 방어 모드 · LLM)을 버전으로 묶고, 고정 회귀 세트(기준선과 같은 질문으로 짝 비교)와 레드팀(같은 공격)을 같은 조건으로 통과해야 배포 후보가 됩니다(FW6). 통과한 버전은 요청의 5 → 25 → 50 → 100% 로 내보내고, 같은 기간 현재 버전과 근거 일치 · 거절률 · 싫어요를 비교해 나빠지면 즉시 되돌립니다(FW7). 배포는 연결 계층의 기본 검색 설정에서 하므로 AS · 대화 · 답변이 함께 바뀝니다.{% endcall %}
+
+<div class="card stack" id="gate">
+  <h2>버전 · 게이트 (FW6)</h2>
+  <div class="row">
+    <div class="field"><label for="r-col">컬렉션</label><select id="r-col" data-ctx="col"></select></div>
+    <div class="field grow"><label for="r-name">버전 이름</label><input id="r-name" placeholder="예: 혼합 검색 + 리랭커"></div>
+    <div class="field"><label for="r-guard">방어 모드</label><select id="r-guard"><option value="">설정값</option><option>mask</option><option>enforce</option><option>off</option></select></div>
+  </div>
+  <div class="field"><label for="r-search">검색 설정 (JSON, 비우면 지금 기본 설정)</label><textarea id="r-search" rows="3" class="mono"></textarea></div>
+  <div class="row"><button class="btn" id="r-create">버전 만들기</button><label class="row small m-0"><input type="checkbox" id="r-rt" checked> 게이트에 레드팀 포함(LLM, 수 분)</label></div>
+  <div id="r-progress" hidden></div>
+  <div id="r-versions"></div>
+</div>
+
+<div class="card stack mt-4" id="rollout">
+  <h2>단계적 배포 · 롤백 (FW7)</h2>
+  <div id="r-monitor"><div class="small muted">배포 중인 버전의 '감시'를 누르면 두 팔의 지표가 나옵니다.</div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/flywheel/release.js') }}"></script>
+{% endblock %}

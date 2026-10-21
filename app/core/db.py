@@ -615,3 +615,44 @@ class LrStep(Base):
     approved_by: Mapped[str] = mapped_column(String(100), default="")
     started_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     ended_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
+class FwVersion(Base):
+    """플라이휠의 서비스 버전(FW6 · FW7, 마이그레이션 0016): 검색 설정 · 방어 모드 · LLM 묶음 하나와 그 게이트 · 배포 상태.
+
+    '버전'을 따로 두는 이유: 바꾼 것(재색인 · 프롬프트 · 모델)이 게이트를 통과했는지, 지금 몇 % 에 나가 있는지, 언제 되돌렸는지를
+    한 줄로 남겨야 '이 답은 어느 버전에서 나왔나'를 요청 기록(signals.version)과 이어 볼 수 있다.
+    """
+
+    __tablename__ = "fw_versions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    collection_id: Mapped[int] = mapped_column(Integer, index=True)
+    config: Mapped[dict[str, Any]] = mapped_column(default=dict)  # {"search": 검색 설정, "guard_mode", "llm_model"}
+    note: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(
+        String(20), default="candidate", index=True
+    )  # candidate · passed · failed · rolling · live · rolled_back · retired
+    gate: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    rollout: Mapped[dict[str, Any]] = mapped_column(default=dict)  # {"pct", "history": [...]}
+    created_by: Mapped[str] = mapped_column(String(100), default="local")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class FwReview(Base):
+    """사람 검토 한 건(FW3 · FW4): 맞음 · 틀림 판정, 실패 유형, 보낼 곳(평가 · 학습 · 버림)과 실제로 보낸 결과(누수로 막힘 포함)."""
+
+    __tablename__ = "fw_reviews"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    trace_id: Mapped[int] = mapped_column(Integer, index=True)
+    label: Mapped[str] = mapped_column(String(10))  # correct · wrong
+    category: Mapped[str] = mapped_column(String(20), default="")
+    destination: Mapped[str] = mapped_column(String(10), default="ignore")  # eval · train · ignore
+    gold_doc_ids: Mapped[list[Any]] = mapped_column(default=list)
+    corrected: Mapped[str] = mapped_column(Text, default="")
+    routed: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    reviewer: Mapped[str] = mapped_column(String(100), default="local")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)

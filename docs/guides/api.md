@@ -422,6 +422,19 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | GET | `/api/multiagent/audio/{name}` | 합성한 음성(mp3) |
 | POST | `/api/multiagent/image-search` | 사진으로 찾기(multipart: `collection_id`, `image`, `question`?, `top_k`) — 멀티모달 인덱스가 필요 |
 
+## 데이터 플라이휠 (`/api/flywheel`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/flywheel/triage` | 실패 유형 · 날짜별 추이 · 예 · 처방(싼 것부터) `?days=&collection_id=` |
+| GET | `/api/flywheel/queue` | 검토 순서(우선순위 + 무작위 표본) `?n=&collection_id=` |
+| POST | `/api/flywheel/reviews` | 판정 · 분배 `{"trace_id", "label": "correct·wrong", "category", "destination": "eval·train·ignore", "gold_doc_ids", "corrected"}` → 보낸 곳(누수면 막힘과 이유) |
+| GET | `/api/flywheel/reviews/stats` | 검토 수 · 틀림 비율 · 분배 · 학습 데이터 줄 수 |
+| GET / POST | `/api/flywheel/versions` | 버전 목록 / 만들기 `{"name", "collection_id", "search"?, "guard_mode"?, "llm_model"?}` |
+| POST | `/api/flywheel/versions/{id}/gate` | 게이트 작업 `{"redteam": true}` — 회귀 세트 짝 비교 + 레드팀 |
+| POST | `/api/flywheel/versions/{id}/start` · `/step` · `/rollback` | 배포 시작(5%) · 단계(건강하면 다음 비율, 100% 다음은 승격, 나빠졌으면 롤백) · 롤백(관리자) |
+| GET | `/api/flywheel/versions/{id}/monitor` | 후보 팔 vs 나머지 지표 · 판단 |
+
 ## 고객 AS 상담 (`/api/as`)
 
 | 메서드 | 경로 | 설명 |

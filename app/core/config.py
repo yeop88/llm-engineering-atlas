@@ -67,6 +67,9 @@ class Settings(BaseSettings):
     # 외부 MCP 서버 · A2A 상대 에이전트: [{"name", "url", "token"?}] (JSON). 이 앱 자신도 넣어 시험할 수 있다
     mcp_servers: list[dict[str, Any]] = []
     a2a_peers: list[dict[str, Any]] = []
+    # 데이터 플라이휠(FW7): 배포 감시 주기(시간, 0 = 끔) — 나빠지면 자동 롤백. 좋을 때 다음 비율로 자동 진행할지(기본은 사람이)
+    flywheel_watch_hours: float = 0
+    flywheel_auto_advance: bool = False
     # 멀티에이전트(MA6): 쉬운 작성을 맡길 소형 모델(OpenAI 호환). 비우면 기본 LLM 이 모두 쓴다
     small_llm_model: str | None = None
     small_llm_base_url: str | None = None

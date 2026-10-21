@@ -29,6 +29,7 @@ from app.stages.embedding import benchmarks_api, compat, models_api, playground_
 from app.stages.embedding.model_manager import get_manager  # noqa: E402
 from app.stages.evalops import api as evalops_api  # noqa: E402
 from app.stages.finetune import api as finetune_api  # noqa: E402
+from app.stages.flywheel import api as flywheel_api  # noqa: E402
 from app.stages.guardrails import api as guardrails_api  # noqa: E402
 from app.stages.interop import api as interop_api  # noqa: E402
 from app.stages.kg import api as kg_api  # noqa: E402
@@ -54,6 +55,7 @@ def _periodic(stop: threading.Event) -> None:
             docintel_api.run_due()
             evalops_api.run_watch()  # 레드팀 · 드리프트 · 회귀 정기 점검(설정한 주기가 됐을 때만)
             compliance_api.run_watch()  # 통제 감사(RC8, WATCH_AUDIT_HOURS)
+            flywheel_api.run_watch()  # 배포 감시 · 자동 롤백(FW7, FLYWHEEL_WATCH_HOURS)
             if (now := time.time()) - last_purge > 86400:  # 하루 한 번: 보관 기간(0 = 지우지 않음)이 지난 요청 기록 · 고객 프로필
                 with SessionLocal() as db:
                     n, m = tracing.purge(db), conversation_api.profile.purge(db)
@@ -130,6 +132,7 @@ for module in (
     interop_api,  # 상호운용 — MCP(/mcp) · A2A(/a2a) 끝점과 도구 권한 · 상한 · 감사
     longrun_api,  # 장기 실행 업무 — 계획 · 체크포인트 · 승인 · 되돌리기
     multiagent_api,  # 멀티에이전트 — 오케스트레이터 · 전문가 에이전트 · 멀티모달 출력
+    flywheel_api,  # 데이터 플라이휠 — 실패 분류 · 검토 · 게이트 · 단계적 배포
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

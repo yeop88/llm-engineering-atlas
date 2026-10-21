@@ -91,6 +91,8 @@ def prepare(
     if res.get("restricted"):
         p.guard["restricted"] = res["restricted"]
     p.signals = tracing.signals_of(p.results)
+    if search_cfg.get("_version"):  # 플라이휠 배포(FW7): 어느 버전 · 팔이 답했는지 — 배포 감시가 이 표시로 두 팔을 비교한다
+        p.signals |= {"version": search_cfg["_version"], "arm": search_cfg.get("_arm")}
     with p.tracer.step("guard_context") as st:
         flagged = injection.scan_results(p.results)
         st["flagged"] = len(flagged)

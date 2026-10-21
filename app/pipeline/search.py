@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core import llm
 from app.core.db import ChunkSet, VectorIndex
 from app.stages.docintel import meta as doc_meta
+from app.stages.flywheel import release as fw_release
 from app.stages.guardrails import acl
 from app.stages.rag import service
 from app.stages.rerank import llm_rerank
@@ -34,7 +35,12 @@ def collection_of(db: Session, cfg: dict[str, Any]) -> int | None:
 def default_config(db: Session, collection_id: int, top_k: int = 4) -> dict[str, Any] | None:
     """컬렉션의 기본 검색 설정: 최근 준비된 청크 세트에 준비된 인덱스가 있으면 혼합(BM25 + 의미), 없으면 BM25.
     오류 코드 · 조문 번호 같은 낱말은 BM25 가, 바꿔 말한 질문은 의미 검색이 잡는다. 설정 화면이 없는 서비스(AS 상담 · 대화)가 쓴다.
-    → 설정(인덱스면 model_id 포함) 또는 준비된 청크 세트가 없으면 None."""
+    → 설정(인덱스면 model_id 포함) 또는 준비된 청크 세트가 없으면 None.
+
+    플라이휠(FW7)에서 배포 중이거나 현재로 승격한 버전이 있으면 그 버전의 검색 설정을 돌려준다(_version · _arm 표시를 붙여 서비스
+    답변이 요청 기록에 남긴다). 서비스마다 기본 설정을 여기서 받으므로, 배포를 한 곳에서 하면 AS · 대화 · 답변이 함께 바뀐다."""
+    if (choice := fw_release.pick(db, collection_id)) is not None:
+        return choice[0] | {"top_k": top_k}
     cs = db.scalar(select(ChunkSet).where(ChunkSet.collection_id == collection_id, ChunkSet.status == "ready").order_by(ChunkSet.id.desc()))
     if cs is None:
         return None
