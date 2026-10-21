@@ -44,7 +44,7 @@ def retrieval(dialogs: list[dict[str, Any]], search_fns: dict[str, Callable[[str
         k = known.get(d["domain"], {})
         mem = mem_mod.from_messages(hist, k.get("models", ()), k.get("codes", ()), model_codes=k.get("model_codes"))
         mem = mem_mod.update(mem, "user", q, k.get("models", ()), k.get("codes", ()), k.get("model_codes"))
-        row: dict[str, Any] = {"id": d["id"], "domain": d["domain"], "question": q, "depends": rewrite.depends(q, hist)[0]}
+        row: dict[str, Any] = {"id": d["id"], "domain": d["domain"], "question": q, "depends": rewrite.depends(q, hist, mem)[0]}
         for j, m in enumerate(methods):
             if job:
                 job.update((i * len(methods) + j) / n, f"{d['id']} · {m}")
