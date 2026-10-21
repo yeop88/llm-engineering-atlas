@@ -34,8 +34,8 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [MA6 보고서 작성 에이전트](../../multi-agent/ma6-report-agent/README.md) — 멀티에이전트 · 멀티모달 맵 · ⬜ 예정
-- [MA8 멀티모달 출력](../../multi-agent/ma8-output/README.md) — 멀티에이전트 · 멀티모달 맵 · ⬜ 예정
+- [MA6 보고서 작성 에이전트](../../multi-agent/ma6-report-agent/README.md) — 멀티에이전트 · 멀티모달 맵 · ✅ 구현됨
+- [MA8 멀티모달 출력](../../multi-agent/ma8-output/README.md) — 멀티에이전트 · 멀티모달 맵 · ✅ 구현됨
 
 ---
 

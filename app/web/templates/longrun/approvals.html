@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}승인 · 완료 판정{% endblock %}
+{% block content %}
+{% call ui.page_header("승인 · 완료 판정") %}되돌릴 수 없는 행동(발송 · 결제 · 삭제) 전에 멈춘 업무를 사람이 승인하거나 반려합니다(LR4). 기다리는 동안 업무는 상태만 남기고 멈춰 있으며, 승인하면 다음 단계부터 이어 갑니다. 승인 화면에는 초안과 완료 조건 검사(LR6: 필수 절 · 숫자가 집계에 있나 · 인용 번호 · 근거 일치)를 함께 보여 무엇을 승인하는지 알 수 있게 합니다. 승인 · 반려한 사람이 남습니다(관리자).{% endcall %}
+
+<div class="card stack" id="approvals">
+  <h2>승인 대기 (LR4)</h2>
+  <div id="p-list"><div class="loading" role="status">불러오는 중…</div></div>
+</div>
+
+<div class="card stack mt-4" id="verify">
+  <h2>완료 판정 (LR6)</h2>
+  <div class="small muted">업무가 모든 단계를 마치면 계획의 완료 조건으로 판정합니다 — 하나라도 미달이면 '완료'가 아니라 '검토 필요'입니다. 판정은 업무 화면에서도 보입니다.</div>
+  <div id="p-done"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/longrun/approvals.js') }}"></script>
+{% endblock %}

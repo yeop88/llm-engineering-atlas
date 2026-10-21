@@ -520,3 +520,98 @@ class ComplianceRecord(Base):
     reviewed_by: Mapped[str] = mapped_column(String(100), default="")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class InteropTask(Base):
+    """에이전트 간 위임(A2A) 작업 — 받은 것(in)과 맡긴 것(out) 모두(상호운용 맵 IO3 · IO4, 마이그레이션 0014).
+
+    작업 기록을 메모리가 아니라 DB 에 두는 이유: 위임 작업은 몇 분~몇 시간 걸리고, 그사이 서버가 다시 뜨면 결과를 잃는다.
+    idem_key 는 같은 요청(messageId)이 두 번 와도 작업을 하나만 만들게 한다(멱등) — 상대가 응답을 못 받아 재전송하는 일이 흔하다.
+    """
+
+    __tablename__ = "interop_tasks"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    direction: Mapped[str] = mapped_column(String(4), index=True)  # in | out
+    peer: Mapped[str] = mapped_column(String(300), default="")  # 맡긴 쪽 · 맡은 쪽(주소 또는 사용자)
+    skill: Mapped[str] = mapped_column(String(60), default="")
+    status: Mapped[str] = mapped_column(String(20), default="submitted", index=True)  # submitted · working · completed · failed · canceled
+    idem_key: Mapped[str] = mapped_column(String(100), default="", index=True)
+    trace_key: Mapped[str] = mapped_column(String(40), default="", index=True)  # 도구 호출 · 위임을 잇는 추적 id
+    input: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    output: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    error: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class ToolCall(Base):
+    """도구 호출 · 위임 한 번의 감사 기록(IO6). trace_key 로 한 요청에 엮인 호출을 모두 잇고, untrusted 는 신뢰 경계 밖에서 온
+    결과(외부 MCP 서버 · 외부 에이전트 · 샌드박스 출력)를 표시한다 — 그 결과가 LLM 에 들어가면 간접 인젝션 경로가 된다."""
+
+    __tablename__ = "tool_calls"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    trace_key: Mapped[str] = mapped_column(String(40), default="", index=True)
+    channel: Mapped[str] = mapped_column(String(20), index=True)  # mcp · mcp_remote · a2a_in · a2a_out · sandbox
+    client: Mapped[str] = mapped_column(String(100), default="")  # 부른 쪽(사용자 · 세션)
+    target: Mapped[str] = mapped_column(String(200), default="")  # 도구 이름 · 상대 에이전트
+    scope: Mapped[str] = mapped_column(String(10), default="read")  # read · write · exec · network
+    args: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    result: Mapped[dict[str, Any]] = mapped_column(default=dict)  # 요약(글은 앞부분만)
+    status: Mapped[str] = mapped_column(String(10), default="ok", index=True)  # ok · denied · error · limit
+    untrusted: Mapped[bool] = mapped_column(Boolean, default=False)
+    flags: Mapped[list[Any]] = mapped_column(default=list)  # 인젝션 의심 등
+    ms: Mapped[float] = mapped_column(Float, default=0.0)
+    cost: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+
+
+class LrRun(Base):
+    """장기 실행 업무 하나(장기 실행 맵 LR1~LR7, 마이그레이션 0015): 목표 · 계획 · 범위(상한) · 상태 · 변경 기록.
+
+    백그라운드 작업(jobs)은 메모리에서 돌아 서버가 다시 뜨면 이어 할 수 없다 — 업무는 며칠짜리라 상태와 단계별 결과(체크포인트)를
+    DB 에 두고, 재시작하면 '중단됨'으로 표시해 마지막 체크포인트부터 이어 간다.
+    """
+
+    __tablename__ = "lr_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    goal: Mapped[str] = mapped_column(Text, default="")
+    template: Mapped[str] = mapped_column(String(40), default="")
+    status: Mapped[str] = mapped_column(
+        String(20), default="planned", index=True
+    )  # planned · running · waiting · paused · done · failed · canceled · rolled_back
+    plan: Mapped[dict[str, Any]] = mapped_column(default=dict)  # {"steps": [...], "criteria": [...], "planner": "template|llm"}
+    scope: Mapped[dict[str, Any]] = mapped_column(default=dict)  # 허용 행동 · 컬렉션 · 단계 · 시간 · 비용 상한
+    usage: Mapped[dict[str, Any]] = mapped_column(default=dict)  # 쓴 단계 · 시간 · 토큰 · 비용
+    log: Mapped[list[Any]] = mapped_column(default=list)  # 재계획 · 승인 · 복구 · 상한 사건
+    verdict: Mapped[dict[str, Any]] = mapped_column(default=dict)  # 완료 판정
+    created_by: Mapped[str] = mapped_column(String(100), default="local")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class LrStep(Base):
+    """업무의 단계 하나 = 체크포인트. idem_key 는 되돌릴 수 없는 행동(발송)을 두 번 하지 않게 하는 열쇠."""
+
+    __tablename__ = "lr_steps"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = mapped_column(ForeignKey("lr_runs.id", ondelete="CASCADE"), index=True)
+    idx: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(String(100), default="")
+    action: Mapped[str] = mapped_column(String(40))
+    params: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    deps: Mapped[list[Any]] = mapped_column(default=list)  # 앞 단계 idx
+    status: Mapped[str] = mapped_column(
+        String(20), default="pending"
+    )  # pending · running · done · failed · skipped · waiting · compensated
+    output: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    error: Mapped[str] = mapped_column(Text, default="")
+    idem_key: Mapped[str] = mapped_column(String(64), default="")
+    approved_by: Mapped[str] = mapped_column(String(100), default="")
+    started_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)

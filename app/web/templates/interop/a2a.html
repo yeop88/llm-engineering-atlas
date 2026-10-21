@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}A2A 위임 · 작업{% endblock %}
+{% block content %}
+{% call ui.page_header("A2A 위임 · 작업") %}다른 에이전트에게 일을 맡기고 결과를 받아 검증합니다(IO3, A2A — Agent-to-Agent). 이 앱도 에이전트 카드(<span class="mono">/.well-known/agent-card.json</span>)와 <span class="mono">/a2a</span> 로 작업을 받습니다. 작업은 DB 에 남아 서버가 다시 떠도 이어지고, 같은 요청(messageId)이 두 번 와도 작업은 하나이며, 실패하면 정해진 횟수만 다시 합니다(IO4). 맡긴 결과는 신뢰 경계 밖 입력이라 지시 문장을 빼고, 우리 자료로 근거 일치를 다시 재 기준을 넘을 때만 받아들입니다.{% endcall %}
+
+<div class="card stack" id="card">
+  <h2>에이전트 카드</h2>
+  <div class="row">
+    <div class="field grow"><label for="a-url">상대 에이전트 주소</label><input id="a-url" list="a-peers" placeholder="http://127.0.0.1:8000"><datalist id="a-peers"></datalist></div>
+    <div class="field"><label for="a-token">토큰 (선택)</label><input id="a-token" type="password" autocomplete="off"></div>
+    <div class="self-end"><button class="btn" id="a-card">카드 보기</button></div>
+  </div>
+  <div id="a-card-out"></div>
+</div>
+
+<div class="card stack mt-4" id="delegate">
+  <h2>맡기기 (IO3)</h2>
+  <div class="row">
+    <div class="field"><label for="a-skill">기술(skill)</label><select id="a-skill"><option value="document_qa">document_qa — 문서 근거 답변</option><option value="compliance_scope">compliance_scope — 적용 규제 확인</option></select></div>
+    <div class="field"><label for="a-meta">metadata (JSON)</label><input id="a-meta" class="mono" placeholder='{"collection_id": 3}'></div>
+    <div class="field"><label for="a-verify">결과를 검증할 우리 컬렉션</label><select id="a-verify" data-ctx="col"></select></div>
+  </div>
+  <div class="field"><label for="a-text">맡길 일</label><textarea id="a-text" rows="2" placeholder="해고 예고는 언제까지 해야 하나요?"></textarea></div>
+  <div><button class="btn primary" id="a-send">맡기기</button></div>
+  <div id="a-progress" hidden></div>
+  <div id="a-out"></div>
+</div>
+
+<div class="card stack mt-4" id="tasks">
+  <h2>작업 (IO4)</h2>
+  <div class="row"><div class="field"><label for="a-dir">방향</label><select id="a-dir"><option value="">모두</option><option value="out">맡긴 것</option><option value="in">받은 것</option></select></div></div>
+  <div id="a-tasks"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/interop/a2a.js') }}"></script>
+{% endblock %}

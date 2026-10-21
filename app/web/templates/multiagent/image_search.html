@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}사진으로 찾기{% endblock %}
+{% block content %}
+{% call ui.page_header("사진으로 찾기") %}사진을 올리면 컬렉션 인덱스의 멀티모달 임베딩 모델로 같은 공간에 놓아, 비슷한 그림 청크와 관련된 글 청크를 함께 찾습니다(MA1). 질문 글을 함께 넣으면 그림과 글 임베딩을 평균해 '이 사진 + 이 질문'으로 찾습니다 — 고장 부위 사진과 '이 부품은 어떻게 빼나요?'처럼. 문서 권한(G3)은 그림 검색에도 같습니다. 인덱스가 텍스트 전용 모델이면 찾을 수 없습니다.{% endcall %}
+
+<div class="card stack" id="image">
+  <h2>사진 + 질문 (MA1)</h2>
+  <div class="row">
+    <div class="field"><label for="i-col">컬렉션 (멀티모달 인덱스)</label><select id="i-col" data-ctx="col"></select></div>
+    <div class="field"><label for="i-file">사진</label><input id="i-file" type="file" accept="image/*"></div>
+    <div class="field grow"><label for="i-q">질문 (선택)</label><input id="i-q" placeholder="이 부품은 어떻게 빼나요?"></div>
+    <div class="self-end"><button class="btn primary" id="i-run">찾기</button></div>
+  </div>
+  <div id="i-preview"></div>
+  <div id="i-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/multiagent/image_search.js') }}"></script>
+{% endblock %}

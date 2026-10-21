@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}업무 계획 · 실행{% endblock %}
+{% block content %}
+{% call ui.page_header("업무 계획 · 실행") %}큰 목표를 단계 계획으로 나누고(LR1, 템플릿 또는 LLM — 등록된 행동만, 되돌릴 수 없는 행동 앞에는 승인을 끼움), 단계마다 결과를 저장하며 실행합니다(LR3 체크포인트 — 서버가 다시 떠도 이어 하기). 실패하면 재시도 → 대체 행동 → 남은 단계 재계획 순서로 복구하고(LR2 · LR5), 범위(행동 · 컬렉션 · 단계 · 시간 · 비용)를 넘으면 멈춥니다(LR7). 발송처럼 부작용이 있는 단계는 보상 작업으로 되돌립니다.{% endcall %}
+
+<div class="card stack" id="plan">
+  <h2>계획 (LR1)</h2>
+  <div class="row">
+    <div class="field"><label for="l-planner">계획 방법</label><select id="l-planner"><option value="template">템플릿</option><option value="llm">LLM 계획</option></select></div>
+    <div class="field"><label for="l-template">템플릿</label><select id="l-template"></select></div>
+    <div class="field"><label for="l-col">근거 컬렉션</label><select id="l-col" data-ctx="col"></select></div>
+    <div class="field"><label for="l-days">기간(일)</label><input id="l-days" type="number" value="90" min="1" class="w-md"></div>
+  </div>
+  <div class="field"><label for="l-goal">목표 (LLM 계획 · 비우면 템플릿 목표)</label><textarea id="l-goal" rows="2"></textarea></div>
+  <details class="small" id="limits"><summary>범위 · 상한 (LR7)</summary>
+    <div class="row mt-2">
+      <div class="field"><label for="l-steps">단계 상한</label><input id="l-steps" type="number" value="30" min="1" class="w-md"></div>
+      <div class="field"><label for="l-secs">시간 상한(초)</label><input id="l-secs" type="number" value="3600" min="10" class="w-md"></div>
+      <div class="field"><label for="l-cost">비용 상한($, 0 = 없음)</label><input id="l-cost" type="number" value="0" min="0" step="0.01" class="w-md"></div>
+      <div class="field grow"><label for="l-acts">허용 행동 (쉼표, 비우면 모두)</label><input id="l-acts" class="mono"></div>
+    </div>
+  </details>
+  <div class="row"><button class="btn" id="l-preview">계획 보기</button><button class="btn primary" id="l-start">이 계획으로 시작</button></div>
+  <div id="l-plan"></div>
+</div>
+
+<div class="card stack mt-4" id="runs">
+  <h2>업무 · 체크포인트 (LR3)</h2>
+  <div id="l-runs"></div>
+  <div id="l-detail"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/longrun/runs.js') }}"></script>
+{% endblock %}

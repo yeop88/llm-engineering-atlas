@@ -45,6 +45,12 @@ app/
     compliance/        규제 대응 맵(RC1~RC8): lawapi(국가법령정보 판) · corpus(조항 · 개정 비교) · scope(적용 규칙) · risk(등급) ·
                        register(처리 근거 · 파기) · explain(결정 기록) · reviews(사람 검토) · impact(영향 평가) · graph(조항-통제) ·
                        audit(통제 증적), catalog + presets/(규제 · 기능 · 규칙 · 통제 · 기준표 · 의무 질문)
+    interop/           에이전트 상호운용 맵(IO1~IO6): tools(도구 · 범위 · 역할 정책) · mcp(MCP 서버 · 클라이언트) · sandbox(Docker 격리 실행) ·
+                       a2a(에이전트 카드 · 받은 작업 · 맡기기 · 결과 검증) · limits(호출 · 시간 · 비용 상한) · audit(추적 id · 외부 결과 정리)
+    longrun/           장기 실행 맵(LR1~LR7): actions(행동 · 보상 · 대체 · 멱등 발송) · plans(템플릿 · LLM 계획 · 계획 검사) ·
+                       runner(실행 · 체크포인트 · 재시도 · 재계획 · 승인 대기 · 범위 · 되돌리기 · 중단 표시) · verify(완료 조건)
+    multiagent/        멀티에이전트 맵(MA1~MA8): orchestrator(규칙 계획 · 칠판 · 흐름) · retrieval(Self-RAG · 비전 리랭킹) ·
+                       analysis(코드 → 샌드박스 계산 · 차트) · writer(난이도별 모델) · critic(통과 · 수정 · 반려) · output(차트 · 그림 · 음성)
     as_service/        고객 AS 상담 맵(AS1~AS8): triage(의도 · 긴급도 · 코드) · photo(사진 코드 읽기) · flow(상담 흐름 · 캐시 · 티켓 · 지표) ·
                        setup(예시 매뉴얼), presets/
     registry/          맵 · 단계 설명(데이터만, 다른 앱 모듈을 불러오지 않음)
@@ -168,8 +174,10 @@ FastAPI 라우터 ── core/system_api · llm_api / stages/*/…_api / web/pag
 | `profiles` | Profile | 고객 프로필 — 보유 제품 · 지난 문의 요약(0011) |
 | `kg_nodes` · `kg_edges` | KgNode · KgEdge | 지식 그래프 노드 · 관계 — (graph, label, key) · (graph, src, dst, type) 유일(0012) |
 | `compliance_records` | ComplianceRecord | 규제 대응의 사람 판단 — 위험 등급 · 처리 근거 등록 · 영향 평가 · 사람 검토 요청(0013) |
+| `interop_tasks` · `tool_calls` | InteropTask · ToolCall | A2A 위임 작업(멱등 키 · 시도) · 도구 호출 · 위임 감사(추적 id · 외부 결과)(0014) |
+| `lr_runs` · `lr_steps` | LrRun · LrStep | 장기 실행 업무(계획 · 범위 · 기록 · 판정) · 단계 체크포인트(결과 · 시도 · 멱등 키 · 승인자)(0015) |
 
-마이그레이션은 `migrations/versions/0001_initial` … `0013_compliance` 입니다.
+마이그레이션은 `migrations/versions/0001_initial` … `0015_longrun` 입니다.
 
 ## 검색 저장 방식
 

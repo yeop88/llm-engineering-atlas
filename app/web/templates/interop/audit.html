@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}호출 상한 · 감사 추적{% endblock %}
+{% block content %}
+{% call ui.page_header("호출 상한 · 감사 추적") %}세션 · 위임 하나가 쓸 수 있는 도구 호출 수 · 시간 · 비용에 상한을 두고, 닿으면 호출을 막고 기록합니다(IO5). 모든 도구 호출 · 위임은 추적 id 로 이어지고, 신뢰 경계 밖에서 온 결과(외부 MCP 서버 · 외부 에이전트 · 샌드박스 출력)는 '외부 결과'로 표시되며 지시 문장을 뺀 기록이 남습니다(IO6).{% endcall %}
+
+<div class="card stack" id="limits">
+  <h2>호출 · 비용 상한 (IO5)</h2>
+  <div id="u-limits" class="small"></div>
+</div>
+
+<div class="card stack mt-4" id="trace">
+  <h2>추적 (IO6)</h2>
+  <div class="row"><div class="field grow"><label for="u-key">추적 id</label><input id="u-key" class="mono" placeholder="tk-…"></div><div class="self-end"><button class="btn" id="u-open">열기</button></div></div>
+  <div id="u-trace"></div>
+</div>
+
+<div class="card stack mt-4" id="calls">
+  <h2>도구 호출 · 위임 기록</h2>
+  <div class="row">
+    <div class="field"><label for="u-channel">통로</label><select id="u-channel"><option value="">모두</option><option value="mcp">MCP(이 앱)</option><option value="mcp_remote">외부 MCP</option><option value="sandbox">샌드박스</option><option value="a2a_in">A2A 받음</option><option value="a2a_out">A2A 맡김</option></select></div>
+    <div class="field"><label for="u-status">결과</label><select id="u-status"><option value="">모두</option><option value="ok">성공</option><option value="denied">권한 거절</option><option value="limit">상한</option><option value="error">오류</option></select></div>
+  </div>
+  <div id="u-calls"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/interop/audit.js') }}"></script>
+{% endblock %}

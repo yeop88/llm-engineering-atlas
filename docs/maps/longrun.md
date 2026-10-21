@@ -22,13 +22,13 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| LR1 | [목표 분해 · 계획](../stages/longrun/lr1-goal/README.md) | ⬜ 예정 | 큰 목표를 하위 작업 · 의존 관계 · 완료 조건이 있는 계획으로 나눈다 | [MA3 오케스트레이터](../stages/multi-agent/ma3-orchestrator/README.md) | — |
-| LR2 | [실행 · 재계획](../stages/longrun/lr2-replan/README.md) | ⬜ 예정 | 계획대로 실행하다 막히면 상황을 보고 계획을 고친다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | — |
-| LR3 | [상태 저장 · 체크포인트](../stages/longrun/lr3-state/README.md) | ⬜ 예정 | 작업마다 상태 · 중간 결과를 저장해 서버가 재시작돼도 마지막 체크포인트부터 이어 간다 | [MA3 오케스트레이터](../stages/multi-agent/ma3-orchestrator/README.md) | — |
-| LR4 | [사람 승인 지점](../stages/longrun/lr4-approval/README.md) | ⬜ 예정 | 되돌릴 수 없는 행동(발송 · 결제 · 삭제) 전에 사람의 승인을 받고, 기다리는 동안 상태를 유지한다 | [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) | — |
-| LR5 | [실패 복구 · 되돌리기](../stages/longrun/lr5-recovery/README.md) | ⬜ 예정 | 실패한 작업을 재시도 · 대체 · 되돌리기 중에서 고르고, 이미 한 행동의 부작용을 정리한다 | [IO4 장기 작업](../stages/interop/io4-longtask/README.md) | — |
-| LR6 | [결과 검증 · 완료 판정](../stages/longrun/lr6-verify/README.md) | 🟡 기초 있음 | 작업 결과를 완료 조건 · 근거 · 형식으로 검사해 '정말 끝났는지' 판정한다 | [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) · [E2 회귀 평가](../stages/evalops/e2-offline/README.md) | — |
-| LR7 | [권한 · 비용 상한](../stages/longrun/lr7-limits/README.md) | ⬜ 예정 | 작업이 쓸 수 있는 권한 · 자료 · 비용 · 기간을 미리 정하고 넘으면 멈춘다 | [IO5 호출 상한](../stages/interop/io5-limits/README.md) · [G3 권한별 검색](../stages/guardrails/g3-acl/README.md) | — |
+| LR1 | [목표 분해 · 계획](../stages/longrun/lr1-goal/README.md) | ✅ 구현됨 | 큰 목표를 하위 작업 · 의존 관계 · 완료 조건이 있는 계획으로 나눈다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | [장기 실행 업무 — 계획 · 체크포인트 · 승인 · 복구 · 완료 판정 · 실측](../stages/longrun/lr1-goal/longrun.md) |
+| LR2 | [실행 · 재계획](../stages/longrun/lr2-replan/README.md) | ✅ 구현됨 | 계획대로 실행하다 막히면 상황을 보고 계획을 고친다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | [장기 실행 업무 — 계획 · 체크포인트 · 승인 · 복구 · 완료 판정 · 실측](../stages/longrun/lr1-goal/longrun.md) |
+| LR3 | [상태 저장 · 체크포인트](../stages/longrun/lr3-state/README.md) | ✅ 구현됨 | 작업마다 상태 · 중간 결과를 저장해 서버가 재시작돼도 마지막 체크포인트부터 이어 간다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | [장기 실행 업무 — 계획 · 체크포인트 · 승인 · 복구 · 완료 판정 · 실측](../stages/longrun/lr1-goal/longrun.md) |
+| LR4 | [사람 승인 지점](../stages/longrun/lr4-approval/README.md) | ✅ 구현됨 | 되돌릴 수 없는 행동(발송 · 결제 · 삭제) 전에 사람의 승인을 받고, 기다리는 동안 상태를 유지한다 | [LR1 목표 분해](../stages/longrun/lr1-goal/README.md) · [G5 감사 로그](../stages/guardrails/g5-audit/README.md) | [장기 실행 업무 — 계획 · 체크포인트 · 승인 · 복구 · 완료 판정 · 실측](../stages/longrun/lr1-goal/longrun.md) |
+| LR5 | [실패 복구 · 되돌리기](../stages/longrun/lr5-recovery/README.md) | ✅ 구현됨 | 실패한 작업을 재시도 · 대체 · 되돌리기 중에서 고르고, 이미 한 행동의 부작용을 정리한다 | [IO4 장기 작업](../stages/interop/io4-longtask/README.md) | [장기 실행 업무 — 계획 · 체크포인트 · 승인 · 복구 · 완료 판정 · 실측](../stages/longrun/lr1-goal/longrun.md) |
+| LR6 | [결과 검증 · 완료 판정](../stages/longrun/lr6-verify/README.md) | ✅ 구현됨 | 작업 결과를 완료 조건 · 근거 · 형식으로 검사해 '정말 끝났는지' 판정한다 | [2 RAG](../stages/llm/2-rag/README.md) · [E2 회귀 평가](../stages/evalops/e2-offline/README.md) | [장기 실행 업무 — 계획 · 체크포인트 · 승인 · 복구 · 완료 판정 · 실측](../stages/longrun/lr1-goal/longrun.md) |
+| LR7 | [권한 · 비용 상한](../stages/longrun/lr7-limits/README.md) | ✅ 구현됨 | 작업이 쓸 수 있는 권한 · 자료 · 비용 · 기간을 미리 정하고 넘으면 멈춘다 | [IO5 호출 상한](../stages/interop/io5-limits/README.md) · [G3 권한별 검색](../stages/guardrails/g3-acl/README.md) | [장기 실행 업무 — 계획 · 체크포인트 · 승인 · 복구 · 완료 판정 · 실측](../stages/longrun/lr1-goal/longrun.md) |
 
 ## 설계 원칙
 

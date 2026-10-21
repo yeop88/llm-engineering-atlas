@@ -34,7 +34,7 @@
 이미 있는 단계 위에 짓습니다.
 
 - [8a 에이전틱 AI](../../llm/8a-agent/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
-- [IO1 도구 정의 · 검색 (MCP 서버)](../../interop/io1-tools/README.md) — 에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A) · ⬜ 예정
+- [IO1 도구 정의 · 검색 (MCP 서버)](../../interop/io1-tools/README.md) — 에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A) · ✅ 구현됨
 
 ---
 

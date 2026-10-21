@@ -21,7 +21,7 @@ from app.core.config import get_settings
 
 COOKIE = "atlas_session"
 # 로그인 없이 열리는 경로: 로그인 화면 자체, 정적 파일(로그인 화면 CSS), 상태 확인(도커 healthcheck)
-OPEN_PATHS = ("/login", "/logout", "/static/", "/api/health")
+OPEN_PATHS = ("/login", "/logout", "/static/", "/api/health", "/.well-known/")  # 에이전트 카드는 공개(A2A 규격 — 인증 방법도 카드에 적힘)
 ALL = "*"  # 모든 그룹 — 관리자 · 인증을 끈 로컬
 
 
@@ -104,7 +104,9 @@ async def middleware(request: Request, call_next) -> Response:
     request.state.user = user
     if user is not None or path.startswith(OPEN_PATHS):
         return await call_next(request)
-    if path.startswith("/api/") or path in ("/openapi.json",) or path.startswith("/docs"):
+    if (
+        path.startswith(("/api/", "/mcp", "/a2a")) or path in ("/openapi.json",) or path.startswith("/docs")
+    ):  # 프로그램이 부르는 끝점은 로그인 화면 대신 401
         return JSONResponse({"detail": "인증이 필요합니다. Authorization: Bearer <토큰> 헤더를 보내거나 /login 에서 로그인하세요."},
                             status_code=401, headers={"WWW-Authenticate": "Bearer"})  # fmt: skip
     nxt = path + (f"?{request.url.query}" if request.url.query else "")

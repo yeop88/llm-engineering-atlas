@@ -20,7 +20,7 @@ from app.stages.guardrails import pii
 
 SAMPLE = 200  # 최근 요청 기록 표본
 REDTEAM_MAX_DAYS = 90  # 레드팀은 이 기간 안에 한 번은 돌아야 한다
-SERVICE_KINDS = ("answer", "as", "chat", "graphrag")  # 이용자에게 답이 나가는 기록(레드팀 · A/B 재생은 뺀다)
+SERVICE_KINDS = ("answer", "as", "chat", "graphrag", "a2a")  # 이용자 · 다른 에이전트에게 답이 나가는 기록(레드팀 · A/B 재생은 뺀다)
 
 
 def _sample(db: Session, kinds: tuple[str, ...] | None = SERVICE_KINDS) -> list[Trace]:

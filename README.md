@@ -24,7 +24,7 @@
 |---|---|---|---|---|---|---|
 | **LLM 시스템 엔지니어링** | 문서 지식을 싸고 빠르고 정확하게 서비스하는 흐름 | 12 | 12 | — | — | `/maps/llm` · [개요](docs/maps/llm.md) |
 | **지식 그래프 · GraphRAG** | 개념과 관계를 구조로 저장해 다단계 · 집계 · 전체 요약 질문에 답하는 흐름 | 8 | 8 | — | — | `/maps/knowledge-graph` · [개요](docs/maps/knowledge-graph.md) |
-| **멀티에이전트 · 멀티모달** | 멀티모달 입력 · 검색 → 오케스트레이터가 전문가 에이전트(검색 · 분석 · 작성 · 검증)에게 분배 → 교차 검증 → 텍스트 · 차트 · 음성 출력 | 8 | — | 4 | 4 | `/maps/multi-agent` · [개요](docs/maps/multi-agent.md) |
+| **멀티에이전트 · 멀티모달** | 멀티모달 입력 · 검색 → 오케스트레이터가 전문가 에이전트(검색 · 분석 · 작성 · 검증)에게 분배 → 교차 검증 → 텍스트 · 차트 · 음성 출력 | 8 | 8 | — | — | `/maps/multi-agent` · [개요](docs/maps/multi-agent.md) |
 | **평가 · 관측 (LLMOps)** | 서비스가 지금 잘 되고 있는지 숫자로 아는 흐름 | 8 | 8 | — | — | `/maps/evalops` · [개요](docs/maps/evalops.md) |
 | **보안 · 가드레일 · 거버넌스** | 써도 되는 답인지 확인하는 흐름 | 7 | 7 | — | — | `/maps/guardrails` · [개요](docs/maps/guardrails.md) |
 | **문서 처리 (Document Intelligence)** | 자료를 제대로 읽는 흐름 | 7 | 7 | — | — | `/maps/docintel` · [개요](docs/maps/docintel.md) |
@@ -34,13 +34,13 @@
 | **후학습 (Post-training)** | 우리 데이터로 LLM 자체를 고치는 흐름 | 7 | — | 3 | 4 | `/maps/posttrain` · [개요](docs/maps/posttrain.md) |
 | **데이터 플라이휠** | 평가 · 후학습 · 서빙 · 가드레일을 하나의 순환으로 | 7 | — | 4 | 3 | `/maps/flywheel` · [개요](docs/maps/flywheel.md) |
 | **엔터프라이즈 AI 플랫폼 아키텍처** | 맵들을 실제 운영 시스템으로 묶는 흐름 | 7 | — | 3 | 4 | `/maps/platform` · [개요](docs/maps/platform.md) |
-| **에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)** | 신뢰 경계를 넘나드는 에이전트 연결 | 6 | — | — | 6 | `/maps/interop` · [개요](docs/maps/interop.md) |
+| **에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)** | 신뢰 경계를 넘나드는 에이전트 연결 | 6 | 6 | — | — | `/maps/interop` · [개요](docs/maps/interop.md) |
 | **실시간 음성 상담** | 전화 AS 상담 | 7 | — | — | 7 | `/maps/voice` · [개요](docs/maps/voice.md) |
 | **규제 대응 · 컴플라이언스** | 법 조항을 시스템 요구로 | 8 | 8 | — | — | `/maps/compliance` · [개요](docs/maps/compliance.md) |
-| **장기 실행 에이전트 · 업무 자동화** | 며칠짜리 업무를 맡기는 흐름 | 7 | — | 1 | 6 | `/maps/longrun` · [개요](docs/maps/longrun.md) |
+| **장기 실행 에이전트 · 업무 자동화** | 며칠짜리 업무를 맡기는 흐름 | 7 | 7 | — | — | `/maps/longrun` · [개요](docs/maps/longrun.md) |
 | **강화학습 기반 에이전트 학습 (RLVR)** | 정답을 확인할 수 있는 과제로 에이전트를 학습 | 6 | — | 3 | 3 | `/maps/rlvr` · [개요](docs/maps/rlvr.md) |
 | **온디바이스 · 엣지** | 서버 없이 기기에서 돌리는 흐름 | 6 | — | 3 | 3 | `/maps/edge` · [개요](docs/maps/edge.md) |
-| **합계 18개** | | 132 | 64 | 26 | 42 | `/maps` |
+| **합계 18개** | | 132 | 85 | 21 | 26 | `/maps` |
 <!-- /맵 표 -->
 
 ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정 — 맵 · 단계의 정의와 상태는 `app/stages/registry/` 한 곳에서 관리하고, 이 표와 문서가 거기서 만들어집니다.

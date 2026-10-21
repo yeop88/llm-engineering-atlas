@@ -381,6 +381,47 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 
 서비스 답변(`/api/rag/answer` 스트림의 `done`, AS 상담 · 대화 · GraphRAG 답)에는 AI 응답 고지 `notice` 가 함께 옵니다.
 
+## 에이전트 상호운용 (`/mcp` · `/a2a` · `/api/interop`)
+
+표준 끝점은 `/api` 밖입니다. 인증은 다른 API 와 같습니다(API_TOKEN 이 있으면 `Authorization: Bearer`).
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/mcp` | MCP 서버(Streamable HTTP · JSON-RPC 2.0, 규격 2025-06-18): `initialize`(응답 머리 `Mcp-Session-Id`) · `ping` · `tools/list`(역할이 허용한 도구만) · `tools/call` → `content` · `structuredContent` · `isError`. 알림은 202, 묶음 요청은 오류 |
+| GET | `/mcp` | 405 (서버가 먼저 보내는 SSE 스트림 없음) |
+| GET | `/.well-known/agent-card.json` | A2A 에이전트 카드(공개) — 기술 `document_qa` · `compliance_scope`, 인증 방식 |
+| POST | `/a2a` | A2A JSON-RPC: `message/send` `{"message": {"messageId", "parts": [{"kind": "text", "text"}]}, "metadata": {"skill", "collection_id"?}, "configuration": {"blocking": true}}` → 작업(같은 messageId 면 같은 작업) · `tasks/get` · `tasks/cancel` `{"id"}` |
+| GET | `/api/interop/tools` | 도구 · 범위 · 지금 역할에서 허용 여부 · 역할별 정책 · 샌드박스(Docker 여부) · MCP 주소 |
+| POST | `/api/interop/tools/{name}/call` | 화면에서 도구 호출 `{"arguments", "trace_key"?}` (권한 · 상한 · 감사가 MCP 와 같음) |
+| POST | `/api/interop/sandbox` | 코드 실행(관리자) `{"code"}` → stdout · stderr · 종료 코드 · 격리 방식 |
+| GET | `/api/interop/servers` | 설정의 외부 MCP 서버 · A2A 상대(토큰 감춤)와 이 앱 주소 |
+| POST | `/api/interop/remote/tools` · `/remote/call` | 외부 MCP 서버의 도구 목록(설명 속 지시 표시) · 호출 `{"url", "token"?, "name", "arguments"}` → 지시 문장을 뺀 결과 |
+| POST | `/api/interop/a2a/card` · `/a2a/delegate` | 상대 에이전트 카드 · 맡기기 작업 `{"url", "skill", "text", "metadata", "verify_collection_id"?}` → 결과 · 검증 · 받아들임 |
+| GET | `/api/interop/tasks` · `/calls` · `/trace/{key}` · `/limits` | 작업(`?direction=in·out`) · 호출 기록(`?channel=&status=`) · 추적 id 로 이은 호출 · 작업 · 상한과 세션 사용량 |
+
+## 장기 실행 업무 (`/api/longrun`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/longrun/catalog` | 행동(되돌릴 수 있나 · 보상 · 대체 · LLM) · 템플릿 · 기본 범위 |
+| POST | `/api/longrun/plan` | 계획 보기 `{"planner": "template·llm", "template", "goal", "params": {"days", "collection_id"}, "scope"}` → 검사를 거친 계획 · 고친 것 |
+| POST | `/api/longrun/runs` | 업무 만들기 · 시작 `{… , "plan"?: 미리 본 계획, "start": true}` → 업무 · 단계 · 작업 |
+| GET | `/api/longrun/runs` · `/runs/{id}` | 업무 목록 · 단계별 체크포인트 · 기록 · 완료 판정 |
+| POST | `/api/longrun/runs/{id}/go` | 이어 하기(마지막 체크포인트 다음부터, 멈춘 업무는 실패 · 반려 단계부터) |
+| POST | `/api/longrun/runs/{id}/steps/{idx}/approve` | 승인 · 반려(관리자) `{"ok", "note"}` — 승인하면 이어 감 |
+| POST | `/api/longrun/runs/{id}/rollback?confirm=true` | 되돌리기(관리자) — 보상 작업을 나중 단계부터 |
+| POST | `/api/longrun/runs/{id}/extend` · `/cancel` | 범위 늘리기(관리자) `{"max_steps", "max_seconds", "max_cost"}` · 취소 |
+| GET | `/api/longrun/approvals` | 승인을 기다리는 단계(초안 · 완료 조건 검사 포함) |
+
+## 멀티에이전트 · 멀티모달 (`/api/multiagent`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/api/multiagent/run` | 협업 작업 `{"collection_id", "question", "analyze": "auto·on·off", "rounds": 3, "revisions": 2, "vision": true, "tts": false, "provider"?, "model"?}` → 계획 · 흐름(events) · 답 · 결정 · 검증 · 근거 · 분석 · 출력(차트 · 그림 · 음성) · 요청 기록 번호 |
+| GET | `/api/multiagent/runs` · `/runs/{id}` | 실행 기록 |
+| GET | `/api/multiagent/audio/{name}` | 합성한 음성(mp3) |
+| POST | `/api/multiagent/image-search` | 사진으로 찾기(multipart: `collection_id`, `image`, `question`?, `top_k`) — 멀티모달 인덱스가 필요 |
+
 ## 고객 AS 상담 (`/api/as`)
 
 | 메서드 | 경로 | 설명 |

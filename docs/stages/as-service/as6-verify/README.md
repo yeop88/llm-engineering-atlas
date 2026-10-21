@@ -34,7 +34,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [MA7 품질 검증 에이전트](../../multi-agent/ma7-critic-agent/README.md) — 멀티에이전트 · 멀티모달 맵 · 🟡 기초 있음
+- [MA7 품질 검증 에이전트](../../multi-agent/ma7-critic-agent/README.md) — 멀티에이전트 · 멀티모달 맵 · ✅ 구현됨
 - [G4 출력 정책 검사](../../guardrails/g4-output/README.md) — 보안 · 가드레일 · 거버넌스 맵 · ✅ 구현됨
 
 ---

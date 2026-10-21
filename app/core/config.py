@@ -57,6 +57,23 @@ class Settings(BaseSettings):
     ai_notice: str = "AI 가 자료를 찾아 작성한 답변입니다. 법률 자문이 아니며, 사람의 검토를 요청할 수 있습니다."
     # 규제 대응(RC8): 통제 감사(증적 모으기)를 몇 시간마다 다시 돌릴지(0 = 끔). LLM 없이 기록만 본다
     watch_audit_hours: float = 0
+    # 에이전트 상호운용(IO5): 세션 · 위임 하나가 쓸 수 있는 도구 호출 수 · 시간(초) · 비용(달러, 0 = 상한 없음)
+    interop_max_calls: int = 20
+    interop_max_seconds: float = 120
+    interop_max_cost: float = 0
+    # 실행 도구 샌드박스(IO2): Docker 가 있으면 이 이미지로 네트워크 없이, 없으면 격리가 약한 별도 프로세스로(화면에 표시)
+    sandbox_image: str = "python:3.13-slim"
+    sandbox_timeout: float = 10
+    # 외부 MCP 서버 · A2A 상대 에이전트: [{"name", "url", "token"?}] (JSON). 이 앱 자신도 넣어 시험할 수 있다
+    mcp_servers: list[dict[str, Any]] = []
+    a2a_peers: list[dict[str, Any]] = []
+    # 멀티에이전트(MA6): 쉬운 작성을 맡길 소형 모델(OpenAI 호환). 비우면 기본 LLM 이 모두 쓴다
+    small_llm_model: str | None = None
+    small_llm_base_url: str | None = None
+    # 멀티모달 출력(MA8): 음성 합성 서버(OpenAI 호환 /audio/speech). 비우면 글 · 차트 · 그림만
+    tts_url: str | None = None
+    tts_model: str = "tts-1"
+    tts_voice: str = "alloy"
 
     # 라이브러리(sentence-transformers · transformers · torch) 버전이 지난 점검 때와 다르면 시작할 때 내려받은 모델을 자동 점검.
     # 모델을 하나씩 올려 보므로 CPU 에서는 몇 분 걸린다 — 기본은 끄고 화면에서 '점검 권장'만 알린다.

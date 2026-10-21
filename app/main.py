@@ -30,7 +30,10 @@ from app.stages.embedding.model_manager import get_manager  # noqa: E402
 from app.stages.evalops import api as evalops_api  # noqa: E402
 from app.stages.finetune import api as finetune_api  # noqa: E402
 from app.stages.guardrails import api as guardrails_api  # noqa: E402
+from app.stages.interop import api as interop_api  # noqa: E402
 from app.stages.kg import api as kg_api  # noqa: E402
+from app.stages.longrun import api as longrun_api  # noqa: E402
+from app.stages.multiagent import api as multiagent_api  # noqa: E402
 from app.stages.quant import api as quant_api  # noqa: E402
 from app.stages.rag import answer_api, collections_api, eval_api, verify_api  # noqa: E402
 from app.stages.rerank import api as rerank_api  # noqa: E402
@@ -71,6 +74,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         added = seed_catalog(db)
         stale = mark_interrupted(db)
         upgraded = compat.needs_check_after_upgrade(db)
+    stale += longrun_api.mark_interrupted()  # 돌던 업무는 '중단됨'으로 — 마지막 체크포인트부터 이어 하게
     log.info("카탈로그 seed: %d개 모델 추가 · 중단된 작업 정리 %d건", added, stale)
     if upgraded:
         log.warning("라이브러리 버전이 지난 호환성 점검 때와 다릅니다 — 모델 화면에서 점검을 권장합니다")
@@ -123,6 +127,9 @@ for module in (
     as_api,
     kg_api,  # 지식 그래프 · GraphRAG — RAG 검색 · 서비스 답변 위에 그래프를 얹는다
     compliance_api,  # 규제 대응 — 가드레일 · 평가 · 대화 · 지식 그래프의 기록을 통제 증적으로 읽는다
+    interop_api,  # 상호운용 — MCP(/mcp) · A2A(/a2a) 끝점과 도구 권한 · 상한 · 감사
+    longrun_api,  # 장기 실행 업무 — 계획 · 체크포인트 · 승인 · 되돌리기
+    multiagent_api,  # 멀티에이전트 — 오케스트레이터 · 전문가 에이전트 · 멀티모달 출력
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

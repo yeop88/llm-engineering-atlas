@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}MCP 도구 · 샌드박스{% endblock %}
+{% block content %}
+{% call ui.page_header("MCP 도구 · 샌드박스") %}이 앱의 검색 · 조문 번호 조회 · 그래프 조회 · 계산 · 코드 실행 · 사람 검토 요청을 MCP(Model Context Protocol) 서버로 내보냅니다(IO1). 도구마다 범위(읽기 · 쓰기 · 실행)를 두고 역할이 허용한 도구만 목록에 보이며, 코드 실행은 네트워크 없는 컨테이너에서 돕니다(IO2). 다른 MCP 서버에 붙어 도구를 받아 쓸 수도 있습니다 — 외부에서 온 설명 · 결과는 지시 문장을 빼고 표시합니다.{% endcall %}
+
+<div class="card stack" id="tools">
+  <h2>이 앱의 MCP 서버 (IO1)</h2>
+  <div id="t-conn" class="small"></div>
+  <div id="t-tools"><div class="loading" role="status">불러오는 중…</div></div>
+  <div class="row">
+    <div class="field"><label for="t-name">도구</label><select id="t-name"></select></div>
+    <div class="field grow"><label for="t-args">입력 (JSON)</label><input id="t-args" class="mono" placeholder='{"collection_id": 3, "query": "해고 예고"}'></div>
+    <div class="self-end"><button class="btn primary" id="t-call">호출</button></div>
+  </div>
+  <div id="t-out"></div>
+</div>
+
+<div class="card stack mt-4" id="sandbox">
+  <h2>권한 · 샌드박스 (IO2)</h2>
+  <div id="t-policy" class="small"></div>
+  <div class="field"><label for="t-code">파이썬 코드 (관리자 · 네트워크 없음 · 시간 · 메모리 제한)</label><textarea id="t-code" rows="5" class="mono">import statistics
+print(statistics.mean([70.1, 74.1, 88.0]))</textarea></div>
+  <div><button class="btn" id="t-run">실행</button></div>
+  <div id="t-run-out"></div>
+</div>
+
+<div class="card stack mt-4" id="remote">
+  <h2>다른 MCP 서버의 도구</h2>
+  <div class="row">
+    <div class="field grow"><label for="t-url">MCP 서버 주소</label><input id="t-url" list="t-servers" placeholder="http://127.0.0.1:8000/mcp"><datalist id="t-servers"></datalist></div>
+    <div class="field"><label for="t-token">토큰 (선택)</label><input id="t-token" type="password" autocomplete="off"></div>
+    <div class="self-end"><button class="btn" id="t-inspect">도구 목록</button></div>
+  </div>
+  <div id="t-remote"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/interop/tools.js') }}"></script>
+{% endblock %}

@@ -36,7 +36,7 @@
 이미 있는 단계 위에 짓습니다.
 
 - [C6 상담원 이관 · 인계 요약](../../conversation/c6-handoff/README.md) — 대화 · 메모리 맵 · ✅ 구현됨
-- [MA3 오케스트레이터 에이전트](../../multi-agent/ma3-orchestrator/README.md) — 멀티에이전트 · 멀티모달 맵 · ⬜ 예정
+- [MA3 오케스트레이터 에이전트](../../multi-agent/ma3-orchestrator/README.md) — 멀티에이전트 · 멀티모달 맵 · ✅ 구현됨
 
 ---
 

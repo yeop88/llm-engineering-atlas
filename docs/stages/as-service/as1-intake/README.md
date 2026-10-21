@@ -34,7 +34,7 @@ AS 문의의 상당수가 '이 화면 좀 보세요' 같은 사진 · 음성입�
 
 이미 있는 단계 위에 짓습니다.
 
-- [MA1 멀티모달 입력 · 임베딩](../../multi-agent/ma1-input/README.md) — 멀티에이전트 · 멀티모달 맵 · 🟡 기초 있음
+- [MA1 멀티모달 입력 · 임베딩](../../multi-agent/ma1-input/README.md) — 멀티에이전트 · 멀티모달 맵 · ✅ 구현됨
 - [C1 대화 맥락 질의 재작성](../../conversation/c1-rewrite/README.md) — 대화 · 메모리 맵 · ✅ 구현됨
 
 ---

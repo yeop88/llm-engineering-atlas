@@ -34,7 +34,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [MA2 멀티모달 RAG](../../multi-agent/ma2-rag/README.md) — 멀티에이전트 · 멀티모달 맵 · 🟡 기초 있음
+- [MA2 멀티모달 RAG](../../multi-agent/ma2-rag/README.md) — 멀티에이전트 · 멀티모달 맵 · ✅ 구현됨
 - [M 멀티모달](../../llm/m-multimodal/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
 
 ---

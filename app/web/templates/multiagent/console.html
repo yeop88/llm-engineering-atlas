@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}에이전트 협업{% endblock %}
+{% block content %}
+{% call ui.page_header("에이전트 협업") %}오케스트레이터가 요청을 작업으로 나눠(MA3) 검색 전문가(MA4 — 부족하면 질의를 고쳐 다시, 그림 후보는 비전 LLM 으로 다시 줄 세움), 분석 · 코딩(MA5 — 근거 속 수치를 코드로 계산해 샌드박스에서 실행), 작성(MA6 — 쉬운 질문은 소형 모델), 품질 검증(MA7 — 통과 · 수정 요청 · 반려, 재작성 루프)에게 차례로 맡기고, 글 · 차트 · 근거 그림 · 음성으로 냅니다(MA8). 에이전트끼리 주고받은 것을 시간 순서대로 보입니다.{% endcall %}
+
+<div class="card stack" id="orchestrator">
+  <h2>요청</h2>
+  <div class="row">
+    <div class="field"><label for="m-col">컬렉션</label><select id="m-col" data-ctx="col"></select></div>
+    <div class="field"><label for="m-analyze">분석 에이전트</label><select id="m-analyze"><option value="auto">필요할 때(계산 · 비교 · 표)</option><option value="on">항상</option><option value="off">끔</option></select></div>
+    <div class="field"><label for="m-rounds">재검색 상한</label><input id="m-rounds" type="number" value="3" min="1" max="5" class="w-md"></div>
+    <div class="field"><label for="m-rev">재작성 상한</label><input id="m-rev" type="number" value="2" min="0" max="4" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="m-vision" checked> 그림 다시 줄 세우기</label>
+    <label class="row small m-0 self-end"><input type="checkbox" id="m-tts"> 음성</label>
+  </div>
+  <div class="field"><label for="m-q">질문</label><textarea id="m-q" rows="2" placeholder="예: 연차휴가 일수와 해고 예고 기간을 비교해 주세요"></textarea></div>
+  <div><button class="btn primary" id="m-run">맡기기</button></div>
+  <div id="m-progress" hidden></div>
+</div>
+
+<div class="grid cols-2 mt-4">
+  <div class="card stack" id="timeline"><h2>흐름</h2><div id="m-events"><div class="empty">맡기면 에이전트 사이의 주고받음이 여기에 나옵니다.</div></div></div>
+  <div class="card stack" id="output"><h2>결과 (MA8)</h2><div id="m-out"></div><div id="m-chart-box" hidden><canvas id="m-chart" aria-label="분석 결과 차트" role="img"></canvas></div><div id="m-chart-table"></div></div>
+</div>
+
+<div class="card stack mt-4" id="history">
+  <h2>실행 기록</h2>
+  <div id="m-runs"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"
+        integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', path='js/multiagent/console.js') }}"></script>
+{% endblock %}
