@@ -55,6 +55,8 @@ app/
                        release(처방 · 게이트 · 단계적 배포 · 감시 · 롤백 — pipeline.search.default_config 가 pick 을 부름)
     platform/          엔터프라이즈 플랫폼 맵(PF1~PF7): gateway(속도 제한 · 사용량) · tenancy(테넌트 격리 — restrict 가 부름) ·
                        registry(프롬프트 버전 · 기능 플래그 — serve 가 부름) · resilience(차단기 · 대체 사슬) · chargeback(비용 배분 · 예산)
+    serving/           서빙 맵(S1~S7): launcher(llama-server 설정별로 띄우기 · 메모리) · bench(동시 부하 · 디코딩 설정 비교) ·
+                       budget(실측 후보 · 목표 안 최고 · 파레토 · 운영 준수) · resources(캐시 · 모델 · 장치 현황)
     as_service/        고객 AS 상담 맵(AS1~AS8): triage(의도 · 긴급도 · 코드) · photo(사진 코드 읽기) · flow(상담 흐름 · 캐시 · 티켓 · 지표) ·
                        setup(예시 매뉴얼), presets/
     registry/          맵 · 단계 설명(데이터만, 다른 앱 모듈을 불러오지 않음)

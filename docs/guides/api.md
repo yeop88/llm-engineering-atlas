@@ -450,6 +450,15 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/platform/ops/llm-check` | 대체 사슬의 모델마다 짧게 불러 보기(관리자) |
 | GET / POST | `/api/platform/chargeback` · `/budgets` | 이번 달 테넌트 · 기능별 요청 · 토큰 · 비용 · 예산 / 예산 `{"tenant", "monthly_usd", "alert_pct"}` |
 
+## 서빙 · 추론 최적화 (`/api/serving`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/serving/resources` | 캐시 · 올라간 모델 · 장치 · 메모리 · LLM 경로 · GGUF 파일 · llama-server 유무 |
+| POST | `/api/serving/load` | 동시 부하 작업 `{"levels": [1, 2, 4], "max_tokens", "prompts"?}` → 동시 수별 요청/초 · 토큰/초 · p50 · p95 |
+| POST | `/api/serving/decode` | 디코딩 설정 비교 작업(관리자) `{"model": GGUF 이름, "variants": [{"label", "kv_k", "kv_v", "draft"?}], "eval_set_id", "max_queries"}` → 설정별 품질 · 기준 대비 · 생성 속도 · KV 캐시 · RSS |
+| POST | `/api/serving/budget` | 예산 `{"max_ms", "max_cost", "min_quality", "days"}` → 평가 세트별 목표 안 최고 품질 · 파레토 앞줄 · 운영 경로별 p95 · 비용 |
+
 ## 고객 AS 상담 (`/api/as`)
 
 | 메서드 | 경로 | 설명 |

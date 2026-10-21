@@ -137,6 +137,8 @@ class Settings(BaseSettings):
     openai_model_urls: dict[str, str] = {}
     # 로컬 GGUF 파일 폴더 — 양자화 화면이 파일 목록 · 크기를 보여 주고 llama-server 실행 명령을 만들 때 쓴다(선택)
     llm_models_dir: Path | None = None
+    # 서빙 실측(S5): llama-server 실행 파일 — 있으면 앱이 KV 캐시 · 추측 디코딩 설정별로 서버를 직접 띄워 비교한다(빈 포트 18100~)
+    llama_server_bin: Path | None = None
     anthropic_api_key: str | None = None
     anthropic_model: str = "claude-sonnet-5-5"
     llm_timeout: float = 120.0

@@ -34,8 +34,8 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [S1 캐시 (의미 · 프롬프트 · 임베딩)](../../serving/s1-cache/README.md) — 서빙 · 추론 최적화 · 비용 맵 · 🟡 기초 있음
-- [S2 근거 길이 관리](../../serving/s2-context/README.md) — 서빙 · 추론 최적화 · 비용 맵 · 🟡 기초 있음
+- [S1 캐시 (의미 · 프롬프트 · 임베딩)](../../serving/s1-cache/README.md) — 서빙 · 추론 최적화 · 비용 맵 · ✅ 구현됨
+- [S2 근거 길이 관리](../../serving/s2-context/README.md) — 서빙 · 추론 최적화 · 비용 맵 · ✅ 구현됨
 - [2 RAG 검색](../../llm/2-rag/README.md) — LLM 시스템 엔지니어링 맵 · ✅ 구현됨
 
 ---

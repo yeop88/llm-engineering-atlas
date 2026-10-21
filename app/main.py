@@ -41,6 +41,7 @@ from app.stages.rag import answer_api, collections_api, eval_api, verify_api  # 
 from app.stages.rerank import api as rerank_api  # noqa: E402
 from app.stages.rl import api as rl_api  # noqa: E402
 from app.stages.routing import api as routing_api  # noqa: E402
+from app.stages.serving import api as serving_api  # noqa: E402
 from app.web import pages  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -138,6 +139,7 @@ for module in (
     multiagent_api,  # 멀티에이전트 — 오케스트레이터 · 전문가 에이전트 · 멀티모달 출력
     flywheel_api,  # 데이터 플라이휠 — 실패 분류 · 검토 · 게이트 · 단계적 배포
     platform_api,  # 엔터프라이즈 플랫폼 — 게이트웨이 · 테넌트 · 프롬프트 · 플래그 · 장애 대응 · 비용
+    serving_api,  # 서빙 — 동시 부하 · 디코딩 설정 실측 · 예산 · 자원 현황
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

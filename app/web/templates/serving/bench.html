@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}부하 · 디코딩 실측{% endblock %}
+{% block content %}
+{% call ui.page_header("부하 · 디코딩 실측") %}동시 요청 수를 늘려 가며 처리량 · p50 · p95 지연을 잽니다(S4) — llama-server 의 동시 슬롯보다 많이 보내면 줄을 서서 p95 가 늘어납니다. KV 캐시 비트(f16 · q8_0 · q4_0)와 추측 디코딩(작은 초안 모델)은 앱이 설정마다 llama-server 를 직접 띄워, 같은 질문 · 같은 근거로 품질 · 생성 속도 · KV 캐시 메모리를 비교합니다(S5, 첫 설정이 기준).{% endcall %}
+
+<div class="card stack" id="server">
+  <h2>동시 부하 (S4)</h2>
+  <div class="row">
+    <div class="field"><label for="b-levels">동시 수 (쉼표)</label><input id="b-levels" value="1, 2, 4" class="w-md"></div>
+    <div class="field"><label for="b-tokens">답 최대 토큰</label><input id="b-tokens" type="number" value="96" min="8" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="b-load">부하 걸기</button></div>
+  </div>
+  <div id="b-load-progress" hidden></div>
+  <div id="b-load-out"></div>
+</div>
+
+<div class="card stack mt-4" id="decode">
+  <h2>KV 캐시 · 추측 디코딩 (S5)</h2>
+  <div id="b-env" class="small"></div>
+  <div class="row">
+    <div class="field"><label for="b-model">모델 (GGUF)</label><select id="b-model"></select></div>
+    <div class="field"><label for="b-col">평가 세트 컬렉션</label><select id="b-col" data-ctx="col"></select></div>
+    <div class="field"><label for="b-set">평가 세트</label><select id="b-set" data-ctx="set"></select></div>
+    <div class="field"><label for="b-n">질문 수</label><input id="b-n" type="number" value="12" min="1" max="100" class="w-md"></div>
+  </div>
+  <div class="field"><label for="b-variants">설정 (JSON 목록 — 첫 번째가 기준)</label><textarea id="b-variants" rows="5" class="mono">[{"label": "f16", "kv_k": "f16", "kv_v": "f16"},
+ {"label": "kv-q8", "kv_k": "q8_0", "kv_v": "q8_0"},
+ {"label": "kv-q4", "kv_k": "q4_0", "kv_v": "q4_0"},
+ {"label": "spec-e2b", "draft": "gemma-4-E2B_q4_0-it.gguf"}]</textarea></div>
+  <div><button class="btn primary" id="b-decode">설정별 비교</button></div>
+  <div id="b-decode-progress" hidden></div>
+  <div id="b-decode-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/serving/bench.js') }}"></script>
+{% endblock %}

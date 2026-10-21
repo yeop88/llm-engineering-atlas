@@ -28,7 +28,7 @@
 | **평가 · 관측 (LLMOps)** | 서비스가 지금 잘 되고 있는지 숫자로 아는 흐름 | 8 | 8 | — | — | `/maps/evalops` · [개요](docs/maps/evalops.md) |
 | **보안 · 가드레일 · 거버넌스** | 써도 되는 답인지 확인하는 흐름 | 7 | 7 | — | — | `/maps/guardrails` · [개요](docs/maps/guardrails.md) |
 | **문서 처리 (Document Intelligence)** | 자료를 제대로 읽는 흐름 | 7 | 7 | — | — | `/maps/docintel` · [개요](docs/maps/docintel.md) |
-| **서빙 · 추론 최적화 · 비용** | 싸고 빠르게 돌리는 흐름 | 7 | — | 5 | 2 | `/maps/serving` · [개요](docs/maps/serving.md) |
+| **서빙 · 추론 최적화 · 비용** | 싸고 빠르게 돌리는 흐름 | 7 | 7 | — | — | `/maps/serving` · [개요](docs/maps/serving.md) |
 | **대화 · 메모리** | 한 번이 아니라 이어지는 상담을 다루는 흐름 | 6 | 6 | — | — | `/maps/conversation` · [개요](docs/maps/conversation.md) |
 | **서비스 시나리오: 고객 AS 상담** | 기술 맵들을 실제 업무로 묶은 흐름 | 8 | 8 | — | — | `/maps/as-service` · [개요](docs/maps/as-service.md) |
 | **후학습 (Post-training)** | 우리 데이터로 LLM 자체를 고치는 흐름 | 7 | — | 3 | 4 | `/maps/posttrain` · [개요](docs/maps/posttrain.md) |
@@ -40,7 +40,7 @@
 | **장기 실행 에이전트 · 업무 자동화** | 며칠짜리 업무를 맡기는 흐름 | 7 | 7 | — | — | `/maps/longrun` · [개요](docs/maps/longrun.md) |
 | **강화학습 기반 에이전트 학습 (RLVR)** | 정답을 확인할 수 있는 과제로 에이전트를 학습 | 6 | — | 3 | 3 | `/maps/rlvr` · [개요](docs/maps/rlvr.md) |
 | **온디바이스 · 엣지** | 서버 없이 기기에서 돌리는 흐름 | 6 | — | 3 | 3 | `/maps/edge` · [개요](docs/maps/edge.md) |
-| **합계 18개** | | 132 | 99 | 14 | 19 | `/maps` |
+| **합계 18개** | | 132 | 106 | 9 | 17 | `/maps` |
 <!-- /맵 표 -->
 
 ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정 — 맵 · 단계의 정의와 상태는 `app/stages/registry/` 한 곳에서 관리하고, 이 표와 문서가 거기서 만들어집니다.

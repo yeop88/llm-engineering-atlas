@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}비용 · 지연 예산 · 자원{% endblock %}
+{% block content %}
+{% call ui.page_header("비용 · 지연 예산 · 자원") %}질문당 p95 지연 · 비용 · 최저 품질 목표를 넣으면, 이미 잰 실측(연결 비교 · LLM 양자화 · 라우팅 평가)에서 목표 안 최고 품질 설정과 파레토 앞줄(품질을 올리려면 지연이 늘어야 하는 후보)을 평가 세트별로 고르고, 운영 요청 기록으로 경로 · 모델별로 지금 목표를 지키는지 봅니다(S7). 캐시 적중 · 올라간 모델 · 장치 · 메모리는 아래 현황에 모읍니다(S1 · S2 · S3 · S6).{% endcall %}
+
+<div class="card stack" id="budget">
+  <h2>예산 (S7)</h2>
+  <div class="row">
+    <div class="field"><label for="u-ms">p95 지연 목표(ms)</label><input id="u-ms" type="number" min="0" placeholder="30000" class="w-md"></div>
+    <div class="field"><label for="u-cost">질문당 비용 목표($)</label><input id="u-cost" type="number" min="0" step="0.0001" class="w-md"></div>
+    <div class="field"><label for="u-q">최저 품질</label><input id="u-q" type="number" min="0" max="1" step="0.01" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="u-run">고르기</button></div>
+  </div>
+  <div id="u-out"></div>
+  <h3>운영 — 경로 · 모델별 (최근 7일)</h3>
+  <div id="u-live"></div>
+</div>
+
+<div class="card stack mt-4" id="resources">
+  <h2>자원 · 캐시 현황 (S1 · S2 · S3 · S6)</h2>
+  <div id="u-res"><div class="loading" role="status">불러오는 중…</div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/serving/budget.js') }}"></script>
+{% endblock %}

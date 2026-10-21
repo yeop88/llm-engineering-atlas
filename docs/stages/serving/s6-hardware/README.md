@@ -2,7 +2,7 @@
 
 # S6 · 하드웨어 배치 (Hardware placement)
 
-**상태: 🟡 기초 있음** — 어느 모델을 CPU · 내장 GPU · 외장 GPU 에 둘지, 몇 개를 올려 둘지 정한다
+**상태: ✅ 구현됨** — 어느 모델을 CPU · 내장 GPU · 외장 GPU 에 둘지, 몇 개를 올려 둘지 정한다
 
 ## 원리
 
@@ -14,20 +14,20 @@
 
 ## 어떻게 (이 앱에서)
 
-- (있음) CPU · CUDA · ROCm 설치 가이드, 모델 LRU 로드(MAX_LOADED_MODELS), bf16/fp32 자동 선택, Docker TORCH_EXTRA
-- (예정) 장치별 단계 지연 표, GPU 환경 재측정(리랭커 · 색인)
+- (있음) CPU · CUDA · ROCm 설치 가이드, 모델 LRU 로드(MAX_LOADED_MODELS), bf16/fp32 자동 선택
+- 지금 쓰는 장치 · 빌드 · 올라간 임베딩 · 리랭커(장치 · dtype · 로드 시간) · 메모리 사용을 한 화면에
 
 ## 화면
 
-- 아직 테스트 화면이 없습니다. 단계 소개는 앱의 `/stages/sv_hardware` 에서 볼 수 있습니다.
+- `/serving/budget#resources` — **하드웨어 배치**: 장치 · 올라간 모델 · 메모리
 
 ## 앞으로 할 일
 
-- 장치별 지연 표
-- GPU 재측정
+- 장치별 단계 지연 표
 
 ## 상세 문서
 
+- [서빙 · 추론 최적화 — 동시 부하 · KV 캐시 · 추측 디코딩 · 예산 · 자원 · 실측](../s4-server/serving.md)
 - [서빙 · 추론 최적화 · 비용 맵](../../../maps/serving.md)
 
 ## 기반 단계

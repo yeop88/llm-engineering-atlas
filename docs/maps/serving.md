@@ -22,13 +22,13 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| S1 | [캐시 (의미 · 프롬프트 · 임베딩)](../stages/serving/s1-cache/README.md) | 🟡 기초 있음 | 같거나 비슷한 계산을 다시 하지 않는다 — 임베딩 · LLM 변형 · 프롬프트 · 답변 캐시 | [1 임베딩](../stages/llm/1-embedding/README.md) · [4 검색 향상](../stages/llm/4-search-lab/README.md) | — |
-| S2 | [근거 길이 관리](../stages/serving/s2-context/README.md) | 🟡 기초 있음 | LLM 이 읽을 근거의 수 · 길이를 품질을 지키는 범위에서 줄인다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
-| S3 | [경량 모델 (양자화 · 증류)](../stages/serving/s3-light/README.md) | 🟡 기초 있음 | 가중치 · 벡터 비트를 낮추고 작은 모델에 지식을 옮겨 메모리 · 지연을 줄인다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [7a 지식 증류](../stages/llm/7a-distill/README.md) | — |
-| S4 | [추론 서버 · 배치 · 스트리밍](../stages/serving/s4-server/README.md) | 🟡 기초 있음 | 모델별 서버 · 동시 처리 · 스트리밍으로 대기 시간과 처리량을 맞춘다 | [2 RAG](../stages/llm/2-rag/README.md) | — |
-| S5 | [KV 캐시 · 추측 디코딩](../stages/serving/s5-decode/README.md) | ⬜ 예정 | KV 캐시 양자화로 긴 문맥 메모리를 줄이고, 추측 디코딩(MTP 등)으로 생성 속도를 올린다 | [7b 양자화](../stages/llm/7b-quant/README.md) | — |
-| S6 | [하드웨어 배치](../stages/serving/s6-hardware/README.md) | 🟡 기초 있음 | 어느 모델을 CPU · 내장 GPU · 외장 GPU 에 둘지, 몇 개를 올려 둘지 정한다 | [1 임베딩](../stages/llm/1-embedding/README.md) | — |
-| S7 | [비용 · 지연 예산](../stages/serving/s7-budget/README.md) | ⬜ 예정 | 질문당 비용 · p95 지연 목표를 정하고 경로 · 모델 · 근거 설정을 그 안에 맞춘다 | [6 라우팅](../stages/llm/6-routing/README.md) · [E4 비용 · 지연](../stages/evalops/e4-cost/README.md) | — |
+| S1 | [캐시 (의미 · 프롬프트 · 임베딩)](../stages/serving/s1-cache/README.md) | ✅ 구현됨 | 같거나 비슷한 계산을 다시 하지 않는다 — 임베딩 · LLM 변형 · 프롬프트 · 답변 캐시 | [1 임베딩](../stages/llm/1-embedding/README.md) · [4 검색 향상](../stages/llm/4-search-lab/README.md) | [서빙 · 추론 최적화 — 동시 부하 · KV 캐시 · 추측 디코딩 · 예산 · 자원 · 실측](../stages/serving/s4-server/serving.md) |
+| S2 | [근거 길이 관리](../stages/serving/s2-context/README.md) | ✅ 구현됨 | LLM 이 읽을 근거의 수 · 길이를 품질을 지키는 범위에서 줄인다 | [2 RAG](../stages/llm/2-rag/README.md) | [서빙 · 추론 최적화 — 동시 부하 · KV 캐시 · 추측 디코딩 · 예산 · 자원 · 실측](../stages/serving/s4-server/serving.md) |
+| S3 | [경량 모델 (양자화 · 증류)](../stages/serving/s3-light/README.md) | ✅ 구현됨 | 가중치 · 벡터 비트를 낮추고 작은 모델에 지식을 옮겨 메모리 · 지연을 줄인다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [7a 지식 증류](../stages/llm/7a-distill/README.md) | [서빙 · 추론 최적화 — 동시 부하 · KV 캐시 · 추측 디코딩 · 예산 · 자원 · 실측](../stages/serving/s4-server/serving.md) |
+| S4 | [추론 서버 · 배치 · 스트리밍](../stages/serving/s4-server/README.md) | ✅ 구현됨 | 모델별 서버 · 동시 처리 · 스트리밍으로 대기 시간과 처리량을 맞춘다 | [2 RAG](../stages/llm/2-rag/README.md) | [서빙 · 추론 최적화 — 동시 부하 · KV 캐시 · 추측 디코딩 · 예산 · 자원 · 실측](../stages/serving/s4-server/serving.md) |
+| S5 | [KV 캐시 · 추측 디코딩](../stages/serving/s5-decode/README.md) | ✅ 구현됨 | KV 캐시 양자화로 긴 문맥 메모리를 줄이고, 추측 디코딩(MTP 등)으로 생성 속도를 올린다 | [7b 양자화](../stages/llm/7b-quant/README.md) | [서빙 · 추론 최적화 — 동시 부하 · KV 캐시 · 추측 디코딩 · 예산 · 자원 · 실측](../stages/serving/s4-server/serving.md) |
+| S6 | [하드웨어 배치](../stages/serving/s6-hardware/README.md) | ✅ 구현됨 | 어느 모델을 CPU · 내장 GPU · 외장 GPU 에 둘지, 몇 개를 올려 둘지 정한다 | [1 임베딩](../stages/llm/1-embedding/README.md) | [서빙 · 추론 최적화 — 동시 부하 · KV 캐시 · 추측 디코딩 · 예산 · 자원 · 실측](../stages/serving/s4-server/serving.md) |
+| S7 | [비용 · 지연 예산](../stages/serving/s7-budget/README.md) | ✅ 구현됨 | 질문당 비용 · p95 지연 목표를 정하고 경로 · 모델 · 근거 설정을 그 안에 맞춘다 | [6 라우팅](../stages/llm/6-routing/README.md) · [E4 비용 · 지연](../stages/evalops/e4-cost/README.md) | [서빙 · 추론 최적화 — 동시 부하 · KV 캐시 · 추측 디코딩 · 예산 · 자원 · 실측](../stages/serving/s4-server/serving.md) |
 
 ## 설계 원칙
 
