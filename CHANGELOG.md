@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-21
+
 ### 추가
 - **지식 그래프 · GraphRAG 맵 구현(K1~K8)** — 화면 `/kg/build` · `/kg/explore` · `/kg/rag`
   - 법률 온톨로지(클래스 5 · 관계 6)와 역량 질문 15개(기대 Cypher), 정형 추출(조문 머리 · 시행령의 '법 제N조' · 판례 참조조문 · 참조판례)과 LLM 쟁점 추출 · 합치기, 온톨로지 검증
@@ -329,7 +331,8 @@
 - 차트는 Chart.js 를 CDN 에서 불러오므로 오프라인에서는 차트 대신 표만 표시됩니다.
 - 내장 벤치마크 데이터셋은 소형이라 상위 모델 간 차이가 작게 나옵니다. 실제 선택에는 도메인 데이터셋을 업로드해 평가하세요.
 
-[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/yeop88/llm-engineering-atlas/compare/v1.0.2...v1.1.0
