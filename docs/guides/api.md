@@ -474,6 +474,22 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 실시간 음성 상담 (`/api/voice`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/voice/config` | 턴 관리 문턱 · 지연 예산(단계별) · 인식 엔진 · 합성 · 전사 저장 · 보관 기간 |
+| POST / GET / DELETE | `/api/voice/calls` · `/calls/{id}` | 통화 만들기 `{"collection_id", "mode": "auto"\|"assist", "customer", "product_model"}`(AS 상담 기록과 짝) / 목록(보관 기간 지난 기록 지움) · 한 건 / 삭제 |
+| POST | `/api/voice/calls/{id}/audio` | 16kHz PCM16 조각(본문) `?speaking=` → 사건 partial(이어질 말) · final(고객 턴 · 감정 · 인식 시간 · 표기 복원) · barge_in |
+| POST | `/api/voice/calls/{id}/say` | 글로 말하기 `{"text", "role": "customer"\|"agent"}` |
+| POST | `/api/voice/calls/{id}/respond` | NDJSON — 자동 응답: plan · sources · sentence(글 · 읽는 글 · 합성 파일 · 시각) · done(단계별 시간 · 예산 · 검증 · 이관) / 상담원 보조: triage · evidence(근거 · 확인할 질문) · suggestion |
+| POST | `/api/voice/calls/{id}/barge` · `/suggestions/{n}/feedback` | 끼어들기 기록 `{"turn", "spoken_chars", "sentence"}` / 추천 채택 `{"action": "adopted"\|"edited"\|"ignored", "text"}` |
+| POST | `/api/voice/calls/{id}/end` | 종료 `{"summarize", "ticket", "provider", "model"}` → 양식 요약 · 항목별 전사 일치 · 티켓 |
+| POST / GET | `/api/voice/stt/transcribe` · `/stt/sets` · `/stt/eval` | 파일 하나 인식(표기 복원 · 운율) / 음성 평가 세트(파일 + 정답 전사) / 평가 작업 `{"set", "engines", "collection_id"}` → 글자 오류율 · 용어 정확도 · 실시간 계수 |
+| POST / GET | `/api/voice/tts/preview` · `/tts/{name}` | 문장 · 읽는 글 · 합성 / 합성 파일(mp3) |
+| POST | `/api/voice/emotion/score` · `/emotion/eval` | 불만 점수 · 이관 / 라벨 문장 평가(정밀도 · 재현율) |
+| GET | `/api/voice/report` | 통화 기록: 단계별 지연 p50 · p95 · 예산 안 비율 · 끼어들기 · 이관 · 추천 채택 · 요약 검증 · 인식 실시간 계수 |
+
 ## 온디바이스 · 엣지 (`/api/edge`)
 
 | 메서드 | 경로 | 설명 |

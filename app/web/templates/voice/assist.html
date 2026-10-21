@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}상담원 보조 · 통화 요약{% endblock %}
+{% block content %}
+{% call ui.page_header("상담원 보조 · 통화 요약") %}자동 응답 대신 상담원 화면에 고객 말마다 매뉴얼 근거 · 추천 답 · 확인할 질문을 띄웁니다(VC6). 사람이 최종 판단을 하므로 몇 초 늦어도 쓸모가 있고, 상담원이 추천을 채택 · 고쳐서 씀 · 무시한 결과로 채택률을 잽니다. 통화가 끝나면 전사를 상담 기록 양식(문의 · 제품 · 코드 · 진단 · 안내한 조치 · 약속 · 다음 할 일)으로 정리하고, 항목마다 전사와 맞는지 확인해 맞지 않는 항목을 표시합니다. 해결되지 않았으면 요약과 함께 접수 티켓을 만듭니다(VC7).{% endcall %}
+
+<div class="card stack" id="assist">
+  <h2>통화 (VC6)</h2>
+  <div class="row">
+    <div class="field"><label for="a-col">컬렉션</label><select id="a-col" data-ctx="col"></select></div>
+    <div class="field"><label for="a-pm">제품 모델 (고객 기록)</label><input id="a-pm" class="w-md"></div>
+    <div class="field"><label for="a-provider">제공자</label><select id="a-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field"><label for="a-model">모델 (비우면 근거만)</label><input id="a-model" data-ctx="model"></div>
+  </div>
+  <div class="row">
+    <button class="btn primary" id="a-start">통화 시작</button>
+    <button class="btn" id="a-mic" disabled>고객 마이크 켜기</button>
+    <span id="a-status" class="small muted"></span>
+  </div>
+  <div class="row">
+    <div class="field grow"><label for="a-cust">고객 말 (글로)</label><input id="a-cust" value="WM-200 인데 문이 안 열려요" disabled></div>
+    <div class="self-end"><button class="btn" id="a-cust-say" disabled>고객</button></div>
+  </div>
+  <div class="row">
+    <div class="field grow"><label for="a-agent">상담원이 한 말</label><input id="a-agent" disabled></div>
+    <div class="self-end"><button class="btn" id="a-agent-say" disabled>상담원</button></div>
+  </div>
+  <div class="grid cols-2">
+    <div><h3>전사</h3><div id="a-partial" class="small muted"></div><div id="a-turns" class="stack small"></div></div>
+    <div><h3>추천</h3><div id="a-adopt" class="small"></div><div id="a-sugg" class="stack"></div></div>
+  </div>
+</div>
+
+<div class="card stack mt-4" id="summary">
+  <h2>통화 요약 · 후처리 (VC7)</h2>
+  <div class="row">
+    <label class="row small m-0"><input type="checkbox" id="s-ticket"> 해결됐어도 접수</label>
+    <button class="btn primary" id="s-end" disabled>통화 끝내고 요약</button>
+  </div>
+  <div id="s-out"></div>
+  <h3>최근 통화</h3>
+  <div id="s-calls"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/voice/call_line.js') }}"></script>
+<script src="{{ url_for('static', path='js/voice/assist.js') }}"></script>
+{% endblock %}

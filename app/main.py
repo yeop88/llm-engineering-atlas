@@ -45,6 +45,7 @@ from app.stages.rl import api as rl_api  # noqa: E402
 from app.stages.rlvr import api as rlvr_api  # noqa: E402
 from app.stages.routing import api as routing_api  # noqa: E402
 from app.stages.serving import api as serving_api  # noqa: E402
+from app.stages.voice import api as voice_api  # noqa: E402
 from app.web import pages  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -146,6 +147,7 @@ for module in (
     posttrain_api,  # 후학습 — 데이터 · LoRA SFT · DPO · 병합 · 평가 · GGUF
     rlvr_api,  # RLVR — 검증 가능한 과제 · 환경 · 보상 · GRPO · 일반화
     edge_api,  # 온디바이스 · 엣지 — 기기 추천 · 기기용 팩 · 오프라인 · 동기화 · 국소 개인정보 처리
+    voice_api,  # 실시간 음성 상담 — 인식 · 턴 관리 · 짧은 지연 RAG · 합성 · 감정 · 상담원 보조 · 통화 요약
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

@@ -63,6 +63,8 @@ app/
                        reward(항목별 보상 · 해킹 감시) · policy(GRPO, posttrain.trainer 를 씀)
     edge/              온디바이스 · 엣지 맵(ED1~ED6): devices(기기 프로필 · 조합 추천) · pack(기기용 팩 · 압축 · 정확 검색 · 평가) ·
                        offline(기능 범위 · 미룸) · sync(판 증분 · 지문 확인 · 기기 상태) · privacy(전송 정책 · 서버 재검사)
+    voice/             실시간 음성 상담 맵(VC1~VC7): audio(16kHz · 운율) · turn(말소리 감지 · 끝점 · 끼어들기) · stt(엔진 · 용어 사전 · 표기 복원 · 오류율) ·
+                       fastrag(지연 예산 · 문장 스트리밍) · speech(읽기 규칙 · 합성) · emotion(불만 · 이관) · assist(추천 · 채택률) · summary(양식 · 전사 일치), presets/
     as_service/        고객 AS 상담 맵(AS1~AS8): triage(의도 · 긴급도 · 코드) · photo(사진 코드 읽기) · flow(상담 흐름 · 캐시 · 티켓 · 지표) ·
                        setup(예시 매뉴얼), presets/
     registry/          맵 · 단계 설명(데이터만, 다른 앱 모듈을 불러오지 않음)
@@ -191,8 +193,9 @@ FastAPI 라우터 ── core/system_api · llm_api / stages/*/…_api / web/pag
 | `fw_versions` · `fw_reviews` | FwVersion · FwReview | 플라이휠 버전(설정 · 게이트 · 배포 비율 · 기록) · 사람 검토(판정 · 분배 · 누수)(0016) |
 | `pf_tenant_collections` · `pf_prompts` · `pf_flags` · `pf_budgets` | PfTenantCollection · PfPrompt · PfFlag · PfBudget | 컬렉션 테넌트 · 프롬프트 버전 · 기능 플래그 · 테넌트 월 예산(0017) |
 | `edge_devices` · `edge_events` | EdgeDevice · EdgeEvent | 기기(받은 팩 · 판 · 마지막 동기화) · 기기가 올린 기록 · 피드백 · 미룬 요청(서버 재검사 위반)(0018) |
+| `voice_calls` | VoiceCall | 음성 상담 통화(턴: 전사 · 운율 · 감정 · 단계별 지연, 추천과 채택, 끼어들기 · 이관 사건, 요약)(0019) |
 
-마이그레이션은 `migrations/versions/0001_initial` … `0018_edge` 입니다.
+마이그레이션은 `migrations/versions/0001_initial` … `0019_voice` 입니다.
 
 ## 검색 저장 방식
 

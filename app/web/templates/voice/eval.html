@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}음성 평가 · 지연 보고{% endblock %}
+{% block content %}
+{% call ui.page_header("음성 평가 · 지연 보고") %}음성 상담의 각 단계를 따로 잽니다. 인식은 녹음 파일과 정답 전사로 글자 오류율 · 용어(모델명 · 오류 코드) 정확도 · 실시간 계수를 엔진별로, 용어 사전 없이 · 앞 문맥만 · 앞 문맥 + 표기 복원으로 나눠 비교합니다(VC1). 합성 읽기 규칙(코드 · 모델 번호 · 단위 · 전화번호)을 미리 보고(VC4), 불만 · 이관 감지 규칙을 라벨 문장으로 채점합니다(VC5). 아래 보고는 통화 기록에서 단계별 지연 p50 · p95 와 예산 안 비율, 끼어들기 · 이관 · 추천 채택 · 요약 검증을 모읍니다(VC3).{% endcall %}
+
+<div class="card stack" id="stt">
+  <h2>음성 인식 평가 (VC1)</h2>
+  <div class="row">
+    <div class="field"><label for="t-name">세트 이름</label><input id="t-name" value="as-calls" class="w-md"></div>
+    <div class="field grow"><label for="t-files">녹음 파일 (여러 개)</label><input id="t-files" type="file" accept="audio/*" multiple></div>
+  </div>
+  <div class="field"><label for="t-refs">정답 전사 (JSON: 파일 이름 → 글)</label><textarea id="t-refs" rows="3" class="mono">{"call1.wav": "WM-200 인데 E4 오류가 떠요"}</textarea></div>
+  <div><button class="btn" id="t-add">세트에 넣기</button></div>
+  <div id="t-sets"></div>
+  <div class="row">
+    <div class="field"><label for="t-set">세트</label><select id="t-set"></select></div>
+    <div class="field"><label for="t-col">용어 사전 (컬렉션)</label><select id="t-col" data-ctx="col"></select></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="t-openai"> openai (STT_URL)</label>
+    <label class="row small m-0 self-end"><input type="checkbox" id="t-local" checked> local (Whisper)</label>
+    <div class="self-end"><button class="btn primary" id="t-run">평가</button></div>
+  </div>
+  <div id="t-progress" hidden></div>
+  <div id="t-out"></div>
+  <div class="row">
+    <div class="field grow"><label for="t-one">파일 하나 인식</label><input id="t-one" type="file" accept="audio/*"></div>
+    <div class="self-end"><button class="btn" id="t-one-run">인식</button></div>
+  </div>
+  <div id="t-one-out"></div>
+</div>
+
+<div class="card stack mt-4" id="tts">
+  <h2>읽기 규칙 · 합성 (VC4)</h2>
+  <div class="field"><label for="r-text">답 글</label><textarea id="r-text" rows="3">1. WM-200 에서 E4 가 뜨면 [1] 배수 필터를 청소하세요.
+2. 물 온도는 30℃ 이하로, 세제는 2.5kg 기준 표시선까지. 문의 010-1234-5678</textarea></div>
+  <div><button class="btn" id="r-run">문장 · 읽는 글</button></div>
+  <div id="r-out"></div>
+</div>
+
+<div class="card stack mt-4" id="emotion">
+  <h2>불만 · 이관 감지 (VC5)</h2>
+  <div class="row">
+    <div class="field grow"><label for="m-text">고객 말</label><input id="m-text" value="도대체 몇 번째 전화하는 거예요! 책임자 바꿔요"></div>
+    <div class="self-end"><button class="btn" id="m-run">점수</button></div>
+    <div class="self-end"><button class="btn" id="m-eval">라벨 문장 평가</button></div>
+  </div>
+  <div id="m-out"></div>
+</div>
+
+<div class="card stack mt-4" id="report">
+  <h2>통화 기록 보고 (VC3 · VC6 · VC7)</h2>
+  <div><button class="btn" id="p-run">새로 고침</button></div>
+  <div id="p-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/voice/eval.js') }}"></script>
+{% endblock %}

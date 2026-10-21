@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}음성 상담 통화{% endblock %}
+{% block content %}
+{% call ui.page_header("음성 상담 통화") %}전화 상담을 흉내 냅니다. 마이크 소리를 조각으로 보내면 끝점(말이 끝났는지)을 판단해 그 조각만 인식하고, 이어질 말로 끝나면 조금 더 기다립니다(VC1 · VC2). 답은 짧은 근거로 첫 문장부터 흘려보내 문장마다 읽어 주고(VC3 · VC4), 소리가 나오는 동안 말하면 바로 멈춥니다(끼어들기). 불만 · 상담원 요청이 감지되면 사과하고 상담원에게 넘깁니다(VC5). 턴마다 끝점 대기 · 인식 · 검색 · 첫 문장 · 합성 시간을 지연 예산과 비교합니다.{% endcall %}
+
+<div class="card stack" id="call">
+  <h2>통화</h2>
+  <div class="row">
+    <div class="field"><label for="c-col">컬렉션</label><select id="c-col" data-ctx="col"></select></div>
+    <div class="field"><label for="c-pm">제품 모델 (고객 기록)</label><input id="c-pm" placeholder="WM-200" class="w-md"></div>
+    <div class="field"><label for="c-provider">제공자</label><select id="c-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field"><label for="c-model">모델 (비우면 설정값)</label><input id="c-model" data-ctx="model"></div>
+  </div>
+  <div class="row">
+    <button class="btn primary" id="c-start">통화 시작</button>
+    <button class="btn" id="c-mic" disabled>마이크 켜기</button>
+    <button class="btn danger" id="c-end" disabled>통화 끝내기</button>
+    <span id="c-status" class="small muted"></span>
+  </div>
+  <div id="c-engines" class="small muted"></div>
+  <div class="row">
+    <div class="field grow"><label for="c-text">고객 말 (글로)</label><input id="c-text" value="세탁기에서 이 사 오류가 떠요" disabled></div>
+    <div class="self-end"><button class="btn" id="c-say" disabled>말하기</button></div>
+  </div>
+  <div id="c-partial" class="small muted"></div>
+  <div id="c-turns" class="stack"></div>
+</div>
+
+<div class="card stack mt-4" id="budget">
+  <h2>지연 예산 (VC3)</h2>
+  <div id="c-budget" class="small"></div>
+  <div id="c-last"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/voice/call_line.js') }}"></script>
+<script src="{{ url_for('static', path='js/voice/call.js') }}"></script>
+{% endblock %}

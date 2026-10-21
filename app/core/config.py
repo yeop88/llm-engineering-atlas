@@ -1,6 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -144,6 +144,13 @@ class Settings(BaseSettings):
     llama_server_bin: Path | None = None
     # 온디바이스(ED4 · ED5): 이 시간보다 오래 동기화하지 않은 기기는 '낡은 자료' — 오프라인 답에 자료 기준 시각을 붙이고 기기 목록에 표시
     edge_stale_hours: float = 72.0
+    # 실시간 음성 상담(VC1 · VC3 · VC7): 인식 엔진(auto = STT_URL 이 있으면 openai, 없으면 local) · 로컬 Whisper 모델(처음 쓸 때 내려받음) ·
+    # 말이 끝난 뒤 첫 소리까지 예산 · 전사 원문 저장 여부(기본은 개인정보를 가려 저장) · 통화 기록 보관 기간
+    voice_stt_engine: Literal["auto", "openai", "local"] = "auto"
+    voice_stt_local_model: str = "openai/whisper-small"
+    voice_budget_ms: float = 1200.0
+    voice_store_raw: bool = False
+    voice_retention_days: int = 30
     anthropic_api_key: str | None = None
     anthropic_model: str = "claude-sonnet-5-5"
     llm_timeout: float = 120.0

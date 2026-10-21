@@ -737,3 +737,25 @@ class EdgeEvent(Base):
     violations: Mapped[list[Any]] = mapped_column(default=list)
     at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)  # 기기에서 생긴 시각(오프라인일 때)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+
+
+class VoiceCall(Base):
+    """음성 상담 통화 한 건(VC1~VC7, 마이그레이션 0019): 턴(전사 · 운율 · 감정 · 단계별 지연) · 상담원 추천과 채택 · 사건(끼어들기 · 끝점) · 요약.
+
+    전사는 기본으로 개인정보를 가려 저장한다(VOICE_STORE_RAW) — 음성 상담 기록은 이름 · 연락처 · 주소가 가장 많이 섞이는 자료다.
+    """
+
+    __tablename__ = "voice_calls"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    collection_id: Mapped[int | None] = mapped_column(ForeignKey("collections.id", ondelete="SET NULL"), nullable=True)
+    as_session_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    mode: Mapped[str] = mapped_column(String(10), default="auto")  # auto(자동 응답) | assist(상담원 보조)
+    status: Mapped[str] = mapped_column(String(10), default="live", index=True)  # live | ended
+    turns: Mapped[list[Any]] = mapped_column(default=list)
+    suggestions: Mapped[list[Any]] = mapped_column(default=list)
+    events: Mapped[list[Any]] = mapped_column(default=list)
+    memory: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    summary: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    ended_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)

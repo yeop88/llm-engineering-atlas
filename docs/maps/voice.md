@@ -22,13 +22,13 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| VC1 | [스트리밍 음성 인식](../stages/voice/vc1-stt/README.md) | ⬜ 예정 | 통화 음성을 말하는 도중에 글로 옮겨, 끝나기 전에 처리를 시작한다 | [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) | — |
-| VC2 | [말 끊기 · 끼어들기 (턴 관리)](../stages/voice/vc2-turn/README.md) | ⬜ 예정 | 고객이 말을 끊거나 끼어들면 즉시 멈추고 듣고, 말이 끝나면 바로 응답한다 | [C2 되묻기](../stages/conversation/c2-clarify/README.md) | — |
-| VC3 | [짧은 지연 RAG](../stages/voice/vc3-fastrag/README.md) | ⬜ 예정 | 음성에 맞게 1초 안팎으로 근거를 찾고 첫 문장을 낸다 — 캐시 · 짧은 근거 · 스트리밍 | [S1 캐시](../stages/serving/s1-cache/README.md) · [S2 근거 길이](../stages/serving/s2-context/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | — |
-| VC4 | [스트리밍 음성 합성](../stages/voice/vc4-tts/README.md) | ⬜ 예정 | 생성되는 글을 문장 단위로 바로 음성으로 바꿔 들려준다 | [MA8 멀티모달 출력](../stages/multi-agent/ma8-output/README.md) | — |
-| VC5 | [감정 · 불만 감지](../stages/voice/vc5-emotion/README.md) | ⬜ 예정 | 목소리와 말에서 불만 · 격앙을 감지해 말투를 바꾸거나 상담원에게 넘긴다 | [A 의미 응용](../stages/llm/a-apps/README.md) | — |
-| VC6 | [상담원 실시간 보조](../stages/voice/vc6-assist/README.md) | ⬜ 예정 | 자동 응답 대신 상담원 화면에 근거 · 추천 답 · 다음 질문을 실시간으로 띄운다 | [AS3 FAQ 답변](../stages/as-service/as3-faq/README.md) · [C6 상담원 이관](../stages/conversation/c6-handoff/README.md) | — |
-| VC7 | [통화 요약 · 후처리](../stages/voice/vc7-summary/README.md) | ⬜ 예정 | 통화가 끝나면 요약 · 조치 · 다음 할 일을 정리해 티켓 · 고객 기록에 남긴다 | [C3 대화 메모리](../stages/conversation/c3-memory/README.md) · [AS7 티켓 · 이관](../stages/as-service/as7-ticket/README.md) | — |
+| VC1 | [스트리밍 음성 인식](../stages/voice/vc1-stt/README.md) | ✅ 구현됨 | 통화 음성을 말하는 도중에 글로 옮겨, 끝나기 전에 처리를 시작한다 | [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) | [실시간 음성 상담 — 인식 · 턴 관리 · 짧은 지연 RAG · 합성 · 감정 · 상담원 보조 · 통화 요약 · 실측](../stages/voice/vc1-stt/voice.md) |
+| VC2 | [말 끊기 · 끼어들기 (턴 관리)](../stages/voice/vc2-turn/README.md) | ✅ 구현됨 | 고객이 말을 끊거나 끼어들면 즉시 멈추고 듣고, 말이 끝나면 바로 응답한다 | [C2 되묻기](../stages/conversation/c2-clarify/README.md) | [실시간 음성 상담 — 인식 · 턴 관리 · 짧은 지연 RAG · 합성 · 감정 · 상담원 보조 · 통화 요약 · 실측](../stages/voice/vc1-stt/voice.md) |
+| VC3 | [짧은 지연 RAG](../stages/voice/vc3-fastrag/README.md) | ✅ 구현됨 | 음성에 맞게 1초 안팎으로 근거를 찾고 첫 문장을 낸다 — 캐시 · 짧은 근거 · 스트리밍 | [S1 캐시](../stages/serving/s1-cache/README.md) · [S2 근거 길이](../stages/serving/s2-context/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | [실시간 음성 상담 — 인식 · 턴 관리 · 짧은 지연 RAG · 합성 · 감정 · 상담원 보조 · 통화 요약 · 실측](../stages/voice/vc1-stt/voice.md) |
+| VC4 | [스트리밍 음성 합성](../stages/voice/vc4-tts/README.md) | ✅ 구현됨 | 생성되는 글을 문장 단위로 바로 음성으로 바꿔 들려준다 | [MA8 멀티모달 출력](../stages/multi-agent/ma8-output/README.md) | [실시간 음성 상담 — 인식 · 턴 관리 · 짧은 지연 RAG · 합성 · 감정 · 상담원 보조 · 통화 요약 · 실측](../stages/voice/vc1-stt/voice.md) |
+| VC5 | [감정 · 불만 감지](../stages/voice/vc5-emotion/README.md) | ✅ 구현됨 | 목소리와 말에서 불만 · 격앙을 감지해 말투를 바꾸거나 상담원에게 넘긴다 | [A 의미 응용](../stages/llm/a-apps/README.md) | [실시간 음성 상담 — 인식 · 턴 관리 · 짧은 지연 RAG · 합성 · 감정 · 상담원 보조 · 통화 요약 · 실측](../stages/voice/vc1-stt/voice.md) |
+| VC6 | [상담원 실시간 보조](../stages/voice/vc6-assist/README.md) | ✅ 구현됨 | 자동 응답 대신 상담원 화면에 근거 · 추천 답 · 다음 질문을 실시간으로 띄운다 | [AS3 FAQ 답변](../stages/as-service/as3-faq/README.md) · [C6 상담원 이관](../stages/conversation/c6-handoff/README.md) | [실시간 음성 상담 — 인식 · 턴 관리 · 짧은 지연 RAG · 합성 · 감정 · 상담원 보조 · 통화 요약 · 실측](../stages/voice/vc1-stt/voice.md) |
+| VC7 | [통화 요약 · 후처리](../stages/voice/vc7-summary/README.md) | ✅ 구현됨 | 통화가 끝나면 요약 · 조치 · 다음 할 일을 정리해 티켓 · 고객 기록에 남긴다 | [C3 대화 메모리](../stages/conversation/c3-memory/README.md) · [AS7 티켓 · 이관](../stages/as-service/as7-ticket/README.md) | [실시간 음성 상담 — 인식 · 턴 관리 · 짧은 지연 RAG · 합성 · 감정 · 상담원 보조 · 통화 요약 · 실측](../stages/voice/vc1-stt/voice.md) |
 
 ## 설계 원칙
 

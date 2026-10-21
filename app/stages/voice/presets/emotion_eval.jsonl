@@ -1,0 +1,38 @@
+{"text": "세탁기에서 E4 가 떠요. 어떻게 하면 되나요?", "level": 0, "escalate": false}
+{"text": "건조기 필터 청소는 얼마나 자주 해야 하나요", "level": 0, "escalate": false}
+{"text": "네 알겠습니다 감사합니다", "level": 0, "escalate": false}
+{"text": "WM-200 모델인데요 탈수가 안 돼요", "level": 0, "escalate": false}
+{"text": "문이 안 열리는데 잠금 표시가 켜져 있어요", "level": 0, "escalate": false}
+{"text": "배수 호스는 어디에 있어요?", "level": 0, "escalate": false}
+{"text": "물이 조금 새는 것 같아요", "level": 0, "escalate": false}
+{"text": "설명서대로 해 볼게요", "level": 0, "escalate": false}
+{"text": "건조가 덜 된 것 같은데 원래 이런가요", "level": 0, "escalate": false}
+{"text": "소음이 좀 나는데 괜찮은 건가요", "level": 0, "escalate": false}
+{"text": "예약 기능은 어떻게 쓰나요", "level": 0, "escalate": false}
+{"text": "아 그렇군요 그럼 필터부터 볼게요", "level": 0, "escalate": false}
+{"text": "그건 이미 해 봤는데 그래도 안 돼요", "level": 1, "escalate": false}
+{"text": "왜 자꾸 이 오류가 나는 거예요", "level": 1, "escalate": false}
+{"text": "아직도 안 고쳐졌어요 좀 답답하네요", "level": 1, "escalate": false}
+{"text": "또 고장 났어요 산 지 얼마 안 됐는데", "level": 1, "escalate": false}
+{"text": "기다렸는데 연락이 없어서 다시 전화했어요", "level": 1, "escalate": false}
+{"text": "계속 안 돼서 불편하네요", "level": 1, "escalate": false}
+{"text": "설명대로 했는데 그대로예요", "level": 1, "escalate": false}
+{"text": "벌써 세 번째 같은 증상이에요", "level": 1, "escalate": false}
+{"text": "좀 실망스럽네요 비싸게 샀는데", "level": 1, "escalate": false}
+{"text": "일주일째 빨래를 못 하고 있어요", "level": 1, "escalate": false}
+{"text": "상담원 연결해 주세요", "level": 1, "escalate": true}
+{"text": "사람이랑 통화하고 싶어요", "level": 1, "escalate": true}
+{"text": "기사님 보내 주세요 직접 봐야 할 것 같아요", "level": 1, "escalate": true}
+{"text": "직원 바꿔 주세요", "level": 1, "escalate": true}
+{"text": "도대체 몇 번째 전화하는 거예요!", "level": 2, "escalate": true}
+{"text": "이거 환불해 주세요 더는 못 쓰겠어요", "level": 2, "escalate": true}
+{"text": "장난해요? 똑같은 말만 하고 있잖아요", "level": 2, "escalate": true}
+{"text": "책임자 바꿔요 지금 당장", "level": 2, "escalate": true}
+{"text": "어이가 없네 진짜 최악이에요", "level": 2, "escalate": true}
+{"text": "소비자원에 신고할 거예요", "level": 2, "escalate": true}
+{"text": "짜증 나 죽겠어요 언제까지 기다려야 돼요", "level": 2, "escalate": true}
+{"text": "화가 나서 말이 안 나오네요!!", "level": 2, "escalate": true}
+{"text": "말이 돼요 이게? 새 제품인데 한 달 만에", "level": 2, "escalate": true}
+{"text": "대체 왜 이렇게 처리가 늦어요", "level": 2, "escalate": true}
+{"text": "열받아서 못 참겠어요 빨리 해결해 주세요", "level": 2, "escalate": true}
+{"text": "미치겠네 또 물바다예요", "level": 2, "escalate": true}
