@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}영향 평가 · 통제 감사{% endblock %}
+{% block content %}
+{% call ui.page_header("영향 평가 · 통제 감사") %}출시 전에 이미 잰 측정 기록(검색 평가 · 레드팀 · 대화 평가 · 드리프트 · 자료 속 개인정보)으로 영향 평가 초안을 만들고, 약한 질문 유형 · 공격 유형을 짚은 뒤 사람이 영향 · 완화책 · 결론을 적어 승인합니다(RC5). 통제 감사는 통제마다 실제로 동작했는지를 요청 기록 · 실행 기록 · 사람 판단 기록에서 모읍니다(RC8, LLM 없이). WATCH_AUDIT_HOURS 를 정하면 앱이 주기마다 다시 돕니다.{% endcall %}
+
+<div class="card stack" id="impact">
+  <h2>영향 평가 (RC5)</h2>
+  <div class="row">
+    <div class="field"><label for="a-profile">서비스 기능</label><select id="a-profile"></select></div>
+    <div class="field"><label for="a-col">답변 근거 컬렉션 (측정 기록을 찾을 곳)</label><select id="a-col" data-ctx="col"></select></div>
+    <div class="self-end"><button class="btn" id="a-draft">측정 기록 모으기</button></div>
+  </div>
+  <div id="a-evidence"></div>
+  <div class="field"><label for="a-affected">영향받는 사람 · 집단</label><textarea id="a-affected" rows="2" placeholder="예: 임금 · 해고 문의를 하는 근로자, 디지털 취약 계층"></textarea></div>
+  <div class="field"><label for="a-mitig">완화책 (약한 집단마다)</label><textarea id="a-mitig" rows="3" placeholder="예: 여러 문서 질문은 근거 부족 시 상담원 연결 안내"></textarea></div>
+  <div class="row">
+    <div class="field"><label for="a-decision">결론</label><select id="a-decision"><option value="proceed_with_conditions">조건부 진행</option><option value="proceed">진행</option><option value="hold">보류</option></select></div>
+    <div class="self-end"><button class="btn primary" id="a-save">초안 저장</button></div>
+  </div>
+  <div id="a-list"></div>
+</div>
+
+<div class="card stack mt-4" id="audit">
+  <h2>통제 감사 · 증적 (RC8)</h2>
+  <div class="row"><button class="btn primary" id="a-run">지금 감사</button><span class="small muted">통과 · 실패 · 부분 · 없음(통제 자체가 없음) · 수동(사람이 점검) · 근거 없음</span></div>
+  <div id="a-out"></div>
+  <div id="a-runs"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/compliance/audit.js') }}"></script>
+{% endblock %}

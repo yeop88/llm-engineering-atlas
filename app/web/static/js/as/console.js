@@ -94,7 +94,7 @@ function detail(r) {
   const mm = r.mismatch ? html`<div class="warnbox">고객 제품은 <b>${r.mismatch.product_model}</b> 인데 근거 일부가 다른 모델 자료입니다: ${html.join(r.mismatch.other_model_sources.map(o => html`${o.filename} (${o.models.join(", ")})`), " · ")}</div>` : "";
   const tk = r.ticket ? html`<div class="warnbox">티켓 <b>${r.ticket.id}</b> 생성 · ${r.ticket.reason} · 전달 ${r.ticket.delivered?.to === "local" ? "이 앱에만 기록" : html`${r.ticket.delivered?.to} (${r.ticket.delivered?.status ?? r.ticket.delivered?.error ?? "-"})`}</div>` : "";
   const src = (r.sources || []).length ? html`<details><summary class="small">근거 ${r.sources.length}개</summary><div class="stack mt-2">${r.sources.map((s, i) => html`<div class="src"><span class="cite">${i + 1}</span> <b class="small">${s.filename}</b> <span class="small muted mono">${s.score?.toFixed?.(3) ?? ""}</span><div class="small pre">${s.text}</div></div>`)}</div></details>` : "";
-  return html`${steps}${triBox}${ph}${ver}${mm}${tk}${src}${r.trace_id ? html`<div class="small muted">요청 기록 <span class="mono">${r.trace_id}</span></div>` : ""}`;
+  return html`${steps}${triBox}${ph}${ver}${mm}${tk}${src}${r.trace_id ? html`<div class="small muted">요청 기록 <span class="mono">${r.trace_id}</span></div>` : ""}${ui.aiNotice(r.notice, r.trace_id)}`;
 }
 
 function renderThread(s) {

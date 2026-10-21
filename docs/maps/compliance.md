@@ -22,14 +22,14 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| RC1 | [적용 규제 식별](../stages/compliance/rc1-scope/README.md) | ⬜ 예정 | 서비스 · 자료 · 사용자에 따라 적용되는 법령 · 지침을 목록으로 만들고 근거 조항을 연결한다 | [2 RAG](../stages/llm/2-rag/README.md) · [K1 요구사항](../stages/knowledge-graph/k1-requirements/README.md) | — |
-| RC2 | [위험 등급 분류](../stages/compliance/rc2-risk/README.md) | ⬜ 예정 | AI 기능마다 영향 · 자율성 · 데이터 민감도로 위험 등급을 정하고 등급별 통제를 고른다 | [A 의미 응용](../stages/llm/a-apps/README.md) | — |
-| RC3 | [데이터 처리 근거 · 보관](../stages/compliance/rc3-data/README.md) | 🟡 기초 있음 | 자료 · 로그마다 수집 근거 · 목적 · 보관 기한을 기록하고, 기한이 지나면 지운다 | [G6 라이선스](../stages/guardrails/g6-license/README.md) · [D1 수집](../stages/docintel/d1-ingest/README.md) | — |
-| RC4 | [설명 가능성 · 결정 기록](../stages/compliance/rc4-explain/README.md) | 🟡 기초 있음 | 답 · 결정마다 근거 문서 · 검증 결과 · 사용한 버전을 남겨 '왜 그렇게 답했나'를 설명할 수 있게 한다 | [2 RAG](../stages/llm/2-rag/README.md) · [G5 감사 로그](../stages/guardrails/g5-audit/README.md) | — |
-| RC5 | [영향 평가](../stages/compliance/rc5-impact/README.md) | ⬜ 예정 | 출시 전에 정확도 · 편향 · 안전성 · 개인정보 영향을 측정해 기록하고 승인받는다 | [E2 회귀 평가](../stages/evalops/e2-offline/README.md) · [G7 레드팀](../stages/guardrails/g7-redteam/README.md) | — |
-| RC6 | [사용자 고지 · 이의 제기](../stages/compliance/rc6-notice/README.md) | ⬜ 예정 | AI 가 답한다는 사실 · 한계를 알리고, 사람에게 다시 판단받을 길을 연다 | [C6 상담원 이관](../stages/conversation/c6-handoff/README.md) | — |
-| RC7 | [규정 조항 ↔ 시스템 통제 매핑](../stages/compliance/rc7-controls/README.md) | ⬜ 예정 | 규정 조항과 시스템 통제(기능 · 설정 · 기록)를 그래프로 연결해 개정 영향을 바로 찾는다 | [K3 추출](../stages/knowledge-graph/k3-extract/README.md) · [K5 그래프 DB](../stages/knowledge-graph/k5-graph-db/README.md) | — |
-| RC8 | [정기 감사 · 증적](../stages/compliance/rc8-audit/README.md) | ⬜ 예정 | 통제가 실제로 동작했는지 로그 · 측정 기록 표본으로 정기 점검하고 증적을 남긴다 | [G5 감사 로그](../stages/guardrails/g5-audit/README.md) · [E3 트레이싱](../stages/evalops/e3-tracing/README.md) | — |
+| RC1 | [적용 규제 식별](../stages/compliance/rc1-scope/README.md) | ✅ 구현됨 | 서비스 · 자료 · 사용자에 따라 적용되는 법령 · 지침을 목록으로 만들고 근거 조항을 연결한다 | [2 RAG](../stages/llm/2-rag/README.md) · [K1 요구사항](../stages/knowledge-graph/k1-requirements/README.md) | [규제 대응 — 규제 자료 · 적용 규제 · 조항-통제 그래프 · 감사 · 실측](../stages/compliance/rc1-scope/compliance.md) |
+| RC2 | [위험 등급 분류](../stages/compliance/rc2-risk/README.md) | ✅ 구현됨 | AI 기능마다 영향 · 자율성 · 데이터 민감도로 위험 등급을 정하고 등급별 통제를 고른다 | [RC1 규제 식별](../stages/compliance/rc1-scope/README.md) | [규제 대응 — 규제 자료 · 적용 규제 · 조항-통제 그래프 · 감사 · 실측](../stages/compliance/rc1-scope/compliance.md) |
+| RC3 | [데이터 처리 근거 · 보관](../stages/compliance/rc3-data/README.md) | ✅ 구현됨 | 자료 · 로그마다 수집 근거 · 목적 · 보관 기한을 기록하고, 기한이 지나면 지운다 | [G6 라이선스](../stages/guardrails/g6-license/README.md) · [D1 수집](../stages/docintel/d1-ingest/README.md) | [규제 대응 — 규제 자료 · 적용 규제 · 조항-통제 그래프 · 감사 · 실측](../stages/compliance/rc1-scope/compliance.md) |
+| RC4 | [설명 가능성 · 결정 기록](../stages/compliance/rc4-explain/README.md) | ✅ 구현됨 | 답 · 결정마다 근거 문서 · 검증 결과 · 사용한 버전을 남겨 '왜 그렇게 답했나'를 설명할 수 있게 한다 | [2 RAG](../stages/llm/2-rag/README.md) · [G5 감사 로그](../stages/guardrails/g5-audit/README.md) | [규제 대응 — 규제 자료 · 적용 규제 · 조항-통제 그래프 · 감사 · 실측](../stages/compliance/rc1-scope/compliance.md) |
+| RC5 | [영향 평가](../stages/compliance/rc5-impact/README.md) | ✅ 구현됨 | 출시 전에 정확도 · 편향 · 안전성 · 개인정보 영향을 측정해 기록하고 승인받는다 | [E2 회귀 평가](../stages/evalops/e2-offline/README.md) · [G7 레드팀](../stages/guardrails/g7-redteam/README.md) | [규제 대응 — 규제 자료 · 적용 규제 · 조항-통제 그래프 · 감사 · 실측](../stages/compliance/rc1-scope/compliance.md) |
+| RC6 | [사용자 고지 · 이의 제기](../stages/compliance/rc6-notice/README.md) | ✅ 구현됨 | AI 가 답한다는 사실 · 한계를 알리고, 사람에게 다시 판단받을 길을 연다 | [C6 상담원 이관](../stages/conversation/c6-handoff/README.md) | [규제 대응 — 규제 자료 · 적용 규제 · 조항-통제 그래프 · 감사 · 실측](../stages/compliance/rc1-scope/compliance.md) |
+| RC7 | [규정 조항 ↔ 시스템 통제 매핑](../stages/compliance/rc7-controls/README.md) | ✅ 구현됨 | 규정 조항과 시스템 통제(기능 · 설정 · 기록)를 그래프로 연결해 개정 영향을 바로 찾는다 | [K3 추출](../stages/knowledge-graph/k3-extract/README.md) · [K5 그래프 DB](../stages/knowledge-graph/k5-graph-db/README.md) | [규제 대응 — 규제 자료 · 적용 규제 · 조항-통제 그래프 · 감사 · 실측](../stages/compliance/rc1-scope/compliance.md) |
+| RC8 | [정기 감사 · 증적](../stages/compliance/rc8-audit/README.md) | ✅ 구현됨 | 통제가 실제로 동작했는지 로그 · 측정 기록 표본으로 정기 점검하고 증적을 남긴다 | [G5 감사 로그](../stages/guardrails/g5-audit/README.md) · [E3 트레이싱](../stages/evalops/e3-tracing/README.md) | [규제 대응 — 규제 자료 · 적용 규제 · 조항-통제 그래프 · 감사 · 실측](../stages/compliance/rc1-scope/compliance.md) |
 
 ## 설계 원칙
 

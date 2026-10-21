@@ -134,7 +134,7 @@ async function send() {
         } else if (ev.type === "done") {
           const u = ev.usage || {};
           $t("[data-status]")?.remove();
-          if (ev.trace_id) feedbackBar(turn, turnId, ev.trace_id);
+          if (ev.trace_id) feedbackBar(turn, turnId, ev.trace_id, ev.notice);
           if (ev.blocked) { $t("[data-meta]").textContent = `입력 방어로 차단 · 검색 ${ev.timings?.search_ms ?? "-"}ms · 요청 #${ev.trace_id}`; continue; }
           $t("[data-meta]").textContent =`검색 ${ev.timings.search_ms}ms · 답변 ${ev.timings.llm_s}s${ev.timings.ttft_s != null ? ` (근거 읽기 ${ev.timings.ttft_s}s` + (ev.tokens_per_second ? ` · 생성 ${ev.tokens_per_second} 토큰/초)` : ")") : ""}${ev.timings.judge_s ? ` · 판정 ${ev.timings.judge_s}s` : ""} · 토큰 ${u.input_tokens ?? "-"}→${u.output_tokens ?? "-"}${u.truncated ? " · 길이 한도에서 잘림" : ""}`;
         } else if (ev.type === "error") {
@@ -166,7 +166,7 @@ function guardBadges(g) {
 
 // 답변 피드백(평가 · 관측 E5): 요청 기록(trace)에 붙어 피드백 · 개선 루프 화면에 모인다
 let fbReasons = null;
-async function feedbackBar(turn, turnId, traceId) {
+async function feedbackBar(turn, turnId, traceId, notice) {
   const box = turn.querySelector("[data-fb-box]");
   turn.dataset.trace = traceId;
   fbReasons ??= api("/api/evalops/feedback?days=1").then(r => r.reason_labels).catch(() => ({ other: "기타" }));
@@ -177,7 +177,7 @@ async function feedbackBar(turn, turnId, traceId) {
     <div class="row small" data-fb-bad hidden>
       <div class="field"><label for="${turnId}-fb-reason">이유</label><select id="${turnId}-fb-reason">${Object.entries(reasons).map(([k, v]) => html`<option value="${k}">${v}</option>`)}</select></div>
       <div class="field grow"><label for="${turnId}-fb-note">메모 (선택)</label><input id="${turnId}-fb-note" maxlength="1000"></div>
-      <div class="self-end"><button type="button" class="btn sm primary" data-fb-send>보내기</button></div></div>`;
+      <div class="self-end"><button type="button" class="btn sm primary" data-fb-send>보내기</button></div></div>${ui.aiNotice(notice, traceId)}`;
 }
 async function sendFeedback(turn, rating, reason = "", note = "") {
   const r = await api(`/api/evalops/traces/${turn.dataset.trace}/feedback`, { method: "POST", body: { rating, reason, note } });

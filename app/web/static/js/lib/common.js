@@ -64,7 +64,25 @@ const ui = {
   async confirm(message, { ok = "확인", danger = false, title = "확인" } = {}) {
     return (await this.choose(message, [{ label: ok, value: true, danger }], { title })) === true;
   },
+  // AI 응답 고지 + 사람 검토 요청(규제 대응 RC6, 인공지능 기본법 제31조): 서비스 답변 화면마다 같은 자리 · 같은 모양으로.
+  // 요청 버튼은 아래 문서 전체 클릭 처리가 받는다(화면마다 처리기를 따로 두면 한 화면만 빠져도 요청 길이 끊긴다).
+  aiNotice(notice, traceId) {
+    if (!notice && !traceId) return "";
+    return html`<div class="row small muted mt-2" role="note">${notice ? html`<span class="badge">AI 응답</span> <span>${notice}</span>` : ""}
+      ${traceId ? html`<span data-review-box><button type="button" class="btn sm" data-review-trace="${traceId}">사람 검토 요청</button></span>` : ""}</div>`;
+  },
 };
+const REVIEW_REASONS = [{ label: "답이 틀렸어요", value: "wrong" }, { label: "근거가 맞지 않아요", value: "source" }, { label: "사람과 상담하고 싶어요", value: "human" }];
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-review-trace]");
+  if (!b) return;
+  const reason = await ui.choose("이 답을 사람이 다시 판단하도록 요청합니다. 어떤 점이 문제인가요?", REVIEW_REASONS, { title: "사람 검토 요청" });
+  if (!reason) return;
+  try {
+    const r = await api("/api/compliance/reviews", { method: "POST", body: { trace_id: +b.dataset.reviewTrace, reason } });
+    b.closest("[data-review-box]").innerHTML = html`<span class="badge ok">검토 요청 #${r.id} 접수</span>`;
+  } catch (err) { toast(err.message, "err"); }
+});
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-cancel-job]");
   if (!b) return;

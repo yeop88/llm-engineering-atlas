@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}처리 근거 · 결정 기록 · 검토 요청{% endblock %}
+{% block content %}
+{% call ui.page_header("처리 근거 · 결정 기록 · 검토 요청") %}자료 · 기록마다 처리 목적 · 근거 · 보관 기한을 등록하고 기한이 지난 것을 지웁니다(RC3). 답 하나마다 근거 문서 · 문장별 검증 · 가드레일 조치 · 모델 · 기록 무결성을 한 장으로 보이고(RC4), 이용자가 보낸 사람 검토 요청을 처리합니다(RC6). 서비스 답변에는 AI 응답 고지와 '사람 검토 요청' 버튼이 붙습니다.{% endcall %}
+
+<div class="card stack" id="data">
+  <h2>데이터 처리 근거 · 보관 (RC3)</h2>
+  <div id="r-data"><div class="loading" role="status">불러오는 중…</div></div>
+  <details class="small"><summary>처리 근거 등록</summary>
+    <div class="row mt-2">
+      <div class="field"><label for="r-subject">대상</label><select id="r-subject"></select></div>
+      <div class="field grow"><label for="r-purpose">처리 목적</label><input id="r-purpose" placeholder="예: 고객 AS 문의 답변 근거"></div>
+      <div class="field"><label for="r-basis">근거</label><input id="r-basis" placeholder="예: 계약 이행 · 공개 자료(공공누리)"></div>
+      <div class="field"><label for="r-days">보관 일수 (0 = 정하지 않음)</label><input id="r-days" type="number" min="0" value="0" class="w-md"></div>
+      <div class="field"><label for="r-owner">담당</label><input id="r-owner" class="w-md"></div>
+      <div class="self-end"><button class="btn" id="r-save">등록</button></div>
+    </div>
+  </details>
+  <div class="row"><button class="btn danger" id="r-purge">보관 기한 지난 자료 지우기</button><span class="small muted">요청 기록 · 고객 프로필 · 등록한 기한이 지난 컬렉션 문서 (되돌릴 수 없음)</span></div>
+</div>
+
+<div class="card stack mt-4" id="decisions">
+  <h2>결정 기록 (RC4)</h2>
+  <div class="row"><div class="field"><label for="r-trace">요청 기록 번호</label><input id="r-trace" type="number" min="1" class="w-md"></div><div class="self-end"><button class="btn" id="r-open">열기</button></div></div>
+  <div id="r-recent"></div>
+  <div id="r-decision"></div>
+</div>
+
+<div class="card stack mt-4" id="reviews">
+  <h2>사람 검토 요청 (RC6)</h2>
+  <div class="small" id="r-notice"></div>
+  <div class="row"><div class="field"><label for="r-status">상태</label><select id="r-status"><option value="open">열림</option><option value="resolved">처리됨</option><option value="">모두</option></select></div></div>
+  <div id="r-reviews"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/compliance/records.js') }}"></script>
+{% endblock %}

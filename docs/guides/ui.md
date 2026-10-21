@@ -66,6 +66,7 @@ base.html
 | 삭제 · 되돌릴 수 없는 동작 | `await ui.confirm(글, { ok: "삭제", danger: true })`. 선택지가 여럿이면 `ui.choose(글, [{ label, value, danger }])` → 고른 value 또는 `null`(취소). 브라우저 `confirm()` 금지(테스트) |
 | 상세 화면의 대상 이름 | `setCrumb(name)` — 위치 표시 끝에 붙고 목록은 링크가 됨 |
 | 알림 | `toast(글, "ok" \| "err")` |
+| 서비스 답변 아래 | `ui.aiNotice(notice, traceId)` — AI 응답 고지와 '사람 검토 요청' 버튼(규제 대응 RC6). 요청은 문서 전체 클릭 처리가 받아 `/api/compliance/reviews` 로 — 답변 화면마다 같은 자리 · 같은 모양 |
 
 ## 작업 맥락 (Ctx)
 

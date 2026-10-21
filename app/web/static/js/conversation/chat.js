@@ -47,6 +47,7 @@ function turnMeta(r) {
   if (r.clarify?.ask) parts.push(html`<div class="small"><span class="badge warn">되묻기</span> ${r.clarify.reason === "product_model" ? "제품을 모르는 고장 문의" : "검색이 헷갈리는 짧은 질문"}</div>`);
   if (r.history_prompt?.dropped) parts.push(html`<div class="small muted">앞 대화 ${r.history_prompt.dropped}개 메시지는 기억한 사실로 줄여 넣음(C5)</div>`);
   if (r.sources?.length) parts.push(html`<details class="small"><summary>근거 ${r.sources.length}개</summary>${html.join(r.sources.map((s, i) => html`<div>[${i + 1}] ${s.filename}</div>`), "")}</details>`);
+  if (r.answered) parts.push(ui.aiNotice(r.notice, r.trace_id));
   if (r.verify && r.answered) parts.push(html`<div class="small muted">근거 일치 ${r.verify.supported_ratio == null ? "-" : `${Math.round(r.verify.supported_ratio * 100)}%`}${r.trace_id ? html` · <a href="/evalops/traces?trace=${r.trace_id}">요청 기록 #${r.trace_id}</a>` : ""}</div>`);
   return html.join(parts, "");
 }

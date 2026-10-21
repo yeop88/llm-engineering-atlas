@@ -38,7 +38,7 @@ $("#r-answer").onclick = async e => {
   const r = await busy(e.target, () => api(`/api/kg/graphs/${g()}/answer`, { method: "POST", body: { question: q, ...llmBody() } }));
   const v = r.verify || {};
   $("#r-out").innerHTML = html`<div class="pre">${r.answer}</div>
-    <div class="small muted">근거 일치 ${rate(v.supported_ratio)}${r.trace_id ? html` · <a href="/evalops/traces?trace=${r.trace_id}">요청 기록 #${r.trace_id}</a>` : ""}</div>
+    <div class="small muted">근거 일치 ${rate(v.supported_ratio)}${r.trace_id ? html` · <a href="/evalops/traces?trace=${r.trace_id}">요청 기록 #${r.trace_id}</a>` : ""}</div>${ui.aiNotice(r.notice, r.trace_id)}
     <details class="small"><summary>근거 ${(r.sources || []).length}개</summary>${html.join((r.sources || []).map((s, i) => html`<div>[${i + 1}] ${s.filename}</div>`), "")}</details>${expandBox(r.expand)}`;
 };
 

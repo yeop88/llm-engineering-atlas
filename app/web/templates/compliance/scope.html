@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}적용 규제 · 위험 등급{% endblock %}
+{% block content %}
+{% call ui.page_header("적용 규제 · 위험 등급") %}서비스 기능의 특성(생성형 AI · 개인정보 · 민감정보 · 자동화된 결정 · 고영향 영역)으로 적용 조항과 의무를 찾고(RC1), 기능마다 위험 등급을 제안 · 확정합니다(RC2). 조항 원문은 국가법령정보 API 로 받은 규제 자료 컬렉션에서 보이고, 검색은 규칙이 놓친 조항을 '검토할 후보'로만 보입니다. 기술 설계를 위한 정리이며 법률 자문이 아닙니다.{% endcall %}
+
+<div class="card stack" id="corpus">
+  <h2>규제 자료</h2>
+  <div class="row">
+    <div class="field"><label for="s-col">규제 자료 컬렉션</label><select id="s-col" data-ctx="col"></select></div>
+    <div class="field"><label for="s-date">시행일 기준 (YYYYMMDD, 비우면 현행)</label><input id="s-date" class="w-md" placeholder="20260122" pattern="\d{8}" maxlength="8"></div>
+    <div class="self-end"><button class="btn" id="s-import">기본 규제 가져오기</button></div>
+  </div>
+  <div id="s-import-progress" hidden></div>
+  <div id="s-corpus" class="small"></div>
+</div>
+
+<div class="card stack mt-4" id="scope">
+  <h2>기능별 적용 규제 (RC1)</h2>
+  <div class="row">
+    <div class="field"><label for="s-profile">서비스 기능</label><select id="s-profile"></select></div>
+    <div class="self-end"><button class="btn primary" id="s-run">적용 조항 보기</button></div>
+  </div>
+  <div id="s-profile-desc" class="small muted"></div>
+  <div id="s-out"></div>
+  <details class="small" id="s-eval-box"><summary>실측: 의무를 평이하게 물었을 때 근거 조항을 찾는가</summary>
+    <div class="row mt-2"><button class="btn" id="s-eval">의무 질문 22개 실행</button><span class="muted">컬렉션의 기본 검색(색인이 있으면 혼합, 없으면 BM25) · 조항 단위 hit@k · MRR</span></div>
+    <div id="s-eval-progress" hidden></div><div id="s-eval-out"></div>
+  </details>
+</div>
+
+<div class="card stack mt-4" id="risk">
+  <h2>위험 등급 (RC2)</h2>
+  <div id="s-rubric" class="small"></div>
+  <div id="s-risk"><div class="loading" role="status">불러오는 중…</div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/compliance/scope.js') }}"></script>
+{% endblock %}
