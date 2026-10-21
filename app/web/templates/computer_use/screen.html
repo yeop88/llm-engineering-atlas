@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}화면 이해{% endblock %}
+{% block content %}
+{% call ui.page_header("화면 이해") %}시험용 사이트(레거시 AS 접수 · 제품 매뉴얼 · 관리자 설정)의 화면을 접근성 트리(역할 · 이름 · 값 · 요소 번호)로 읽습니다. 이름은 label · aria-label · 글자에서 가져오고, 화면에 보이지 않는 요소(display:none · hidden · aria-hidden)는 트리에서 빼 '숨은 글' 로 따로 모읍니다 — 사람이 볼 수 없는 글이 에이전트에게 지시로 들어가는 것이 웹 인젝션의 주된 길입니다. 사람이 쓰는 설명('제출하는 버튼')으로 요소를 찾는 정확도를 잽니다(CU1).{% endcall %}
+
+<div class="card stack" id="screen">
+  <h2>화면 읽기 (CU1)</h2>
+  <div class="row">
+    <div class="field"><label for="p-site">사이트</label><select id="p-site"><option value="legacy">레거시 AS 접수</option><option value="manual">제품 매뉴얼</option><option value="admin">관리자 설정</option></select></div>
+    <div class="field grow"><label for="p-url">주소</label><input id="p-url" value="http://legacy.local/new" class="mono"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="p-login" checked> 로그인한 상태</label>
+    <div class="self-end"><button class="btn primary" id="p-run">읽기</button></div>
+  </div>
+  <div class="grid cols-2">
+    <div><h3>접근성 트리 (에이전트가 보는 것)</h3><pre id="p-tree" class="mono small pre"></pre></div>
+    <div><h3>숨은 글 · 인젝션 표시</h3><div id="p-hidden" class="small"></div></div>
+  </div>
+</div>
+
+<div class="card stack mt-4" id="find">
+  <h2>요소 찾기 정확도 (CU1)</h2>
+  <div class="row">
+    <div class="field"><label for="f-provider">제공자</label><select id="f-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="f-model">모델</label><input id="f-model" data-ctx="model"></div>
+    <div class="self-end"><button class="btn" id="f-run">평가</button></div>
+  </div>
+  <div id="f-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/computer_use/screen.js') }}"></script>
+{% endblock %}

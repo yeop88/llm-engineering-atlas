@@ -474,6 +474,17 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 컴퓨터 사용 · 브라우저 에이전트 (`/api/computer-use`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/computer-use/overview` | 과제 · 시험용 사이트 · 허용 도메인 · 최근 실행 |
+| POST | `/api/computer-use/perceive` · `/perceive/eval` | 화면 읽기 `{"site", "url", "logged_in"}` → 접근성 트리 · 요소 · 숨은 글 · 인젝션 표시 / 설명으로 요소 찾기 정확도 |
+| POST | `/api/computer-use/runs` | 실행 작업 `{"task", "config": {"observe", "isolate", "allowlist", "approval"}, "max_steps", "provider", "model"}` → 걸음 · 최종 상태 · 판정(멈추면 waiting) |
+| GET / POST | `/api/computer-use/runs/{id}` · `/runs/{id}/approve` | 실행 기록 / 멈춘 실행 승인 · 거부 `{"approve"}` 후 이어 가기 |
+| POST | `/api/computer-use/runs/{id}/replay` | 기록한 행동을 새 사이트에서 재생 → 같은 최종 상태인가 |
+| POST | `/api/computer-use/eval` | 과제 × 방어 설정 평가 작업 `{"tasks", "configs", "max_steps"}` → 성공률 · 목표 달성 · 인젝션을 따른 비율 · 걸음 |
+
 ## 코딩 에이전트 (`/api/coding`)
 
 | 메서드 | 경로 | 설명 |

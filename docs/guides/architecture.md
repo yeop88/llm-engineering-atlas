@@ -63,6 +63,8 @@ app/
                        reward(항목별 보상 · 해킹 감시) · policy(GRPO, posttrain.trainer 를 씀)
     edge/              온디바이스 · 엣지 맵(ED1~ED6): devices(기기 프로필 · 조합 추천) · pack(기기용 팩 · 압축 · 정확 검색 · 평가) ·
                        offline(기능 범위 · 미룸) · sync(판 증분 · 지문 확인 · 기기 상태) · privacy(전송 정책 · 서버 재검사)
+    computer_use/      컴퓨터 사용 · 브라우저 에이전트 맵(CU1~CU6): sites(시험용 사이트 상태 기계) · browser(접근성 트리 · 행동 · 지문) ·
+                       agent(행동 하나 · 상태 확인 · 승인 · 방어 설정 · 재생) · tasks(과제 · 최종 상태 판정 · 인젝션을 따랐나)
     coding/            코딩 에이전트 맵(CD1~CD6): index(함수 단위 색인 · BM25 · 기호 · 호출 그래프) · workspace(저장소 복사본 · 도구 · 돌연변이 과제) ·
                        agent(계획 · 걸음마다 도구 하나 · 테스트 피드백) · review(규칙 · LLM 리뷰), presets/
     analytics/         데이터 분석 · Text-to-SQL 맵(DA1~DA7): source(분석용 SQLite · 예시 자료) · schema(스키마 카드 · 연결 · 의미 계층) ·

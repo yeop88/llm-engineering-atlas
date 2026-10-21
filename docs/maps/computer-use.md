@@ -22,12 +22,12 @@ API 가 없는 사내 시스템(레거시 접수 화면 · 관리자 페이지)�
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| CU1 | [화면 이해](../stages/computer-use/cu1-perceive/README.md) | ⬜ 예정 | 스크린샷 · 접근성 트리로 화면 요소를 찾는다 | [AS4 사진 진단](../stages/as-service/as4-photo/README.md) · [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) | — |
-| CU2 | [행동 계획 · 실행](../stages/computer-use/cu2-act/README.md) | ⬜ 예정 | 클릭 · 입력 · 스크롤을 고르고 헤드리스 브라우저로 실행한다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | — |
-| CU3 | [상태 확인](../stages/computer-use/cu3-check/README.md) | ⬜ 예정 | 행동 뒤 화면이 기대한 상태인지 확인한다 | [LR6 완료 판정](../stages/longrun/lr6-verify/README.md) | — |
-| CU4 | [위험 행동 승인](../stages/computer-use/cu4-approve/README.md) | ⬜ 예정 | 제출 · 결제 · 삭제 같은 행동 전에 사람 승인을 받는다 | [LR4 승인 지점](../stages/longrun/lr4-approval/README.md) | — |
-| CU5 | [웹 콘텐츠 인젝션 방어](../stages/computer-use/cu5-injection/README.md) | ⬜ 예정 | 페이지 글 속 지시를 따르지 않고 허용 도메인만 다닌다 | [G1 입력 방어](../stages/guardrails/g1-injection/README.md) · [IO6 감사 추적](../stages/interop/io6-audit/README.md) | — |
-| CU6 | [재생 평가](../stages/computer-use/cu6-eval/README.md) | ⬜ 예정 | 과제 세트를 녹화 · 재생해 성공률 · 걸음 수를 잰다 | [RV2 환경](../stages/rlvr/rv2-env/README.md) | — |
+| CU1 | [화면 이해](../stages/computer-use/cu1-perceive/README.md) | ✅ 구현됨 | 스크린샷 · 접근성 트리로 화면 요소를 찾는다 | [AS4 사진 진단](../stages/as-service/as4-photo/README.md) · [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) | [컴퓨터 사용 · 브라우저 에이전트 — 시험용 사이트 · 접근성 트리 · 행동 · 상태 확인 · 승인 · 웹 인젝션 · 재생 평가 · 실측](../stages/computer-use/cu1-perceive/computer_use.md) |
+| CU2 | [행동 계획 · 실행](../stages/computer-use/cu2-act/README.md) | ✅ 구현됨 | 클릭 · 입력 · 스크롤을 고르고 헤드리스 브라우저로 실행한다 | [8a 에이전틱 AI](../stages/llm/8a-agent/README.md) | [컴퓨터 사용 · 브라우저 에이전트 — 시험용 사이트 · 접근성 트리 · 행동 · 상태 확인 · 승인 · 웹 인젝션 · 재생 평가 · 실측](../stages/computer-use/cu1-perceive/computer_use.md) |
+| CU3 | [상태 확인](../stages/computer-use/cu3-check/README.md) | ✅ 구현됨 | 행동 뒤 화면이 기대한 상태인지 확인한다 | [LR6 완료 판정](../stages/longrun/lr6-verify/README.md) | [컴퓨터 사용 · 브라우저 에이전트 — 시험용 사이트 · 접근성 트리 · 행동 · 상태 확인 · 승인 · 웹 인젝션 · 재생 평가 · 실측](../stages/computer-use/cu1-perceive/computer_use.md) |
+| CU4 | [위험 행동 승인](../stages/computer-use/cu4-approve/README.md) | ✅ 구현됨 | 제출 · 결제 · 삭제 같은 행동 전에 사람 승인을 받는다 | [LR4 승인 지점](../stages/longrun/lr4-approval/README.md) | [컴퓨터 사용 · 브라우저 에이전트 — 시험용 사이트 · 접근성 트리 · 행동 · 상태 확인 · 승인 · 웹 인젝션 · 재생 평가 · 실측](../stages/computer-use/cu1-perceive/computer_use.md) |
+| CU5 | [웹 콘텐츠 인젝션 방어](../stages/computer-use/cu5-injection/README.md) | ✅ 구현됨 | 페이지 글 속 지시를 따르지 않고 허용 도메인만 다닌다 | [G1 입력 방어](../stages/guardrails/g1-injection/README.md) · [IO6 감사 추적](../stages/interop/io6-audit/README.md) | [컴퓨터 사용 · 브라우저 에이전트 — 시험용 사이트 · 접근성 트리 · 행동 · 상태 확인 · 승인 · 웹 인젝션 · 재생 평가 · 실측](../stages/computer-use/cu1-perceive/computer_use.md) |
+| CU6 | [재생 평가](../stages/computer-use/cu6-eval/README.md) | ✅ 구현됨 | 과제 세트를 녹화 · 재생해 성공률 · 걸음 수를 잰다 | [RV2 환경](../stages/rlvr/rv2-env/README.md) | [컴퓨터 사용 · 브라우저 에이전트 — 시험용 사이트 · 접근성 트리 · 행동 · 상태 확인 · 승인 · 웹 인젝션 · 재생 평가 · 실측](../stages/computer-use/cu1-perceive/computer_use.md) |
 
 ## 설계 원칙
 

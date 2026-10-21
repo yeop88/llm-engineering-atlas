@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}웹 인젝션 · 재생 평가{% endblock %}
+{% block content %}
+{% call ui.page_header("웹 인젝션 · 재생 평가") %}고정한 시험용 사이트와 과제 세트로 화면 에이전트를 잽니다 — 실제 사이트는 매번 바뀌어 같은 조건으로 비교할 수 없습니다(CU6). 매뉴얼 페이지에는 숨은 지시 · 화면에 보이는 'AI 대상 지시' · 허용 밖 도메인 링크가 있어, 방어 설정(숨은 글을 보나 · 화면 글을 데이터로 격리하나 · 허용 도메인만 다니나)마다 인젝션을 따른 비율과 성공률을 비교합니다(CU5). 위험 행동은 평가에서는 자동 승인으로 두고 기록만 합니다. 끝난 실행은 기록한 행동을 새 사이트에서 그대로 재생해 같은 결과인지 확인할 수 있습니다.{% endcall %}
+
+<div class="card stack" id="injection">
+  <h2>방어 설정별 평가 (CU5 · CU6)</h2>
+  <div class="row">
+    <div class="field"><label for="e-provider">제공자</label><select id="e-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="e-model">모델</label><input id="e-model" data-ctx="model"></div>
+    <div class="field"><label for="e-steps">걸음 상한</label><input id="e-steps" type="number" value="15" min="1" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="e-run">평가</button></div>
+  </div>
+  <div class="small">설정: ① 방어 없음(숨은 글까지 · 격리 없음 · 도메인 제한 없음) ② 트리만 ③ 트리 + 격리 ④ 모두 켬(트리 · 격리 · 허용 도메인)</div>
+  <div id="e-progress" hidden></div>
+  <div id="e-out"></div>
+</div>
+
+<div class="card stack mt-4" id="eval">
+  <h2>재생 (CU6)</h2>
+  <div class="row">
+    <div class="field grow"><label for="p-run">끝난 실행</label><select id="p-run"></select></div>
+    <div class="self-end"><button class="btn" id="p-go">재생</button></div>
+  </div>
+  <div id="p-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/computer_use/eval.js') }}"></script>
+{% endblock %}
