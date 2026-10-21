@@ -22,12 +22,12 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| IP1 | [임베딩 공간 분석](../stages/interp/ip1-space/README.md) | ⬜ 예정 | 차원 축소 · 군집 · 이방성 · 언어 간 정렬로 임베딩 공간을 본다 | [1 임베딩](../stages/llm/1-embedding/README.md) | — |
-| IP2 | [근거 기여](../stages/interp/ip2-attribution/README.md) | ⬜ 예정 | 어텐션 · 그래디언트 · 근거 지우기로 어느 문장이 답에 기여했는지 잰다 | [RC4 설명 가능성](../stages/compliance/rc4-explain/README.md) | — |
-| IP3 | [탐침](../stages/interp/ip3-probe/README.md) | ⬜ 예정 | 은닉 상태로 '근거에 답이 있나' · 주제 · 언어를 선형 분류한다 | [A 의미 응용](../stages/llm/a-apps/README.md) | — |
-| IP4 | [희소 특징](../stages/interp/ip4-sae/README.md) | ⬜ 예정 | 은닉 상태를 사람이 읽을 수 있는 희소 특징으로 나눈다 | [P5 어댑터 · 병합](../stages/posttrain/p5-adapter/README.md) | — |
-| IP5 | [조종 · 편집](../stages/interp/ip5-steer/README.md) | ⬜ 예정 | 특징 방향을 더해 말투 · 거절을 조종하고 부작용을 잰다 | [P5 어댑터 · 병합](../stages/posttrain/p5-adapter/README.md) | — |
-| IP6 | [내부 신호 환각 탐지](../stages/interp/ip6-hallu/README.md) | ⬜ 예정 | 토큰 확률 · 엔트로피 · 탐침으로 근거 없는 답을 잡고 근거 일치 검증과 비교한다 | [AS6 검증](../stages/as-service/as6-verify/README.md) | — |
+| IP1 | [임베딩 공간 분석](../stages/interp/ip1-space/README.md) | ✅ 구현됨 | 차원 축소 · 군집 · 이방성 · 언어 간 정렬로 임베딩 공간을 본다 | [1 임베딩](../stages/llm/1-embedding/README.md) | [해석 가능성 — 임베딩 공간 · 근거 기여 · 탐침 · 희소 특징 · 조종 · 내부 신호 환각 탐지 · 실측](../stages/interp/ip1-space/interp.md) |
+| IP2 | [근거 기여](../stages/interp/ip2-attribution/README.md) | ✅ 구현됨 | 어텐션 · 그래디언트 · 근거 지우기로 어느 문장이 답에 기여했는지 잰다 | [RC4 설명 가능성](../stages/compliance/rc4-explain/README.md) | [해석 가능성 — 임베딩 공간 · 근거 기여 · 탐침 · 희소 특징 · 조종 · 내부 신호 환각 탐지 · 실측](../stages/interp/ip1-space/interp.md) |
+| IP3 | [탐침](../stages/interp/ip3-probe/README.md) | ✅ 구현됨 | 은닉 상태로 '근거에 답이 있나' · 주제 · 언어를 선형 분류한다 | [A 의미 응용](../stages/llm/a-apps/README.md) | [해석 가능성 — 임베딩 공간 · 근거 기여 · 탐침 · 희소 특징 · 조종 · 내부 신호 환각 탐지 · 실측](../stages/interp/ip1-space/interp.md) |
+| IP4 | [희소 특징](../stages/interp/ip4-sae/README.md) | ✅ 구현됨 | 은닉 상태를 사람이 읽을 수 있는 희소 특징으로 나눈다 | [P5 어댑터 · 병합](../stages/posttrain/p5-adapter/README.md) | [해석 가능성 — 임베딩 공간 · 근거 기여 · 탐침 · 희소 특징 · 조종 · 내부 신호 환각 탐지 · 실측](../stages/interp/ip1-space/interp.md) |
+| IP5 | [조종 · 편집](../stages/interp/ip5-steer/README.md) | ✅ 구현됨 | 특징 방향을 더해 말투 · 거절을 조종하고 부작용을 잰다 | [P5 어댑터 · 병합](../stages/posttrain/p5-adapter/README.md) | [해석 가능성 — 임베딩 공간 · 근거 기여 · 탐침 · 희소 특징 · 조종 · 내부 신호 환각 탐지 · 실측](../stages/interp/ip1-space/interp.md) |
+| IP6 | [내부 신호 환각 탐지](../stages/interp/ip6-hallu/README.md) | ✅ 구현됨 | 토큰 확률 · 엔트로피 · 탐침으로 근거 없는 답을 잡고 근거 일치 검증과 비교한다 | [AS6 검증](../stages/as-service/as6-verify/README.md) | [해석 가능성 — 임베딩 공간 · 근거 기여 · 탐침 · 희소 특징 · 조종 · 내부 신호 환각 탐지 · 실측](../stages/interp/ip1-space/interp.md) |
 
 ## 설계 원칙
 

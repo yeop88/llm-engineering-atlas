@@ -474,6 +474,17 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 해석 가능성 · 모델 내부 (`/api/interp`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/interp/overview` | 안을 보는 모델 · 저장한 내부 신호 · 번역 쌍 수 |
+| POST | `/api/interp/space` | 임베딩 공간 작업 `{"model_ids", "collection_id", "max_chunks"}` → 모델별 이방성 · 유효 차원 · 주성분 · 문서 군집 · 한-영 정렬 |
+| POST | `/api/interp/attribution` | 근거 기여 작업 `{"eval_set_id", "max_queries", "k", "max_new"}` → 지우기 기여 · 어텐션 · 인용 · 정답 근거 일치율 |
+| POST | `/api/interp/inside` | 내부 신호 작업 `{… "layers", "name"}` → 층별 탐침 · 거절률 · 환각 AUROC(내부 vs 밖), 은닉 상태 저장 |
+| POST | `/api/interp/steer` | 조종 작업 `{"name", "layer", "alphas", "max_queries"}` → 세기별 근거 뺌 · 있음 거절률 · 근거율 |
+| POST | `/api/interp/sae` | 희소 특징 작업 `{"collection_id", "layer", "max_texts", "mult", "l1", "steps"}` → 설명한 분산 · L0 · 안 켜진 비율 · 특징별 글 조각 |
+
 ## 컴퓨터 사용 · 브라우저 에이전트 (`/api/computer-use`)
 
 | 메서드 | 경로 | 설명 |

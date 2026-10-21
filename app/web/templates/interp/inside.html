@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}탐침 · 조종 · 내부 환각 탐지{% endblock %}
+{% block content %}
+{% call ui.page_header("탐침 · 조종 · 내부 환각 탐지") %}같은 질문을 '정답 근거 있음' 과 '정답 근거 뺌' 두 벌로 작은 공개 LLM 에 넣습니다. 층마다 은닉 상태로 근거 유무를 선형 분류해 모델이 어느 층에서 '답이 근거에 없다'를 아는지 봅니다(IP3). 거절하지 않은 답 가운데 근거 없이 답한 것(환각)을 내부 신호(엔트로피 · 최소 확률 · 탐침 점수)와 밖의 검증(글자 근거율)으로 얼마나 가려내는지 AUROC 로 비교합니다(IP6). 그 층의 '근거 뺌 − 있음' 방향을 생성 중에 더해, 근거가 없을 때만 거절이 느는지 · 근거가 있을 때도 느는지(부작용) 세기별로 잽니다(IP5).{% endcall %}
+
+<div class="card stack" id="probe">
+  <h2>탐침 · 내부 환각 탐지 (IP3 · IP6)</h2>
+  <div class="row">
+    <div class="field"><label for="i-col">컬렉션</label><select id="i-col" data-ctx="col"></select></div>
+    <div class="field"><label for="i-set">평가 세트</label><select id="i-set" data-ctx="set"></select></div>
+    <div class="field"><label for="i-n">질문 수</label><input id="i-n" type="number" value="20" min="2" class="w-md"></div>
+    <div class="field"><label for="i-layers">층 (쉼표)</label><input id="i-layers" value="4, 8, 12, 16, 20, 24, 28" class="w-md"></div>
+    <div class="field"><label for="i-name">저장 이름</label><input id="i-name" value="inside-1" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="i-run">재기</button></div>
+  </div>
+  <div id="i-progress" hidden></div>
+  <div id="i-out"></div>
+</div>
+
+<div class="card stack mt-4" id="steer">
+  <h2>조종 (IP5)</h2>
+  <div class="row">
+    <div class="field"><label for="t-name">저장한 내부 신호</label><select id="t-name"></select></div>
+    <div class="field"><label for="t-layer">층 (비우면 탐침 최고 층)</label><input id="t-layer" type="number" min="1" class="w-md"></div>
+    <div class="field"><label for="t-alphas">세기 (쉼표)</label><input id="t-alphas" value="0, 4, 8" class="w-md"></div>
+    <div class="field"><label for="t-n">질문 수</label><input id="t-n" type="number" value="10" min="2" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="t-run">조종</button></div>
+  </div>
+  <div id="t-progress" hidden></div>
+  <div id="t-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/interp/inside.js') }}"></script>
+{% endblock %}

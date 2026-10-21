@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}임베딩 공간 · 희소 특징{% endblock %}
+{% block content %}
+{% call ui.page_header("임베딩 공간 · 희소 특징") %}같은 점수의 임베딩 모델도 공간 모양이 다릅니다. 같은 청크로 모델마다 이방성(벡터가 한쪽으로 몰린 정도) · 유효 차원 · 주성분 설명력 · 문서 군집 · 한국어-영어 정렬을 잽니다(IP1). 아래에서는 작은 공개 LLM 의 한 층 은닉 상태를 희소 오토인코더로 수천 개 특징으로 나누고, 특징마다 가장 세게 켜지는 글 조각으로 뜻을 붙입니다(IP4).{% endcall %}
+
+<div class="card stack" id="space">
+  <h2>임베딩 공간 (IP1)</h2>
+  <div class="row">
+    <div class="field"><label for="s-col">컬렉션</label><select id="s-col" data-ctx="col"></select></div>
+    <div class="field grow"><label for="s-models">임베딩 모델 (여럿)</label><select id="s-models" multiple size="4"></select></div>
+    <div class="field"><label for="s-n">청크 수</label><input id="s-n" type="number" value="600" min="20" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="s-run">재기</button></div>
+  </div>
+  <div id="s-progress" hidden></div>
+  <div id="s-out"></div>
+</div>
+
+<div class="card stack mt-4" id="sae">
+  <h2>희소 특징 (IP4)</h2>
+  <div class="row">
+    <div class="field"><label for="f-layer">층</label><input id="f-layer" type="number" value="14" min="1" class="w-md"></div>
+    <div class="field"><label for="f-texts">글 수</label><input id="f-texts" type="number" value="200" min="10" class="w-md"></div>
+    <div class="field"><label for="f-mult">특징 배수</label><input id="f-mult" type="number" value="4" min="1" class="w-md"></div>
+    <div class="field"><label for="f-l1">L1</label><input id="f-l1" type="number" value="0.001" step="0.0005" class="w-md"></div>
+    <div class="field"><label for="f-steps">걸음</label><input id="f-steps" type="number" value="400" min="10" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="f-run">학습</button></div>
+  </div>
+  <p class="small muted" id="f-model"></p>
+  <div id="f-progress" hidden></div>
+  <div id="f-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/interp/space.js') }}"></script>
+{% endblock %}
