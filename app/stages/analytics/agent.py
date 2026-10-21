@@ -33,6 +33,9 @@ def anomalies(res: dict[str, Any]) -> list[str]:
     out = []
     if not res["rows"]:
         return ["결과가 비었습니다 — 값 표기(대소문자 · 띄어쓰기) · 날짜 조건 · 조인 조건을 확인하세요"]
+    # COUNT(*) 는 맞는 행이 없어도 0 한 줄을 돌려준다 — 값 표기가 틀린 질의('e4')가 빈 결과로 보이지 않아 고치지 못했다
+    if len(res["rows"]) == 1 and res["rows"][0] and all(v in (0, None) for v in res["rows"][0]):
+        return ["결과가 0 입니다 — 정말 없는지, 값 표기(대소문자 · 띄어쓰기) · 날짜 조건이 틀렸는지 확인하세요"]
     cols = [c.lower() for c in res["columns"]]
     for j, c in enumerate(cols):
         vals = [r[j] for r in res["rows"]]
@@ -80,7 +83,7 @@ def generate_and_run(
         attempts.append(a)
         if not issues or k == max_tries - 1:
             break
-        if not res["rows"]:
+        if not res["rows"] or issues[0].startswith("결과가 0"):
             if empty_retried:
                 break  # 정말 없을 수도 있다 — 빈 결과로 두 번 고치지 않는다
             empty_retried = True

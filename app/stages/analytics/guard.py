@@ -78,7 +78,9 @@ def run(g: Guarded, sql: str, max_rows: int = 500) -> dict[str, Any]:
         rows = cur.fetchmany(max_rows + 1)
     except sqlite3.DatabaseError as exc:
         msg = str(exc)
-        if "not authorized" in msg:
+        if (
+            "not authorized" in msg or "prohibited" in msg
+        ):  # 판에 따라 허가 콜백 거부 메시지가 다르다(읽기 거부는 'access to … is prohibited')
             raise Blocked("권한이 없는 표 · 열을 읽으려 했습니다(개인정보 열 등)") from exc
         if "interrupted" in msg:
             raise Blocked(f"시간 상한({g.timeout_s}초)을 넘었습니다") from exc
