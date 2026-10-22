@@ -11,8 +11,10 @@
 from app.stages.registry.maps import (
     analytics,
     as_service,
+    bigmodel,
     coding,
     compliance,
+    compress,
     computer_use,
     context,
     conversation,
@@ -26,7 +28,9 @@ from app.stages.registry.maps import (
     knowledge_graph,
     llm,
     longrun,
+    memory,
     multi_agent,
+    omni,
     platform,
     posttrain,
     reasoning,
@@ -39,7 +43,8 @@ from app.stages.registry.model import BASIC, DONE, PLANNED, STATUS_LABEL, Map, P
 # 메뉴 · 문서 색인에 나오는 순서
 MAP_MODULES = [llm, knowledge_graph, multi_agent, evalops, guardrails, docintel, serving, conversation, as_service, posttrain,
                flywheel, platform, interop, voice, compliance, longrun, rlvr, edge,
-               reasoning, context, analytics, coding, computer_use, interp]  # fmt: skip
+               reasoning, context, analytics, coding, computer_use, interp,
+               memory, compress, omni, bigmodel]  # fmt: skip
 MAPS: list[Map] = [m.MAP for m in MAP_MODULES]
 MAP_BY_KEY = {m.key: m for m in MAPS}
 STAGES: list[Stage] = [s for m in MAP_MODULES for s in m.STAGES]
