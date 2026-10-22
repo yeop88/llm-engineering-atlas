@@ -72,7 +72,8 @@ def analyze(answer: str, sources: list[dict[str, Any]]) -> dict[str, Any]:
     return {"claims": claims, "n": len(claims), "strong": lv.count("strong") / n, "weak": lv.count("weak") / n, "none": lv.count("none") / n,
             "uncited": lv.count("uncited") / n, "marks_missing": sum(len(c["marks_missing"]) for c in claims),
             "cite_precision": round(sum(c["cite_matches_best"] for c in claims if c["cites"]) / max(1, sum(1 for c in claims if c["cites"])), 3),
-            "traceable": round(sum(1 for c in claims if c["level"] == "strong" and c["cite_valid"]) / n, 3)}  # fmt: skip
+            # 추적 가능 = 근거가 강하고 인용 번호가 그 근거를 가리킴 — 다른 근거를 인용한 주장은 인용을 따라가면 근거가 안 나온다
+            "traceable": round(sum(1 for c in claims if c["level"] == "strong" and c["cite_valid"] and c["cite_matches_best"]) / n, 3)}  # fmt: skip
 
 
 def same_question(a: str, b: str, th: float = 0.8) -> bool:
