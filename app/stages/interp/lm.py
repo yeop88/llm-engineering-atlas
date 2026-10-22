@@ -84,16 +84,31 @@ def answer_logprob(model: Any, tok: Any, ids: list[int], answer_text: str) -> fl
     return float(lp[torch.arange(len(a)), torch.tensor(a, device=model.device)].mean())
 
 
+@contextmanager
+def eager_attention(model: Any):
+    """어텐션 가중치가 필요한 동안만 eager 구현으로. 기본 sdpa 는 output_attentions=True 여도 가중치를 돌려주지 않는다(transformers 5.x).
+    그것을 모르고 쓰면 가중치 없이 다른 경로로 조용히 빠진다 — KV 압축의 누적 주의(heavy) · 관찰 창(snap)이 같은 값이 됐던 이유."""
+    prev = getattr(model.config, "_attn_implementation", None)
+    if prev in (None, "eager"):
+        yield
+        return
+    model.set_attn_implementation("eager")
+    try:
+        yield
+    finally:
+        model.set_attn_implementation(prev)
+
+
 @torch.no_grad()
 def attention_to_spans(
     model: Any, ids: list[int], answer_ids: list[int], spans: list[tuple[int | None, int | None]], last_layers: int = 4
 ) -> list[float | None]:
     """답 토큰이 근거마다 준 어텐션(마지막 몇 층 · 모든 머리 평균, 근거 길이로 나누지 않은 합 비율)."""
     x = torch.tensor([ids + answer_ids], device=model.device)
-    try:
+    with eager_attention(model):
         out = model(x, output_attentions=True)
-    except ValueError, RuntimeError:
-        return [None for _ in spans]  # 어텐션 구현(sdpa 등)이 가중치를 돌려주지 않는 판
+    if not out.attentions or out.attentions[0] is None:
+        return [None for _ in spans]
     att = torch.stack([a[0].float() for a in out.attentions[-last_layers:]]).mean(0).mean(0)  # (tgt, src)
     rows = att[len(ids) :, : len(ids)]
     total = float(rows.sum()) or 1.0

@@ -16,13 +16,19 @@ from typing import Any
 
 import torch
 
+from app.stages.interp import lm
+
 POLICIES = ("full", "window", "sink_window", "heavy", "snap")
 
 
 @torch.no_grad()
-def prefill(model: Any, ids: list[int]) -> tuple[Any, torch.Tensor, list[torch.Tensor]]:
-    """→ (KV 캐시, 마지막 로짓, 층별 어텐션 (heads, q, k))."""
-    out = model(torch.tensor([ids], device=model.device), use_cache=True, output_attentions=True)
+def prefill(model: Any, ids: list[int], attentions: bool = False) -> tuple[Any, torch.Tensor, list[torch.Tensor]]:
+    """→ (KV 캐시, 마지막 로짓, 층별 어텐션 (heads, q, k)). 어텐션은 고르는 데 쓰는 정책(heavy · snap)만 — eager 는 느리고 메모리를 많이 쓴다."""
+    if not attentions:
+        out = model(torch.tensor([ids], device=model.device), use_cache=True)
+        return out.past_key_values, out.logits[0, -1].float(), []
+    with lm.eager_attention(model):
+        out = model(torch.tensor([ids], device=model.device), use_cache=True, output_attentions=True)
     atts = [a[0].float() for a in out.attentions] if out.attentions and out.attentions[0] is not None else []
     return out.past_key_values, out.logits[0, -1].float(), atts
 
@@ -36,8 +42,11 @@ def choose(policy: str, n: int, keep: int, atts: list[torch.Tensor], sinks: int 
     sinks = min(sinks, keep // 2)
     recent = max(1, (keep - sinks) // (1 if policy == "sink_window" else 3))
     base = set(range(sinks)) | set(range(n - recent, n))
-    if policy == "sink_window" or not atts:
+    if policy == "sink_window":
         return sorted(base)[:keep] if len(base) > keep else sorted(base)
+    if not atts:
+        # 가중치 없이 조용히 '첫 토큰 + 최근'으로 빠지면 정책끼리 같은 값이 나오고 남긴 몫도 요청보다 작아진다 — 실측이 틀리지 않게 멈춘다
+        raise RuntimeError(f"{policy} 정책에는 어텐션 가중치가 필요합니다")
     stack = torch.stack([a.mean(0) for a in atts]).mean(0)  # (q, k) 층 · 머리 평균
     score = stack[-obs:].sum(0) if policy == "snap" else stack.sum(0)  # snap = 질문 쪽 관찰 창, heavy = 모든 질의의 누적 주의
     rest = [i for i in torch.argsort(score, descending=True).tolist() if i not in base]
@@ -121,12 +130,12 @@ def run_one(
     """한 프롬프트: 가득 찬 캐시로 기준 로짓을 만들고, (정책 × 남길 비율) · (양자화 비트) 마다 충실도."""
     if not answer:
         return []
-    cache, last, atts = prefill(model, ids)
+    cache, last, _ = prefill(model, ids)
     ref = continue_logits(model, cache, last, answer, len(ids))
     rows = []
     for pol in policies:
         for r in [1.0] if pol == "full" else keeps:
-            c, last2, a2 = prefill(model, ids)
+            c, last2, a2 = prefill(model, ids, attentions=pol in ("heavy", "snap"))
             pos = choose(pol, len(ids), max(1, int(len(ids) * r)), a2)
             slice_cache(c, pos)
             got = continue_logits(model, c, last2, answer, len(ids))

@@ -161,7 +161,7 @@ def test_sliced_cache_with_all_positions_matches_full(tiny):
     model, tok = tiny
     ids = tok(TEXT)["input_ids"]
     ans = kv.greedy_answer(model, tok, ids, 6)
-    cache, last, atts = kv.prefill(model, ids)
+    cache, last, atts = kv.prefill(model, ids, attentions=True)
     assert atts and atts[0].shape[-1] == len(ids)  # eager 어텐션이라 층별 어텐션이 나온다
     ref = kv.continue_logits(model, cache, last, ans, len(ids))
     c2, last2, _ = kv.prefill(model, ids)
