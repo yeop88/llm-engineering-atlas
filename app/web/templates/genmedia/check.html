@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}생성물 검사 · 출처{% endblock %}
+{% block content %}
+{% call ui.page_header("생성물 검사 · 출처") %}생성은 외부 서비스 · 공개 모델의 자리로 두고, 생성물이 나온 뒤의 두 가지를 합니다.
+<ul class="small">
+  <li>사람 검토 전 자동 검사(GM7): 지시의 물체가 있나 · 기준 스타일과 같은가 · 프레임 사이에 깜빡임 · 순간 이동이 없나</li>
+  <li>출처 · 표시(GM8): 매니페스트 메타데이터 · 보이는 'AI 생성' 표시 · 보이지 않는 워터마크</li>
+</ul>
+다시 저장 · 압축 · 줄이기 · 자르기 뒤에도 출처 표시가 남는지 잽니다.{% endcall %}
+
+<div class="card stack" id="qa">
+  <h2>자동 품질 검사 (GM7)</h2>
+  <div class="row">
+    <div class="field"><label for="q-seed">시험 샷 번호</label><input id="q-seed" type="number" value="400" class="w-md"></div>
+    <div class="field"><label for="q-defect">넣을 결함</label><select id="q-defect"><option value="none">없음</option><option value="missing">물체 빠짐</option><option value="style">다른 색감</option><option value="flicker">깜빡임</option><option value="jump">순간 이동</option></select></div>
+    <div class="self-end"><button class="btn primary" id="q-run">검사</button> <button class="btn" id="q-eval">평가(결함 종류마다 20묶음)</button></div>
+  </div>
+  <div id="q-out"></div>
+</div>
+
+<div class="card stack mt-4" id="provenance">
+  <h2>출처 · 워터마크 (GM8)</h2>
+  <div class="row">
+    <div class="field"><label for="p-key">워터마크 열쇠</label><input id="p-key" value="atlas-demo-key"></div>
+    <div class="field grow"><label for="p-prompt">생성 지시문(해시만 남김)</label><input id="p-prompt" value="세탁기 표시창에 E4 가 뜬 사진"></div>
+    <div class="field"><label for="p-gen">생성기</label><input id="p-gen" value="외부 생성 서비스"></div>
+  </div>
+  <div class="row">
+    <div class="field grow"><label for="p-file">그림(비우면 시험 그림)</label><input id="p-file" type="file" accept="image/*"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="p-visible" checked> 보이는 'AI 생성' 표시</label>
+    <div class="self-end"><button class="btn primary" id="p-embed">붙이기</button> <button class="btn" id="p-detect">올린 그림 확인</button> <button class="btn" id="p-eval">남는지 평가</button></div>
+  </div>
+  <div class="grid cols-2"><div><img id="p-img" alt="출처를 붙인 그림" class="w-full" hidden></div><div id="p-out" class="small"></div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/genmedia/check.js') }}"></script>
+{% endblock %}

@@ -488,6 +488,16 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/architecture/layers` | `{"gguf"}` 또는 `{"hf_id", "bits"}` → 층마다 어텐션 종류 · KV 차원 · FFN 밀집/MoE · 바이트, 요약(전문가 몫 · 토큰당 읽는 양 · 임베딩 · 출력층 몫), 맥락 길이별 KV 대 단순 어림 |
 | POST | `/api/architecture/scaling` | 맥락 길이별 실측 작업 `{"lengths"}` → 작은 LM 의 미리 채우기 시간 · 토큰당 ms · 실제 KV · 길이 두 배당 시간 배율 |
 
+## 생성 미디어 (`/api/genmedia`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/api/genmedia/qa/sample` | 폼 `seed` · `defect`(none · missing · style · flicker · jump) → 지시 · 스타일 · 시간 검사 결과와 프레임 |
+| POST | `/api/genmedia/qa/evaluate` | 폼 `n` → 결함 종류별 잡기 · 걸러냄, 결함 없는 샷의 거짓 경보 |
+| POST | `/api/genmedia/provenance/embed` | 폼 `key` · `prompt` · `generator` · `visible` · `file`? → 매니페스트 · 표시 · 워터마크를 붙인 PNG(data URL) |
+| POST | `/api/genmedia/provenance/detect` | 폼 `key` · `file` → 메타데이터 · 해시 일치 · 워터마크 z |
+| POST | `/api/genmedia/provenance/evaluate` | 폼 `n` → 다시 저장 · JPEG · 줄이기 · 자르기 뒤 남은 몫, 거짓 검출 |
+
 ## 합성 데이터 (`/api/synthetic`)
 
 | 메서드 | 경로 | 설명 |

@@ -1,6 +1,6 @@
 """생성 이미지 · 비디오 제작 맵 — 맵 정의와 단계. 화면 · 메뉴 · 문서가 모두 여기서 나온다(scripts/gen_docs.py)."""
 
-from app.stages.registry.model import PLANNED, RESEARCH, Map, Stage
+from app.stages.registry.model import DONE, RESEARCH, Map, Page, Stage
 
 MAP = Map('genmedia', '생성 이미지 · 비디오 제작 맵', '/maps/genmedia', 'docs/maps/genmedia.md',
         summary='기획 · 스크립트 → 장면 · 샷 분해 → 캐릭터 · 스타일 → 이미지 · 비디오 생성 → 음성 · 음악 → 편집 · 합성 → 품질 검사 → 출처 · 워터마크 — 만드는 것보다 검사 · 출처',
@@ -116,36 +116,58 @@ STAGES: list[Stage] = [
     ),
     Stage(
         key="gm_qa",
+        pages=[Page("gm_check", "/genmedia/check", "생성물 검사 · 출처", "자동 품질 검사 · 출처 · 워터마크", "genmedia/check.html")],
         no="GM7",
         title="품질 검사",
         short="품질 검사",
         en="Quality checks",
-        status=PLANNED,
+        status=DONE,
         flow="genmedia",
         map="genmedia",
         builds_on=["vl_vqa", "ev_offline"],
         summary="프롬프트 준수 · 캐릭터 · 시간 일관성 · 입 모양 · 결함을 잰다",
         principle="품질 검사는 샷마다 지시를 지켰는지(VLM 판정), 캐릭터 · 스타일이 기준과 같은지(임베딩 거리), 프레임 사이가 튀지 않는지, 입 모양 · 결함(손가락 · 글자 깨짐)을 재는 단계입니다.",
         why="생성물은 그럴듯해 보여도 결함이 많습니다. 사람 검토 전에 자동 검사로 걸러야 검토 비용이 줄어듭니다.",
-        how=["(기반) 시각 질의응답(VL6) · 회귀 평가(E2)", "(예정) 프롬프트 준수 · 일관성 자동 검사 지표"],
-        plans=["프롬프트 준수 · 일관성 자동 검사 지표"],
-        docs=[("생성 이미지 · 비디오 제작 맵", "docs/maps/genmedia.md")],
+        how=[
+            "(기반) 시각 질의응답(VL6) · 회귀 평가(E2)",
+            "지시 준수(지시의 물체가 있나 — 시험 샷은 색 탐지), 스타일 일관성(기준 샷과 색 분포 차 0.25 이하), 시간 일관성(이웃 프레임 차가 중앙값 4배 · 물체가 한 프레임에 폭 25% 넘게 뜀) — 결함을 넣은 시험 샷으로 잡기 · 거짓 경보",
+        ],
+        plans=["비전 LLM 점검표로 실제 생성물의 지시 준수", "입 모양 · 손가락 · 글자 깨짐 결함"],
+        docs=[
+            (
+                "생성 미디어 — 생성물 자동 품질 검사(지시 · 스타일 · 시간) · 출처 매니페스트 · AI 생성 표시 · 보이지 않는 워터마크와 남는지 실측",
+                "docs/stages/genmedia/gm7-qa/genmedia.md",
+            ),
+            ("생성 이미지 · 비디오 제작 맵", "docs/maps/genmedia.md"),
+        ],
     ),
     Stage(
         key="gm_provenance",
+        pages=[
+            Page("gm_provenance", "/genmedia/check#provenance", "출처 · 워터마크 기록", "매니페스트 · AI 생성 표시 · 워터마크 · 남는지")
+        ],
         no="GM8",
         title="출처 · 워터마크 기록",
         short="출처 · 워터마크",
         en="Provenance & watermark",
-        status=PLANNED,
+        status=DONE,
         flow="genmedia",
         map="genmedia",
         builds_on=["pv_source", "rc_notice"],
         summary="생성 출처 메타 · AI 생성 표시 · 권리 확인을 남긴다",
         principle="출처 · 워터마크는 생성물에 '무엇으로 · 언제 · 어떤 지시로 만들었나' 메타데이터와 AI 생성 표시를 붙이고, 저작권 · 초상권 확인 결과를 남기는 단계입니다.",
         why="AI 생성물 표시는 규제 의무가 되었고(고지 RC6), 출처가 없으면 권리 분쟁에 대응할 수 없습니다.",
-        how=["(기반) 원본 계보(PV1) · 고지(RC6)", "(예정) 생성 메타 · AI 생성 표시 · 권리 확인 기록"],
-        plans=["생성 메타 · AI 생성 표시 · 권리 확인 기록"],
-        docs=[("생성 이미지 · 비디오 제작 맵", "docs/maps/genmedia.md")],
+        how=[
+            "(기반) 원본 계보(PV1) · 고지(RC6)",
+            "매니페스트(생성기 · 시각 · 지시문 해시 · 입력 · 권리 확인, 해시로 바뀜 확인)를 PNG 글 칸에, 보이는 'AI 생성' 표시, 열쇠로 만든 ±1 무늬를 밝기에 ±3 더한 워터마크(접어 더한 뒤 FFT 원형 상관으로 어긋남까지) — 다시 저장 · JPEG · 줄이기 · 자르기 뒤 남는지 · 거짓 검출",
+        ],
+        plans=["C2PA 서명 매니페스트", "크기 바뀜에 버티는 워터마크"],
+        docs=[
+            (
+                "생성 미디어 — 생성물 자동 품질 검사(지시 · 스타일 · 시간) · 출처 매니페스트 · AI 생성 표시 · 보이지 않는 워터마크와 남는지 실측",
+                "docs/stages/genmedia/gm7-qa/genmedia.md",
+            ),
+            ("생성 이미지 · 비디오 제작 맵", "docs/maps/genmedia.md"),
+        ],
     ),
 ]

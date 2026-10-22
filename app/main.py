@@ -39,6 +39,7 @@ from app.stages.embedding.model_manager import get_manager  # noqa: E402
 from app.stages.evalops import api as evalops_api  # noqa: E402
 from app.stages.finetune import api as finetune_api  # noqa: E402
 from app.stages.flywheel import api as flywheel_api  # noqa: E402
+from app.stages.genmedia import api as genmedia_api  # noqa: E402
 from app.stages.guardrails import api as guardrails_api  # noqa: E402
 from app.stages.inference import api as inference_api  # noqa: E402
 from app.stages.interop import api as interop_api  # noqa: E402
@@ -194,6 +195,7 @@ for module in (
     vision_api,  # 이미지 · VL — 표시창 · 호스 영역 규칙, 표시창만 읽기, 매뉴얼 근거 답과 근거 영역, VLM 하나에 vs 나눠서
     video_api,  # 비디오 이해 — 컷 · 추적 · 소리 사건 시간축 색인, 처음 · 마지막 · 몇 번 · 무엇 다음 계산
     synthetic_api,  # 합성 데이터 — 부족 분석 · 생성 · 다양성 · 누수 거르기 · 검토 표본 · 실제 질문으로 효과 평가
+    genmedia_api,  # 생성 미디어 — 생성물 자동 품질 검사(지시 · 스타일 · 시간), 출처 매니페스트 · AI 표시 · 워터마크와 남는지 실측
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

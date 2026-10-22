@@ -28,8 +28,8 @@
 | GM4 | [이미지 · 비디오 생성](../stages/genmedia/gm4-generate/README.md) | 🔬 연구 | 외부 서비스 · 공개 모델로 샷을 생성하는 연결 자리 | [GM3 캐릭터 · 스타일](../stages/genmedia/gm3-style/README.md) | — |
 | GM5 | [음성 · 음악 생성](../stages/genmedia/gm5-audio/README.md) | 🔬 연구 | 대사 음성 · 배경 음악을 만들고 길이를 샷에 맞춘다 | [VC4 음성 합성](../stages/voice/vc4-tts/README.md) | — |
 | GM6 | [편집 · 합성](../stages/genmedia/gm6-edit/README.md) | 🔬 연구 | 샷 · 소리 · 자막을 이어 붙이고 전환을 넣는다 | [GM5 음성 · 음악](../stages/genmedia/gm5-audio/README.md) | — |
-| GM7 | [품질 검사](../stages/genmedia/gm7-qa/README.md) | ⬜ 예정 | 프롬프트 준수 · 캐릭터 · 시간 일관성 · 입 모양 · 결함을 잰다 | [VL6 시각 질의응답](../stages/vision/vl6-vqa/README.md) · [E2 회귀 평가](../stages/evalops/e2-offline/README.md) | — |
-| GM8 | [출처 · 워터마크 기록](../stages/genmedia/gm8-provenance/README.md) | ⬜ 예정 | 생성 출처 메타 · AI 생성 표시 · 권리 확인을 남긴다 | [PV1 원본](../stages/provenance/pv1-source/README.md) · [RC6 고지 · 이의](../stages/compliance/rc6-notice/README.md) | — |
+| GM7 | [품질 검사](../stages/genmedia/gm7-qa/README.md) | ✅ 구현됨 | 프롬프트 준수 · 캐릭터 · 시간 일관성 · 입 모양 · 결함을 잰다 | [VL6 시각 질의응답](../stages/vision/vl6-vqa/README.md) · [E2 회귀 평가](../stages/evalops/e2-offline/README.md) | [생성 미디어 — 생성물 자동 품질 검사(지시 · 스타일 · 시간) · 출처 매니페스트 · AI 생성 표시 · 보이지 않는 워터마크와 남는지 실측](../stages/genmedia/gm7-qa/genmedia.md) |
+| GM8 | [출처 · 워터마크 기록](../stages/genmedia/gm8-provenance/README.md) | ✅ 구현됨 | 생성 출처 메타 · AI 생성 표시 · 권리 확인을 남긴다 | [PV1 원본](../stages/provenance/pv1-source/README.md) · [RC6 고지 · 이의](../stages/compliance/rc6-notice/README.md) | [생성 미디어 — 생성물 자동 품질 검사(지시 · 스타일 · 시간) · 출처 매니페스트 · AI 생성 표시 · 보이지 않는 워터마크와 남는지 실측](../stages/genmedia/gm7-qa/genmedia.md) |
 
 ## 설계 원칙
 
