@@ -118,17 +118,41 @@ def from_hf_config(cfg: dict[str, Any], bits: str = "q4_k_m") -> dict[str, Any]:
     else:
         exp, ffn, router, shared = 0, 3 * h * inter, 0, 0
     per_layer = attn + exp + ffn + router + shared
-    embed = vocab * h
+    # 층별 임베딩(gemma-4 E 계열): 어휘 × 층별 차원 × 층 수 — 파라미터의 큰 몫이지만 토큰마다 한 줄만 읽는다(임베딩으로 센다)
+    ple = int(c.get("vocab_size_per_layer_input") or 0) * int(c.get("hidden_size_per_layer_input") or 0) * n
+    embed = vocab * h + ple
     out = 0 if c.get("tie_word_embeddings", cfg.get("tie_word_embeddings")) else vocab * h
     layers = [{"bytes": int(per_layer * bpp), "experts": int(exp * bpp), "kv_k": kvh * hd, "kv_v": kvh * hd, "attn": True, "swa": False,
                "kv_shared": False} for _ in range(n)]  # fmt: skip
+    # 하이브리드 구조는 config 의 layer_types 에 층마다 적혀 있다 — 이걸 안 보면 모든 층을 전체 어텐션으로 세어 KV 를 몇 배 크게 잡는다
+    types = c.get("layer_types") or []
+    shared_n = int(c.get("num_kv_shared_layers") or 0)
+    ghd = int(c.get("global_head_dim") or hd)
+    state = 0
+    for i, ly in enumerate(layers):
+        t = types[i] if i < len(types) else "full_attention"
+        if t == "linear_attention":
+            ly.update(attn=False, recurrent=True, kv_k=0, kv_v=0)
+        elif t == "sliding_attention":
+            ly["swa"] = True
+        elif ghd != hd:  # 전체 어텐션 층만 머리 차원이 다른 모델(gemma-4)
+            ly["kv_k"] = ly["kv_v"] = kvh * ghd
+        ly["kv_shared"] = shared_n > 0 and i >= n - shared_n
+    if any(ly.get("recurrent") for ly in layers):
+        # 선형 어텐션 층의 고정 상태(f32): 값 머리 × 키 차원 × 값 차원 — 맥락 길이와 무관(어림)
+        state = (
+            int(c.get("linear_num_value_heads") or 0)
+            * int(c.get("linear_key_head_dim") or 0)
+            * int(c.get("linear_value_head_dim") or 0)
+            * 4
+        )
     by_kind = {"embed": int(embed * bpp), "output": int(out * bpp), "attn": int(attn * n * bpp), "experts": int(exp * n * bpp),
                "experts_shared": int(shared * n * bpp), "ffn": int(ffn * n * bpp), "router": int(router * n * bpp)}  # fmt: skip
     total = sum(by_kind.values())
     arch = {"arch": c.get("model_type", ""), "name": cfg.get("_name_or_path", ""), "layers": n, "hidden": h, "heads": heads, "kv_heads": kvh,
-            "head_dim": hd, "context": c.get("max_position_embeddings"), "experts": ne, "experts_used": used, "sliding_window": None}  # fmt: skip
-    return {"source": "hf_config", "exact": False, "bits": bits, "head_bytes": by_kind["output"] or by_kind["embed"], "arch": arch, "weights_bytes": total, "by_kind": by_kind, "layers": layers,
-            "non_layer_bytes": by_kind["embed"] + by_kind["output"], "recurrent_state_bytes": 0,
+            "head_dim": hd, "context": c.get("max_position_embeddings"), "experts": ne, "experts_used": used, "sliding_window": c.get("sliding_window") if types else None}  # fmt: skip
+    return {"source": "hf_config", "exact": False, "bits": bits, "head_bytes": by_kind["output"] or int(vocab * h * bpp), "arch": arch, "weights_bytes": total, "by_kind": by_kind, "layers": layers,
+            "non_layer_bytes": by_kind["embed"] + by_kind["output"], "recurrent_state_bytes": state,
             "params_b": round((per_layer * n + embed + out) / 1e9, 2)}  # fmt: skip
 
 

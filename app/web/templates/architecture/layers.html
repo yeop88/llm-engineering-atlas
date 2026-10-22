@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}층 구조 · 비용{% endblock %}
+{% block content %}
+{% call ui.page_header("층 구조 · 비용") %}같은 크기의 모델도 구조에 따라 메모리 · 속도 · 긴 맥락 비용이 다릅니다. GGUF 머리말이나 HF config.json 만 읽어 층마다 어텐션 종류(전체 · 슬라이딩 창 · KV 공유 · 선형 상태, TA3) · KV 차원 · FFN 밀집/MoE(TA4) · 바이트를 펼치고, 임베딩 표 몫(TA2) · 출력층 몫(TA6) · 토큰마다 읽는 양을 봅니다. 맥락 길이별 KV 는 '층 수 × 맥락' 단순 어림과 나란히 둡니다. 작은 모델로 맥락 길이를 늘려 가며 미리 채우기 시간 · 실제 KV 를 잽니다.{% endcall %}
+
+<div class="card stack" id="layers">
+  <h2>층 구조 (TA2~TA6)</h2>
+  <div class="row">
+    <div class="field"><label for="a-gguf">가지고 있는 GGUF</label><select id="a-gguf"><option value="">(HF 모델로 어림)</option></select></div>
+    <div class="field grow"><label for="a-hf">또는 HF 저장소 id</label><input id="a-hf" value="Qwen/Qwen3-30B-A3B"></div>
+    <div class="field"><label for="a-bits">비트(HF 어림)</label><select id="a-bits"><option>bf16</option><option>q8_0</option><option selected>q4_k_m</option><option>q4_0</option></select></div>
+    <div class="self-end"><button class="btn primary" id="a-run">펼치기</button></div>
+  </div>
+  <div id="a-out"></div>
+</div>
+
+<div class="card stack mt-4" id="scaling">
+  <h2>맥락 길이별 실측 (TA3)</h2>
+  <p class="small muted">작은 공개 LM(해석 맵의 모델)에 같은 글을 늘려 넣어 미리 채우기 시간과 캐시의 실제 KV 크기를 잽니다. 길이가 두 배일 때 시간이 두 배면 선형(FFN · 출력층이 지배), 네 배에 가까우면 어텐션의 제곱이 지배합니다.</p>
+  <div class="row">
+    <div class="field grow"><label for="s-lens">토큰 길이(쉼표)</label><input id="s-lens" value="128, 256, 512, 1024, 2048"></div>
+    <div class="self-end"><button class="btn" id="s-run">실측</button></div>
+  </div>
+  <div id="s-progress" hidden></div>
+  <div id="s-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/architecture/layers.js') }}"></script>
+{% endblock %}

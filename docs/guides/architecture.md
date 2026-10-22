@@ -64,6 +64,7 @@ app/
     edge/              온디바이스 · 엣지 맵(ED1~ED6): devices(기기 프로필 · 조합 추천) · pack(기기용 팩 · 압축 · 정확 검색 · 평가) ·
                        offline(기능 범위 · 미룸) · sync(판 증분 · 지문 확인 · 기기 상태) · privacy(전송 정책 · 서버 재검사)
     tokenizer/         토크나이저 맵(TK1~TK6): analyze(토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 설정 비용)
+    architecture/      Transformer · MoE 구조 맵(TA2~TA4 · TA6): structure(층별 어텐션 종류 · KV · FFN/전문가 · 읽는 양, bigmodel.plan 을 씀) · scaling(맥락 길이별 실측)
     lineage/           기반 모델 계보 맵(LN1~LN6): inspect(GGUF 머리말 · HF 설정 · 모델 카드 · 라이선스 확인) · graph(관계 · 세대 · 비교)
     provenance/        데이터 계보 맵(PV1~PV8): lineage(요청 → 청크 → 문서 · 판) · claims(주장 나누기 · 표시 일치 · 부딪힘)
     model_routing/     모델 라우팅 맵(MR1~MR8): decide(분류 · 위험 · 하한 · 예산 · 점수 · 사슬) · profiles(설정에서 후보 · 보정 값) · evaluate(보정 · 정책 비교)

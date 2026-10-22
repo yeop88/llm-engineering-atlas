@@ -481,6 +481,13 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | GET | `/api/tokenizer/samples` | 비교에 쓰는 글 5종 · 표시 8개 |
 | POST | `/api/tokenizer/compare` | 비교 작업 `{"hf_ids"}` → 모델마다 글 종류별 토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 임베딩 · 출력층 · 위치 · 이미지 토큰 |
 
+## Transformer · MoE 구조 (`/api/architecture`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/api/architecture/layers` | `{"gguf"}` 또는 `{"hf_id", "bits"}` → 층마다 어텐션 종류 · KV 차원 · FFN 밀집/MoE · 바이트, 요약(전문가 몫 · 토큰당 읽는 양 · 임베딩 · 출력층 몫), 맥락 길이별 KV 대 단순 어림 |
+| POST | `/api/architecture/scaling` | 맥락 길이별 실측 작업 `{"lengths"}` → 작은 LM 의 미리 채우기 시간 · 토큰당 ms · 실제 KV · 길이 두 배당 시간 배율 |
+
 ## 기반 모델 계보 (`/api/lineage`)
 
 | 메서드 | 경로 | 설명 |

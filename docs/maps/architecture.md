@@ -21,11 +21,11 @@
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
 | TA1 | [토큰화](../stages/architecture/ta1-tokenize/README.md) | ⬜ 예정 | 글을 토큰으로 — 구조 맵에서는 토큰 수가 모든 비용의 단위 | [TK2 토큰 분할](../stages/tokenizer/tk2-split/README.md) | — |
-| TA2 | [임베딩 · 층별 임베딩](../stages/architecture/ta2-embed/README.md) | ⬜ 예정 | 어휘 × 차원 표, 출력과 같이 쓰는지, 층별 임베딩이 있는지를 본다 | [IP1 임베딩 공간](../stages/interp/ip1-space/README.md) | — |
-| TA3 | [어텐션 종류](../stages/architecture/ta3-attention/README.md) | ⬜ 예정 | 전체 · GQA · 슬라이딩 창 · 선형 어텐션 · 상태 공간 층의 KV 와 연산을 비교한다 | [BM1 메모리 계획](../stages/bigmodel/bm1-plan/README.md) · [KC3 주의 싱크](../stages/compress/kc3-sink/README.md) | — |
-| TA4 | [FFN · 전문가](../stages/architecture/ta4-ffn/README.md) | ⬜ 예정 | 밀집 FFN 과 MoE 전문가(공용 전문가 포함)의 크기 · 쓰는 몫을 비교한다 | [BM3 혼합 · 오프로드](../stages/bigmodel/bm3-offload/README.md) | — |
+| TA2 | [임베딩 · 층별 임베딩](../stages/architecture/ta2-embed/README.md) | ✅ 구현됨 | 어휘 × 차원 표, 출력과 같이 쓰는지, 층별 임베딩이 있는지를 본다 | [IP1 임베딩 공간](../stages/interp/ip1-space/README.md) | [Transformer · MoE 구조 — 층별 어텐션 종류 · KV · FFN/전문가 · 읽는 양 · 맥락 길이별 실측](../stages/architecture/ta1-tokenize/architecture.md) |
+| TA3 | [어텐션 종류](../stages/architecture/ta3-attention/README.md) | ✅ 구현됨 | 전체 · GQA · 슬라이딩 창 · 선형 어텐션 · 상태 공간 층의 KV 와 연산을 비교한다 | [BM1 메모리 계획](../stages/bigmodel/bm1-plan/README.md) · [KC3 주의 싱크](../stages/compress/kc3-sink/README.md) | [Transformer · MoE 구조 — 층별 어텐션 종류 · KV · FFN/전문가 · 읽는 양 · 맥락 길이별 실측](../stages/architecture/ta1-tokenize/architecture.md) |
+| TA4 | [FFN · 전문가](../stages/architecture/ta4-ffn/README.md) | ✅ 구현됨 | 밀집 FFN 과 MoE 전문가(공용 전문가 포함)의 크기 · 쓰는 몫을 비교한다 | [BM3 혼합 · 오프로드](../stages/bigmodel/bm3-offload/README.md) | [Transformer · MoE 구조 — 층별 어텐션 종류 · KV · FFN/전문가 · 읽는 양 · 맥락 길이별 실측](../stages/architecture/ta1-tokenize/architecture.md) |
 | TA5 | [전문가 라우팅](../stages/architecture/ta5-routing/README.md) | ⬜ 예정 | 라우터가 토큰마다 전문가를 고르는 방식과 쓰임 치우침을 잰다 | [TA4 FFN · 전문가](../stages/architecture/ta4-ffn/README.md) | — |
-| TA6 | [출력 헤드](../stages/architecture/ta6-head/README.md) | ⬜ 예정 | 마지막 정규화 · 출력층 · 로짓 처리(소프트캡 등)가 비용 · 신호에 주는 영향 | [IP6 내부 환각 탐지](../stages/interp/ip6-hallu/README.md) | — |
+| TA6 | [출력 헤드](../stages/architecture/ta6-head/README.md) | ✅ 구현됨 | 마지막 정규화 · 출력층 · 로짓 처리(소프트캡 등)가 비용 · 신호에 주는 영향 | [IP6 내부 환각 탐지](../stages/interp/ip6-hallu/README.md) | [Transformer · MoE 구조 — 층별 어텐션 종류 · KV · FFN/전문가 · 읽는 양 · 맥락 길이별 실측](../stages/architecture/ta1-tokenize/architecture.md) |
 
 ## 설계 원칙
 

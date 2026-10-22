@@ -1,6 +1,6 @@
 """Transformer · MoE 구조 맵 — 맵 정의와 단계. 화면 · 메뉴 · 문서가 모두 여기서 나온다(scripts/gen_docs.py)."""
 
-from app.stages.registry.model import PLANNED, Map, Stage
+from app.stages.registry.model import DONE, PLANNED, Map, Page, Stage
 
 MAP = Map('architecture', 'Transformer · MoE 구조 맵', '/maps/architecture', 'docs/maps/architecture.md',
         summary='토큰화 → 임베딩 → 어텐션 → FFN · 전문가 → 라우팅 → 출력 헤드 — 밀집 · MoE · 슬라이딩 창 · 선형 어텐션 · 상태 공간이 메모리 · 연산에 미치는 영향',
@@ -31,54 +31,96 @@ STAGES: list[Stage] = [
     ),
     Stage(
         key="ta_embed",
+        pages=[
+            Page(
+                "ta_layers",
+                "/architecture/layers",
+                "층 구조 · 비용",
+                "층별 어텐션 · KV · FFN · 읽는 양 · 맥락 실측",
+                "architecture/layers.html",
+            )
+        ],
         no="TA2",
         title="임베딩 · 층별 임베딩",
         short="임베딩",
         en="Embeddings",
-        status=PLANNED,
+        status=DONE,
         flow="architecture",
         map="architecture",
         builds_on=["ip_space"],
         summary="어휘 × 차원 표, 출력과 같이 쓰는지, 층별 임베딩이 있는지를 본다",
         principle="임베딩 표는 어휘 수 × 은닉 차원 크기입니다. 출력층과 같은 표를 쓰면(tied) 메모리가 줄고, 층마다 따로 붙이는 임베딩(gemma-4 의 per-layer)은 크지만 토큰마다 한 줄만 읽습니다.",
         why="임베딩 표는 '크지만 거의 안 읽는' 가중치라 메모리 계획과 속도 계획에서 다르게 다뤄야 합니다. 같이 세면 속도 어림이 틀립니다.",
-        how=["(기반) 임베딩 공간(IP1) · GGUF 텐서 종류(BM1)", "(예정) 표 크기 · tied 여부 · 토큰당 읽는 양을 구조별로"],
-        plans=["표 크기 · tied 여부 · 토큰당 읽는 양을 구조별로"],
-        docs=[("Transformer · MoE 구조 맵", "docs/maps/architecture.md")],
+        how=[
+            "(기반) 임베딩 공간(IP1) · GGUF 텐서 종류(BM1)",
+            "임베딩 표(층별 임베딩 포함)가 가중치에서 차지하는 몫 — 메모리에는 다 들지만 토큰마다 한 줄만 읽으므로 '토큰마다 읽는 양'에서는 뺀다",
+        ],
+        plans=[],
+        docs=[
+            (
+                "Transformer · MoE 구조 — 층별 어텐션 종류 · KV · FFN/전문가 · 읽는 양 · 맥락 길이별 실측",
+                "docs/stages/architecture/ta1-tokenize/architecture.md",
+            ),
+            ("Transformer · MoE 구조 맵", "docs/maps/architecture.md"),
+        ],
     ),
     Stage(
         key="ta_attention",
+        pages=[
+            Page("ta_attention", "/architecture/layers#layers", "어텐션 종류", "층마다 전체 · 슬라이딩 창 · KV 공유 · 선형 상태"),
+            Page("ta_scaling", "/architecture/layers#scaling", "맥락 길이별 실측", "미리 채우기 시간 · 실제 KV"),
+        ],
         no="TA3",
         title="어텐션 종류",
         short="어텐션",
         en="Attention variants",
-        status=PLANNED,
+        status=DONE,
         flow="architecture",
         map="architecture",
         builds_on=["bm_plan", "kc_sink"],
         summary="전체 · GQA · 슬라이딩 창 · 선형 어텐션 · 상태 공간 층의 KV 와 연산을 비교한다",
         principle="어텐션은 전체(모든 앞 토큰), 그룹 쿼리(KV 머리를 나눠 씀), 슬라이딩 창(최근 n 토큰만), 선형 어텐션 · 상태 공간(고정 크기 상태)으로 나뉩니다. 층마다 섞어 쓰는 하이브리드 모델이 늘었습니다.",
         why="긴 맥락의 메모리는 대부분 KV 입니다. 층 종류를 모르고 '층 수 × 맥락' 으로 세면 하이브리드 모델의 KV 를 몇 배 크게 잡습니다.",
-        how=["(기반) 층별 KV 계산(BM1) · 주의 싱크(KC3)", "(예정) 층 종류별 KV · 연산 표 · 작은 모델로 맥락 길이별 실측"],
-        plans=["층 종류별 KV · 연산 표 · 작은 모델로 맥락 길이별 실측"],
-        docs=[("Transformer · MoE 구조 맵", "docs/maps/architecture.md")],
+        how=[
+            "(기반) 층별 KV 계산(BM1) · 주의 싱크(KC3)",
+            "층마다 어텐션 종류(전체 · 슬라이딩 창 · 앞 층 KV 공유 · 선형 상태) · KV 차원, 맥락 길이별 KV 를 '층 수 × 맥락' 어림과 나란히",
+            "작은 공개 LM 으로 길이를 두 배씩 늘려 미리 채우기 시간 배율 · 캐시의 실제 KV 텐서 크기를 잰다",
+        ],
+        plans=[],
+        docs=[
+            (
+                "Transformer · MoE 구조 — 층별 어텐션 종류 · KV · FFN/전문가 · 읽는 양 · 맥락 길이별 실측",
+                "docs/stages/architecture/ta1-tokenize/architecture.md",
+            ),
+            ("Transformer · MoE 구조 맵", "docs/maps/architecture.md"),
+        ],
     ),
     Stage(
         key="ta_ffn",
+        pages=[Page("ta_ffn", "/architecture/layers#layers", "FFN · 전문가", "밀집 · MoE, 전문가 몫 · 토큰당 읽는 양")],
         no="TA4",
         title="FFN · 전문가",
         short="FFN · 전문가",
         en="FFN & experts",
-        status=PLANNED,
+        status=DONE,
         flow="architecture",
         map="architecture",
         builds_on=["bm_offload"],
         summary="밀집 FFN 과 MoE 전문가(공용 전문가 포함)의 크기 · 쓰는 몫을 비교한다",
         principle="FFN 은 층마다 가장 큰 가중치입니다. MoE 는 FFN 을 전문가 여러 개로 나누고 토큰마다 몇 개만 씁니다. 공용 전문가는 모든 토큰이 씁니다.",
         why="MoE 는 메모리(전부 올려야 함)는 그대로이고 토큰마다 읽는 양(속도)을 줄입니다. 이 차이가 '어디에 둘까'(BM3)를 정합니다.",
-        how=["(기반) 전문가 오프로드 · 쓰임(BM3)", "(예정) 전체 · 활성 비율 · 공용 전문가 몫 · 메모리 대 연산 그림"],
-        plans=["전체 · 활성 비율 · 공용 전문가 몫 · 메모리 대 연산 그림"],
-        docs=[("Transformer · MoE 구조 맵", "docs/maps/architecture.md")],
+        how=[
+            "(기반) 전문가 오프로드 · 쓰임(BM3)",
+            "층마다 FFN 밀집 · MoE, 전문가 바이트가 가중치에서 차지하는 몫, 쓰는 전문가 비율로 토큰마다 읽는 양 — 메모리(전부)와 읽는 양(일부)을 나눠 보인다",
+        ],
+        plans=[],
+        docs=[
+            (
+                "Transformer · MoE 구조 — 층별 어텐션 종류 · KV · FFN/전문가 · 읽는 양 · 맥락 길이별 실측",
+                "docs/stages/architecture/ta1-tokenize/architecture.md",
+            ),
+            ("Transformer · MoE 구조 맵", "docs/maps/architecture.md"),
+        ],
     ),
     Stage(
         key="ta_routing",
@@ -99,19 +141,26 @@ STAGES: list[Stage] = [
     ),
     Stage(
         key="ta_head",
+        pages=[Page("ta_head", "/architecture/layers#layers", "출력 헤드", "토큰마다 읽는 양 중 출력층 몫")],
         no="TA6",
         title="출력 헤드",
         short="출력 헤드",
         en="Output head",
-        status=PLANNED,
+        status=DONE,
         flow="architecture",
         map="architecture",
         builds_on=["ip_hallu"],
         summary="마지막 정규화 · 출력층 · 로짓 처리(소프트캡 등)가 비용 · 신호에 주는 영향",
         principle="출력 헤드는 마지막 은닉 상태를 어휘 크기의 로짓으로 바꾸는 층입니다. 어휘가 크면 토큰마다 읽는 양의 큰 몫이고, 로짓 소프트캡 같은 처리는 확신도 신호를 바꿉니다.",
         why="작은 모델에서는 출력층이 토큰당 읽는 양의 1/4 을 넘기도 합니다. 확신도 기반 라우팅 · 환각 탐지도 이 층의 출력에 기대므로 처리 방식을 알아야 합니다.",
-        how=["(기반) 내부 환각 탐지(IP6)", "(예정) 출력층 몫 · 소프트캡 · 확신도 분포를 모델별로"],
-        plans=["출력층 몫 · 소프트캡 · 확신도 분포를 모델별로"],
-        docs=[("Transformer · MoE 구조 맵", "docs/maps/architecture.md")],
+        how=["(기반) 내부 환각 탐지(IP6)", "토큰마다 읽는 양에서 출력층(어휘 × 은닉)이 차지하는 몫 — 작은 모델일수록 크다"],
+        plans=["로짓 소프트캡 · 확신도 분포를 모델별로"],
+        docs=[
+            (
+                "Transformer · MoE 구조 — 층별 어텐션 종류 · KV · FFN/전문가 · 읽는 양 · 맥락 길이별 실측",
+                "docs/stages/architecture/ta1-tokenize/architecture.md",
+            ),
+            ("Transformer · MoE 구조 맵", "docs/maps/architecture.md"),
+        ],
     ),
 ]

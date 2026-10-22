@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [TA4 FFN · 전문가](../ta4-ffn/README.md) — Transformer · MoE 구조 맵 · ⬜ 예정
+- [TA4 FFN · 전문가](../ta4-ffn/README.md) — Transformer · MoE 구조 맵 · ✅ 구현됨
 
 ---
 
