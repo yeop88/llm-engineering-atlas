@@ -49,6 +49,7 @@ from app.stages.memory import api as memory_api  # noqa: E402
 from app.stages.model_routing import api as model_routing_api  # noqa: E402
 from app.stages.multiagent import api as multiagent_api  # noqa: E402
 from app.stages.omni import api as omni_api  # noqa: E402
+from app.stages.personalize import api as personalize_api  # noqa: E402
 from app.stages.platform import api as platform_api  # noqa: E402
 from app.stages.posttrain import api as posttrain_api  # noqa: E402
 from app.stages.provenance import api as provenance_api  # noqa: E402
@@ -182,6 +183,7 @@ for module in (
     tokenizer_api,  # 토크나이저 · 표현 공간 — 토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 설정 비용
     architecture_api,  # Transformer · MoE 구조 — 층별 어텐션 · KV · FFN/전문가 · 바이트, KV 곡선, 맥락 길이별 미리 채우기
     training_api,  # 학습 생애주기 — 모델 하나의 데이터 · 학습 · 평가 · 배포 기록을 잇는 원장, 학습 데이터 감사
+    personalize_api,  # 개인화 · 적응 — 동의 범위별 선호 · 행동 신호 → 프로필 → 응답 형식, 사실 보존 검사
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

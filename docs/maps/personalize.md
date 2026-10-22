@@ -22,13 +22,13 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| PS1 | [사용자 동의](../stages/personalize/ps1-consent/README.md) | ⬜ 예정 | 개인화 · 기록 보관 · 학습 사용 동의를 따로 받고 범위를 남긴다 | [RC6 고지 · 이의](../stages/compliance/rc6-notice/README.md) | — |
-| PS2 | [명시적 선호](../stages/personalize/ps2-explicit/README.md) | ⬜ 예정 | 사용자가 직접 고른 선호(길이 · 말투 · 채널 · 언어)를 받는다 | [C4 프로필](../stages/conversation/c4-profile/README.md) | — |
-| PS3 | [행동 신호](../stages/personalize/ps3-behavior/README.md) | ⬜ 예정 | 동의 범위 안에서 해결 단계 · 재질문 · 끊김 같은 행동 신호를 모은다 | [E5 피드백](../stages/evalops/e5-feedback/README.md) · [ME1 기억 추출](../stages/memory/me1-extract/README.md) | — |
-| PS4 | [프로필 갱신](../stages/personalize/ps4-profile/README.md) | ⬜ 예정 | 선호 · 숙련도 · 상황을 프로필로 갱신하고 오래된 추정은 낮춘다 | [ME4 갱신 · 충돌](../stages/memory/me4-update/README.md) | — |
-| PS5 | [응답 전략 선택](../stages/personalize/ps5-strategy/README.md) | ⬜ 예정 | 프로필로 길이 · 단계 수 · 설명 깊이 · 채널 형식을 고른다 | [6 라우팅](../stages/llm/6-routing/README.md) · [OM7 응답 형식](../stages/omni/om7-format/README.md) | — |
-| PS6 | [개인화 응답](../stages/personalize/ps6-respond/README.md) | ⬜ 예정 | 이미 한 조치는 건너뛰고 숙련도에 맞춰 답한다 | [C1 맥락 재작성](../stages/conversation/c1-rewrite/README.md) | — |
-| PS7 | [사용자 피드백](../stages/personalize/ps7-feedback/README.md) | ⬜ 예정 | 개인화가 실제로 도움이 됐는지 A/B · 피드백으로 잰다 | [AS8 피드백](../stages/as-service/as8-feedback/README.md) · [E7 A/B 실험](../stages/evalops/e7-ab/README.md) | — |
+| PS1 | [사용자 동의](../stages/personalize/ps1-consent/README.md) | ✅ 구현됨 | 개인화 · 기록 보관 · 학습 사용 동의를 따로 받고 범위를 남긴다 | [RC6 고지 · 이의](../stages/compliance/rc6-notice/README.md) | [개인화 · 적응 — 범위별 동의 · 명시 선호 · 행동 신호 · 반감기 프로필 · 응답 전략 · 사실 보존 개인화 · 오프라인 평가](../stages/personalize/ps1-consent/personalize.md) |
+| PS2 | [명시적 선호](../stages/personalize/ps2-explicit/README.md) | ✅ 구현됨 | 사용자가 직접 고른 선호(길이 · 말투 · 채널 · 언어)를 받는다 | [C4 프로필](../stages/conversation/c4-profile/README.md) | [개인화 · 적응 — 범위별 동의 · 명시 선호 · 행동 신호 · 반감기 프로필 · 응답 전략 · 사실 보존 개인화 · 오프라인 평가](../stages/personalize/ps1-consent/personalize.md) |
+| PS3 | [행동 신호](../stages/personalize/ps3-behavior/README.md) | ✅ 구현됨 | 동의 범위 안에서 해결 단계 · 재질문 · 끊김 같은 행동 신호를 모은다 | [E5 피드백](../stages/evalops/e5-feedback/README.md) · [ME1 기억 추출](../stages/memory/me1-extract/README.md) | [개인화 · 적응 — 범위별 동의 · 명시 선호 · 행동 신호 · 반감기 프로필 · 응답 전략 · 사실 보존 개인화 · 오프라인 평가](../stages/personalize/ps1-consent/personalize.md) |
+| PS4 | [프로필 갱신](../stages/personalize/ps4-profile/README.md) | ✅ 구현됨 | 선호 · 숙련도 · 상황을 프로필로 갱신하고 오래된 추정은 낮춘다 | [ME4 갱신 · 충돌](../stages/memory/me4-update/README.md) | [개인화 · 적응 — 범위별 동의 · 명시 선호 · 행동 신호 · 반감기 프로필 · 응답 전략 · 사실 보존 개인화 · 오프라인 평가](../stages/personalize/ps1-consent/personalize.md) |
+| PS5 | [응답 전략 선택](../stages/personalize/ps5-strategy/README.md) | ✅ 구현됨 | 프로필로 길이 · 단계 수 · 설명 깊이 · 채널 형식을 고른다 | [6 라우팅](../stages/llm/6-routing/README.md) · [OM7 응답 형식](../stages/omni/om7-format/README.md) | [개인화 · 적응 — 범위별 동의 · 명시 선호 · 행동 신호 · 반감기 프로필 · 응답 전략 · 사실 보존 개인화 · 오프라인 평가](../stages/personalize/ps1-consent/personalize.md) |
+| PS6 | [개인화 응답](../stages/personalize/ps6-respond/README.md) | ✅ 구현됨 | 이미 한 조치는 건너뛰고 숙련도에 맞춰 답한다 | [C1 맥락 재작성](../stages/conversation/c1-rewrite/README.md) | [개인화 · 적응 — 범위별 동의 · 명시 선호 · 행동 신호 · 반감기 프로필 · 응답 전략 · 사실 보존 개인화 · 오프라인 평가](../stages/personalize/ps1-consent/personalize.md) |
+| PS7 | [사용자 피드백](../stages/personalize/ps7-feedback/README.md) | ✅ 구현됨 | 개인화가 실제로 도움이 됐는지 A/B · 피드백으로 잰다 | [AS8 피드백](../stages/as-service/as8-feedback/README.md) · [E7 A/B 실험](../stages/evalops/e7-ab/README.md) | [개인화 · 적응 — 범위별 동의 · 명시 선호 · 행동 신호 · 반감기 프로필 · 응답 전략 · 사실 보존 개인화 · 오프라인 평가](../stages/personalize/ps1-consent/personalize.md) |
 
 ## 설계 원칙
 

@@ -488,6 +488,19 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/architecture/layers` | `{"gguf"}` 또는 `{"hf_id", "bits"}` → 층마다 어텐션 종류 · KV 차원 · FFN 밀집/MoE · 바이트, 요약(전문가 몫 · 토큰당 읽는 양 · 임베딩 · 출력층 몫), 맥락 길이별 KV 대 단순 어림 |
 | POST | `/api/architecture/scaling` | 맥락 길이별 실측 작업 `{"lengths"}` → 작은 LM 의 미리 채우기 시간 · 토큰당 ms · 실제 KV · 길이 두 배당 시간 배율 |
 
+## 개인화 · 적응 (`/api/personalize`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/personalize/options` | 동의 범위 · 선호 항목 · 신호 종류 · 시험 인물 · 예시 기본 답 |
+| GET | `/api/personalize/profiles/{key}` | 동의 · 선호 · 신호 · 해 본 조치 · 특성(출처 · 확신) · 응답 전략 |
+| POST | `/api/personalize/profiles/{key}/consent` | `{"scopes": {"personalize", "behavior", "history", "training"}, "version"}` — 철회한 범위의 기록을 지우고 지운 수 |
+| POST | `/api/personalize/profiles/{key}/prefs` | `{"prefs": {"length", "tone", "channel", "language", "expertise"}}` — 개인화 동의가 없으면 403, 인증 정보로 보이면 400 |
+| POST | `/api/personalize/profiles/{key}/signals` | `{"events": [{"type", "step", "topic", "note"}]}` — 동의가 없으면 버린 수만 |
+| DELETE | `/api/personalize/profiles/{key}` | 개인화 칸 통째로 지우기 |
+| POST | `/api/personalize/respond` | `{"key", "topic", "answer"}` 또는 `{"key", "question", "collection_id", "llm"}` → 기본 답 · 전략 · 개인화 답 · 사실 보존 검사 |
+| POST | `/api/personalize/evaluate` | 오프라인 평가(인물 7명 × 상담 3건) — 형식 · 건너뛰기 · 사실 보존 · 길이, 개인화 없음 · 명시만과 비교 |
+
 ## 학습 생애주기 (`/api/training`)
 
 | 메서드 | 경로 | 설명 |

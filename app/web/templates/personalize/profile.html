@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}개인화 · 적응{% endblock %}
+{% block content %}
+{% call ui.page_header("개인화 · 적응") %}동의 범위(개인화 · 행동 신호 · 보관 · 학습)를 따로 받고(PS1), 고객이 직접 고른 선호(PS2)와 동의한 행동 신호(PS3)로 프로필을 만듭니다. 명시 선호가 추정보다 우선하고, 신호는 반감기 30일로 낮춥니다(PS4). 프로필로 단계 수 · 설명 깊이 · 채널 형식을 고르고(PS5), 검증을 거친 기본 답의 문장 · 단계만 골라 줄입니다. 해 본 조치는 건너뛰고, 숫자 · 코드가 기본 답과 같은지 검사합니다(PS6). 인물 7명 × 상담 3건으로 형식 · 사실 보존을 잽니다(PS7).{% endcall %}
+
+<div class="card stack" id="consent">
+  <h2>고객 · 동의 (PS1)</h2>
+  <div class="row">
+    <div class="field grow"><label for="k-key">고객 키</label><input id="k-key" value="demo-customer"></div>
+    <div class="self-end"><button class="btn" id="k-load">불러오기</button> <button class="btn danger" id="k-withdraw">개인화 기록 모두 지우기</button></div>
+  </div>
+  <div id="k-scopes" class="stack small"></div>
+  <div><button class="btn primary" id="k-save">동의 저장</button></div>
+</div>
+
+<div class="card stack mt-4" id="prefs">
+  <h2>명시적 선호 (PS2) · 행동 신호 (PS3)</h2>
+  <div class="row" id="p-fields"></div>
+  <div><button class="btn" id="p-save">선호 저장</button></div>
+  <div class="row">
+    <div class="field"><label for="s-type">신호</label><select id="s-type"></select></div>
+    <div class="field"><label for="s-step">단계</label><input id="s-step" type="number" min="1" max="20" value="1" class="w-md"></div>
+    <div class="field grow"><label for="s-topic">주제</label><input id="s-topic" value="WM-200 E4"></div>
+    <div class="self-end"><button class="btn" id="s-add">신호 넣기</button></div>
+  </div>
+  <div id="s-msg" class="small muted"></div>
+</div>
+
+<div class="card stack mt-4" id="profile">
+  <h2>프로필 · 응답 전략 (PS4 · PS5)</h2>
+  <div id="f-out" class="small"></div>
+</div>
+
+<div class="card stack mt-4" id="respond">
+  <h2>개인화 응답 (PS6)</h2>
+  <div class="row">
+    <div class="field"><label for="r-scn">예시 기본 답</label><select id="r-scn"></select></div>
+    <div class="field grow"><label for="r-topic">주제(해 본 조치를 찾을 때)</label><input id="r-topic"></div>
+  </div>
+  <div class="field"><label for="r-base">기본 답 (비우면 아래 질문 · 컬렉션으로 서비스 답변)</label><textarea id="r-base" rows="7"></textarea></div>
+  <div class="row">
+    <div class="field grow"><label for="r-q">질문</label><input id="r-q" placeholder="세탁기에 E4 가 떠요"></div>
+    <div class="field"><label for="r-col">컬렉션</label><select id="r-col"></select></div>
+  </div>
+  <div><button class="btn primary" id="r-run">개인화</button></div>
+  <div id="r-out"></div>
+</div>
+
+<div class="card stack mt-4" id="evaluate">
+  <h2>오프라인 평가 (PS7)</h2>
+  <p class="small muted">인물 7명(동의 없음 · 짧게 명시 · 늘 1단계 해결 · 자세히 · 음성 · 오래된 신호와 해 본 조치 · 동의 철회 뒤 남은 기록) × 상담 3건. 기대 단계 수 · 건너뛸 단계와 맞는지, 사실이 보존되는지 봅니다. 개인화 없음 · 명시 선호만과 비교합니다.</p>
+  <div><button class="btn" id="e-run">평가</button></div>
+  <div id="e-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/personalize/profile.js') }}"></script>
+{% endblock %}

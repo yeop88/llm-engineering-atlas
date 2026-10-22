@@ -64,9 +64,9 @@
 | E | **규제 대응 · 컴플라이언스** | 법 조항을 시스템 요구로 | 8 | 8 | — | — | — | `/maps/compliance` · [개요](docs/maps/compliance.md) |
 | F | **서비스 시나리오: 고객 AS 상담** | 기술 맵들을 실제 업무로 묶은 흐름 | 8 | 8 | — | — | — | `/maps/as-service` · [개요](docs/maps/as-service.md) |
 | F | **엔터프라이즈 AI 플랫폼 아키텍처** | 맵들을 실제 운영 시스템으로 묶는 흐름 | 7 | 7 | — | — | — | `/maps/platform` · [개요](docs/maps/platform.md) |
-| F | **개인화 · 적응** | 개인화 데이터 · 인증 · 민감 정보 · 학습 동의를 나눠서 | 7 | — | — | 7 | — | `/maps/personalize` · [개요](docs/maps/personalize.md) |
+| F | **개인화 · 적응** | 개인화 데이터 · 인증 · 민감 정보 · 학습 동의를 나눠서 | 7 | 7 | — | — | — | `/maps/personalize` · [개요](docs/maps/personalize.md) |
 | F | **모델 라우팅 · 비용 최적화** | 점수 = 품질 · 근거 · 지연 · 비용 · 신뢰성 | 8 | 8 | — | — | — | `/maps/routing` · [개요](docs/maps/routing.md) |
-| | **합계 44개** | | 316 | 246 | 0 | 46 | 24 | `/maps` · [생태계 구조](docs/maps/ecosystem.md) |
+| | **합계 44개** | | 316 | 253 | 0 | 39 | 24 | `/maps` · [생태계 구조](docs/maps/ecosystem.md) |
 <!-- /맵 표 -->
 
 ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정 — 맵 · 단계의 정의와 상태는 `app/stages/registry/` 한 곳에서 관리하고, 이 표와 문서가 거기서 만들어집니다.
