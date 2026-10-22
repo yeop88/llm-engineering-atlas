@@ -488,6 +488,14 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/architecture/layers` | `{"gguf"}` 또는 `{"hf_id", "bits"}` → 층마다 어텐션 종류 · KV 차원 · FFN 밀집/MoE · 바이트, 요약(전문가 몫 · 토큰당 읽는 양 · 임베딩 · 출력층 몫), 맥락 길이별 KV 대 단순 어림 |
 | POST | `/api/architecture/scaling` | 맥락 길이별 실측 작업 `{"lengths"}` → 작은 LM 의 미리 채우기 시간 · 토큰당 ms · 실제 KV · 길이 두 배당 시간 배율 |
 
+## 학습 생애주기 (`/api/training`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/training/models` | 학습한 모델(어댑터 · 병합)과 학습 데이터 목록 |
+| GET | `/api/training/lifecycle/{id}` | 모델 하나의 TL1~TL8 — 만든 순서, 단계마다 상태(done · check · missing) · 기록 · 확인할 것 |
+| GET | `/api/training/datasets/{name}/audit` | 학습 데이터 감사 — 비슷한 질문 쌍 · 같은 답 · 짧은 답 · 거절 몫 · 채팅 틀 조각 · 선호 쌍 길이 치우침 · 경고 |
+
 ## 기반 모델 계보 (`/api/lineage`)
 
 | 메서드 | 경로 | 설명 |

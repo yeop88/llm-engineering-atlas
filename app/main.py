@@ -61,6 +61,7 @@ from app.stages.rlvr import api as rlvr_api  # noqa: E402
 from app.stages.routing import api as routing_api  # noqa: E402
 from app.stages.serving import api as serving_api  # noqa: E402
 from app.stages.tokenizer import api as tokenizer_api  # noqa: E402
+from app.stages.training import api as training_api  # noqa: E402
 from app.stages.voice import api as voice_api  # noqa: E402
 from app.web import pages  # noqa: E402
 
@@ -180,6 +181,7 @@ for module in (
     lineage_api,  # 기반 모델 계보 — GGUF 머리말 · HF 설정 · 모델 카드로 계열 · 구조 · 맥락 · 모달리티 · 라이선스
     tokenizer_api,  # 토크나이저 · 표현 공간 — 토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 설정 비용
     architecture_api,  # Transformer · MoE 구조 — 층별 어텐션 · KV · FFN/전문가 · 바이트, KV 곡선, 맥락 길이별 미리 채우기
+    training_api,  # 학습 생애주기 — 모델 하나의 데이터 · 학습 · 평가 · 배포 기록을 잇는 원장, 학습 데이터 감사
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

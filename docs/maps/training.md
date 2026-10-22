@@ -22,14 +22,14 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| TL1 | [데이터 수집](../stages/training/tl1-collect/README.md) | ⬜ 예정 | 학습 데이터의 출처(운영 기록 · 합성 · 공개)를 모으고 출처를 남긴다 | [FW1 로그](../stages/flywheel/fw1-logs/README.md) · [P1 합성 데이터](../stages/posttrain/p1-synth/README.md) | — |
-| TL2 | [전처리 · 중복 제거](../stages/training/tl2-dedup/README.md) | ⬜ 예정 | 중복 · 저품질 · 평가와 겹치는 예시를 거른다 | [P2 선별](../stages/posttrain/p2-select/README.md) · [D4 정제 · 중복](../stages/docintel/d4-clean/README.md) | — |
-| TL3 | [사전학습](../stages/training/tl3-pretrain/README.md) | 🔬 연구 | 사전학습은 하지 않고, 쓰는 공개 모델의 사전학습 정보(데이터 · 토큰 수)를 기록만 한다 | [LN1 모델 계열](../stages/lineage/ln1-family/README.md) | — |
-| TL4 | [지시 튜닝](../stages/training/tl4-sft/README.md) | ⬜ 예정 | 지시 · 답 쌍으로 LoRA SFT — 무엇을 배웠고 무엇을 잃었나 | [P3 SFT](../stages/posttrain/p3-sft/README.md) | — |
-| TL5 | [선호 정렬](../stages/training/tl5-pref/README.md) | ⬜ 예정 | 선호 쌍(DPO) · 검증 가능한 보상(GRPO)으로 답의 질을 맞춘다 | [P4 선호 학습](../stages/posttrain/p4-pref/README.md) · [RV5 정책 학습](../stages/rlvr/rv5-policy/README.md) | — |
-| TL6 | [안전 정렬](../stages/training/tl6-safety/README.md) | ⬜ 예정 | 학습 전후 레드팀 · 거절 균형을 같은 문항으로 확인한다 | [G7 레드팀](../stages/guardrails/g7-redteam/README.md) · [RV4 보상 해킹](../stages/rlvr/rv4-hacking/README.md) | — |
-| TL7 | [평가](../stages/training/tl7-eval/README.md) | ⬜ 예정 | 기본 모델 대비 업무 · 일반 · 안전을 짝지은 질문으로 비교한다 | [P6 후학습 평가](../stages/posttrain/p6-eval/README.md) · [E2 회귀 평가](../stages/evalops/e2-offline/README.md) | — |
-| TL8 | [배포](../stages/training/tl8-deploy/README.md) | ⬜ 예정 | GGUF 로 내보내 게이트 · 단계적 배포로 운영에 넣는다 | [P7 배포 변환](../stages/posttrain/p7-export/README.md) · [FW7 단계적 배포](../stages/flywheel/fw7-rollout/README.md) | — |
+| TL1 | [데이터 수집](../stages/training/tl1-collect/README.md) | ✅ 구현됨 | 학습 데이터의 출처(운영 기록 · 합성 · 공개)를 모으고 출처를 남긴다 | [FW1 로그](../stages/flywheel/fw1-logs/README.md) · [P1 합성 데이터](../stages/posttrain/p1-synth/README.md) | [학습 생애주기 — 모델 원장(데이터 → 거르기 → 기본 모델 → SFT → 선호 정렬 → 안전 → 평가 → 배포) · 학습 데이터 감사](../stages/training/tl1-collect/training.md) |
+| TL2 | [전처리 · 중복 제거](../stages/training/tl2-dedup/README.md) | ✅ 구현됨 | 중복 · 저품질 · 평가와 겹치는 예시를 거른다 | [P2 선별](../stages/posttrain/p2-select/README.md) · [D4 정제 · 중복](../stages/docintel/d4-clean/README.md) | [학습 생애주기 — 모델 원장(데이터 → 거르기 → 기본 모델 → SFT → 선호 정렬 → 안전 → 평가 → 배포) · 학습 데이터 감사](../stages/training/tl1-collect/training.md) |
+| TL3 | [사전학습](../stages/training/tl3-pretrain/README.md) | ✅ 구현됨 | 사전학습은 하지 않고, 쓰는 공개 모델의 사전학습 정보(데이터 · 토큰 수)를 기록만 한다 | [LN1 모델 계열](../stages/lineage/ln1-family/README.md) | [학습 생애주기 — 모델 원장(데이터 → 거르기 → 기본 모델 → SFT → 선호 정렬 → 안전 → 평가 → 배포) · 학습 데이터 감사](../stages/training/tl1-collect/training.md) |
+| TL4 | [지시 튜닝](../stages/training/tl4-sft/README.md) | ✅ 구현됨 | 지시 · 답 쌍으로 LoRA SFT — 무엇을 배웠고 무엇을 잃었나 | [P3 SFT](../stages/posttrain/p3-sft/README.md) | [학습 생애주기 — 모델 원장(데이터 → 거르기 → 기본 모델 → SFT → 선호 정렬 → 안전 → 평가 → 배포) · 학습 데이터 감사](../stages/training/tl1-collect/training.md) |
+| TL5 | [선호 정렬](../stages/training/tl5-pref/README.md) | ✅ 구현됨 | 선호 쌍(DPO) · 검증 가능한 보상(GRPO)으로 답의 질을 맞춘다 | [P4 선호 학습](../stages/posttrain/p4-pref/README.md) · [RV5 정책 학습](../stages/rlvr/rv5-policy/README.md) | [학습 생애주기 — 모델 원장(데이터 → 거르기 → 기본 모델 → SFT → 선호 정렬 → 안전 → 평가 → 배포) · 학습 데이터 감사](../stages/training/tl1-collect/training.md) |
+| TL6 | [안전 정렬](../stages/training/tl6-safety/README.md) | ✅ 구현됨 | 학습 전후 레드팀 · 거절 균형을 같은 문항으로 확인한다 | [G7 레드팀](../stages/guardrails/g7-redteam/README.md) · [RV4 보상 해킹](../stages/rlvr/rv4-hacking/README.md) | [학습 생애주기 — 모델 원장(데이터 → 거르기 → 기본 모델 → SFT → 선호 정렬 → 안전 → 평가 → 배포) · 학습 데이터 감사](../stages/training/tl1-collect/training.md) |
+| TL7 | [평가](../stages/training/tl7-eval/README.md) | ✅ 구현됨 | 기본 모델 대비 업무 · 일반 · 안전을 짝지은 질문으로 비교한다 | [P6 후학습 평가](../stages/posttrain/p6-eval/README.md) · [E2 회귀 평가](../stages/evalops/e2-offline/README.md) | [학습 생애주기 — 모델 원장(데이터 → 거르기 → 기본 모델 → SFT → 선호 정렬 → 안전 → 평가 → 배포) · 학습 데이터 감사](../stages/training/tl1-collect/training.md) |
+| TL8 | [배포](../stages/training/tl8-deploy/README.md) | ✅ 구현됨 | GGUF 로 내보내 게이트 · 단계적 배포로 운영에 넣는다 | [P7 배포 변환](../stages/posttrain/p7-export/README.md) · [FW7 단계적 배포](../stages/flywheel/fw7-rollout/README.md) | [학습 생애주기 — 모델 원장(데이터 → 거르기 → 기본 모델 → SFT → 선호 정렬 → 안전 → 평가 → 배포) · 학습 데이터 감사](../stages/training/tl1-collect/training.md) |
 
 ## 설계 원칙
 

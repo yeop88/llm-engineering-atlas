@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}학습 생애주기{% endblock %}
+{% block content %}
+{% call ui.page_header("학습 생애주기") %}학습한 모델 하나에서 거꾸로 따라갑니다. 병합 → 어댑터 → 데이터 → 출처 · 거르기 보고, 기본 모델 → 계보 기록, 이 모델이 들어간 평가 · 레드팀 실행, GGUF · 플라이휠 판을 이어 TL1~TL8 을 '했다 · 확인 필요 · 안 했다'로 보여 줍니다. 학습 · 평가는 후학습 · RLVR 화면에서 하고, 여기서는 빈칸을 빈칸으로 보여 줍니다.{% endcall %}
+
+<div class="card stack" id="lifecycle">
+  <h2>모델 원장 (TL1~TL8)</h2>
+  <div class="row">
+    <div class="field grow"><label for="l-model">학습한 모델</label><select id="l-model"></select></div>
+    <div class="self-end"><button class="btn primary" id="l-run">따라가기</button></div>
+  </div>
+  <div id="l-out"></div>
+</div>
+
+<div class="card stack mt-4" id="audit">
+  <h2>학습 데이터 감사 (TL2)</h2>
+  <p class="small muted">만든 뒤의 데이터를 다시 읽어, 만들 때의 거르기(형식 · 질문 중복 · 평가 누수)가 놓친 것을 셉니다. 비슷한 질문 무리, 같은 답 반복, 짧은 답, 거절 몫, 채팅 틀 조각, 선호 쌍의 길이 치우침을 봅니다.</p>
+  <div class="row">
+    <div class="field grow"><label for="d-name">학습 데이터</label><select id="d-name"></select></div>
+    <div class="self-end"><button class="btn" id="d-run">감사</button></div>
+  </div>
+  <div id="d-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/training/lifecycle.js') }}"></script>
+{% endblock %}
