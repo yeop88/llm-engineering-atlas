@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [RT1 스트림 입력](../../realtime/rt1-input/README.md) — 실시간 스트리밍 LLM 맵 · ⬜ 예정
+- [RT1 스트림 입력](../../realtime/rt1-input/README.md) — 실시간 스트리밍 LLM 맵 · ✅ 구현됨
 
 ---
 

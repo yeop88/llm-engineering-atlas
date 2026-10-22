@@ -34,7 +34,7 @@
 이미 있는 단계 위에 짓습니다.
 
 - [OM4 멀티모달 턴 융합](../../omni/om4-fuse/README.md) — 옴니채널 · 실시간 멀티모달 에이전트 맵 · ✅ 구현됨
-- [RT4 상태 갱신](../../realtime/rt4-state/README.md) — 실시간 스트리밍 LLM 맵 · ⬜ 예정
+- [RT4 상태 갱신](../../realtime/rt4-state/README.md) — 실시간 스트리밍 LLM 맵 · ✅ 구현됨
 
 ---
 

@@ -1,0 +1,19 @@
+{
+  "name": "AS 음성 발화 6개 · 망 조건 4개",
+  "known_models": ["WM-200", "DR-300", "RF-500"],
+  "known_codes": ["E4", "d80", "OE", "LE"],
+  "utterances": [
+    "세탁기 WM-200 에서 E4 에러가 떠요 어떻게 해야 하나요?",
+    "건조기 DR-300 에 d80 표시가 계속 나와요.",
+    "냉장고 RF-500 냉장실 온도가 너무 높아요 설정은 3도로 해 놨어요.",
+    "어제 접수한 방문 예약을 다음 주 화요일 오후로 바꾸고 싶어요.",
+    "세탁기 문이 안 열려요 탈수까지 다 끝났는데요.",
+    "필터 청소는 했는데 WM-200 에서 아직도 E4 가 떠요."
+  ],
+  "networks": {
+    "좋음(유선)": {"base_ms": 20, "jitter_ms": 10, "loss": 0.0, "retransmit": true},
+    "보통(와이파이)": {"base_ms": 40, "jitter_ms": 30, "loss": 0.005, "retransmit": true},
+    "나쁨(이동 중 LTE)": {"base_ms": 70, "jitter_ms": 80, "loss": 0.02, "retransmit": true},
+    "나쁨 · 재전송 없음": {"base_ms": 70, "jitter_ms": 80, "loss": 0.02, "retransmit": false}
+  }
+}

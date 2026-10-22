@@ -22,14 +22,14 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| RT1 | [스트림 입력](../stages/realtime/rt1-input/README.md) | ⬜ 예정 | 소리 · 영상 · 글 스트림을 시각 표시와 함께 받는다 | [VC1 음성 인식](../stages/voice/vc1-stt/README.md) · [OM2 실시간 음성](../stages/omni/om2-voice/README.md) | — |
-| RT2 | [조각 나누기](../stages/realtime/rt2-chunk/README.md) | ⬜ 예정 | 조각 길이가 지연 · 인식 품질에 주는 영향을 잰다 | [VC2 턴 관리](../stages/voice/vc2-turn/README.md) | — |
-| RT3 | [부분 인식](../stages/realtime/rt3-partial/README.md) | ⬜ 예정 | 잠정 결과를 확정 규칙으로 굳혀 나간다 | [OM2 실시간 음성](../stages/omni/om2-voice/README.md) | — |
-| RT4 | [상태 갱신](../stages/realtime/rt4-state/README.md) | ⬜ 예정 | 확정된 조각마다 대화 · 화면 상태를 갱신한다 | [C3 대화 메모리](../stages/conversation/c3-memory/README.md) · [OM4 턴 융합](../stages/omni/om4-fuse/README.md) | — |
-| RT5 | [점진 추론](../stages/realtime/rt5-incremental/README.md) | ⬜ 예정 | 문장 끝이 확정되면 검색 · 미리 채우기를 먼저 시작한다 | [VC3 짧은 지연 RAG](../stages/voice/vc3-fastrag/README.md) · [CX4 프롬프트 캐시](../stages/context/cx4-cache/README.md) | — |
-| RT6 | [토큰 · 소리 스트리밍](../stages/realtime/rt6-stream/README.md) | ⬜ 예정 | 첫 토큰 · 첫 문장 · 첫 소리까지를 나눠 잰다 | [VC4 음성 합성](../stages/voice/vc4-tts/README.md) | — |
-| RT7 | [중단 처리](../stages/realtime/rt7-interrupt/README.md) | ⬜ 예정 | 끼어들면 생성 · 합성 · 전송을 함께 멈추고 들은 데까지 남긴다 | [VC2 턴 관리](../stages/voice/vc2-turn/README.md) | — |
-| RT8 | [세션 복구](../stages/realtime/rt8-recover/README.md) | ⬜ 예정 | 끊겼다 다시 붙으면 마지막 확정 지점부터 이어 간다 | [LR3 체크포인트](../stages/longrun/lr3-state/README.md) · [OM5 채널 이어 가기](../stages/omni/om5-handoff/README.md) | — |
+| RT1 | [스트림 입력](../stages/realtime/rt1-input/README.md) | ✅ 구현됨 | 소리 · 영상 · 글 스트림을 시각 표시와 함께 받는다 | [VC1 음성 인식](../stages/voice/vc1-stt/README.md) · [OM2 실시간 음성](../stages/omni/om2-voice/README.md) | [실시간 스트리밍 — 지터 · 손실 · 끊김을 섞은 스트림 재생, 단계별 꼬리 지연 · 확정 오류 · 끼어들기 · 세션 복구](../stages/realtime/rt1-input/realtime.md) |
+| RT2 | [조각 나누기](../stages/realtime/rt2-chunk/README.md) | ✅ 구현됨 | 조각 길이가 지연 · 인식 품질에 주는 영향을 잰다 | [VC2 턴 관리](../stages/voice/vc2-turn/README.md) | [실시간 스트리밍 — 지터 · 손실 · 끊김을 섞은 스트림 재생, 단계별 꼬리 지연 · 확정 오류 · 끼어들기 · 세션 복구](../stages/realtime/rt1-input/realtime.md) |
+| RT3 | [부분 인식](../stages/realtime/rt3-partial/README.md) | ✅ 구현됨 | 잠정 결과를 확정 규칙으로 굳혀 나간다 | [OM2 실시간 음성](../stages/omni/om2-voice/README.md) | [실시간 스트리밍 — 지터 · 손실 · 끊김을 섞은 스트림 재생, 단계별 꼬리 지연 · 확정 오류 · 끼어들기 · 세션 복구](../stages/realtime/rt1-input/realtime.md) |
+| RT4 | [상태 갱신](../stages/realtime/rt4-state/README.md) | ✅ 구현됨 | 확정된 조각마다 대화 · 화면 상태를 갱신한다 | [C3 대화 메모리](../stages/conversation/c3-memory/README.md) · [OM4 턴 융합](../stages/omni/om4-fuse/README.md) | [실시간 스트리밍 — 지터 · 손실 · 끊김을 섞은 스트림 재생, 단계별 꼬리 지연 · 확정 오류 · 끼어들기 · 세션 복구](../stages/realtime/rt1-input/realtime.md) |
+| RT5 | [점진 추론](../stages/realtime/rt5-incremental/README.md) | ✅ 구현됨 | 문장 끝이 확정되면 검색 · 미리 채우기를 먼저 시작한다 | [VC3 짧은 지연 RAG](../stages/voice/vc3-fastrag/README.md) · [CX4 프롬프트 캐시](../stages/context/cx4-cache/README.md) | [실시간 스트리밍 — 지터 · 손실 · 끊김을 섞은 스트림 재생, 단계별 꼬리 지연 · 확정 오류 · 끼어들기 · 세션 복구](../stages/realtime/rt1-input/realtime.md) |
+| RT6 | [토큰 · 소리 스트리밍](../stages/realtime/rt6-stream/README.md) | ✅ 구현됨 | 첫 토큰 · 첫 문장 · 첫 소리까지를 나눠 잰다 | [VC4 음성 합성](../stages/voice/vc4-tts/README.md) | [실시간 스트리밍 — 지터 · 손실 · 끊김을 섞은 스트림 재생, 단계별 꼬리 지연 · 확정 오류 · 끼어들기 · 세션 복구](../stages/realtime/rt1-input/realtime.md) |
+| RT7 | [중단 처리](../stages/realtime/rt7-interrupt/README.md) | ✅ 구현됨 | 끼어들면 생성 · 합성 · 전송을 함께 멈추고 들은 데까지 남긴다 | [VC2 턴 관리](../stages/voice/vc2-turn/README.md) | [실시간 스트리밍 — 지터 · 손실 · 끊김을 섞은 스트림 재생, 단계별 꼬리 지연 · 확정 오류 · 끼어들기 · 세션 복구](../stages/realtime/rt1-input/realtime.md) |
+| RT8 | [세션 복구](../stages/realtime/rt8-recover/README.md) | ✅ 구현됨 | 끊겼다 다시 붙으면 마지막 확정 지점부터 이어 간다 | [LR3 체크포인트](../stages/longrun/lr3-state/README.md) · [OM5 채널 이어 가기](../stages/omni/om5-handoff/README.md) | [실시간 스트리밍 — 지터 · 손실 · 끊김을 섞은 스트림 재생, 단계별 꼬리 지연 · 확정 오류 · 끼어들기 · 세션 복구](../stages/realtime/rt1-input/realtime.md) |
 
 ## 설계 원칙
 

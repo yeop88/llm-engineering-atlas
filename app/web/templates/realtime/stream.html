@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}스트림 재생 · 꼬리 지연{% endblock %}
+{% block content %}
+{% call ui.page_header("스트림 재생 · 꼬리 지연") %}같은 발화 스트림을 망 지터 · 조각 손실 · 연결 끊김을 섞어 씨앗마다 다시 틀고, 평균이 아니라 p95 · p99 를 봅니다. 단계별로 잽니다.
+<ul class="small">
+  <li>조각 나누기(RT2), 지터 버퍼와 재전송(RT1)</li>
+  <li>부분 인식 확정(RT3, 연속 일치), 확정할 때마다 대화 상태 갱신(RT4)</li>
+  <li>문장 끝이 확정되면 검색 미리 시작(RT5)</li>
+  <li>첫 토큰 · 첫 문장 · 첫 합성(RT6)</li>
+  <li>끼어들면 소리가 멈출 때까지(RT7), 끊겼다 다시 붙을 때 잃는 말(RT8)</li>
+</ul>
+LLM 시간은 실제 스트리밍 실측으로 바꿔 넣을 수 있습니다.{% endcall %}
+
+<div class="card stack" id="run">
+  <h2>한 설정 재생 (RT1~RT8)</h2>
+  <div class="row">
+    <div class="field"><label for="p-net">망 조건</label><select id="p-net"></select></div>
+    <div class="field"><label for="p-chunk">조각 ms</label><input id="p-chunk" type="number" value="250" min="20" class="w-md"></div>
+    <div class="field"><label for="p-buf">지터 버퍼 ms</label><input id="p-buf" type="number" value="60" min="0" class="w-md"></div>
+    <div class="field"><label for="p-agree">확정 일치 수</label><input id="p-agree" type="number" value="2" min="1" max="5" class="w-md"></div>
+    <div class="field"><label for="p-end">끝점 대기 ms</label><input id="p-end" type="number" value="500" min="0" class="w-md"></div>
+    <div class="field"><label for="p-seeds">씨앗</label><input id="p-seeds" type="number" value="30" min="1" max="300" class="w-md"></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="p-ttft">첫 토큰 ms(중앙)</label><input id="p-ttft" type="number" value="600" min="10" class="w-md"></div>
+    <div class="field"><label for="p-sigma">첫 토큰 퍼짐</label><input id="p-sigma" type="number" value="0.35" step="0.05" min="0" class="w-md"></div>
+    <div class="field"><label for="p-tok">토큰 간격 ms</label><input id="p-tok" type="number" value="80" min="1" class="w-md"></div>
+    <div class="field"><label for="p-fst">첫 문장 토큰</label><input id="p-fst" type="number" value="14" min="1" class="w-md"></div>
+    <div class="field"><label for="p-tts">첫 합성 ms</label><input id="p-tts" type="number" value="180" min="0" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="p-early" checked> 문장 끝 확정 시 검색 미리</label>
+    <div class="self-end"><button class="btn primary" id="p-run">재생</button></div>
+  </div>
+  <div id="p-out"></div>
+</div>
+
+<div class="card stack mt-4" id="sweep">
+  <h2>조건 훑기 (RT1 · RT2)</h2>
+  <p class="small muted">망 조건 × 조각 길이 × 지터 버퍼마다 첫 소리 p50 · p95 · p99, 1.2초 예산 초과 몫, 확정 오류, 상태 정확을 봅니다. 위의 LLM 시간 설정을 그대로 씁니다.</p>
+  <div class="row">
+    <div class="field"><label for="w-chunk">조각 ms(쉼표)</label><input id="w-chunk" value="100, 250, 500"></div>
+    <div class="field"><label for="w-buf">버퍼 ms(쉼표)</label><input id="w-buf" value="0, 60, 150"></div>
+    <div class="self-end"><button class="btn" id="w-run">훑기</button></div>
+  </div>
+  <div id="w-progress" hidden></div>
+  <div id="w-out"></div>
+</div>
+
+<div class="card stack mt-4" id="live">
+  <h2>LLM 첫 토큰 실측 (RT6)</h2>
+  <p class="small muted">음성 지시문으로 예시 발화를 돌려 가며 물어 첫 토큰(중앙 · 퍼짐) · 토큰 간격 · 첫 문장 토큰을 잽니다. 결과를 위 설정에 넣습니다.</p>
+  <div class="row">
+    <div class="field"><label for="l-provider">제공자</label><select id="l-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="l-model">모델</label><input id="l-model" data-ctx="model"></div>
+    <div class="field"><label for="l-n">횟수</label><input id="l-n" type="number" value="6" min="2" max="30" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="l-run">실측</button></div>
+  </div>
+  <div id="l-progress" hidden></div>
+  <div id="l-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/realtime/stream.js') }}"></script>
+{% endblock %}

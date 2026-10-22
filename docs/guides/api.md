@@ -488,6 +488,15 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/architecture/layers` | `{"gguf"}` 또는 `{"hf_id", "bits"}` → 층마다 어텐션 종류 · KV 차원 · FFN 밀집/MoE · 바이트, 요약(전문가 몫 · 토큰당 읽는 양 · 임베딩 · 출력층 몫), 맥락 길이별 KV 대 단순 어림 |
 | POST | `/api/architecture/scaling` | 맥락 길이별 실측 작업 `{"lengths"}` → 작은 LM 의 미리 채우기 시간 · 토큰당 ms · 실제 KV · 길이 두 배당 시간 배율 |
 
+## 실시간 스트리밍 (`/api/realtime`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/realtime/preset` | 예시 발화 6개 · 망 조건 4개 · 기본 설정 · 단계 이름 |
+| POST | `/api/realtime/run` | `{"params": {chunk_ms, buffer_ms, agree, endpoint_ms, ttft_ms, ttft_sigma, tok_ms, first_sentence_tokens, tts_ms, early_retrieval, cancel_mode, net}, "utterances"?, "seeds", "cut_s"}` → 첫 소리 · 첫 토큰 · 단계별 p50 · p95 · p99, 확정 오류 · 상태 정확, 끼어들기 멈춤(서버 · 기기), 복구 전략별 복구율 |
+| POST | `/api/realtime/sweep` | 조건 훑기 작업 `{"params", "chunk_ms": [...], "buffer_ms": [...], "networks"?, "seeds"}` |
+| POST | `/api/realtime/live` | LLM 첫 토큰 실측 작업 `{"llm", "n"}` → 첫 토큰 중앙 · 로그 퍼짐 · 토큰 간격 · 첫 문장 토큰 |
+
 ## 개인화 · 적응 (`/api/personalize`)
 
 | 메서드 | 경로 | 설명 |

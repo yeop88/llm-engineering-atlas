@@ -55,6 +55,7 @@ from app.stages.posttrain import api as posttrain_api  # noqa: E402
 from app.stages.provenance import api as provenance_api  # noqa: E402
 from app.stages.quant import api as quant_api  # noqa: E402
 from app.stages.rag import answer_api, collections_api, eval_api, verify_api  # noqa: E402
+from app.stages.realtime import api as realtime_api  # noqa: E402
 from app.stages.reasoning import api as reasoning_api  # noqa: E402
 from app.stages.rerank import api as rerank_api  # noqa: E402
 from app.stages.rl import api as rl_api  # noqa: E402
@@ -184,6 +185,7 @@ for module in (
     architecture_api,  # Transformer · MoE 구조 — 층별 어텐션 · KV · FFN/전문가 · 바이트, KV 곡선, 맥락 길이별 미리 채우기
     training_api,  # 학습 생애주기 — 모델 하나의 데이터 · 학습 · 평가 · 배포 기록을 잇는 원장, 학습 데이터 감사
     personalize_api,  # 개인화 · 적응 — 동의 범위별 선호 · 행동 신호 → 프로필 → 응답 형식, 사실 보존 검사
+    realtime_api,  # 실시간 스트리밍 — 지터 · 손실 · 끊김을 섞은 스트림 재생으로 첫 소리 꼬리 · 확정 오류 · 끼어들기 · 복구율
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

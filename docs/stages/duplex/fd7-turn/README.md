@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [RT6 토큰 · 소리 스트리밍](../../realtime/rt6-stream/README.md) — 실시간 스트리밍 LLM 맵 · ⬜ 예정
+- [RT6 토큰 · 소리 스트리밍](../../realtime/rt6-stream/README.md) — 실시간 스트리밍 LLM 맵 · ✅ 구현됨
 - [E4 비용 · 지연 대시보드](../../evalops/e4-cost/README.md) — 평가 · 관측 (LLMOps) 맵 · ✅ 구현됨
 
 ---
