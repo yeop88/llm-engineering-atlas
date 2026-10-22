@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}메모리 계획 · 배치{% endblock %}
+{% block content %}
+{% call ui.page_header("메모리 계획 · 배치") %}올려 보기 전에 계산합니다. GGUF 는 머리말만 읽어 텐서마다 정확한 바이트를, HF 모델은 config.json 으로 구조 × 비트를 어림해 가중치 · KV · 계산 버퍼를 더하고, GPU · CPU · 디스크에 어떻게 나눌지 후보마다 메모리와 토큰/초를 어림합니다(BM1). 메모리보다 큰 모델은 층을 디스크에서 하나씩 불러 돌리고(BM2), MoE 는 전문가만 CPU 에 두는 배치를 실제 서버로 잽니다(BM3).{% endcall %}
+
+<div class="card stack" id="plan">
+  <h2>메모리 계획 (BM1)</h2>
+  <div class="row">
+    <div class="field"><label for="p-gguf">가지고 있는 GGUF</label><select id="p-gguf"><option value="">(HF 모델로 어림)</option></select></div>
+    <div class="field grow"><label for="p-hf">또는 HF 저장소 id</label><input id="p-hf" value="Qwen/Qwen3-30B-A3B"></div>
+    <div class="field"><label for="p-bits">비트(HF 어림)</label><select id="p-bits"><option>bf16</option><option>q8_0</option><option>q6_k</option><option>q5_k_m</option><option selected>q4_k_m</option><option>q4_0</option><option>q3_k_m</option><option>q2_k</option><option>iq1_m</option></select></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="p-ctx">맥락</label><input id="p-ctx" type="number" value="8192" min="256" class="w-md"></div>
+    <div class="field"><label for="p-par">동시 요청</label><input id="p-par" type="number" value="1" min="1" class="w-md"></div>
+    <div class="field"><label for="p-kv">KV 형식</label><select id="p-kv"><option>f16</option><option>q8_0</option><option>q4_0</option></select></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="d-gpu">GPU 메모리 GB</label><input id="d-gpu" type="number" value="8" min="0" step="0.5" class="w-md"></div>
+    <div class="field"><label for="d-gpubw">GPU 대역폭 GB/s</label><input id="d-gpubw" type="number" value="90" min="1" class="w-md"></div>
+    <div class="field"><label for="d-cpu">RAM GB(모델에 쓸)</label><input id="d-cpu" type="number" value="20" min="0" step="0.5" class="w-md"></div>
+    <div class="field"><label for="d-cpubw">RAM 대역폭 GB/s</label><input id="d-cpubw" type="number" value="40" min="1" class="w-md"></div>
+    <div class="field"><label for="d-disk">디스크 GB/s</label><input id="d-disk" type="number" value="2" min="0.1" step="0.1" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="d-shared" checked> 내장 GPU(RAM 을 나눠 씀)</label>
+    <div class="self-end"><button class="btn primary" id="p-run">계획</button></div>
+  </div>
+  <div id="p-machine" class="small muted"></div>
+  <div id="p-out"></div>
+</div>
+
+<div class="card stack mt-4" id="layer">
+  <h2>층 단위 스트리밍 (BM2)</h2>
+  <p class="small muted">체크포인트를 층마다 파일로 나눠(처음 한 번) 층 하나씩 불러 계산하고 내립니다. 같은 입력에서 통째로 올린 모델과 로짓 · 생성 토큰이 같은지, 최대 상주 메모리 · 토큰/초 · 토큰마다 읽은 양을 미리 읽기 켬 · 끔으로 비교합니다.</p>
+  <div class="row">
+    <div class="field grow"><label for="l-hf">HF 저장소 id (비우면 후학습 기본 모델)</label><input id="l-hf" placeholder="Qwen/Qwen3-0.6B"></div>
+    <div class="field"><label for="l-new">생성 토큰</label><input id="l-new" type="number" value="16" min="1" max="128" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="l-run">실측</button></div>
+  </div>
+  <div class="field"><label for="l-prompt">질문</label><input id="l-prompt" value="세탁기에서 E4 오류가 뜨면 어떻게 해야 하나요?"></div>
+  <div id="l-progress" hidden></div>
+  <div id="l-out"></div>
+</div>
+
+<div class="card stack mt-4" id="offload">
+  <h2>CPU-GPU 혼합 · 전문가 오프로드 (BM3)</h2>
+  <p class="small muted">계획의 배치 후보를 고르면 그 인자(-ngl · --cpu-moe · --n-cpu-moe)로 llama-server 를 차례로 띄워 같은 질문의 생성 · 미리 채우기 토큰/초와 메모리를 잽니다(LLAMA_SERVER_BIN 필요). 계획의 어림과 실측이 얼마나 맞는지도 함께 봅니다.</p>
+  <div id="o-configs" class="stack small"></div>
+  <div class="row">
+    <div class="field"><label for="o-ctx">맥락</label><input id="o-ctx" type="number" value="8192" min="512" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="o-run" disabled>고른 배치 실측</button></div>
+  </div>
+  <div id="o-progress" hidden></div>
+  <div id="o-out"></div>
+  <h3>전문가 쓰임 · 캐시 적중</h3>
+  <p class="small muted">토큰마다 라우터가 고른 전문가 기록으로, GPU 에 전문가 일부만 둘 때의 적중률을 정책(미리 센 인기 전문가 고정 · LRU · LFU)별로 봅니다. 치우침이 0 이면 고르게 쓰여 일부만 둬서는 이득이 없습니다.</p>
+  <div class="row">
+    <div class="field"><label for="x-src">기록</label><select id="x-src"><option value="synthetic">흉내(치우침 지정)</option><option value="hf">HF MoE 모델(작은 것)</option></select></div>
+    <div class="field"><label for="x-hf">HF MoE id</label><input id="x-hf" class="w-md"></div>
+    <div class="field"><label for="x-skew">치우침</label><input id="x-skew" type="number" value="1.0" min="0" max="3" step="0.1" class="w-md"></div>
+    <div class="field"><label for="x-experts">전문가 수</label><input id="x-experts" type="number" value="128" min="2" class="w-md"></div>
+    <div class="field"><label for="x-used">토큰당 쓰는 수</label><input id="x-used" type="number" value="8" min="1" class="w-md"></div>
+    <div class="field"><label for="x-mb">전문가 하나 MB</label><input id="x-mb" type="number" value="1.7" min="0.01" step="0.1" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="x-run">보기</button></div>
+  </div>
+  <div id="x-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/bigmodel/plan.js') }}"></script>
+{% endblock %}

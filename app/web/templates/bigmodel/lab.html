@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}저비트 · 여러 기기{% endblock %}
+{% block content %}
+{% call ui.page_header("저비트 · 여러 기기") %}메모리를 가장 크게 줄이는 두 길입니다. 가중치를 2비트 이하(삼진 1.58비트)로 줄이면 어디서 품질이 무너지는지 같은 글로 재고, 가지고 있는 GGUF 가 실제로 가중치당 몇 비트인지 봅니다(BM6). 기기 하나에 안 들어가면 층을 기기마다 나누거나(파이프라인) 층의 행렬을 나눠(텐서) 돌릴 때의 메모리 · 속도 · 전송 몫을 계산합니다(BM7).{% endcall %}
+
+<div class="card stack" id="lowbit">
+  <h2>극저비트 (BM6)</h2>
+  <p class="small muted">작은 공개 LM(후학습 기본 모델)의 선형층을 학습 없이 바로 줄입니다. 64개 묶음 반올림 8 · 4 · 3 · 2비트와 삼진(평균 절댓값 눈금). 임베딩 · 출력층은 그대로 둡니다.</p>
+  <div class="row">
+    <div class="field"><label for="w-tokens">글 길이(토큰)</label><input id="w-tokens" type="number" value="256" min="16" max="2048" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="w-run">실측</button></div>
+    <div class="self-end"><button class="btn" id="w-gguf">가진 GGUF 의 실제 비트</button></div>
+  </div>
+  <div id="w-progress" hidden></div>
+  <div id="w-out"></div>
+  <div id="w-gguf-out"></div>
+</div>
+
+<div class="card stack mt-4" id="dist">
+  <h2>여러 기기 나눠 돌리기 (BM7)</h2>
+  <div class="row">
+    <div class="field"><label for="t-gguf">GGUF</label><select id="t-gguf"><option value="">(HF 모델로 어림)</option></select></div>
+    <div class="field grow"><label for="t-hf">또는 HF 저장소 id</label><input id="t-hf" value="Qwen/Qwen3-32B"></div>
+    <div class="field"><label for="t-ctx">맥락</label><input id="t-ctx" type="number" value="4096" min="256" class="w-md"></div>
+  </div>
+  <div class="field"><label for="t-devices">기기 (한 줄에 이름, 메모리 GB, 대역폭 GB/s)</label><textarea id="t-devices" rows="3">PC, 20, 40
+노트북, 12, 50</textarea></div>
+  <div class="row">
+    <div class="field"><label for="t-link">링크 Gbit/s</label><input id="t-link" type="number" value="1" min="0.01" step="0.1" class="w-md"></div>
+    <div class="field"><label for="t-lat">링크 지연 ms</label><input id="t-lat" type="number" value="0.5" min="0" step="0.1" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="t-run">계획</button></div>
+  </div>
+  <p class="small muted">실측은 다른 기기에서 llama.cpp 의 rpc-server 를 띄우고, 메모리 계획 화면의 배치 실측에 <span class="mono">--rpc 주소:포트</span> 를 인자로 넣어 같은 길로 잽니다.</p>
+  <div id="t-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/bigmodel/lab.js') }}"></script>
+{% endblock %}

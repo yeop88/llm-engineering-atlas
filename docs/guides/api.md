@@ -474,6 +474,22 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 적은 메모리로 큰 모델 (`/api/bigmodel`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/bigmodel/machine` | 이 기기의 RAM · CPU · 가속기 · 가진 GGUF · llama-server 설정 |
+| POST | `/api/bigmodel/plan` | 메모리 계획 `{"gguf"\|"hf_id", "bits", "ctx", "parallel", "kv_type", "devices": {gpu_gb, gpu_bw, cpu_gb, cpu_bw, disk_bw, shared}}` → 모델 요약 · KV · 배치 후보(메모리 · 들어가나 · 토큰/초 어림 · 서버 인자) · 추천 |
+| POST | `/api/bigmodel/layered` | 층 단위 스트리밍 작업 `{"hf_id", "prompt", "max_new"}` → 미리 읽기 켬 · 끔별 최대 상주 · 토큰/초 · 토큰당 읽기 · 통째와 로짓 차 · 같은 토큰 |
+| POST | `/api/bigmodel/offload/sweep` | 배치별 서버 실측 작업 `{"gguf", "configs": [{"label", "args"}], "ctx", "max_tokens"}` → 생성 · 미리 채우기 토큰/초 · KV · RSS |
+| POST | `/api/bigmodel/offload/experts` | 전문가 쓰임 `{"source": "synthetic"\|"hf", "skew", "experts", "used", "expert_mb", ...}` → 상위 10% 몫 · GPU 비율 × 정책 적중률 · 전문가 읽기 ms |
+| POST | `/api/bigmodel/paged` | 페이지 KV 비교 `{"source": "synthetic"\|"traces", "budget_gb", "kv_bytes_per_token", "block_size", "max_len", ...}` → 미리 잡기 · 페이지 · 앞부분 공유 |
+| POST | `/api/bigmodel/batching/sim` | 연속 배칭 흉내 `{"rate", "slots", "base_ms", "per_seq_ms", ...}` → 고정 묶음 · 연속 배칭 처리량 · 지연 · 첫 토큰 · 자리 쓰임 |
+| POST | `/api/bigmodel/batching/server` | 슬롯 × 연속 배칭 켬 · 끔 서버 실측 작업 `{"gguf", "slots", "ctx_per_slot"}` |
+| POST | `/api/bigmodel/lowbit` | 극저비트 작업 `{"methods", "max_tokens"}` → 방법별 비트 · 혼란도 · 1위 일치 · KL |
+| GET | `/api/bigmodel/lowbit/gguf` | 가진 GGUF 의 실제 가중치당 비트 · 형식 구성 |
+| POST | `/api/bigmodel/dist` | 여러 기기 계획 `{"gguf"\|"hf_id", "devices": [{name, mem_gb, bw_gbs}], "link_gbps", "latency_ms", "ctx"}` → 파이프라인 · 텐서 |
+
 ## 옴니채널 (`/api/omni`)
 
 | 메서드 | 경로 | 설명 |

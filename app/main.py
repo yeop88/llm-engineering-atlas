@@ -22,6 +22,7 @@ from app.stages.agent import api as agent_api  # noqa: E402
 from app.stages.analytics import api as analytics_api  # noqa: E402
 from app.stages.apps import api as apps_api  # noqa: E402
 from app.stages.as_service import api as as_api  # noqa: E402
+from app.stages.bigmodel import api as bigmodel_api  # noqa: E402
 from app.stages.coding import api as coding_api  # noqa: E402
 from app.stages.compliance import api as compliance_api  # noqa: E402
 from app.stages.compress import api as compress_api  # noqa: E402
@@ -166,6 +167,7 @@ for module in (
     memory_api,  # 장기 메모리 — 기억 추출 · 저장 · 연결 · 검색 · 갱신 · 통합 · 망각 · 계층 · 여러 세션 평가
     compress_api,  # 프롬프트 · KV 압축 — 토큰 · 질문 압축 · 주의 싱크 · 중요 토큰 KV · KV 양자화 · 압축 평가
     omni_api,  # 옴니채널 — 채널 통합 · 실시간 음성 · 영상 장면 · 턴 융합 · 이어 가기 · 비동기 메시지 · 채널별 형식 · 평가
+    bigmodel_api,  # 적은 메모리로 큰 모델 — 메모리 계획 · 층 단위 스트리밍 · 전문가 오프로드 · 페이지 KV · 연속 배칭 · 극저비트 · 여러 기기
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

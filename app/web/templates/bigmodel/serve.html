@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}여러 요청 나눠 쓰기{% endblock %}
+{% block content %}
+{% call ui.page_header("여러 요청 나눠 쓰기") %}메모리가 적을수록 여러 요청이 메모리 · 계산을 잘 나눠 써야 합니다. KV 를 요청마다 최대 길이로 미리 잡지 않고 작은 블록을 필요할 때 붙이며, 같은 시스템 프롬프트 · 근거는 블록을 공유합니다(BM4). 묶음 전체가 끝나길 기다리지 않고 토큰 걸음마다 끝난 요청을 빼고 새 요청을 넣습니다(BM5). 같은 요청 기록 · 같은 메모리로 방식만 바꿔 비교합니다.{% endcall %}
+
+<div class="card stack" id="paged">
+  <h2>페이지 KV 캐시 (BM4)</h2>
+  <div class="row">
+    <div class="field"><label for="k-src">요청</label><select id="k-src"><option value="synthetic">흉내</option><option value="traces">요청 기록의 토큰 수</option></select></div>
+    <div class="field"><label for="k-n">요청 수</label><input id="k-n" type="number" value="200" min="1" class="w-md"></div>
+    <div class="field"><label for="k-prefix">공통 앞부분 토큰</label><input id="k-prefix" type="number" value="600" min="0" class="w-md"></div>
+    <div class="field"><label for="k-prefixes">앞부분 종류</label><input id="k-prefixes" type="number" value="3" min="0" class="w-md"></div>
+    <div class="field"><label for="k-prompt">질문 · 근거 평균</label><input id="k-prompt" type="number" value="300" min="1" class="w-md"></div>
+    <div class="field"><label for="k-out">답 평균</label><input id="k-out" type="number" value="200" min="1" class="w-md"></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="k-budget">KV 메모리 GB</label><input id="k-budget" type="number" value="2" min="0.1" step="0.1" class="w-md"></div>
+    <div class="field"><label for="k-tok">토큰당 KV 바이트</label><input id="k-tok" type="number" value="73728" min="1" class="w-md"></div>
+    <div class="field"><label for="k-block">블록 토큰</label><input id="k-block" type="number" value="16" min="1" class="w-md"></div>
+    <div class="field"><label for="k-max">최대 길이(미리 잡기)</label><input id="k-max" type="number" value="4096" min="64" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="k-run">비교</button></div>
+  </div>
+  <p class="small muted">토큰당 KV 바이트는 메모리 계획(BM1)의 '토큰당' 값입니다(예: 층 36 · KV 머리 8 · 128차원 · f16 = 147,456).</p>
+  <div id="k-out"></div>
+</div>
+
+<div class="card stack mt-4" id="batch">
+  <h2>연속 배칭 (BM5)</h2>
+  <div class="row">
+    <div class="field"><label for="b-n">요청 수</label><input id="b-n" type="number" value="300" min="1" class="w-md"></div>
+    <div class="field"><label for="b-rate">초당 도착</label><input id="b-rate" type="number" value="0.6" min="0.01" step="0.1" class="w-md"></div>
+    <div class="field"><label for="b-out">답 평균 토큰</label><input id="b-out" type="number" value="150" min="1" class="w-md"></div>
+    <div class="field"><label for="b-spread">답 길이 들쭉날쭉</label><input id="b-spread" type="number" value="1" min="0" max="3" step="0.1" class="w-md"></div>
+    <div class="field"><label for="b-slots">자리(슬롯)</label><input id="b-slots" type="number" value="8" min="1" class="w-md"></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="b-base">걸음 기본 ms</label><input id="b-base" type="number" value="25" min="0" class="w-md"></div>
+    <div class="field"><label for="b-seq">자리당 ms</label><input id="b-seq" type="number" value="4" min="0" step="0.5" class="w-md"></div>
+    <div class="field"><label for="b-pre">미리 채우기 ms/토큰</label><input id="b-pre" type="number" value="0.4" min="0" step="0.1" class="w-md"></div>
+    <div class="field"><label for="b-wait">묶음 기다림 상한(초)</label><input id="b-wait" type="number" value="0.5" min="0" step="0.1" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="b-run">흉내</button></div>
+  </div>
+  <div id="b-out"></div>
+  <h3>서버 실측 — 슬롯 × 연속 배칭 켬 · 끔</h3>
+  <div class="row">
+    <div class="field"><label for="s-gguf">GGUF</label><select id="s-gguf"></select></div>
+    <div class="field"><label for="s-slots">슬롯 (쉼표)</label><input id="s-slots" value="1, 4" class="w-md"></div>
+    <div class="field"><label for="s-ctx">슬롯당 맥락</label><input id="s-ctx" type="number" value="4096" min="512" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="s-run">실측</button></div>
+  </div>
+  <div id="s-progress" hidden></div>
+  <div id="s-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/bigmodel/serve.js') }}"></script>
+{% endblock %}

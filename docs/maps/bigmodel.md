@@ -22,13 +22,13 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| BM1 | [메모리 계획](../stages/bigmodel/bm1-plan/README.md) | ⬜ 예정 | 가중치 · KV · 활성값을 계산해 GPU · CPU · 디스크 어디에 둘지 정한다 | [ED1 모델 선택](../stages/edge/ed1-select/README.md) · [S6 하드웨어](../stages/serving/s6-hardware/README.md) | — |
-| BM2 | [층 단위 스트리밍](../stages/bigmodel/bm2-layer/README.md) | ⬜ 예정 | 층을 디스크에서 하나씩 불러 돌리고 버려 메모리보다 큰 모델을 돌린다 | [BM1 메모리 계획](../stages/bigmodel/bm1-plan/README.md) | — |
-| BM3 | [CPU-GPU 혼합 · 전문가 오프로드](../stages/bigmodel/bm3-offload/README.md) | ⬜ 예정 | 자주 쓰는 층은 GPU, MoE 전문가처럼 드물게 쓰는 부분은 CPU 에 둔다 | [S4 추론 서버](../stages/serving/s4-server/README.md) · [BM1 메모리 계획](../stages/bigmodel/bm1-plan/README.md) | — |
-| BM4 | [페이지 KV 캐시](../stages/bigmodel/bm4-paged/README.md) | ⬜ 예정 | KV 캐시를 작은 블록으로 나눠 요청끼리 나눠 쓰고 같은 앞부분은 공유한다 | [KC5 KV 양자화](../stages/compress/kc5-kvquant/README.md) | — |
-| BM5 | [연속 배칭](../stages/bigmodel/bm5-batch/README.md) | ⬜ 예정 | 끝난 요청 자리에 바로 새 요청을 넣어 GPU 를 쉬지 않게 한다 | [BM4 페이지 KV](../stages/bigmodel/bm4-paged/README.md) · [S4 추론 서버](../stages/serving/s4-server/README.md) | — |
-| BM6 | [극저비트](../stages/bigmodel/bm6-lowbit/README.md) | ⬜ 예정 | 2비트 이하 · 1.58비트 가중치로 메모리를 줄이고 품질 손실을 잰다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [ED2 극단 경량화](../stages/edge/ed2-compress/README.md) | — |
-| BM7 | [여러 기기 나눠 돌리기](../stages/bigmodel/bm7-dist/README.md) | ⬜ 예정 | 층(파이프라인)이나 텐서를 여러 기기에 나눠 한 기기에 안 들어가는 모델을 돌린다 | [BM3 혼합 · 오프로드](../stages/bigmodel/bm3-offload/README.md) | — |
+| BM1 | [메모리 계획](../stages/bigmodel/bm1-plan/README.md) | ✅ 구현됨 | 가중치 · KV · 활성값을 계산해 GPU · CPU · 디스크 어디에 둘지 정한다 | [ED1 모델 선택](../stages/edge/ed1-select/README.md) · [S6 하드웨어](../stages/serving/s6-hardware/README.md) | [적은 메모리로 큰 모델 — GGUF 머리말 · 메모리 계획 · 층 단위 스트리밍 · 전문가 오프로드 · 페이지 KV · 연속 배칭 · 극저비트 · 여러 기기 · 실측](../stages/bigmodel/bm1-plan/bigmodel.md) |
+| BM2 | [층 단위 스트리밍](../stages/bigmodel/bm2-layer/README.md) | ✅ 구현됨 | 층을 디스크에서 하나씩 불러 돌리고 버려 메모리보다 큰 모델을 돌린다 | [BM1 메모리 계획](../stages/bigmodel/bm1-plan/README.md) | [적은 메모리로 큰 모델 — GGUF 머리말 · 메모리 계획 · 층 단위 스트리밍 · 전문가 오프로드 · 페이지 KV · 연속 배칭 · 극저비트 · 여러 기기 · 실측](../stages/bigmodel/bm1-plan/bigmodel.md) |
+| BM3 | [CPU-GPU 혼합 · 전문가 오프로드](../stages/bigmodel/bm3-offload/README.md) | ✅ 구현됨 | 자주 쓰는 층은 GPU, MoE 전문가처럼 드물게 쓰는 부분은 CPU 에 둔다 | [S4 추론 서버](../stages/serving/s4-server/README.md) · [BM1 메모리 계획](../stages/bigmodel/bm1-plan/README.md) | [적은 메모리로 큰 모델 — GGUF 머리말 · 메모리 계획 · 층 단위 스트리밍 · 전문가 오프로드 · 페이지 KV · 연속 배칭 · 극저비트 · 여러 기기 · 실측](../stages/bigmodel/bm1-plan/bigmodel.md) |
+| BM4 | [페이지 KV 캐시](../stages/bigmodel/bm4-paged/README.md) | ✅ 구현됨 | KV 캐시를 작은 블록으로 나눠 요청끼리 나눠 쓰고 같은 앞부분은 공유한다 | [KC5 KV 양자화](../stages/compress/kc5-kvquant/README.md) | [적은 메모리로 큰 모델 — GGUF 머리말 · 메모리 계획 · 층 단위 스트리밍 · 전문가 오프로드 · 페이지 KV · 연속 배칭 · 극저비트 · 여러 기기 · 실측](../stages/bigmodel/bm1-plan/bigmodel.md) |
+| BM5 | [연속 배칭](../stages/bigmodel/bm5-batch/README.md) | ✅ 구현됨 | 끝난 요청 자리에 바로 새 요청을 넣어 GPU 를 쉬지 않게 한다 | [BM4 페이지 KV](../stages/bigmodel/bm4-paged/README.md) · [S4 추론 서버](../stages/serving/s4-server/README.md) | [적은 메모리로 큰 모델 — GGUF 머리말 · 메모리 계획 · 층 단위 스트리밍 · 전문가 오프로드 · 페이지 KV · 연속 배칭 · 극저비트 · 여러 기기 · 실측](../stages/bigmodel/bm1-plan/bigmodel.md) |
+| BM6 | [극저비트](../stages/bigmodel/bm6-lowbit/README.md) | ✅ 구현됨 | 2비트 이하 · 1.58비트 가중치로 메모리를 줄이고 품질 손실을 잰다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [ED2 극단 경량화](../stages/edge/ed2-compress/README.md) | [적은 메모리로 큰 모델 — GGUF 머리말 · 메모리 계획 · 층 단위 스트리밍 · 전문가 오프로드 · 페이지 KV · 연속 배칭 · 극저비트 · 여러 기기 · 실측](../stages/bigmodel/bm1-plan/bigmodel.md) |
+| BM7 | [여러 기기 나눠 돌리기](../stages/bigmodel/bm7-dist/README.md) | ✅ 구현됨 | 층(파이프라인)이나 텐서를 여러 기기에 나눠 한 기기에 안 들어가는 모델을 돌린다 | [BM3 혼합 · 오프로드](../stages/bigmodel/bm3-offload/README.md) | [적은 메모리로 큰 모델 — GGUF 머리말 · 메모리 계획 · 층 단위 스트리밍 · 전문가 오프로드 · 페이지 KV · 연속 배칭 · 극저비트 · 여러 기기 · 실측](../stages/bigmodel/bm1-plan/bigmodel.md) |
 
 ## 설계 원칙
 

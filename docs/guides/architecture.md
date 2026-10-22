@@ -63,6 +63,8 @@ app/
                        reward(항목별 보상 · 해킹 감시) · policy(GRPO, posttrain.trainer 를 씀)
     edge/              온디바이스 · 엣지 맵(ED1~ED6): devices(기기 프로필 · 조합 추천) · pack(기기용 팩 · 압축 · 정확 검색 · 평가) ·
                        offline(기능 범위 · 미룸) · sync(판 증분 · 지문 확인 · 기기 상태) · privacy(전송 정책 · 서버 재검사)
+    bigmodel/          적은 메모리로 큰 모델 맵(BM1~BM7): gguf(머리말 읽기) · plan(가중치 · KV · 배치 · 지붕선) · layered(층 단위 스트리밍) ·
+                       offload(배치별 서버 실측 · 전문가 쓰임 · 캐시) · paged(블록 KV · 앞부분 공유) · batching(연속 배칭) · lowbit · dist
     omni/              옴니채널 맵(OM1~OM8): envelope(채널 어댑터 · 고객 식별 · 세션) · queue(멱등 받기 · 순서 · 재시도 · 전달) ·
                        realtime(인식 확정) · video(장면 변화 · 비전 읽기 · 시간 색인) · fuse(가리킴 풀기) · handoff(넘김 요약) ·
                        render(채널별 형식 · 개인정보) · evaluate(시나리오 · 대기열 훈련)
