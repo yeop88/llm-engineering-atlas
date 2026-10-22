@@ -474,6 +474,17 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 기반 모델 계보 (`/api/lineage`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/lineage/models` | 읽은 모델(계열 · 세대 · 구조 · 맥락 · 모달리티 · 라이선스 · 기반 모델) |
+| POST | `/api/lineage/scan` | 가진 GGUF 를 모두 머리말만 읽기 |
+| POST | `/api/lineage/inspect` | HF 저장소 읽기 `{"hf_id"}` — config.json · 모델 카드 메타 |
+| DELETE | `/api/lineage/models/{key}` | 계보에서 지우기 |
+| GET | `/api/lineage/graph` | 노드 · 관계(BELONGS_TO · SUCCEEDS · QUANTIZED_FROM · DERIVED_FROM · HAS_ARCHITECTURE · SUPPORTS_MODALITY · LICENSED_UNDER) |
+| GET | `/api/lineage/compare?a=&b=` | 두 모델의 바뀐 점 |
+
 ## 데이터 계보 · 근거 (`/api/provenance`)
 
 | 메서드 | 경로 | 설명 |

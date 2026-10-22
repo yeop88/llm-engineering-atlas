@@ -37,7 +37,7 @@
 | B | **해석 가능성 · 모델 내부** | 모델이 왜 그렇게 답했는지 안을 보는 흐름 | 6 | 6 | — | — | — | `/maps/interp` · [개요](docs/maps/interp.md) |
 | B | **프롬프트 · KV 캐시 압축** | 같은 모델로 더 긴 맥락을 싸게 | 6 | 6 | — | — | — | `/maps/compress` · [개요](docs/maps/compress.md) |
 | B | **적은 메모리로 큰 모델 돌리기** | 메모리보다 큰 모델을 돌리는 흐름 | 7 | 7 | — | — | — | `/maps/bigmodel` · [개요](docs/maps/bigmodel.md) |
-| B | **기반 모델 계보** | 어떤 모델이 어떤 기능 · 환경에 맞나 | 6 | — | — | 6 | — | `/maps/lineage` · [개요](docs/maps/lineage.md) |
+| B | **기반 모델 계보** | 어떤 모델이 어떤 기능 · 환경에 맞나 | 6 | 6 | — | — | — | `/maps/lineage` · [개요](docs/maps/lineage.md) |
 | B | **Transformer · MoE 구조** | 밀집 · MoE · 슬라이딩 창 · 선형 어텐션 · 상태 공간이 메모리 · 연산에 미치는 영향 | 6 | — | — | 6 | — | `/maps/architecture` · [개요](docs/maps/architecture.md) |
 | B | **토크나이저 · 표현 공간** | 한국어 토큰 효율 · 코드 · 이미지 패치 · 오디오 토큰 | 6 | — | — | 6 | — | `/maps/tokenizer` · [개요](docs/maps/tokenizer.md) |
 | B | **학습 생애주기** | 후학습 · RLVR · 플라이휠을 한 생애주기로 | 8 | — | — | 7 | 1 | `/maps/training` · [개요](docs/maps/training.md) |
@@ -66,7 +66,7 @@
 | F | **엔터프라이즈 AI 플랫폼 아키텍처** | 맵들을 실제 운영 시스템으로 묶는 흐름 | 7 | 7 | — | — | — | `/maps/platform` · [개요](docs/maps/platform.md) |
 | F | **개인화 · 적응** | 개인화 데이터 · 인증 · 민감 정보 · 학습 동의를 나눠서 | 7 | — | — | 7 | — | `/maps/personalize` · [개요](docs/maps/personalize.md) |
 | F | **모델 라우팅 · 비용 최적화** | 점수 = 품질 · 근거 · 지연 · 비용 · 신뢰성 | 8 | 8 | — | — | — | `/maps/routing` · [개요](docs/maps/routing.md) |
-| | **합계 44개** | | 316 | 222 | 0 | 69 | 25 | `/maps` · [생태계 구조](docs/maps/ecosystem.md) |
+| | **합계 44개** | | 316 | 228 | 0 | 63 | 25 | `/maps` · [생태계 구조](docs/maps/ecosystem.md) |
 <!-- /맵 표 -->
 
 ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정 — 맵 · 단계의 정의와 상태는 `app/stages/registry/` 한 곳에서 관리하고, 이 표와 문서가 거기서 만들어집니다.

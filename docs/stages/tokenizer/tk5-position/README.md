@@ -33,7 +33,7 @@ KV 를 자를 때(KC3) 위치를 지켜야 하는 이유, 긴 맥락에서 중�
 
 이미 있는 단계 위에 짓습니다.
 
-- [LN4 컨텍스트 길이](../../lineage/ln4-context/README.md) — 기반 모델 계보 맵 · ⬜ 예정
+- [LN4 컨텍스트 길이](../../lineage/ln4-context/README.md) — 기반 모델 계보 맵 · ✅ 구현됨
 
 ---
 

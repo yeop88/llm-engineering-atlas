@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [LN1 모델 계열](../../lineage/ln1-family/README.md) — 기반 모델 계보 맵 · ⬜ 예정
+- [LN1 모델 계열](../../lineage/ln1-family/README.md) — 기반 모델 계보 맵 · ✅ 구현됨
 
 ---
 

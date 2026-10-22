@@ -42,6 +42,7 @@ from app.stages.inference import api as inference_api  # noqa: E402
 from app.stages.interop import api as interop_api  # noqa: E402
 from app.stages.interp import api as interp_api  # noqa: E402
 from app.stages.kg import api as kg_api  # noqa: E402
+from app.stages.lineage import api as lineage_api  # noqa: E402
 from app.stages.longrun import api as longrun_api  # noqa: E402
 from app.stages.memory import api as memory_api  # noqa: E402
 from app.stages.model_routing import api as model_routing_api  # noqa: E402
@@ -174,6 +175,7 @@ for module in (
     inference_api,  # 추론 최적화 — 워크로드 측정 · 미리 채우기 · 생성 분리 · 최적화 사다리 · 품질 게이트
     model_routing_api,  # 모델 라우팅 — 분류 · 위험 · 품질 하한 · 예산 · 후보 점수 · 승격 · 보정 · 채점
     provenance_api,  # 데이터 계보 · 근거 — 요청 → 청크 → 문서 · 판, 주장 · 근거 · 표시 일치, 부딪힘, 주장 단위 평가
+    lineage_api,  # 기반 모델 계보 — GGUF 머리말 · HF 설정 · 모델 카드로 계열 · 구조 · 맥락 · 모달리티 · 라이선스
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

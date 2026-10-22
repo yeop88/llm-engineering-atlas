@@ -63,6 +63,7 @@ app/
                        reward(항목별 보상 · 해킹 감시) · policy(GRPO, posttrain.trainer 를 씀)
     edge/              온디바이스 · 엣지 맵(ED1~ED6): devices(기기 프로필 · 조합 추천) · pack(기기용 팩 · 압축 · 정확 검색 · 평가) ·
                        offline(기능 범위 · 미룸) · sync(판 증분 · 지문 확인 · 기기 상태) · privacy(전송 정책 · 서버 재검사)
+    lineage/           기반 모델 계보 맵(LN1~LN6): inspect(GGUF 머리말 · HF 설정 · 모델 카드 · 라이선스 확인) · graph(관계 · 세대 · 비교)
     provenance/        데이터 계보 맵(PV1~PV8): lineage(요청 → 청크 → 문서 · 판) · claims(주장 나누기 · 표시 일치 · 부딪힘)
     model_routing/     모델 라우팅 맵(MR1~MR8): decide(분류 · 위험 · 하한 · 예산 · 점수 · 사슬) · profiles(설정에서 후보 · 보정 값) · evaluate(보정 · 정책 비교)
     inference/         추론 최적화 맵(IF1~IF9): workload(요청 기록 분포 · 탐침 · 미리 채우기 · 생성 분리) · ladder(칸 · 누적 · 짝지은 품질 게이트)

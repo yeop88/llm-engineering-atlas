@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}계보 관계 · 세대 비교{% endblock %}
+{% block content %}
+{% call ui.page_header("계보 관계 · 세대 비교") %}읽은 모델을 계열 · 제작사 · 구조 · 모달리티 · 라이선스 노드와 관계(BELONGS_TO · SUCCEEDS · QUANTIZED_FROM · DERIVED_FROM · HAS_ARCHITECTURE · SUPPORTS_MODALITY · LICENSED_UNDER)로 잇습니다. 같은 기반 모델을 가리키는 GGUF 들은 '같은 모델의 다른 비트'로 묶여 양자화 비교의 후보가 됩니다. 두 모델을 골라 구조 · 맥락 · 모달리티 · 라이선스의 바뀐 점을 봅니다(LN2 · LN4).{% endcall %}
+
+<div class="card stack" id="graph">
+  <h2>관계</h2>
+  <div id="g-out"></div>
+</div>
+
+<div class="card stack mt-4" id="compare">
+  <h2>두 모델 비교</h2>
+  <div class="row">
+    <div class="field"><label for="c-a">모델 A</label><select id="c-a"></select></div>
+    <div class="field"><label for="c-b">모델 B</label><select id="c-b"></select></div>
+    <div class="self-end"><button class="btn" id="c-run">비교</button></div>
+  </div>
+  <div id="c-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/lineage/graph.js') }}"></script>
+{% endblock %}

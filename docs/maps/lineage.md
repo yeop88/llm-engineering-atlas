@@ -20,12 +20,12 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| LN1 | [모델 계열](../stages/lineage/ln1-family/README.md) | ⬜ 예정 | 모델을 계열(만든 곳 · 구조 흐름)로 묶는다 | [1 임베딩](../stages/llm/1-embedding/README.md) | — |
-| LN2 | [모델 세대](../stages/lineage/ln2-generation/README.md) | ⬜ 예정 | 같은 계열 안의 세대 차이(무엇이 바뀌었나)를 잇는다 | [LN1 모델 계열](../stages/lineage/ln1-family/README.md) | — |
-| LN3 | [파라미터 · MoE 구조](../stages/lineage/ln3-params/README.md) | ⬜ 예정 | 전체 · 활성 파라미터, 밀집 · MoE, 층 · 차원을 설정 파일에서 읽는다 | [BM1 메모리 계획](../stages/bigmodel/bm1-plan/README.md) · [IP1 임베딩 공간](../stages/interp/ip1-space/README.md) | — |
-| LN4 | [컨텍스트 길이](../stages/lineage/ln4-context/README.md) | ⬜ 예정 | 학습 · 확장 맥락 길이와 실제로 쓸 수 있는 길이를 나눠 적는다 | [CX2 긴 맥락 vs RAG](../stages/context/cx2-long/README.md) | — |
-| LN5 | [입력 · 출력 모달리티](../stages/lineage/ln5-modality/README.md) | ⬜ 예정 | 글 · 이미지 · 소리 · 영상 입력과 출력을 모델별로 적는다 | [M 멀티모달](../stages/llm/m-multimodal/README.md) · [VC1 음성 인식](../stages/voice/vc1-stt/README.md) | — |
-| LN6 | [라이선스 · 배포 조건](../stages/lineage/ln6-license/README.md) | ⬜ 예정 | 라이선스 · 사용 제한 · 재배포 조건을 모델 카드에서 확인해 남긴다 | [G6 라이선스](../stages/guardrails/g6-license/README.md) | — |
+| LN1 | [모델 계열](../stages/lineage/ln1-family/README.md) | ✅ 구현됨 | 모델을 계열(만든 곳 · 구조 흐름)로 묶는다 | [1 임베딩](../stages/llm/1-embedding/README.md) | [기반 모델 계보 — GGUF 머리말 · HF 설정 · 모델 카드 · 계열 · 세대 · 구조 · 맥락 · 모달리티 · 라이선스 확인 · 실측](../stages/lineage/ln1-family/lineage.md) |
+| LN2 | [모델 세대](../stages/lineage/ln2-generation/README.md) | ✅ 구현됨 | 같은 계열 안의 세대 차이(무엇이 바뀌었나)를 잇는다 | [LN1 모델 계열](../stages/lineage/ln1-family/README.md) | [기반 모델 계보 — GGUF 머리말 · HF 설정 · 모델 카드 · 계열 · 세대 · 구조 · 맥락 · 모달리티 · 라이선스 확인 · 실측](../stages/lineage/ln1-family/lineage.md) |
+| LN3 | [파라미터 · MoE 구조](../stages/lineage/ln3-params/README.md) | ✅ 구현됨 | 전체 · 활성 파라미터, 밀집 · MoE, 층 · 차원을 설정 파일에서 읽는다 | [BM1 메모리 계획](../stages/bigmodel/bm1-plan/README.md) · [IP1 임베딩 공간](../stages/interp/ip1-space/README.md) | [기반 모델 계보 — GGUF 머리말 · HF 설정 · 모델 카드 · 계열 · 세대 · 구조 · 맥락 · 모달리티 · 라이선스 확인 · 실측](../stages/lineage/ln1-family/lineage.md) |
+| LN4 | [컨텍스트 길이](../stages/lineage/ln4-context/README.md) | ✅ 구현됨 | 학습 · 확장 맥락 길이와 실제로 쓸 수 있는 길이를 나눠 적는다 | [CX2 긴 맥락 vs RAG](../stages/context/cx2-long/README.md) | [기반 모델 계보 — GGUF 머리말 · HF 설정 · 모델 카드 · 계열 · 세대 · 구조 · 맥락 · 모달리티 · 라이선스 확인 · 실측](../stages/lineage/ln1-family/lineage.md) |
+| LN5 | [입력 · 출력 모달리티](../stages/lineage/ln5-modality/README.md) | ✅ 구현됨 | 글 · 이미지 · 소리 · 영상 입력과 출력을 모델별로 적는다 | [M 멀티모달](../stages/llm/m-multimodal/README.md) · [VC1 음성 인식](../stages/voice/vc1-stt/README.md) | [기반 모델 계보 — GGUF 머리말 · HF 설정 · 모델 카드 · 계열 · 세대 · 구조 · 맥락 · 모달리티 · 라이선스 확인 · 실측](../stages/lineage/ln1-family/lineage.md) |
+| LN6 | [라이선스 · 배포 조건](../stages/lineage/ln6-license/README.md) | ✅ 구현됨 | 라이선스 · 사용 제한 · 재배포 조건을 모델 카드에서 확인해 남긴다 | [G6 라이선스](../stages/guardrails/g6-license/README.md) | [기반 모델 계보 — GGUF 머리말 · HF 설정 · 모델 카드 · 계열 · 세대 · 구조 · 맥락 · 모달리티 · 라이선스 확인 · 실측](../stages/lineage/ln1-family/lineage.md) |
 
 ## 설계 원칙
 

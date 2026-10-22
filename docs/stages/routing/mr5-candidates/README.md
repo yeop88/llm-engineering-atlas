@@ -30,7 +30,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [LN5 입력 · 출력 모달리티](../../lineage/ln5-modality/README.md) — 기반 모델 계보 맵 · ⬜ 예정
+- [LN5 입력 · 출력 모달리티](../../lineage/ln5-modality/README.md) — 기반 모델 계보 맵 · ✅ 구현됨
 - [ED1 기기별 모델 선택](../../edge/ed1-select/README.md) — 온디바이스 · 엣지 맵 · ✅ 구현됨
 
 ---
