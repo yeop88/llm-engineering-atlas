@@ -1,0 +1,14 @@
+{
+  "name": "흉내 시장 — 번역 · OCR · 배송 접수 서비스 7곳",
+  "services": [
+    {"id": "tr-fast", "name": "빠른번역", "skill": "translate", "price": 8000, "unit": "건", "quality": 0.78, "deliver_s": 60, "refund": "불합격 시 전액", "reliability": 0.97},
+    {"id": "tr-pro", "name": "전문번역사", "skill": "translate", "price": 18000, "unit": "건", "quality": 0.95, "deliver_s": 600, "refund": "불합격 시 전액", "reliability": 0.99},
+    {"id": "tr-cheap", "name": "초저가번역", "skill": "translate", "price": 2500, "unit": "건", "quality": 0.55, "deliver_s": 30, "refund": "환불 없음", "reliability": 0.85},
+    {"id": "ocr-a", "name": "문서인식A", "skill": "ocr", "price": 300, "unit": "쪽", "quality": 0.92, "deliver_s": 5, "refund": "불합격 시 전액", "reliability": 0.99},
+    {"id": "ocr-b", "name": "문서인식B", "skill": "ocr", "price": 120, "unit": "쪽", "quality": 0.8, "deliver_s": 5, "refund": "불합격 시 50%", "reliability": 0.95},
+    {"id": "ship-a", "name": "택배접수A", "skill": "shipping", "price": 4000, "unit": "건", "quality": 0.97, "deliver_s": 20, "refund": "미접수 시 전액", "reliability": 0.98},
+    {"id": "ship-scam", "name": "수상한배송", "skill": "shipping", "price": 1500, "unit": "건", "quality": 0.2, "deliver_s": 20, "refund": "환불 없음", "reliability": 0.4}
+  ],
+  "mandate": {"principal": "고객지원팀", "agent": "AS 에이전트", "skills": ["translate", "ocr", "shipping"], "per_tx": 10000, "monthly": 150000,
+              "allow": ["tr-fast", "tr-pro", "tr-cheap", "ocr-a", "ocr-b", "ship-a"], "approve_over": 5000, "expires": "2026-12-31"}
+}

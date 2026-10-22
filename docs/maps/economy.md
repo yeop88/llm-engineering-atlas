@@ -22,14 +22,14 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| EC1 | [서비스 발견](../stages/economy/ec1-discover/README.md) | 🔬 연구 | 에이전트 카드 · 도구 목록에서 살 수 있는 서비스를 찾는다 | [IO3 A2A 위임](../stages/interop/io3-a2a/README.md) | — |
-| EC2 | [가격 · 조건 비교](../stages/economy/ec2-compare/README.md) | 🔬 연구 | 같은 기능의 가격 · 품질 · 납기 · 환불 조건을 비교한다 | [S7 예산](../stages/serving/s7-budget/README.md) | — |
-| EC3 | [예산 정책 · 위임](../stages/economy/ec3-budget/README.md) | 🔬 연구 | 누가 · 무엇에 · 얼마까지 쓰게 할지 위임 범위를 정하고 검사한다 | [PF7 비용 배분](../stages/platform/pf7-chargeback/README.md) · [LR7 상한](../stages/longrun/lr7-limits/README.md) | — |
-| EC4 | [거래 승인](../stages/economy/ec4-approve/README.md) | 🔬 연구 | 금액 · 위험에 따라 사람 승인을 요구한다 | [LR4 승인 지점](../stages/longrun/lr4-approval/README.md) · [CU4 위험 승인](../stages/computer-use/cu4-approve/README.md) | — |
-| EC5 | [결제 · 에스크로](../stages/economy/ec5-escrow/README.md) | 🔬 연구 | 흉내 장부에서 돈을 묶어 두고 결과 확인 뒤 푼다 | [IO4 장기 작업](../stages/interop/io4-longtask/README.md) | — |
-| EC6 | [결과 검증](../stages/economy/ec6-verify/README.md) | 🔬 연구 | 산 결과가 조건에 맞는지 검사한다 | [LR6 완료 판정](../stages/longrun/lr6-verify/README.md) · [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) | — |
-| EC7 | [정산 · 영수증](../stages/economy/ec7-settle/README.md) | 🔬 연구 | 통과하면 정산하고 영수증 · 감사 기록을 남긴다 | [G5 감사 로그](../stages/guardrails/g5-audit/README.md) | — |
-| EC8 | [분쟁 처리](../stages/economy/ec8-dispute/README.md) | 🔬 연구 | 불합격 · 미이행이면 환불 · 분쟁 · 책임을 정한다 | [C6 상담원 이관](../stages/conversation/c6-handoff/README.md) | — |
+| EC1 | [서비스 발견](../stages/economy/ec1-discover/README.md) | ✅ 구현됨 | 에이전트 카드 · 도구 목록에서 살 수 있는 서비스를 찾는다 | [IO3 A2A 위임](../stages/interop/io3-a2a/README.md) | [에이전트 경제 · 거래 — 흉내 시장 · 흉내 장부로 찾기 · 비교 · 위임 · 승인 · 에스크로 · 검증 · 정산 · 분쟁, 공격 시나리오 시험](../stages/economy/ec1-discover/economy.md) |
+| EC2 | [가격 · 조건 비교](../stages/economy/ec2-compare/README.md) | ✅ 구현됨 | 같은 기능의 가격 · 품질 · 납기 · 환불 조건을 비교한다 | [S7 예산](../stages/serving/s7-budget/README.md) | [에이전트 경제 · 거래 — 흉내 시장 · 흉내 장부로 찾기 · 비교 · 위임 · 승인 · 에스크로 · 검증 · 정산 · 분쟁, 공격 시나리오 시험](../stages/economy/ec1-discover/economy.md) |
+| EC3 | [예산 정책 · 위임](../stages/economy/ec3-budget/README.md) | ✅ 구현됨 | 누가 · 무엇에 · 얼마까지 쓰게 할지 위임 범위를 정하고 검사한다 | [PF7 비용 배분](../stages/platform/pf7-chargeback/README.md) · [LR7 상한](../stages/longrun/lr7-limits/README.md) | [에이전트 경제 · 거래 — 흉내 시장 · 흉내 장부로 찾기 · 비교 · 위임 · 승인 · 에스크로 · 검증 · 정산 · 분쟁, 공격 시나리오 시험](../stages/economy/ec1-discover/economy.md) |
+| EC4 | [거래 승인](../stages/economy/ec4-approve/README.md) | ✅ 구현됨 | 금액 · 위험에 따라 사람 승인을 요구한다 | [LR4 승인 지점](../stages/longrun/lr4-approval/README.md) · [CU4 위험 승인](../stages/computer-use/cu4-approve/README.md) | [에이전트 경제 · 거래 — 흉내 시장 · 흉내 장부로 찾기 · 비교 · 위임 · 승인 · 에스크로 · 검증 · 정산 · 분쟁, 공격 시나리오 시험](../stages/economy/ec1-discover/economy.md) |
+| EC5 | [결제 · 에스크로](../stages/economy/ec5-escrow/README.md) | ✅ 구현됨 | 흉내 장부에서 돈을 묶어 두고 결과 확인 뒤 푼다 | [IO4 장기 작업](../stages/interop/io4-longtask/README.md) | [에이전트 경제 · 거래 — 흉내 시장 · 흉내 장부로 찾기 · 비교 · 위임 · 승인 · 에스크로 · 검증 · 정산 · 분쟁, 공격 시나리오 시험](../stages/economy/ec1-discover/economy.md) |
+| EC6 | [결과 검증](../stages/economy/ec6-verify/README.md) | ✅ 구현됨 | 산 결과가 조건에 맞는지 검사한다 | [LR6 완료 판정](../stages/longrun/lr6-verify/README.md) · [MA7 검증 에이전트](../stages/multi-agent/ma7-critic-agent/README.md) | [에이전트 경제 · 거래 — 흉내 시장 · 흉내 장부로 찾기 · 비교 · 위임 · 승인 · 에스크로 · 검증 · 정산 · 분쟁, 공격 시나리오 시험](../stages/economy/ec1-discover/economy.md) |
+| EC7 | [정산 · 영수증](../stages/economy/ec7-settle/README.md) | ✅ 구현됨 | 통과하면 정산하고 영수증 · 감사 기록을 남긴다 | [G5 감사 로그](../stages/guardrails/g5-audit/README.md) | [에이전트 경제 · 거래 — 흉내 시장 · 흉내 장부로 찾기 · 비교 · 위임 · 승인 · 에스크로 · 검증 · 정산 · 분쟁, 공격 시나리오 시험](../stages/economy/ec1-discover/economy.md) |
+| EC8 | [분쟁 처리](../stages/economy/ec8-dispute/README.md) | ✅ 구현됨 | 불합격 · 미이행이면 환불 · 분쟁 · 책임을 정한다 | [C6 상담원 이관](../stages/conversation/c6-handoff/README.md) | [에이전트 경제 · 거래 — 흉내 시장 · 흉내 장부로 찾기 · 비교 · 위임 · 승인 · 에스크로 · 검증 · 정산 · 분쟁, 공격 시나리오 시험](../stages/economy/ec1-discover/economy.md) |
 
 ## 설계 원칙
 

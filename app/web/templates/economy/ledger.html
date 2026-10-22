@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}거래 규칙 · 흉내 장부{% endblock %}
+{% block content %}
+{% call ui.page_header("거래 규칙 · 흉내 장부") %}에이전트가 다른 서비스의 기능을 사서 쓸 때 지켜야 할 규칙을 흉내 시장 · 흉내 장부로 시험합니다. 실제 결제는 하지 않습니다.
+<ul class="small">
+  <li>고르기: 기능으로 찾기(EC1), 요구로 거르고 비교(EC2)</li>
+  <li>허락: 위임 범위 검사(EC3), 사람 승인(EC4)</li>
+  <li>거래: 에스크로에 묶기(EC5), 결과 검증(EC6), 정산 · 해시 사슬 영수증(EC7), 환불 · 분쟁(EC8)</li>
+</ul>
+한도 넘기 · 위임 밖 상대 · 이중 요청 · 승인 뒤 값 바꾸기 · 납품 안 함 · 엉터리 결과를 섞어, 규칙 없는 에이전트와 나란히 돌립니다.{% endcall %}
+
+<div class="card stack" id="quote">
+  <h2>찾기 · 비교 · 위임 · 승인 (EC1~EC4)</h2>
+  <div class="row">
+    <div class="field"><label for="k-skill">기능</label><select id="k-skill"><option value="translate">번역</option><option value="ocr">문서 인식</option><option value="shipping">배송 접수</option></select></div>
+    <div class="field"><label for="k-q">최소 품질</label><input id="k-q" type="number" value="0.75" step="0.05" min="0" max="1" class="w-md"></div>
+    <div class="field"><label for="k-qty">수량</label><input id="k-qty" type="number" value="1" min="1" class="w-md"></div>
+    <div class="field"><label for="k-spent">이번 달 쓴 돈</label><input id="k-spent" type="number" value="0" min="0" class="w-lg"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="k-refund" checked> 환불 조건 필요</label>
+    <div class="self-end"><button class="btn primary" id="k-run">견적</button></div>
+  </div>
+  <div id="k-mandate" class="small muted"></div>
+  <div id="k-out"></div>
+</div>
+
+<div class="card stack mt-4" id="simulate">
+  <h2>일 처리 흉내 (EC5~EC8)</h2>
+  <div class="row">
+    <div class="field"><label for="s-n">일 수</label><input id="s-n" type="number" value="40" min="1" max="500" class="w-md"></div>
+    <div class="field"><label for="s-seed">씨앗</label><input id="s-seed" type="number" value="0" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="s-guard" checked> 규칙 있는 에이전트</label>
+    <div class="self-end"><button class="btn" id="s-run">돌리기</button></div>
+  </div>
+  <div id="s-out"></div>
+</div>
+
+<div class="card stack mt-4" id="evaluate">
+  <h2>규칙 있음 vs 없음</h2>
+  <div class="row">
+    <div class="field"><label for="e-seeds">씨앗 수</label><input id="e-seeds" type="number" value="20" min="1" max="200" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="e-run">평가</button></div>
+  </div>
+  <div id="e-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/economy/ledger.js') }}"></script>
+{% endblock %}

@@ -49,7 +49,7 @@
 | C | **데이터 분석 에이전트 · Text-to-SQL** | 사내 DB 에 자연어로 묻는 흐름 | 7 | 7 | — | — | — | `/maps/analytics` · [개요](docs/maps/analytics.md) |
 | C | **코딩 에이전트 · 소프트웨어 엔지니어링** | 코드를 고치는 에이전트 | 6 | 6 | — | — | — | `/maps/coding` · [개요](docs/maps/coding.md) |
 | C | **컴퓨터 사용 · 브라우저 에이전트** | 화면을 보고 클릭 · 입력하는 에이전트 | 6 | 6 | — | — | — | `/maps/computer-use` · [개요](docs/maps/computer-use.md) |
-| C | **에이전트 경제 · 거래** | 에이전트가 돈을 쓰기 전에 지켜야 할 것 | 8 | — | — | — | 8 | `/maps/economy` · [개요](docs/maps/economy.md) |
+| C | **에이전트 경제 · 거래** | 에이전트가 돈을 쓰기 전에 지켜야 할 것 | 8 | 8 | — | — | — | `/maps/economy` · [개요](docs/maps/economy.md) |
 | D | **실시간 음성 상담** | 전화 AS 상담 | 7 | 7 | — | — | — | `/maps/voice` · [개요](docs/maps/voice.md) |
 | D | **옴니채널 · 실시간 멀티모달 에이전트** | 전화 · 영상 · 메신저를 한 에이전트로 | 8 | 8 | — | — | — | `/maps/omni` · [개요](docs/maps/omni.md) |
 | D | **실시간 스트리밍 LLM** | TTFT · 첫 소리 · p95 · p99 · 복구율 | 8 | 8 | — | — | — | `/maps/realtime` · [개요](docs/maps/realtime.md) |
@@ -66,7 +66,7 @@
 | F | **엔터프라이즈 AI 플랫폼 아키텍처** | 맵들을 실제 운영 시스템으로 묶는 흐름 | 7 | 7 | — | — | — | `/maps/platform` · [개요](docs/maps/platform.md) |
 | F | **개인화 · 적응** | 개인화 데이터 · 인증 · 민감 정보 · 학습 동의를 나눠서 | 7 | 7 | — | — | — | `/maps/personalize` · [개요](docs/maps/personalize.md) |
 | F | **모델 라우팅 · 비용 최적화** | 점수 = 품질 · 근거 · 지연 · 비용 · 신뢰성 | 8 | 8 | — | — | — | `/maps/routing` · [개요](docs/maps/routing.md) |
-| | **합계 44개** | | 316 | 293 | 0 | 2 | 21 | `/maps` · [생태계 구조](docs/maps/ecosystem.md) |
+| | **합계 44개** | | 316 | 301 | 0 | 2 | 13 | `/maps` · [생태계 구조](docs/maps/ecosystem.md) |
 <!-- /맵 표 -->
 
 ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정 — 맵 · 단계의 정의와 상태는 `app/stages/registry/` 한 곳에서 관리하고, 이 표와 문서가 거기서 만들어집니다.
