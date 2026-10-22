@@ -33,6 +33,7 @@ from app.stages.context import api as context_api  # noqa: E402
 from app.stages.conversation import api as conversation_api  # noqa: E402
 from app.stages.distill import api as distill_api  # noqa: E402
 from app.stages.docintel import api as docintel_api  # noqa: E402
+from app.stages.duplex import api as duplex_api  # noqa: E402
 from app.stages.economy import api as economy_api  # noqa: E402
 from app.stages.edge import api as edge_api  # noqa: E402
 from app.stages.embedding import benchmarks_api, compat, models_api, playground_api  # noqa: E402
@@ -198,6 +199,7 @@ for module in (
     synthetic_api,  # 합성 데이터 — 부족 분석 · 생성 · 다양성 · 누수 거르기 · 검토 표본 · 실제 질문으로 효과 평가
     genmedia_api,  # 생성 미디어 — 생성물 자동 품질 검사(지시 · 스타일 · 시간), 출처 매니페스트 · AI 표시 · 워터마크와 남는지 실측
     economy_api,  # 에이전트 경제 — 흉내 시장 · 장부로 위임 · 승인 · 에스크로 · 검증 · 환불 규칙과 공격 시나리오
+    duplex_api,  # 풀듀플렉스 타이밍 — 차례 넘기기 · 맞장구 · 안전 끼어들기 · 말하는 중 멈춤 정책을 흉내 대화로
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

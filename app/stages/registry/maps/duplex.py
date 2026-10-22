@@ -1,6 +1,6 @@
 """실시간 오디오 · 비디오 풀듀플렉스 맵 — 맵 정의와 단계. 화면 · 메뉴 · 문서가 모두 여기서 나온다(scripts/gen_docs.py)."""
 
-from app.stages.registry.model import RESEARCH, Map, Stage
+from app.stages.registry.model import DONE, RESEARCH, Map, Page, Stage
 
 MAP = Map('duplex', '실시간 오디오 · 비디오 풀듀플렉스 맵', '/maps/duplex', 'docs/maps/duplex.md',
         summary='연속 오디오 · 비디오 → 화자 · 시선 · 대상 추적 → 시간 상태 융합 → 발화 의도 예측 → 끼어들 시점 → 동시 듣기 · 보기 · 말하기 → 전환 타이밍 — 내용 이해와 대화 타이밍을 나눠서',
@@ -65,70 +65,114 @@ STAGES: list[Stage] = [
     ),
     Stage(
         key="fd_intent",
+        pages=[
+            Page(
+                "fd_timing", "/duplex/timing", "대화 타이밍", "차례 넘기기 · 맞장구 · 안전 끼어들기 · 말하는 중 멈춤", "duplex/timing.html"
+            )
+        ],
         no="FD4",
         title="발화 의도 예측",
         short="발화 의도",
         en="Turn-taking intent",
-        status=RESEARCH,
+        status=DONE,
         flow="duplex",
         map="duplex",
         builds_on=["vc_turn"],
         summary="상대가 말을 맺을지 · 이어 갈지 · 끼어들기를 원하는지 예측한다",
         principle="발화 의도 예측은 말끝 억양 · 쉼 · 글의 모양 · 시선으로 상대가 말을 맺으려는지, 생각 중인지, 끼어들려는지를 예측하는 것입니다. 끝점 규칙(VC2)의 확장입니다.",
         why="침묵 길이만 보면 생각 중인 사람의 말을 자르거나, 말을 맺었는데 오래 기다립니다.",
-        how=["(기반) 끝점 · 이어질 말 판정(VC2)", "(연구) 억양 · 쉼 · 글 모양 결합 · 예측 정확도"],
-        plans=["억양 · 쉼 · 글 모양 결합 · 예측 정확도"],
-        docs=[("실시간 오디오 · 비디오 풀듀플렉스 맵", "docs/maps/duplex.md")],
+        how=[
+            "(기반) 끝점 · 말끝 규칙(VC2)",
+            "고객이 말을 맺었나: 쉼 동안 들은 마지막 어절이 끝난 말(…요 · …다 · …까)이면 0.5초, 아니면 1.4초 — 침묵만 보는 정책(0.5 · 1.4초)과 같은 흉내 대화로 끊어 먹기 · 응답 간격",
+        ],
+        plans=["억양(말끝 높낮이) · 시선을 더한 예측"],
+        docs=[
+            (
+                "풀듀플렉스 타이밍 — 차례 넘기기 · 맞장구 · 안전 끼어들기 · 말하는 중 멈춤 정책을 흉내 대화로",
+                "docs/stages/duplex/fd4-intent/duplex.md",
+            ),
+            ("실시간 오디오 · 비디오 풀듀플렉스 맵", "docs/maps/duplex.md"),
+        ],
     ),
     Stage(
         key="fd_barge",
+        pages=[Page("fd_barge", "/duplex/timing#evaluate", "끼어들 시점", "맞장구 · 안전 경고 끼어들기")],
         no="FD5",
         title="끼어들기 시점 · 정책",
         short="끼어들기",
         en="Barge-in timing & policy",
-        status=RESEARCH,
+        status=DONE,
         flow="duplex",
         map="duplex",
         builds_on=["vc_turn", "gr_output"],
         summary="언제 끼어들고 언제 맞장구만 칠지 정책으로 정한다",
         principle="끼어들기 시점 · 정책은 응답자(에이전트)가 상대 말 중에 끼어들 때를 정하는 것입니다. 안전 경고(전원을 뽑으세요)는 바로, 정보는 말이 끝난 뒤, 맞장구는 짧게.",
         why="타이밍만 학습하면 무례하거나 위험을 놓칩니다. 끼어들기는 내용이 아니라 정책의 문제이기도 합니다.",
-        how=["(기반) 끼어들기(VC2) · 출력 정책(G4)", "(연구) 끼어들기 정책 표 · 오탐 · 놓침"],
-        plans=["끼어들기 정책 표 · 오탐 · 놓침"],
-        docs=[("실시간 오디오 · 비디오 풀듀플렉스 맵", "docs/maps/duplex.md")],
+        how=[
+            "(기반) 실시간 끼어들기(RT7)",
+            "맞장구: 이어질 말끝 뒤 정해 둔 시간 동안 다음 어절이 없으면 '네'(그 순간 들은 것만으로) — 겹침, 안전: '타는 냄새 · 연기 · 감전'이 들리면 차례를 기다리지 않고 미리 합성해 둔 경고",
+        ],
+        plans=[],
+        docs=[
+            (
+                "풀듀플렉스 타이밍 — 차례 넘기기 · 맞장구 · 안전 끼어들기 · 말하는 중 멈춤 정책을 흉내 대화로",
+                "docs/stages/duplex/fd4-intent/duplex.md",
+            ),
+            ("실시간 오디오 · 비디오 풀듀플렉스 맵", "docs/maps/duplex.md"),
+        ],
     ),
     Stage(
         key="fd_duplex",
+        pages=[Page("fd_duplex", "/duplex/timing#evaluate", "동시 듣기 · 말하기", "말하는 중 고객 소리: 맞장구면 계속, 끼어들기면 멈춤")],
         no="FD6",
         title="동시 듣기 · 보기 · 말하기",
         short="동시 처리",
         en="Full-duplex generation",
-        status=RESEARCH,
+        status=DONE,
         flow="duplex",
         map="duplex",
         builds_on=["rt_stream"],
         summary="말하는 동안에도 듣고 보며 응답을 고친다",
         principle="동시 처리는 에이전트가 말하는 동안에도 상대의 소리 · 화면을 계속 받아 응답을 고치거나 멈추는 것입니다. 통합 모델(Speech-to-Speech)이 이 방향이고, 파이프라인으로는 흉내만 냅니다.",
         why="반이중 구조로는 '말하다가 상대 표정을 보고 고치기' 가 안 됩니다. 어디까지 흉내 낼 수 있는지 재야 통합 모델의 이득을 압니다.",
-        how=["(기반) 스트리밍(RT6)", "(연구) 파이프라인 흉내 vs 통합 모델 비교 설계"],
-        plans=["파이프라인 흉내 vs 통합 모델 비교 설계"],
-        docs=[("실시간 오디오 · 비디오 풀듀플렉스 맵", "docs/maps/duplex.md")],
+        how=[
+            "(기반) 끼어들기 감지(VC2)",
+            "우리가 말하는 중 고객 소리 — 길이만(250ms) 보는 정책과 길이 + 부분 인식 글('네' · '음'은 맞장구)로 거르는 정책의 잘못 멈춤 · 놓친 끼어들기",
+        ],
+        plans=["말하는 중 들은 내용으로 답 고치기"],
+        docs=[
+            (
+                "풀듀플렉스 타이밍 — 차례 넘기기 · 맞장구 · 안전 끼어들기 · 말하는 중 멈춤 정책을 흉내 대화로",
+                "docs/stages/duplex/fd4-intent/duplex.md",
+            ),
+            ("실시간 오디오 · 비디오 풀듀플렉스 맵", "docs/maps/duplex.md"),
+        ],
     ),
     Stage(
         key="fd_turn",
+        pages=[Page("fd_turn", "/duplex/timing#preview", "전환 타이밍", "응답 간격 분포 · 대화 하나 보기")],
         no="FD7",
         title="전환 타이밍 조정",
         short="전환 타이밍",
         en="Turn transition timing",
-        status=RESEARCH,
+        status=DONE,
         flow="duplex",
         map="duplex",
         builds_on=["rt_stream", "ev_cost"],
         summary="차례가 넘어가는 간격을 재고 사람 대화에 맞춘다",
         principle="전환 타이밍은 상대가 말을 맺은 뒤 응답을 시작하기까지의 간격(사람끼리 대략 0.2~0.5초)과 겹침을 재고 맞추는 것입니다.",
         why="너무 빠르면 말을 자르고 너무 느리면 대화가 끊깁니다. 평균이 아니라 분포를 봐야 합니다.",
-        how=["(기반) 첫 소리 지연(RT6) · 비용 · 지연(E4)", "(연구) 전환 간격 분포 · 겹침률"],
-        plans=["전환 간격 분포 · 겹침률"],
-        docs=[("실시간 오디오 · 비디오 풀듀플렉스 맵", "docs/maps/duplex.md")],
+        how=[
+            "(기반) 실시간 첫 소리(RT6)",
+            "고객 말 끝 → 첫 소리 간격 p50 · p95, 끝날 것 같은 말끝이 들린 순간부터 답을 미리 준비하면 준비 시간을 숨김",
+        ],
+        plans=[],
+        docs=[
+            (
+                "풀듀플렉스 타이밍 — 차례 넘기기 · 맞장구 · 안전 끼어들기 · 말하는 중 멈춤 정책을 흉내 대화로",
+                "docs/stages/duplex/fd4-intent/duplex.md",
+            ),
+            ("실시간 오디오 · 비디오 풀듀플렉스 맵", "docs/maps/duplex.md"),
+        ],
     ),
 ]

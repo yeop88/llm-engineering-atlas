@@ -25,10 +25,10 @@
 | FD1 | [연속 오디오 · 비디오 입력](../stages/duplex/fd1-input/README.md) | 🔬 연구 | 소리 · 영상을 끊지 않고 같은 시계로 받는다 | [RT1 스트림 입력](../stages/realtime/rt1-input/README.md) | — |
 | FD2 | [화자 · 시선 · 대상 추적](../stages/duplex/fd2-track/README.md) | 🔬 연구 | 누가 말하는지, 어디를 보고 가리키는지 따라간다 | [AU3 화자 · 언어](../stages/audio/au3-speaker/README.md) · [VD4 추적](../stages/video/vd4-track/README.md) | — |
 | FD3 | [시간 상태 융합](../stages/duplex/fd3-fuse/README.md) | 🔬 연구 | 말 · 화면 · 사건을 하나의 대화 상태로 시간에 따라 합친다 | [OM4 턴 융합](../stages/omni/om4-fuse/README.md) · [RT4 상태 갱신](../stages/realtime/rt4-state/README.md) | — |
-| FD4 | [발화 의도 예측](../stages/duplex/fd4-intent/README.md) | 🔬 연구 | 상대가 말을 맺을지 · 이어 갈지 · 끼어들기를 원하는지 예측한다 | [VC2 턴 관리](../stages/voice/vc2-turn/README.md) | — |
-| FD5 | [끼어들기 시점 · 정책](../stages/duplex/fd5-barge/README.md) | 🔬 연구 | 언제 끼어들고 언제 맞장구만 칠지 정책으로 정한다 | [VC2 턴 관리](../stages/voice/vc2-turn/README.md) · [G4 출력 검사](../stages/guardrails/g4-output/README.md) | — |
-| FD6 | [동시 듣기 · 보기 · 말하기](../stages/duplex/fd6-duplex/README.md) | 🔬 연구 | 말하는 동안에도 듣고 보며 응답을 고친다 | [RT6 스트리밍](../stages/realtime/rt6-stream/README.md) | — |
-| FD7 | [전환 타이밍 조정](../stages/duplex/fd7-turn/README.md) | 🔬 연구 | 차례가 넘어가는 간격을 재고 사람 대화에 맞춘다 | [RT6 스트리밍](../stages/realtime/rt6-stream/README.md) · [E4 비용 · 지연](../stages/evalops/e4-cost/README.md) | — |
+| FD4 | [발화 의도 예측](../stages/duplex/fd4-intent/README.md) | ✅ 구현됨 | 상대가 말을 맺을지 · 이어 갈지 · 끼어들기를 원하는지 예측한다 | [VC2 턴 관리](../stages/voice/vc2-turn/README.md) | [풀듀플렉스 타이밍 — 차례 넘기기 · 맞장구 · 안전 끼어들기 · 말하는 중 멈춤 정책을 흉내 대화로](../stages/duplex/fd4-intent/duplex.md) |
+| FD5 | [끼어들기 시점 · 정책](../stages/duplex/fd5-barge/README.md) | ✅ 구현됨 | 언제 끼어들고 언제 맞장구만 칠지 정책으로 정한다 | [VC2 턴 관리](../stages/voice/vc2-turn/README.md) · [G4 출력 검사](../stages/guardrails/g4-output/README.md) | [풀듀플렉스 타이밍 — 차례 넘기기 · 맞장구 · 안전 끼어들기 · 말하는 중 멈춤 정책을 흉내 대화로](../stages/duplex/fd4-intent/duplex.md) |
+| FD6 | [동시 듣기 · 보기 · 말하기](../stages/duplex/fd6-duplex/README.md) | ✅ 구현됨 | 말하는 동안에도 듣고 보며 응답을 고친다 | [RT6 스트리밍](../stages/realtime/rt6-stream/README.md) | [풀듀플렉스 타이밍 — 차례 넘기기 · 맞장구 · 안전 끼어들기 · 말하는 중 멈춤 정책을 흉내 대화로](../stages/duplex/fd4-intent/duplex.md) |
+| FD7 | [전환 타이밍 조정](../stages/duplex/fd7-turn/README.md) | ✅ 구현됨 | 차례가 넘어가는 간격을 재고 사람 대화에 맞춘다 | [RT6 스트리밍](../stages/realtime/rt6-stream/README.md) · [E4 비용 · 지연](../stages/evalops/e4-cost/README.md) | [풀듀플렉스 타이밍 — 차례 넘기기 · 맞장구 · 안전 끼어들기 · 말하는 중 멈춤 정책을 흉내 대화로](../stages/duplex/fd4-intent/duplex.md) |
 
 ## 설계 원칙
 

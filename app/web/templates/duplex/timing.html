@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}대화 타이밍{% endblock %}
+{% block content %}
+{% call ui.page_header("대화 타이밍") %}내용 이해와 대화 타이밍을 나눠, 타이밍 규칙만 같은 흉내 대화로 잽니다.
+<ul class="small">
+  <li>차례 넘기기(FD4 · FD7): 고객이 말을 맺었나 — 침묵 0.5초 · 침묵 1.4초 · 말끝 규칙(…요 · …다 · …까면 짧게) · 말끝 + 미리 준비</li>
+  <li>맞장구와 안전 끼어들기(FD5): 이어질 말끝 뒤 '네', '타는 냄새' 같은 위험한 말에는 차례를 기다리지 않고 경고</li>
+  <li>말하는 중 멈춤(FD6): 고객의 '네' · '음'에는 계속 말하고 진짜 끼어들기에는 멈춤</li>
+</ul>
+응답 간격 · 끊어 먹기 · 겹침 · 경고 지연을 봅니다.{% endcall %}
+
+<div class="card stack" id="preview">
+  <h2>대화 하나 보기 (FD4 · FD7)</h2>
+  <div class="row">
+    <div class="field"><label for="p-seed">흉내 대화 번호</label><input id="p-seed" type="number" value="0" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="p-run">보기</button></div>
+  </div>
+  <div id="p-out"></div>
+</div>
+
+<div class="card stack mt-4" id="evaluate">
+  <h2>정책 평가 (FD4~FD7)</h2>
+  <div class="row">
+    <div class="field"><label for="e-seeds">대화 수</label><input id="e-seeds" type="number" value="50" min="1" max="500" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="e-run">평가</button></div>
+  </div>
+  <div id="e-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/duplex/timing.js') }}"></script>
+{% endblock %}

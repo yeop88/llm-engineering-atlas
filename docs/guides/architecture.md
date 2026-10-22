@@ -65,6 +65,7 @@ app/
                        offline(기능 범위 · 미룸) · sync(판 증분 · 지문 확인 · 기기 상태) · privacy(전송 정책 · 서버 재검사)
     tokenizer/         토크나이저 맵(TK1~TK6): analyze(토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 설정 비용)
     architecture/      Transformer · MoE 구조 맵(TA2~TA4 · TA6): structure(층별 어텐션 종류 · KV · FFN/전문가 · 읽는 양, bigmodel.plan 을 씀) · scaling(맥락 길이별 실측)
+    duplex/            풀듀플렉스 맵(FD4~FD7): sim(흉내 대화 · 차례 넘기기 · 맞장구 · 안전 끼어들기 · 말하는 중 멈춤, voice.turn 의 말끝 규칙을 씀)
     economy/           에이전트 경제 맵(EC1~EC8): ledger(복식 기입 · 에스크로 · 해시 사슬) · market(찾기 · 비교 · 위임 · 승인 · 검증 · 환불 · 공격 시나리오), presets/
     genmedia/          생성 미디어 맵(GM7 · GM8): qa(지시 · 스타일 · 시간 검사, video 의 합성기 · 색 탐지를 씀) · provenance(매니페스트 · 표시 · 워터마크 · 공격)
     synthetic/         합성 데이터 맵(SD1~SD8): make(나누기 · 부족 분석 · 전략 · 생성 · 다양성 · 거르기 · 검토 표본) · store(묶음 · 검토) · learn(분류기 학습 · 실제 · 합성 시험)

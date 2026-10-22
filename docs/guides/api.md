@@ -488,6 +488,13 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/architecture/layers` | `{"gguf"}` 또는 `{"hf_id", "bits"}` → 층마다 어텐션 종류 · KV 차원 · FFN 밀집/MoE · 바이트, 요약(전문가 몫 · 토큰당 읽는 양 · 임베딩 · 출력층 몫), 맥락 길이별 KV 대 단순 어림 |
 | POST | `/api/architecture/scaling` | 맥락 길이별 실측 작업 `{"lengths"}` → 작은 LM 의 미리 채우기 시간 · 토큰당 ms · 실제 KV · 길이 두 배당 시간 배율 |
 
+## 풀듀플렉스 타이밍 (`/api/duplex`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/api/duplex/preview` | `{"seed"}` → 흉내 대화 하나의 고객 차례 · 정책마다 판단 시각 · 첫 소리 · 끊어 먹기 |
+| POST | `/api/duplex/evaluate` | `{"seeds"}` → 차례 넘기기 정책별 끊어 먹기 · 응답 간격, 맞장구 겹침, 안전 경고 지연, 말하는 중 멈춤 잘못 |
+
 ## 에이전트 경제 · 거래 (`/api/economy`)
 
 | 메서드 | 경로 | 설명 |
