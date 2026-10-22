@@ -93,7 +93,8 @@ def do_plan(body: PlanIn) -> dict:
 def do_layered(body: LayeredIn) -> dict:
     """층 단위 스트리밍(BM2) 작업: 체크포인트를 층마다 나눠(처음 한 번) 미리 읽기 켬 · 끔으로 통째 실행과 비교."""
     hf_id = body.hf_id or get_settings().posttrain_base_model
-    if not re.fullmatch(r"[\w.-]+/[\w.-]+", hf_id):
+    # 소유자 · 이름은 글자나 숫자로 시작 — '../x' 처럼 점으로 시작하는 id 가 나눈 파일 폴더 이름으로 들어가지 않게
+    if not re.fullmatch(r"[A-Za-z0-9][\w.-]*/[A-Za-z0-9][\w.-]*", hf_id) or ".." in hf_id:
         raise HTTPException(400, "HF 저장소 id 형식이 아닙니다(소유자/이름)")
 
     def work(job: Job) -> dict:
