@@ -42,7 +42,7 @@ docs/
 | B | **적은 메모리로 큰 모델 돌리기 맵** | 메모리 계획 → 층 단위 스트리밍 → CPU-GPU 혼합 · 전문가 오프로드 → 페이지 KV 캐시 → 연속 배칭 → 극저비트 → 여러 기기 나눠 돌리기 — 메모리보다 큰 모델을 돌리는 흐름 | 7 — ✅ 7 | [bigmodel.md](maps/bigmodel.md) | `/maps/bigmodel` |
 | B | **기반 모델 계보 맵** | 모델 계열 → 세대 → 파라미터 · MoE 구조 → 컨텍스트 길이 → 입력 · 출력 모달리티 → 라이선스 · 배포 조건 — 어떤 모델이 어떤 기능 · 환경에 맞나 | 6 — ✅ 6 | [lineage.md](maps/lineage.md) | `/maps/lineage` |
 | B | **Transformer · MoE 구조 맵** | 토큰화 → 임베딩 → 어텐션 → FFN · 전문가 → 라우팅 → 출력 헤드 — 밀집 · MoE · 슬라이딩 창 · 선형 어텐션 · 상태 공간이 메모리 · 연산에 미치는 영향 | 6 — ⬜ 6 | [architecture.md](maps/architecture.md) | `/maps/architecture` |
-| B | **토크나이저 · 표현 공간 맵** | 원문 정규화 → 토큰 분할 → 어휘 → 임베딩 → 위치 표현 → 멀티모달 공통 공간 — 한국어 토큰 효율 · 코드 · 이미지 패치 · 오디오 토큰 | 6 — ⬜ 6 | [tokenizer.md](maps/tokenizer.md) | `/maps/tokenizer` |
+| B | **토크나이저 · 표현 공간 맵** | 원문 정규화 → 토큰 분할 → 어휘 → 임베딩 → 위치 표현 → 멀티모달 공통 공간 — 한국어 토큰 효율 · 코드 · 이미지 패치 · 오디오 토큰 | 6 — ✅ 6 | [tokenizer.md](maps/tokenizer.md) | `/maps/tokenizer` |
 | B | **학습 생애주기 맵** | 데이터 수집 → 전처리 · 중복 제거 → 사전학습 → 지시 튜닝 → 선호 정렬 → 안전 정렬 → 평가 → 배포 — 후학습 · RLVR · 플라이휠을 한 생애주기로 | 8 — ⬜ 7 · 🔬 1 | [training.md](maps/training.md) | `/maps/training` |
 | B | **추론 최적화 맵** | 워크로드 측정 → 미리 채우기 · 생성 분리 → 양자화 → KV 캐시 관리 → 연속 배칭 → 앞부분 캐시 → 추측 디코딩 → 병렬화 → 품질 회귀 — 기준선부터 카나리까지 한 순서로 | 9 — ✅ 9 | [inference.md](maps/inference.md) | `/maps/inference` |
 | B | **합성 데이터 맵** | 데이터 부족 분석 → 생성 전략 → 합성 데이터 생성 → 다양성 검사 → 중복 · 오염 제거 → 인간 검토 → 학습 → 실제 데이터 평가 — 합성으로 늘리되 실제로 잰다 | 8 — ⬜ 8 | [synthetic.md](maps/synthetic.md) | `/maps/synthetic` |

@@ -59,6 +59,7 @@ from app.stages.rl import api as rl_api  # noqa: E402
 from app.stages.rlvr import api as rlvr_api  # noqa: E402
 from app.stages.routing import api as routing_api  # noqa: E402
 from app.stages.serving import api as serving_api  # noqa: E402
+from app.stages.tokenizer import api as tokenizer_api  # noqa: E402
 from app.stages.voice import api as voice_api  # noqa: E402
 from app.web import pages  # noqa: E402
 
@@ -176,6 +177,7 @@ for module in (
     model_routing_api,  # 모델 라우팅 — 분류 · 위험 · 품질 하한 · 예산 · 후보 점수 · 승격 · 보정 · 채점
     provenance_api,  # 데이터 계보 · 근거 — 요청 → 청크 → 문서 · 판, 주장 · 근거 · 표시 일치, 부딪힘, 주장 단위 평가
     lineage_api,  # 기반 모델 계보 — GGUF 머리말 · HF 설정 · 모델 카드로 계열 · 구조 · 맥락 · 모달리티 · 라이선스
+    tokenizer_api,  # 토크나이저 · 표현 공간 — 토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 설정 비용
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

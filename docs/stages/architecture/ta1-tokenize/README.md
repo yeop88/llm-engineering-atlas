@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [TK2 토큰 분할](../../tokenizer/tk2-split/README.md) — 토크나이저 · 표현 공간 맵 · ⬜ 예정
+- [TK2 토큰 분할](../../tokenizer/tk2-split/README.md) — 토크나이저 · 표현 공간 맵 · ✅ 구현됨
 
 ---
 

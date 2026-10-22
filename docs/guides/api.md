@@ -474,6 +474,13 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 토크나이저 (`/api/tokenizer`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/tokenizer/samples` | 비교에 쓰는 글 5종 · 표시 8개 |
+| POST | `/api/tokenizer/compare` | 비교 작업 `{"hf_ids"}` → 모델마다 글 종류별 토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 임베딩 · 출력층 · 위치 · 이미지 토큰 |
+
 ## 기반 모델 계보 (`/api/lineage`)
 
 | 메서드 | 경로 | 설명 |

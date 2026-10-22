@@ -20,12 +20,12 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| TK1 | [원문 정규화](../stages/tokenizer/tk1-normalize/README.md) | ⬜ 예정 | 유니코드 정규화 · 공백 · 전각 문자를 토크나이저 앞에서 맞춘다 | [D4 정제 · 중복](../stages/docintel/d4-clean/README.md) | — |
-| TK2 | [토큰 분할](../stages/tokenizer/tk2-split/README.md) | ⬜ 예정 | 한국어 · 영어 · 코드 · 조문 번호의 글자당 토큰과 쪼개지는 모양을 모델별로 잰다 | [IP1 임베딩 공간](../stages/interp/ip1-space/README.md) | — |
-| TK3 | [어휘](../stages/tokenizer/tk3-vocab/README.md) | ⬜ 예정 | 어휘 크기 · 언어별 몫 · 특수 토큰을 본다 | [TK2 토큰 분할](../stages/tokenizer/tk2-split/README.md) | — |
-| TK4 | [임베딩 표현](../stages/tokenizer/tk4-embed/README.md) | ⬜ 예정 | 토큰 · 문장 임베딩 공간의 비등방성 · 언어 간 정렬을 잰다 | [IP1 임베딩 공간](../stages/interp/ip1-space/README.md) | — |
-| TK5 | [위치 표현](../stages/tokenizer/tk5-position/README.md) | ⬜ 예정 | 회전 위치 부호(RoPE) · 확장 방식이 긴 맥락에 주는 영향을 본다 | [LN4 컨텍스트](../stages/lineage/ln4-context/README.md) | — |
-| TK6 | [멀티모달 공통 공간](../stages/tokenizer/tk6-multimodal/README.md) | ⬜ 예정 | 이미지 패치 · 오디오 토큰 · 영상 시공간 토큰이 글과 한 공간에 놓이는 방식 | [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) | — |
+| TK1 | [원문 정규화](../stages/tokenizer/tk1-normalize/README.md) | ✅ 구현됨 | 유니코드 정규화 · 공백 · 전각 문자를 토크나이저 앞에서 맞춘다 | [D4 정제 · 중복](../stages/docintel/d4-clean/README.md) | [토크나이저 · 표현 공간 — 글 종류별 토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 임베딩 · 위치 · 이미지 토큰 · 실측](../stages/tokenizer/tk1-normalize/tokenizer.md) |
+| TK2 | [토큰 분할](../stages/tokenizer/tk2-split/README.md) | ✅ 구현됨 | 한국어 · 영어 · 코드 · 조문 번호의 글자당 토큰과 쪼개지는 모양을 모델별로 잰다 | [IP1 임베딩 공간](../stages/interp/ip1-space/README.md) | [토크나이저 · 표현 공간 — 글 종류별 토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 임베딩 · 위치 · 이미지 토큰 · 실측](../stages/tokenizer/tk1-normalize/tokenizer.md) |
+| TK3 | [어휘](../stages/tokenizer/tk3-vocab/README.md) | ✅ 구현됨 | 어휘 크기 · 언어별 몫 · 특수 토큰을 본다 | [TK2 토큰 분할](../stages/tokenizer/tk2-split/README.md) | [토크나이저 · 표현 공간 — 글 종류별 토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 임베딩 · 위치 · 이미지 토큰 · 실측](../stages/tokenizer/tk1-normalize/tokenizer.md) |
+| TK4 | [임베딩 표현](../stages/tokenizer/tk4-embed/README.md) | ✅ 구현됨 | 토큰 · 문장 임베딩 공간의 비등방성 · 언어 간 정렬을 잰다 | [IP1 임베딩 공간](../stages/interp/ip1-space/README.md) | [토크나이저 · 표현 공간 — 글 종류별 토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 임베딩 · 위치 · 이미지 토큰 · 실측](../stages/tokenizer/tk1-normalize/tokenizer.md) |
+| TK5 | [위치 표현](../stages/tokenizer/tk5-position/README.md) | ✅ 구현됨 | 회전 위치 부호(RoPE) · 확장 방식이 긴 맥락에 주는 영향을 본다 | [LN4 컨텍스트](../stages/lineage/ln4-context/README.md) | [토크나이저 · 표현 공간 — 글 종류별 토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 임베딩 · 위치 · 이미지 토큰 · 실측](../stages/tokenizer/tk1-normalize/tokenizer.md) |
+| TK6 | [멀티모달 공통 공간](../stages/tokenizer/tk6-multimodal/README.md) | ✅ 구현됨 | 이미지 패치 · 오디오 토큰 · 영상 시공간 토큰이 글과 한 공간에 놓이는 방식 | [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) | [토크나이저 · 표현 공간 — 글 종류별 토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 임베딩 · 위치 · 이미지 토큰 · 실측](../stages/tokenizer/tk1-normalize/tokenizer.md) |
 
 ## 설계 원칙
 
