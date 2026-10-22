@@ -24,6 +24,7 @@ from app.stages.apps import api as apps_api  # noqa: E402
 from app.stages.as_service import api as as_api  # noqa: E402
 from app.stages.coding import api as coding_api  # noqa: E402
 from app.stages.compliance import api as compliance_api  # noqa: E402
+from app.stages.compress import api as compress_api  # noqa: E402
 from app.stages.computer_use import api as computer_use_api  # noqa: E402
 from app.stages.context import api as context_api  # noqa: E402
 from app.stages.conversation import api as conversation_api  # noqa: E402
@@ -162,6 +163,7 @@ for module in (
     computer_use_api,  # 컴퓨터 사용 · 브라우저 에이전트 — 화면 이해 · 행동 · 상태 확인 · 승인 · 웹 인젝션 · 재생 평가
     interp_api,  # 해석 가능성 — 임베딩 공간 · 근거 기여 · 탐침 · 희소 특징 · 조종 · 내부 신호 환각 탐지
     memory_api,  # 장기 메모리 — 기억 추출 · 저장 · 연결 · 검색 · 갱신 · 통합 · 망각 · 계층 · 여러 세션 평가
+    compress_api,  # 프롬프트 · KV 압축 — 토큰 · 질문 압축 · 주의 싱크 · 중요 토큰 KV · KV 양자화 · 압축 평가
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

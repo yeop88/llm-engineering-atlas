@@ -63,6 +63,8 @@ app/
                        reward(항목별 보상 · 해킹 감시) · policy(GRPO, posttrain.trainer 를 씀)
     edge/              온디바이스 · 엣지 맵(ED1~ED6): devices(기기 프로필 · 조합 추천) · pack(기기용 팩 · 압축 · 정확 검색 · 평가) ·
                        offline(기능 범위 · 미룸) · sync(판 증분 · 지문 확인 · 기기 상태) · privacy(전송 정책 · 서버 재검사)
+    compress/          프롬프트 · KV 압축 맵(KC1~KC6): prompt(토큰 놀람 · 질문 대조 · 기준선 · 보존률) · kv(KV 위치 고르기 · 자르기 · 양자화 · 충실도) —
+                       작은 LM 은 interp.lm
     memory/            장기 메모리 맵(ME1~ME7): extract(규칙 · LLM 기억 추출) · store(갱신 규칙 · 시점 기록 · 연결 · 통합 · 망각) ·
                        recall(점수 검색 · 연결 확장 · 핵심 기억 · 맥락) · evaluate(여러 세션 대화 · 질문 6유형 · 채점)
     interp/            해석 가능성 맵(IP1~IP6): space(임베딩 공간 지표 · 언어 간 정렬) · lm(작은 LLM 은닉 상태 · 어텐션 · 로그확률 · 조종 훅) ·

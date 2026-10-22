@@ -22,12 +22,12 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| KC1 | [토큰 단위 프롬프트 압축](../stages/compress/kc1-token/README.md) | ⬜ 예정 | 작은 모델이 쉽게 맞히는(정보가 적은) 토큰을 지워 근거를 줄인다 | [S2 근거 길이](../stages/serving/s2-context/README.md) | — |
-| KC2 | [질문을 아는 압축](../stages/compress/kc2-query/README.md) | ⬜ 예정 | 질문에 비춰 관계없는 문장은 통째로, 남은 문장은 토큰 단위로 줄인다 | [KC1 토큰 압축](../stages/compress/kc1-token/README.md) · [CX1 맥락 배치](../stages/context/cx1-budget/README.md) | — |
-| KC3 | [주의 싱크 + 최근 창](../stages/compress/kc3-sink/README.md) | ⬜ 예정 | 첫 몇 토큰과 최근 창만 KV 에 남겨 끝없이 긴 대화를 고정 메모리로 돈다 | [IP2 근거 기여](../stages/interp/ip2-attribution/README.md) | — |
-| KC4 | [중요 토큰 KV 남기기](../stages/compress/kc4-heavy/README.md) | ⬜ 예정 | 주의를 많이 받은 토큰의 KV 만 남겨 캐시를 줄인다 | [KC3 주의 싱크](../stages/compress/kc3-sink/README.md) | — |
-| KC5 | [KV 양자화](../stages/compress/kc5-kvquant/README.md) | ⬜ 예정 | KV 캐시를 8 · 4비트로 저장해 같은 메모리에 더 긴 맥락을 둔다 | [S5 디코딩 최적화](../stages/serving/s5-decode/README.md) · [7b 양자화](../stages/llm/7b-quant/README.md) | — |
-| KC6 | [압축 평가](../stages/compress/kc6-eval/README.md) | ⬜ 예정 | 압축률마다 같은 질문의 정답률 · 지연 · 남은 숫자 · 조항을 잰다 | [E2 회귀 평가](../stages/evalops/e2-offline/README.md) | — |
+| KC1 | [토큰 단위 프롬프트 압축](../stages/compress/kc1-token/README.md) | ✅ 구현됨 | 작은 모델이 쉽게 맞히는(정보가 적은) 토큰을 지워 근거를 줄인다 | [S2 근거 길이](../stages/serving/s2-context/README.md) | [프롬프트 · KV 캐시 압축 — 토큰 놀람 · 질문 대조 · 주의 싱크 · 누적 주의 · 관찰 창 · KV 양자화 · 압축 평가 · 실측](../stages/compress/kc1-token/compress.md) |
+| KC2 | [질문을 아는 압축](../stages/compress/kc2-query/README.md) | ✅ 구현됨 | 질문에 비춰 관계없는 문장은 통째로, 남은 문장은 토큰 단위로 줄인다 | [KC1 토큰 압축](../stages/compress/kc1-token/README.md) · [CX1 맥락 배치](../stages/context/cx1-budget/README.md) | [프롬프트 · KV 캐시 압축 — 토큰 놀람 · 질문 대조 · 주의 싱크 · 누적 주의 · 관찰 창 · KV 양자화 · 압축 평가 · 실측](../stages/compress/kc1-token/compress.md) |
+| KC3 | [주의 싱크 + 최근 창](../stages/compress/kc3-sink/README.md) | ✅ 구현됨 | 첫 몇 토큰과 최근 창만 KV 에 남겨 끝없이 긴 대화를 고정 메모리로 돈다 | [IP2 근거 기여](../stages/interp/ip2-attribution/README.md) | [프롬프트 · KV 캐시 압축 — 토큰 놀람 · 질문 대조 · 주의 싱크 · 누적 주의 · 관찰 창 · KV 양자화 · 압축 평가 · 실측](../stages/compress/kc1-token/compress.md) |
+| KC4 | [중요 토큰 KV 남기기](../stages/compress/kc4-heavy/README.md) | ✅ 구현됨 | 주의를 많이 받은 토큰의 KV 만 남겨 캐시를 줄인다 | [KC3 주의 싱크](../stages/compress/kc3-sink/README.md) | [프롬프트 · KV 캐시 압축 — 토큰 놀람 · 질문 대조 · 주의 싱크 · 누적 주의 · 관찰 창 · KV 양자화 · 압축 평가 · 실측](../stages/compress/kc1-token/compress.md) |
+| KC5 | [KV 양자화](../stages/compress/kc5-kvquant/README.md) | ✅ 구현됨 | KV 캐시를 8 · 4비트로 저장해 같은 메모리에 더 긴 맥락을 둔다 | [S5 디코딩 최적화](../stages/serving/s5-decode/README.md) · [7b 양자화](../stages/llm/7b-quant/README.md) | [프롬프트 · KV 캐시 압축 — 토큰 놀람 · 질문 대조 · 주의 싱크 · 누적 주의 · 관찰 창 · KV 양자화 · 압축 평가 · 실측](../stages/compress/kc1-token/compress.md) |
+| KC6 | [압축 평가](../stages/compress/kc6-eval/README.md) | ✅ 구현됨 | 압축률마다 같은 질문의 정답률 · 지연 · 남은 숫자 · 조항을 잰다 | [E2 회귀 평가](../stages/evalops/e2-offline/README.md) | [프롬프트 · KV 캐시 압축 — 토큰 놀람 · 질문 대조 · 주의 싱크 · 누적 주의 · 관찰 창 · KV 양자화 · 압축 평가 · 실측](../stages/compress/kc1-token/compress.md) |
 
 ## 설계 원칙
 

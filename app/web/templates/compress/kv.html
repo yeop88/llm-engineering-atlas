@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}KV 캐시 줄이기{% endblock %}
+{% block content %}
+{% call ui.page_header("KV 캐시 줄이기") %}작은 공개 LM 이 근거 + 질문을 읽은 뒤의 KV 캐시를 직접 줄여 봅니다. 최근 창만 남기기(첫 토큰도 버림 — 대조군) · 첫 토큰(주의 싱크) + 최근 창(KC3) · 지금까지 주의를 많이 받은 토큰 남기기 · 질문 쪽 관찰 창이 주목하는 토큰 남기기(KC4)를 남길 비율별로, 키 · 값을 따로 8 · 4비트로 양자화한 것(KC5)과 함께 비교합니다. 가득 찬 캐시로 낸 답을 기준으로, 줄인 캐시가 같은 다음 토큰을 내는 비율 · KL · 처음 갈라지는 자리를 잽니다.{% endcall %}
+
+<div class="card stack" id="sink">
+  <h2>정책 · 비율 · 비트별 충실도 (KC3 · KC4 · KC5)</h2>
+  <div class="row">
+    <div class="field"><label for="k-col">컬렉션</label><select id="k-col" data-ctx="col"></select></div>
+    <div class="field"><label for="k-set">평가 세트</label><select id="k-set" data-ctx="set"></select></div>
+    <div class="field"><label for="k-n">질문 수</label><input id="k-n" type="number" value="8" min="1" class="w-md"></div>
+    <div class="field"><label for="k-keeps">남길 비율 (쉼표)</label><input id="k-keeps" value="0.5, 0.25, 0.1" class="w-md"></div>
+    <div class="field"><label for="k-new">답 토큰</label><input id="k-new" type="number" value="40" min="4" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="k-run">재기</button></div>
+  </div>
+  <p class="small muted" id="k-model"></p>
+  <div id="k-progress" hidden></div>
+  <div id="k-out"></div>
+</div>
+
+<div class="card stack mt-4" id="heavy">
+  <h2>읽는 법</h2>
+  <p class="small">다음 토큰 일치율 1.0 = 줄인 캐시로도 같은 답을 냄. '최근 창만'이 '첫 토큰 + 최근 창'보다 크게 떨어지면 주의 싱크가 있다는 뜻이고, '누적 주의' · '관찰 창'이 같은 비율에서 '첫 토큰 + 최근 창'보다 높으면 앞쪽의 중요한 근거를 지킨다는 뜻입니다.</p>
+</div>
+<div class="card stack mt-4" id="kvquant">
+  <h2>KV 양자화 (KC5)</h2>
+  <p class="small muted">위 표의 'quant k8/v8' 같은 줄 — 키와 값의 비트를 따로 줄여, 어느 쪽이 더 민감한지 봅니다. 실제 서버의 KV 형식(q8_0 · q4_0) 비교는 서빙 맵의 디코딩 비교에서 잽니다.</p>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/compress/kv.js') }}"></script>
+{% endblock %}

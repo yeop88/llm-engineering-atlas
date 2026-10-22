@@ -474,6 +474,15 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 프롬프트 · KV 캐시 압축 (`/api/compress`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/compress/options` | 방법 · KV 정책 이름 · 압축 모델 |
+| POST | `/api/compress/preview` | 압축 미리 보기 `{"text", "question", "method": "token"\|"query"\|"lexical"\|"random", "ratio"}` → 압축 글 · 남은 비율 · 숫자 · 조항 보존 · 문장 대조 점수 |
+| POST | `/api/compress/eval` | 압축 평가 작업 `{"eval_set_id", "methods", "ratios", "max_queries", "provider", "model"}` → 방법 × 비율 정답률 · 남은 글자 · 보존 · 시간 |
+| POST | `/api/compress/kv` | KV 실험 작업 `{"eval_set_id", "policies", "keeps", "kv_bits", "max_queries", "max_new"}` → 정책 × 비율 · 비트별 다음 토큰 일치 · KL · 갈라진 답 |
+
 ## 장기 메모리 (`/api/memory`)
 
 | 메서드 | 경로 | 설명 |

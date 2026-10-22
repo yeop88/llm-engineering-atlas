@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [KC5 KV 양자화](../../compress/kc5-kvquant/README.md) — 프롬프트 · KV 캐시 압축 맵 · ⬜ 예정
+- [KC5 KV 양자화](../../compress/kc5-kvquant/README.md) — 프롬프트 · KV 캐시 압축 맵 · ✅ 구현됨
 
 ---
 

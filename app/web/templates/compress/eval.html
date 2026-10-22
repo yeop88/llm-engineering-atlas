@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}압축 평가{% endblock %}
+{% block content %}
+{% call ui.page_header("압축 평가") %}같은 평가 질문 · 같은 검색 근거를 방법 · 압축률마다 줄여 평소의 LLM 이 답하게 합니다. 작은 모델로 줄이고 큰 모델이 읽는 실제 쓰임 그대로입니다. 정답률(정답 근거 인용)과 함께 실제로 남은 글자 비율 · 정답 근거의 숫자 · 조항이 남은 비율 · 압축에 든 시간 · 답 시간을 봅니다 — 평균 정답률만 보면 숫자 하나가 사라져 틀린 답이 는 것을 놓칩니다(KC6).{% endcall %}
+
+<div class="card stack" id="eval">
+  <h2>방법 × 압축률 (KC6)</h2>
+  <div class="row">
+    <div class="field"><label for="e-col">컬렉션</label><select id="e-col" data-ctx="col"></select></div>
+    <div class="field"><label for="e-set">평가 세트</label><select id="e-set" data-ctx="set"></select></div>
+    <div class="field"><label for="e-n">질문 수</label><input id="e-n" type="number" value="15" min="1" class="w-md"></div>
+    <div class="field"><label for="e-ratios">남길 비율 (쉼표)</label><input id="e-ratios" value="0.5, 0.3" class="w-md"></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="e-provider">제공자</label><select id="e-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="e-model">답할 모델</label><input id="e-model" data-ctx="model"></div>
+    <div class="self-end"><button class="btn primary" id="e-run">평가</button></div>
+  </div>
+  <div id="e-progress" hidden></div>
+  <div id="e-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/compress/eval.js') }}"></script>
+{% endblock %}

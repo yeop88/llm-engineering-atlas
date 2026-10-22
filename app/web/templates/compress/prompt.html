@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}프롬프트 압축{% endblock %}
+{% block content %}
+{% call ui.page_header("프롬프트 압축") %}근거를 LLM 에 넣기 전에 줄입니다. 작은 공개 LM 으로 토큰마다 놀람(예측하기 어려운 정도)을 재고, 쉽게 맞히는 토큰부터 지워 목표 비율까지 남깁니다. 숫자 · 조문 번호 · 모델 · 오류 코드는 놀람과 상관없이 남깁니다(KC1). 질문을 아는 압축은 질문을 붙였을 때 확률이 크게 오르는 문장(질문과 관계 깊은 문장)부터 남기고, 그 안에서 토큰을 줄입니다(KC2). 압축 뒤에 원문의 숫자 · 조항이 몇 % 남았는지 함께 봅니다.{% endcall %}
+
+<div class="card stack" id="token">
+  <h2>미리 보기 (KC1 · KC2)</h2>
+  <div class="field"><label for="p-text">근거</label><textarea id="p-text" rows="6">제23조(해고 등의 제한) ① 사용자는 근로자에게 정당한 이유 없이 해고, 휴직, 정직, 전직, 감봉, 그 밖의 징벌을 하지 못한다. ② 사용자는 근로자가 업무상 부상 또는 질병의 요양을 위하여 휴업한 기간과 그 후 30일 동안은 해고하지 못한다. 세탁기 배수가 안 될 때는 배수 필터를 청소하세요. 냉장고 소음은 수평 조절로 줄일 수 있습니다.</textarea></div>
+  <div class="row">
+    <div class="field grow"><label for="p-q">질문 (질문을 아는 압축 · 글자 겹침에 씀)</label><input id="p-q" value="요양 휴업 뒤 며칠 동안 해고할 수 없나요?"></div>
+    <div class="field"><label for="p-method">방법</label><select id="p-method"><option value="token">토큰 단위(KC1)</option><option value="query">질문을 아는(KC2)</option><option value="lexical">글자 겹침 문장</option><option value="random">무작위 토큰</option></select></div>
+    <div class="field"><label for="p-ratio">남길 비율</label><input id="p-ratio" type="number" value="0.5" step="0.1" min="0.1" max="1" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="p-run">압축</button></div>
+  </div>
+  <div id="p-out"></div>
+</div>
+
+<div class="card stack mt-4" id="query">
+  <h2>질문과의 관계 (KC2)</h2>
+  <p class="small muted">질문을 아는 압축을 고르면 문장마다 대조 점수(질문 없을 때 평균 놀람 − 질문 있을 때)와 남겼는지가 여기에 나옵니다.</p>
+  <div id="p-sents"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/compress/prompt.js') }}"></script>
+{% endblock %}
