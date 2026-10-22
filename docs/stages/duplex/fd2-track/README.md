@@ -34,7 +34,7 @@
 이미 있는 단계 위에 짓습니다.
 
 - [AU3 화자 · 언어 탐지](../../audio/au3-speaker/README.md) — 오디오 이해 맵 · ✅ 구현됨
-- [VD4 객체 · 행동 추적](../../video/vd4-track/README.md) — 비디오 이해 맵 · 🔬 연구
+- [VD4 객체 · 행동 추적](../../video/vd4-track/README.md) — 비디오 이해 맵 · ✅ 구현됨
 
 ---
 

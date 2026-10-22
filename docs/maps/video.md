@@ -22,14 +22,14 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| VD1 | [영상 수집](../stages/video/vd1-ingest/README.md) | ⬜ 예정 | 영상 파일 · 스트림을 받고 길이 · 형식 · 소리 트랙을 확인한다 | [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) | — |
-| VD2 | [장면 분할](../stages/video/vd2-scene/README.md) | ⬜ 예정 | 컷(샷)과 장면 경계를 찾는다 | [OM3 영상 분석](../stages/omni/om3-video/README.md) | — |
-| VD3 | [대표 프레임 선택](../stages/video/vd3-keyframe/README.md) | ⬜ 예정 | 장면마다 대표 프레임을 골라 비전 모델로 읽는다 | [OM3 영상 분석](../stages/omni/om3-video/README.md) | — |
-| VD4 | [객체 · 행동 추적](../stages/video/vd4-track/README.md) | 🔬 연구 | 물체 · 사람을 프레임에 걸쳐 따라가고 행동을 붙인다 | [VL3 객체 · 영역](../stages/vision/vl3-detect/README.md) | — |
-| VD5 | [음성 · 자막 정렬](../stages/video/vd5-align/README.md) | ⬜ 예정 | 전사 · 자막 · 화자를 영상 시간축에 맞춘다 | [AU5 시간 구간](../stages/audio/au5-segment/README.md) · [VC1 음성 인식](../stages/voice/vc1-stt/README.md) | — |
-| VD6 | [시공간 추론](../stages/video/vd6-reason/README.md) | ⬜ 예정 | '처음 · 마지막 · 몇 번 · 무엇 다음' 을 색인 위에서 계산한다 | [RS1 생각 예산](../stages/reasoning/rs1-budget/README.md) · [RS3 여러 번 풀기](../stages/reasoning/rs3-sampling/README.md) | — |
-| VD7 | [이벤트 색인](../stages/video/vd7-index/README.md) | ⬜ 예정 | 장면 · 트랙 · 말 · 사건을 시간 · 관계로 색인한다 | [OM3 영상 분석](../stages/omni/om3-video/README.md) · [K5 그래프 DB](../stages/knowledge-graph/k5-graph-db/README.md) | — |
-| VD8 | [검색 · 요약](../stages/video/vd8-search/README.md) | ⬜ 예정 | 질문에 근거 클립과 함께 답하고 영상을 구간 근거로 요약한다 | [2 RAG](../stages/llm/2-rag/README.md) · [VC7 통화 요약](../stages/voice/vc7-summary/README.md) | — |
+| VD1 | [영상 수집](../stages/video/vd1-ingest/README.md) | ✅ 구현됨 | 영상 파일 · 스트림을 받고 길이 · 형식 · 소리 트랙을 확인한다 | [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) | [비디오 이해 — 컷 · 추적 · 소리 사건을 한 시간축 색인으로, 처음 · 마지막 · 몇 번 · 무엇 다음을 계산, 합성 영상 평가](../stages/video/vd1-ingest/video.md) |
+| VD2 | [장면 분할](../stages/video/vd2-scene/README.md) | ✅ 구현됨 | 컷(샷)과 장면 경계를 찾는다 | [OM3 영상 분석](../stages/omni/om3-video/README.md) | [비디오 이해 — 컷 · 추적 · 소리 사건을 한 시간축 색인으로, 처음 · 마지막 · 몇 번 · 무엇 다음을 계산, 합성 영상 평가](../stages/video/vd1-ingest/video.md) |
+| VD3 | [대표 프레임 선택](../stages/video/vd3-keyframe/README.md) | ✅ 구현됨 | 장면마다 대표 프레임을 골라 비전 모델로 읽는다 | [OM3 영상 분석](../stages/omni/om3-video/README.md) | [비디오 이해 — 컷 · 추적 · 소리 사건을 한 시간축 색인으로, 처음 · 마지막 · 몇 번 · 무엇 다음을 계산, 합성 영상 평가](../stages/video/vd1-ingest/video.md) |
+| VD4 | [객체 · 행동 추적](../stages/video/vd4-track/README.md) | ✅ 구현됨 | 물체 · 사람을 프레임에 걸쳐 따라가고 행동을 붙인다 | [VL3 객체 · 영역](../stages/vision/vl3-detect/README.md) | [비디오 이해 — 컷 · 추적 · 소리 사건을 한 시간축 색인으로, 처음 · 마지막 · 몇 번 · 무엇 다음을 계산, 합성 영상 평가](../stages/video/vd1-ingest/video.md) |
+| VD5 | [음성 · 자막 정렬](../stages/video/vd5-align/README.md) | ✅ 구현됨 | 전사 · 자막 · 화자를 영상 시간축에 맞춘다 | [AU5 시간 구간](../stages/audio/au5-segment/README.md) · [VC1 음성 인식](../stages/voice/vc1-stt/README.md) | [비디오 이해 — 컷 · 추적 · 소리 사건을 한 시간축 색인으로, 처음 · 마지막 · 몇 번 · 무엇 다음을 계산, 합성 영상 평가](../stages/video/vd1-ingest/video.md) |
+| VD6 | [시공간 추론](../stages/video/vd6-reason/README.md) | ✅ 구현됨 | '처음 · 마지막 · 몇 번 · 무엇 다음' 을 색인 위에서 계산한다 | [RS1 생각 예산](../stages/reasoning/rs1-budget/README.md) · [RS3 여러 번 풀기](../stages/reasoning/rs3-sampling/README.md) | [비디오 이해 — 컷 · 추적 · 소리 사건을 한 시간축 색인으로, 처음 · 마지막 · 몇 번 · 무엇 다음을 계산, 합성 영상 평가](../stages/video/vd1-ingest/video.md) |
+| VD7 | [이벤트 색인](../stages/video/vd7-index/README.md) | ✅ 구현됨 | 장면 · 트랙 · 말 · 사건을 시간 · 관계로 색인한다 | [OM3 영상 분석](../stages/omni/om3-video/README.md) · [K5 그래프 DB](../stages/knowledge-graph/k5-graph-db/README.md) | [비디오 이해 — 컷 · 추적 · 소리 사건을 한 시간축 색인으로, 처음 · 마지막 · 몇 번 · 무엇 다음을 계산, 합성 영상 평가](../stages/video/vd1-ingest/video.md) |
+| VD8 | [검색 · 요약](../stages/video/vd8-search/README.md) | ✅ 구현됨 | 질문에 근거 클립과 함께 답하고 영상을 구간 근거로 요약한다 | [2 RAG](../stages/llm/2-rag/README.md) · [VC7 통화 요약](../stages/voice/vc7-summary/README.md) | [비디오 이해 — 컷 · 추적 · 소리 사건을 한 시간축 색인으로, 처음 · 마지막 · 몇 번 · 무엇 다음을 계산, 합성 영상 평가](../stages/video/vd1-ingest/video.md) |
 
 ## 설계 원칙
 

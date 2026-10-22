@@ -488,6 +488,15 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/architecture/layers` | `{"gguf"}` 또는 `{"hf_id", "bits"}` → 층마다 어텐션 종류 · KV 차원 · FFN 밀집/MoE · 바이트, 요약(전문가 몫 · 토큰당 읽는 양 · 임베딩 · 출력층 몫), 맥락 길이별 KV 대 단순 어림 |
 | POST | `/api/architecture/scaling` | 맥락 길이별 실측 작업 `{"lengths"}` → 작은 LM 의 미리 채우기 시간 · 토큰당 ms · 실제 KV · 길이 두 배당 시간 배율 |
 
+## 비디오 이해 (`/api/video`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/video/sample/{seed}/frame.png` | 시험 영상의 `?t=` 초 프레임 |
+| POST | `/api/video/index` | 폼 `file` 또는 `seed`, `fps`, `describe`, `provider` · `model` → 사건 색인(컷 · 트랙 · 소리) · 장면 · 대표 프레임 · 시간 순 기록 |
+| POST | `/api/video/ask` | `{"events", "q", "llm"?}` → 풀이(대상 · 종류 · 연산 · 기준) · 색인 계산 답 · 근거 사건 · 클립, llm 을 주면 기록 전체를 LLM 에 준 답도 |
+| POST | `/api/video/evaluate` | 평가 작업 `{"n", "compare_llm", "llm"}` → 컷 · 사건 찾기 정밀 · 재현, 질문 종류별 정답률 |
+
 ## 이미지 · Vision-Language (`/api/vision`)
 
 | 메서드 | 경로 | 설명 |

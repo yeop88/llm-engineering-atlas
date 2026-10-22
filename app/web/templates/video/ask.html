@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}영상 시간 질문{% endblock %}
+{% block content %}
+{% call ui.page_header("영상 시간 질문") %}영상을 시간축 하나로 색인합니다.
+<ul class="small">
+  <li>영상 받기(길이 · fps · 소리 트랙, VD1), 컷(장면 전환, VD2), 장면마다 대표 프레임(비전 LLM 으로 읽기, VD3)</li>
+  <li>물체 추적 · 나타남 · 사라짐 · 닿음(VD4), 소리 트랙의 말 · 경고음 · 덜컹(오디오 맵으로, VD5)</li>
+</ul>
+'처음 · 마지막 · 몇 번 · 무엇 다음 · 무엇 전'은 LLM 이 기록을 읽어 세지 않고 색인 위에서 계산하고(VD6), 근거 사건과 클립 구간을 붙입니다(VD7 · VD8).{% endcall %}
+
+<div class="card stack" id="index">
+  <h2>색인 만들기 (VD1~VD5 · VD7)</h2>
+  <div class="row">
+    <div class="field"><label for="i-seed">시험 영상 번호</label><input id="i-seed" type="number" value="203" class="w-md"></div>
+    <div class="field grow"><label for="i-file">또는 영상 파일</label><input id="i-file" type="file" accept="video/*"></div>
+    <div class="field"><label for="i-fps">초당 프레임</label><input id="i-fps" type="number" value="2" min="0.5" max="10" step="0.5" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="i-desc"> 대표 프레임 읽기(비전 LLM)</label>
+    <div class="self-end"><button class="btn primary" id="i-run">색인</button></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="i-provider">제공자</label><select id="i-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="i-model">모델</label><input id="i-model" data-ctx="model"></div>
+  </div>
+  <div id="i-out"></div>
+</div>
+
+<div class="card stack mt-4" id="ask">
+  <h2>시간 질문 (VD6 · VD8)</h2>
+  <div class="row">
+    <div class="field grow"><label for="a-q">질문</label><input id="a-q" value="장면이 처음 바뀐 다음에 빨간 공이 처음 나타난 때는?"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="a-llm"> LLM 에 기록 전체를 줘서도</label>
+    <div class="self-end"><button class="btn" id="a-run">묻기</button></div>
+  </div>
+  <div class="grid cols-2"><div id="a-out" class="small"></div><div><img id="a-img" alt="근거 프레임" class="w-full" hidden></div></div>
+</div>
+
+<div class="card stack mt-4" id="evaluate">
+  <h2>평가 (합성 영상)</h2>
+  <p class="small muted">정답 사건을 아는 영상 n 개에서 질문을 만들어 잽니다. 컷 · 사건 찾기 정확, 색인 계산 정답률(찾은 색인 · 정답 색인)을 보고, 고르면 '기록 전체를 LLM 에'와 같은 질문으로 비교합니다.</p>
+  <div class="row">
+    <div class="field"><label for="e-n">영상 수</label><input id="e-n" type="number" value="10" min="1" max="100" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="e-llm"> LLM 비교</label>
+    <div class="self-end"><button class="btn" id="e-run">평가</button></div>
+  </div>
+  <div id="e-progress" hidden></div>
+  <div id="e-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/video/ask.js') }}"></script>
+{% endblock %}
