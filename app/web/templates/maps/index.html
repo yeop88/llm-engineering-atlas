@@ -4,29 +4,40 @@
 {% block title %}모든 맵{% endblock %}
 {% block content %}
 {% if not_found %}<div class="errbox mb-4" role="alert">찾는 맵 · 단계 · 화면이 없습니다. 아래 목록이나 <kbd>Ctrl K</kbd> 빠른 이동으로 찾아 보세요.</div>{% endif %}
-{% call ui.page_header("모든 맵") %}맵은 LLM 시스템을 보는 관점 하나입니다. 같은 단계(기능)가 여러 맵에 기반 단계로 다시 쓰입니다 — 막대는 그 맵의 단계 상태(구현됨 · 기초 있음 · 예정)입니다.{% endcall %}
+{% call ui.page_header("모든 맵") %}맵은 LLM 시스템을 보는 관점 하나입니다. 같은 단계(기능)가 여러 맵에 기반 단계로 다시 쓰입니다 — 막대는 그 맵의 단계 상태(구현됨 · 기초 있음 · 예정 · 연구), 배지는 기술 성숙도, 번호는 덮는 생태계 맵입니다. 생태계 전체와 대응표는 <a href="/maps/ecosystem">LLM 생태계 구조</a>에서 봅니다.{% endcall %}
 
 <div class="row mb-4">
   {{ ui.field("m-q", "이름 · 설명으로 거르기", '<input id="m-q" type="search" placeholder="예: 평가, 음성, 보안">', "grow") }}
   {{ ui.field("m-st", "상태", '<select id="m-st"><option value="">모두</option><option value="done">구현된 단계가 있는 맵</option><option value="planned">예정만 있는 맵</option></select>') }}
 </div>
 
-<div class="grid cols-3" id="maps">
-{% for m in registry.MAPS %}
+{# 맵이 40개를 넘어 생태계 그룹(A~F)으로 나눠 보여 준다 — 그룹은 registry/ecosystem.py #}
+{% for g, gtitle, areas in ecosystem.GROUPS %}
+{% set gm = registry.MAPS | selectattr("group", "equalto", g) | list %}
+{% if gm %}
+<section class="map-group mt-4" data-group="{{ g }}">
+<h2>{{ g }}. {{ gtitle }} <span class="small muted">{{ areas | join(" · ") }} — 맵 {{ gm | length }}개</span></h2>
+<div class="grid cols-3">
+{% for m in gm %}
   {% set ss = registry.map_stages(m.key) %}
   {% set n_done = ss | selectattr("status", "equalto", "done") | list | length %}
   {% set n_basic = ss | selectattr("status", "equalto", "basic") | list | length %}
-  {% set n_plan = ss | length - n_done - n_basic %}
-  <a class="card stack inherit map-card" href="{{ m.href }}" data-text="{{ (m.title ~ ' ' ~ m.summary) | lower }}" data-st="{{ 'done' if n_done else ('basic' if n_basic else 'planned') }}">
+  {% set n_res = ss | selectattr("status", "in", ["research", "hold"]) | list | length %}
+  {% set n_plan = ss | length - n_done - n_basic - n_res %}
+  <a class="card stack inherit map-card" href="{{ m.href }}" data-text="{{ (m.title ~ ' ' ~ m.summary ~ ' ' ~ (m.eco | join(' '))) | lower }}" data-st="{{ 'done' if n_done else ('basic' if n_basic else 'planned') }}" data-group="{{ g }}">
     <div class="row between"><b>{{ m.title }}</b><span class="small muted">{{ ss | length }}단계</span></div>
     <div class="small muted">{{ m.summary }}</div>
-    <div class="stackbar" role="img" aria-label="구현됨 {{ n_done }} · 기초 있음 {{ n_basic }} · 예정 {{ n_plan }}">
-      {% if n_done %}<span style="flex:{{ n_done }};background:var(--ok)"></span>{% endif %}{% if n_basic %}<span style="flex:{{ n_basic }};background:var(--warn)"></span>{% endif %}{% if n_plan %}<span style="flex:{{ n_plan }};background:var(--chart-axis)"></span>{% endif %}
+    <div class="stackbar" role="img" aria-label="구현됨 {{ n_done }} · 기초 있음 {{ n_basic }} · 예정 {{ n_plan }} · 연구 · 보류 {{ n_res }}">
+      {% if n_done %}<span style="flex:{{ n_done }};background:var(--ok)"></span>{% endif %}{% if n_basic %}<span style="flex:{{ n_basic }};background:var(--warn)"></span>{% endif %}{% if n_plan %}<span style="flex:{{ n_plan }};background:var(--chart-axis)"></span>{% endif %}{% if n_res %}<span style="flex:{{ n_res }};background:var(--code)"></span>{% endif %}
     </div>
-    <div class="small muted">구현됨 {{ n_done }} · 기초 있음 {{ n_basic }} · 예정 {{ n_plan }}</div>
+    <div class="row small muted"><span>구현됨 {{ n_done }} · 기초 있음 {{ n_basic }} · 예정 {{ n_plan }}{% if n_res %} · 연구 {{ n_res }}{% endif %}</span>
+      {% if m.maturity %}<span class="badge muted">{{ m.maturity }}</span>{% endif %}{% if m.eco %}<span class="mono">{{ m.eco | join(" ") }}</span>{% endif %}</div>
   </a>
 {% endfor %}
 </div>
+</section>
+{% endif %}
+{% endfor %}
 <div id="m-none" class="empty" hidden>조건에 맞는 맵이 없습니다.</div>
 {% endblock %}
 {% block scripts %}

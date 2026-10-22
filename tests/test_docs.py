@@ -68,7 +68,7 @@ def test_docs_layout_is_consistent():
     assert sorted(p.name for p in docs.glob("*.md")) == ["README.md"]  # 최상위에는 색인만
     slugs = {m.slug for m in registry.MAPS}
     assert {p.name for p in (docs / "stages").iterdir() if p.is_dir()} == slugs
-    assert {p.stem for p in (docs / "maps").glob("*.md")} == slugs
+    assert {p.stem for p in (docs / "maps").glob("*.md")} == slugs | {"ecosystem"}  # 생태계 구조는 맵들을 잇는 문서(맵이 아님)
     for m in registry.MAPS:
         assert m.doc == f"docs/maps/{m.slug}.md"
         text = (ROOT / m.doc).read_text(encoding="utf-8")

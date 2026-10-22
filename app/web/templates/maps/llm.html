@@ -29,7 +29,7 @@
     <tr><th>단계</th><th>상태</th><th>무엇을</th><th>화면</th></tr>
     {% for s in registry.map_stages('llm') %}
     <tr><td class="nowrap"><span class="stage-no">{{ s.no }}</span> <a href="/stages/{{ s.key }}"><b>{{ s.title }}</b></a> <span class="small muted">{{ s.en }}</span></td>
-      <td><span class="badge {{ 'ok' if s.status == 'done' else ('warn' if s.status == 'basic' else '') }}">{{ s.status_label }}</span></td>
+      <td><span class="badge {{ 'ok' if s.status == 'done' else ('warn' if s.status == 'basic' else ('muted' if s.status in ('research', 'hold') else '')) }}">{{ s.status_label }}</span></td>
       <td class="small">{{ s.summary }}</td>
       <td class="small">{% for p in s.pages %}<a href="{{ p.href }}">{{ p.label }}</a>{{ " · " if not loop.last }}{% else %}<span class="muted">—</span>{% endfor %}</td></tr>
     {% endfor %}

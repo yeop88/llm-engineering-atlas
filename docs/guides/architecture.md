@@ -88,7 +88,8 @@ app/
                        fastrag(지연 예산 · 문장 스트리밍) · speech(읽기 규칙 · 합성) · emotion(불만 · 이관) · assist(추천 · 채택률) · summary(양식 · 전사 일치), presets/
     as_service/        고객 AS 상담 맵(AS1~AS8): triage(의도 · 긴급도 · 코드) · photo(사진 코드 읽기) · flow(상담 흐름 · 캐시 · 티켓 · 지표) ·
                        setup(예시 매뉴얼), presets/
-    registry/          맵 · 단계 설명(데이터만, 다른 앱 모듈을 불러오지 않음)
+    registry/          맵 · 단계 설명(데이터만, 다른 앱 모듈을 불러오지 않음) — ecosystem.py 는 생태계 그룹 A~F · 생태계 맵 M1~M30 · E1~E4 대응표 ·
+                       공통 노드 온톨로지 · 통합 라우팅 · 맵 메타데이터(그룹 · 성숙도 · 의존 · 근거 수준 · 확인일)
       model.py           Map · Page · Stage 구조와 문서 경로 규칙
       maps/<맵>.py       맵 1개 = 파일 1개: MAP(흐름 · 원칙 · 예시) + STAGES
       __init__.py        MAP_MODULES 순서로 모으기 · 조회(map_stages · map_flow · stage_for_nav)
@@ -130,7 +131,9 @@ tests/               app/ 와 같은 구조: core/ · pipeline/ · web/ · stage
 5. 테스트: `tests/stages/<단계>/test_<주제>.py` (가짜 모델 · `tests/helpers.py` · 공용 픽스처 `scripted_llm` · `rag_collection`)
 6. 문서: `docs/stages/<맵>/<번호>-<이름>/<단계>.md` 상세 · 실측, `uv run python scripts/gen_docs.py`, `CHANGELOG.md`, `docs/guides/api.md`
 
-**새 맵** — 1. `app/stages/registry/maps/<맵>.py` 에 `MAP`(흐름 묶음 · 원칙 · 예시) + `STAGES` 2. `registry/__init__.py` 의 `MAP_MODULES` 에 한 줄 3. `uv run python scripts/gen_docs.py` (화면 `/maps/<맵>` · 개요 · 단계 문서가 생김). 전용 화면이 필요할 때만 `template` 을 지정하고 템플릿을 만듭니다.
+**새 맵** — 1. `app/stages/registry/maps/<맵>.py` 에 `MAP`(흐름 묶음 · 원칙 · 예시 · 그룹 · 성숙도 · 기대는 맵) + `STAGES` 2. `registry/__init__.py` 의 `MAP_MODULES` 에 한 줄 3. 생태계 대응표(`app/stages/registry/ecosystem.py` 의 `ECOSYSTEM`)에서 그 맵이 덮는 생태계 맵의 `covers` 또는 `new` 에 키를 넣기(생태계 번호는 여기서 계산) 4. `uv run python scripts/gen_docs.py` (화면 `/maps/<맵>` · 개요 · 단계 문서 · `docs/maps/ecosystem.md` 가 생김). 전용 화면이 필요할 때만 `template` 을 지정하고 템플릿을 만듭니다.
+
+단계 상태는 5종입니다: 구현됨 · 기초 있음 · 예정 · 연구(이 PC · 공개 모델로는 아직 제대로 돌릴 수 없어 설계 · 흉내 실험만) · 보류(하지 않기로 미룸, 이유는 할 일에). 상태는 구현 정도이고, 기술 성숙도(기초 · 성숙 · 신선 · 실험적)는 맵의 `maturity` 로 따로 적습니다.
 
 **새 화면만** — 레지스트리 단계의 `pages` 에 `Page` 한 줄 + 템플릿 + 같은 경로의 화면 스크립트. 주소 규칙은 `/<단계>/<화면>`(화면이 하나면 `/<단계>`).
 

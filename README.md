@@ -20,37 +20,53 @@
 ## 맵
 
 <!-- 맵 표: scripts/gen_docs.py 가 레지스트리로 채웁니다. 이 표시 사이는 고치지 마세요. -->
-| 맵 | 무엇을 | 단계 | ✅ | 🟡 | ⬜ | 화면 · 개요 |
-|---|---|---|---|---|---|---|
-| **LLM 시스템 엔지니어링** | 문서 지식을 싸고 빠르고 정확하게 서비스하는 흐름 | 12 | 12 | — | — | `/maps/llm` · [개요](docs/maps/llm.md) |
-| **지식 그래프 · GraphRAG** | 개념과 관계를 구조로 저장해 다단계 · 집계 · 전체 요약 질문에 답하는 흐름 | 8 | 8 | — | — | `/maps/knowledge-graph` · [개요](docs/maps/knowledge-graph.md) |
-| **멀티에이전트 · 멀티모달** | 멀티모달 입력 · 검색 → 오케스트레이터가 전문가 에이전트(검색 · 분석 · 작성 · 검증)에게 분배 → 교차 검증 → 텍스트 · 차트 · 음성 출력 | 8 | 8 | — | — | `/maps/multi-agent` · [개요](docs/maps/multi-agent.md) |
-| **평가 · 관측 (LLMOps)** | 서비스가 지금 잘 되고 있는지 숫자로 아는 흐름 | 8 | 8 | — | — | `/maps/evalops` · [개요](docs/maps/evalops.md) |
-| **보안 · 가드레일 · 거버넌스** | 써도 되는 답인지 확인하는 흐름 | 7 | 7 | — | — | `/maps/guardrails` · [개요](docs/maps/guardrails.md) |
-| **문서 처리 (Document Intelligence)** | 자료를 제대로 읽는 흐름 | 7 | 7 | — | — | `/maps/docintel` · [개요](docs/maps/docintel.md) |
-| **서빙 · 추론 최적화 · 비용** | 싸고 빠르게 돌리는 흐름 | 7 | 7 | — | — | `/maps/serving` · [개요](docs/maps/serving.md) |
-| **대화 · 메모리** | 한 번이 아니라 이어지는 상담을 다루는 흐름 | 6 | 6 | — | — | `/maps/conversation` · [개요](docs/maps/conversation.md) |
-| **서비스 시나리오: 고객 AS 상담** | 기술 맵들을 실제 업무로 묶은 흐름 | 8 | 8 | — | — | `/maps/as-service` · [개요](docs/maps/as-service.md) |
-| **후학습 (Post-training)** | 우리 데이터로 LLM 자체를 고치는 흐름 | 7 | 7 | — | — | `/maps/posttrain` · [개요](docs/maps/posttrain.md) |
-| **데이터 플라이휠** | 평가 · 후학습 · 서빙 · 가드레일을 하나의 순환으로 | 7 | 7 | — | — | `/maps/flywheel` · [개요](docs/maps/flywheel.md) |
-| **엔터프라이즈 AI 플랫폼 아키텍처** | 맵들을 실제 운영 시스템으로 묶는 흐름 | 7 | 7 | — | — | `/maps/platform` · [개요](docs/maps/platform.md) |
-| **에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)** | 신뢰 경계를 넘나드는 에이전트 연결 | 6 | 6 | — | — | `/maps/interop` · [개요](docs/maps/interop.md) |
-| **실시간 음성 상담** | 전화 AS 상담 | 7 | 7 | — | — | `/maps/voice` · [개요](docs/maps/voice.md) |
-| **규제 대응 · 컴플라이언스** | 법 조항을 시스템 요구로 | 8 | 8 | — | — | `/maps/compliance` · [개요](docs/maps/compliance.md) |
-| **장기 실행 에이전트 · 업무 자동화** | 며칠짜리 업무를 맡기는 흐름 | 7 | 7 | — | — | `/maps/longrun` · [개요](docs/maps/longrun.md) |
-| **강화학습 기반 에이전트 학습 (RLVR)** | 정답을 확인할 수 있는 과제로 에이전트를 학습 | 6 | 6 | — | — | `/maps/rlvr` · [개요](docs/maps/rlvr.md) |
-| **온디바이스 · 엣지** | 서버 없이 기기에서 돌리는 흐름 | 6 | 6 | — | — | `/maps/edge` · [개요](docs/maps/edge.md) |
-| **추론 모델 · 테스트 시간 연산** | 생각하는 LLM 을 서비스에 쓰는 흐름 | 6 | 6 | — | — | `/maps/reasoning` · [개요](docs/maps/reasoning.md) |
-| **컨텍스트 엔지니어링** | 모델에 무엇을 얼마나 보여 줄지 설계하는 흐름 | 6 | 6 | — | — | `/maps/context` · [개요](docs/maps/context.md) |
-| **데이터 분석 에이전트 · Text-to-SQL** | 사내 DB 에 자연어로 묻는 흐름 | 7 | 7 | — | — | `/maps/analytics` · [개요](docs/maps/analytics.md) |
-| **코딩 에이전트 · 소프트웨어 엔지니어링** | 코드를 고치는 에이전트 | 6 | 6 | — | — | `/maps/coding` · [개요](docs/maps/coding.md) |
-| **컴퓨터 사용 · 브라우저 에이전트** | 화면을 보고 클릭 · 입력하는 에이전트 | 6 | 6 | — | — | `/maps/computer-use` · [개요](docs/maps/computer-use.md) |
-| **해석 가능성 · 모델 내부** | 모델이 왜 그렇게 답했는지 안을 보는 흐름 | 6 | 6 | — | — | `/maps/interp` · [개요](docs/maps/interp.md) |
-| **장기 메모리 · 메모리 DB** | 긴 맥락을 DB 로 유지하는 흐름 | 7 | 7 | — | — | `/maps/memory` · [개요](docs/maps/memory.md) |
-| **프롬프트 · KV 캐시 압축** | 같은 모델로 더 긴 맥락을 싸게 | 6 | 6 | — | — | `/maps/compress` · [개요](docs/maps/compress.md) |
-| **옴니채널 · 실시간 멀티모달 에이전트** | 전화 · 영상 · 메신저를 한 에이전트로 | 8 | 8 | — | — | `/maps/omni` · [개요](docs/maps/omni.md) |
-| **적은 메모리로 큰 모델 돌리기** | 메모리보다 큰 모델을 돌리는 흐름 | 7 | 7 | — | — | `/maps/bigmodel` · [개요](docs/maps/bigmodel.md) |
-| **합계 28개** | | 197 | 197 | 0 | 0 | `/maps` |
+| 그룹 | 맵 | 무엇을 | 단계 | ✅ | 🟡 | ⬜ | 🔬 | 화면 · 개요 |
+|---|---|---|---|---|---|---|---|---|
+| A | **LLM 시스템 엔지니어링** | 문서 지식을 싸고 빠르고 정확하게 서비스하는 흐름 | 12 | 12 | — | — | — | `/maps/llm` · [개요](docs/maps/llm.md) |
+| A | **지식 그래프 · GraphRAG** | 개념과 관계를 구조로 저장해 다단계 · 집계 · 전체 요약 질문에 답하는 흐름 | 8 | 8 | — | — | — | `/maps/knowledge-graph` · [개요](docs/maps/knowledge-graph.md) |
+| A | **문서 처리 (Document Intelligence)** | 자료를 제대로 읽는 흐름 | 7 | 7 | — | — | — | `/maps/docintel` · [개요](docs/maps/docintel.md) |
+| A | **대화 · 메모리** | 한 번이 아니라 이어지는 상담을 다루는 흐름 | 6 | 6 | — | — | — | `/maps/conversation` · [개요](docs/maps/conversation.md) |
+| A | **장기 메모리 · 메모리 DB** | 긴 맥락을 DB 로 유지하는 흐름 | 7 | 7 | — | — | — | `/maps/memory` · [개요](docs/maps/memory.md) |
+| A | **데이터 계보 · 근거** | 모든 답 문장을 원본까지 거슬러 올라가게 | 8 | — | — | 8 | — | `/maps/provenance` · [개요](docs/maps/provenance.md) |
+| B | **서빙 · 추론 최적화 · 비용** | 싸고 빠르게 돌리는 흐름 | 7 | 7 | — | — | — | `/maps/serving` · [개요](docs/maps/serving.md) |
+| B | **후학습 (Post-training)** | 우리 데이터로 LLM 자체를 고치는 흐름 | 7 | 7 | — | — | — | `/maps/posttrain` · [개요](docs/maps/posttrain.md) |
+| B | **강화학습 기반 에이전트 학습 (RLVR)** | 정답을 확인할 수 있는 과제로 에이전트를 학습 | 6 | 6 | — | — | — | `/maps/rlvr` · [개요](docs/maps/rlvr.md) |
+| B | **온디바이스 · 엣지** | 서버 없이 기기에서 돌리는 흐름 | 6 | 6 | — | — | — | `/maps/edge` · [개요](docs/maps/edge.md) |
+| B | **추론 모델 · 테스트 시간 연산** | 생각하는 LLM 을 서비스에 쓰는 흐름 | 6 | 6 | — | — | — | `/maps/reasoning` · [개요](docs/maps/reasoning.md) |
+| B | **컨텍스트 엔지니어링** | 모델에 무엇을 얼마나 보여 줄지 설계하는 흐름 | 6 | 6 | — | — | — | `/maps/context` · [개요](docs/maps/context.md) |
+| B | **해석 가능성 · 모델 내부** | 모델이 왜 그렇게 답했는지 안을 보는 흐름 | 6 | 6 | — | — | — | `/maps/interp` · [개요](docs/maps/interp.md) |
+| B | **프롬프트 · KV 캐시 압축** | 같은 모델로 더 긴 맥락을 싸게 | 6 | 6 | — | — | — | `/maps/compress` · [개요](docs/maps/compress.md) |
+| B | **적은 메모리로 큰 모델 돌리기** | 메모리보다 큰 모델을 돌리는 흐름 | 7 | 7 | — | — | — | `/maps/bigmodel` · [개요](docs/maps/bigmodel.md) |
+| B | **기반 모델 계보** | 어떤 모델이 어떤 기능 · 환경에 맞나 | 6 | — | — | 6 | — | `/maps/lineage` · [개요](docs/maps/lineage.md) |
+| B | **Transformer · MoE 구조** | 밀집 · MoE · 슬라이딩 창 · 선형 어텐션 · 상태 공간이 메모리 · 연산에 미치는 영향 | 6 | — | — | 6 | — | `/maps/architecture` · [개요](docs/maps/architecture.md) |
+| B | **토크나이저 · 표현 공간** | 한국어 토큰 효율 · 코드 · 이미지 패치 · 오디오 토큰 | 6 | — | — | 6 | — | `/maps/tokenizer` · [개요](docs/maps/tokenizer.md) |
+| B | **학습 생애주기** | 후학습 · RLVR · 플라이휠을 한 생애주기로 | 8 | — | — | 7 | 1 | `/maps/training` · [개요](docs/maps/training.md) |
+| B | **추론 최적화** | 기준선부터 카나리까지 한 순서로 | 9 | — | — | 9 | — | `/maps/inference` · [개요](docs/maps/inference.md) |
+| B | **합성 데이터** | 합성으로 늘리되 실제로 잰다 | 8 | — | — | 8 | — | `/maps/synthetic` · [개요](docs/maps/synthetic.md) |
+| C | **멀티에이전트 · 멀티모달** | 멀티모달 입력 · 검색 → 오케스트레이터가 전문가 에이전트(검색 · 분석 · 작성 · 검증)에게 분배 → 교차 검증 → 텍스트 · 차트 · 음성 출력 | 8 | 8 | — | — | — | `/maps/multi-agent` · [개요](docs/maps/multi-agent.md) |
+| C | **에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)** | 신뢰 경계를 넘나드는 에이전트 연결 | 6 | 6 | — | — | — | `/maps/interop` · [개요](docs/maps/interop.md) |
+| C | **장기 실행 에이전트 · 업무 자동화** | 며칠짜리 업무를 맡기는 흐름 | 7 | 7 | — | — | — | `/maps/longrun` · [개요](docs/maps/longrun.md) |
+| C | **데이터 분석 에이전트 · Text-to-SQL** | 사내 DB 에 자연어로 묻는 흐름 | 7 | 7 | — | — | — | `/maps/analytics` · [개요](docs/maps/analytics.md) |
+| C | **코딩 에이전트 · 소프트웨어 엔지니어링** | 코드를 고치는 에이전트 | 6 | 6 | — | — | — | `/maps/coding` · [개요](docs/maps/coding.md) |
+| C | **컴퓨터 사용 · 브라우저 에이전트** | 화면을 보고 클릭 · 입력하는 에이전트 | 6 | 6 | — | — | — | `/maps/computer-use` · [개요](docs/maps/computer-use.md) |
+| C | **에이전트 경제 · 거래** | 에이전트가 돈을 쓰기 전에 지켜야 할 것 | 8 | — | — | — | 8 | `/maps/economy` · [개요](docs/maps/economy.md) |
+| D | **실시간 음성 상담** | 전화 AS 상담 | 7 | 7 | — | — | — | `/maps/voice` · [개요](docs/maps/voice.md) |
+| D | **옴니채널 · 실시간 멀티모달 에이전트** | 전화 · 영상 · 메신저를 한 에이전트로 | 8 | 8 | — | — | — | `/maps/omni` · [개요](docs/maps/omni.md) |
+| D | **실시간 스트리밍 LLM** | TTFT · 첫 소리 · p95 · p99 · 복구율 | 8 | — | — | 8 | — | `/maps/realtime` · [개요](docs/maps/realtime.md) |
+| D | **오디오 이해** | 말 이외의 소리까지 | 7 | — | — | 5 | 2 | `/maps/audio` · [개요](docs/maps/audio.md) |
+| D | **이미지 · Vision-Language** | VLM 하나에 다 맡기지 않고 탐지 · OCR · 규칙을 나눠서 | 7 | — | — | 7 | — | `/maps/vision` · [개요](docs/maps/vision.md) |
+| D | **비디오 이해** | '처음 일어난 때' 에 답하기 | 8 | — | — | 7 | 1 | `/maps/video` · [개요](docs/maps/video.md) |
+| D | **실시간 오디오 · 비디오 풀듀플렉스** | 내용 이해와 대화 타이밍을 나눠서 | 7 | — | — | — | 7 | `/maps/duplex` · [개요](docs/maps/duplex.md) |
+| D | **생성 이미지 · 비디오 제작** | 만드는 것보다 검사 · 출처 | 8 | — | — | 2 | 6 | `/maps/genmedia` · [개요](docs/maps/genmedia.md) |
+| E | **평가 · 관측 (LLMOps)** | 서비스가 지금 잘 되고 있는지 숫자로 아는 흐름 | 8 | 8 | — | — | — | `/maps/evalops` · [개요](docs/maps/evalops.md) |
+| E | **보안 · 가드레일 · 거버넌스** | 써도 되는 답인지 확인하는 흐름 | 7 | 7 | — | — | — | `/maps/guardrails` · [개요](docs/maps/guardrails.md) |
+| E | **데이터 플라이휠** | 평가 · 후학습 · 서빙 · 가드레일을 하나의 순환으로 | 7 | 7 | — | — | — | `/maps/flywheel` · [개요](docs/maps/flywheel.md) |
+| E | **규제 대응 · 컴플라이언스** | 법 조항을 시스템 요구로 | 8 | 8 | — | — | — | `/maps/compliance` · [개요](docs/maps/compliance.md) |
+| F | **서비스 시나리오: 고객 AS 상담** | 기술 맵들을 실제 업무로 묶은 흐름 | 8 | 8 | — | — | — | `/maps/as-service` · [개요](docs/maps/as-service.md) |
+| F | **엔터프라이즈 AI 플랫폼 아키텍처** | 맵들을 실제 운영 시스템으로 묶는 흐름 | 7 | 7 | — | — | — | `/maps/platform` · [개요](docs/maps/platform.md) |
+| F | **개인화 · 적응** | 개인화 데이터 · 인증 · 민감 정보 · 학습 동의를 나눠서 | 7 | — | — | 7 | — | `/maps/personalize` · [개요](docs/maps/personalize.md) |
+| F | **모델 라우팅 · 비용 최적화** | 점수 = 품질 · 근거 · 지연 · 비용 · 신뢰성 | 8 | — | — | 8 | — | `/maps/routing` · [개요](docs/maps/routing.md) |
+| | **합계 44개** | | 316 | 197 | 0 | 94 | 25 | `/maps` · [생태계 구조](docs/maps/ecosystem.md) |
 <!-- /맵 표 -->
 
 ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정 — 맵 · 단계의 정의와 상태는 `app/stages/registry/` 한 곳에서 관리하고, 이 표와 문서가 거기서 만들어집니다.

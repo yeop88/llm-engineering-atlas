@@ -55,7 +55,7 @@ RETURN j.사건번호, collect(other.법령 + " " + other.번호) AS 함께_인�
     <tr><th>단계</th><th>상태</th><th>무엇을</th><th>기반 단계</th><th>앞으로 할 일</th></tr>
     {% for s in registry.map_stages('kg') %}
     <tr><td class="nowrap"><span class="stage-no">{{ s.no }}</span> <a href="/stages/{{ s.key }}"><b>{{ s.title }}</b></a> <span class="small muted">{{ s.en }}</span></td>
-      <td><span class="badge {{ 'ok' if s.status == 'done' else ('warn' if s.status == 'basic' else '') }}">{{ s.status_label }}</span></td>
+      <td><span class="badge {{ 'ok' if s.status == 'done' else ('warn' if s.status == 'basic' else ('muted' if s.status in ('research', 'hold') else '')) }}">{{ s.status_label }}</span></td>
       <td class="small">{{ s.summary }}</td>
       <td class="small nowrap">{% for k in s.builds_on %}{% set b = registry.BY_KEY[k] %}<a href="/stages/{{ k }}">{{ b.no }} {{ b.menu }}</a>{{ " · " if not loop.last }}{% else %}<span class="muted">—</span>{% endfor %}</td>
       <td class="small">{{ s.plans | join(" · ") }}</td></tr>

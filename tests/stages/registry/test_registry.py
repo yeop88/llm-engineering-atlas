@@ -73,7 +73,9 @@ def test_maps():
     keys = ["llm", "kg", "agents", "evalops", "guardrails", "docintel", "serving", "conversation", "as_service", "posttrain",
             "flywheel", "platform", "interop", "voice", "compliance", "longrun", "rlvr", "edge",
             "reasoning", "context", "analytics", "coding", "computer_use", "interp",
-            "memory", "compress", "omni", "bigmodel"]  # fmt: skip
+            "memory", "compress", "omni", "bigmodel",
+            "lineage", "architecture", "tokenizer", "training", "provenance", "personalize", "economy", "realtime", "audio", "vision", "video",
+            "duplex", "genmedia", "inference", "routing", "synthetic"]  # fmt: skip
     assert [m.key for m in registry.MAPS] == keys and {s.map for s in registry.STAGES} == set(keys)
     for m in registry.MAPS:
         # 공통 화면 맵은 흐름 묶음이 그 맵의 단계를 빠짐없이 한 번씩 담아야 한다(화면 흐름도에서 빠지는 단계가 없게)
@@ -105,3 +107,36 @@ def test_every_map_page(client):
 def test_stage_numbers_unique():
     nos = [s.no for s in registry.STAGES]
     assert len(nos) == len(set(nos))  # 화면 · 문서에서 번호로 단계를 찾으므로 맵이 달라도 겹치면 안 된다
+
+
+def test_ecosystem_structure():
+    """생태계 대응표(registry/ecosystem.py)가 실제 맵 · 단계와 맞는지 — 표에만 있는 맵 키 · 그룹이 생기면 화면 · 문서가 빈칸이 된다."""
+    eco = registry.ecosystem
+    groups = {g for g, _, _ in eco.GROUPS}
+    assert [e.id for e in eco.ECOSYSTEM] == [f"M{i}" for i in range(1, 31)] + ["E1", "E2", "E3", "E4"]
+    for e in eco.ECOSYSTEM:
+        assert e.group in groups and e.maturity in eco.MATURITY, e.id
+        assert e.covers or e.new, e.id  # 생태계 맵마다 이 앱의 자리가 있다(덮는 맵 또는 새 맵)
+        for k in (*e.covers, *([e.new] if e.new else [])):
+            assert k in registry.MAP_BY_KEY, (e.id, k)
+        assert all(d in eco.ECO_BY_ID for d in e.depends_on), e.id
+    for m in registry.MAPS:
+        assert m.group in groups and m.maturity in eco.MATURITY and m.last_verified_at, m.key
+        assert m.evidence_level in eco.EVIDENCE and all(d in registry.MAP_BY_KEY for d in m.depends_on), m.key
+    # 새로 만든 맵은 자기 생태계 번호를 갖고, 단계 상태는 정해진 5종 안에서
+    for e in eco.ECOSYSTEM:
+        if e.new:
+            assert e.id in registry.MAP_BY_KEY[e.new].eco
+    assert {s.status for s in registry.STAGES} <= set(registry.STATUSES)
+    for _, _, keys in eco.ROUTING:
+        assert all(k in registry.MAP_BY_KEY for k in keys)
+    rel_types = {a for a, _, _ in eco.RELATIONS} | {b for _, _, b in eco.RELATIONS}
+    assert rel_types <= {n for n, _, _ in eco.NODE_TYPES} | {"Map"}
+
+
+def test_ecosystem_page(client):
+    r = client.get("/maps/ecosystem")
+    assert r.status_code == 200 and "M30" in r.text and "공통 노드 온톨로지" in r.text and "통합 라우팅" in r.text
+    assert 'href="/maps/lineage"' in r.text and "새 맵" in r.text
+    idx = client.get("/maps").text
+    assert "A. 지식과 검색" in idx and "F. 제품과 인프라" in idx and 'href="/maps/ecosystem"' in idx

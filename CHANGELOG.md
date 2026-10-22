@@ -5,6 +5,13 @@
 ## [Unreleased]
 
 ### 추가
+- **LLM 생태계 구조** — 화면 `/maps/ecosystem` · 문서 `docs/maps/ecosystem.md`
+  - 상위 그룹 A~F(지식과 검색 · 모델과 추론 · 에이전트 · 멀티모달 · 품질과 안전 · 제품과 인프라), 생태계 맵 34개(M1~M30 · E1~E4)와 앱 맵의 대응표
+  - 공통 노드 온톨로지(Capability · Model · Method · Component · Framework · Protocol · Provider · Dataset · Benchmark · Risk · Control · UseCase · Hardware · Artifact · Status)와 관계
+  - 통합 라우팅(모달리티 → 작업 유형 → 실행 맵 → 모델 → 정책 → 실행 → 검증 → 관측 · 메모리)
+  - 맵 메타데이터: 그룹 · 기술 성숙도 · 기대는 맵 · 근거 수준 · 확인한 날, 단계 상태에 '연구' · '보류' 추가
+  - 모든 맵 화면을 그룹별로, README · 문서 색인의 맵 표에 그룹 · 연구 열
+- **새 맵 16개 정의(단계 119개, 예정 · 연구)** — 기반 모델 계보 · Transformer · MoE 구조 · 토크나이저 · 표현 공간 · 학습 생애주기 · 데이터 계보 · 근거 · 개인화 · 적응 · 에이전트 경제 · 거래 · 실시간 스트리밍 LLM · 오디오 이해 · 이미지 · Vision-Language · 비디오 이해 · 실시간 오디오 · 비디오 풀듀플렉스 · 생성 이미지 · 비디오 제작 · 추론 최적화 · 모델 라우팅 · 비용 최적화 · 합성 데이터
 - **적은 메모리로 큰 모델 돌리기 맵 구현(BM1~BM7)** — 화면 `/bigmodel/plan` · `/bigmodel/serve` · `/bigmodel/lab`
   - GGUF 머리말만 읽어 텐서별 정확한 바이트 · 층별 KV(슬라이딩 창 · KV 공유 · 선형 어텐션 고정 상태), HF config.json 어림
   - 배치 후보(전부 GPU · 층 N 개 · 전문가만 CPU · 앞 N 층 전문가 CPU · 전부 CPU · 디스크 스트리밍)별 메모리 · 지붕선 토큰/초 · llama-server 인자, 배치별 서버 실측

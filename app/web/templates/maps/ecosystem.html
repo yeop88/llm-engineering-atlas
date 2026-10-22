@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{# LLM 생태계 구조: 생태계 맵(M1~M30 · E1~E4)과 이 앱의 맵을 잇는 대응표 · 공통 온톨로지 · 통합 라우팅. 데이터는 registry/ecosystem.py #}
+{% block title %}LLM 생태계 구조{% endblock %}
+{% block content %}
+{% call ui.page_header("LLM 생태계 구조") %}LLM 생태계를 기술 영역 34개(M1~M30 · 확장 E1~E4)로 나누고, 이 앱의 맵 {{ registry.MAPS | length }}개가 어디를 덮는지 잇습니다. 구현 상태(단계의 구현됨 · 기초 있음 · 예정 · 연구 · 보류)와 기술 성숙도(기초 · 성숙 · 신선 · 실험적)는 다른 축이라 따로 적습니다. 맵마다 마지막으로 확인한 날 · 근거 수준이 있어 오래된 기술 정보를 가려냅니다.{% endcall %}
+
+<div class="card stack">
+  <h2>설계 원칙</h2>
+  <ul class="small m-0">{% for p in ecosystem.PRINCIPLES %}<li>{{ p }}</li>{% endfor %}</ul>
+</div>
+
+{% for g, title, areas in ecosystem.GROUPS %}
+<div class="card stack mt-4" id="group-{{ g }}">
+  <h2>{{ g }}. {{ title }} <span class="small muted">{{ areas | join(" · ") }}</span></h2>
+  <div class="table-wrap"><table>
+    <tr><th>번호</th><th>생태계 맵</th><th>성숙도</th><th>우선순위</th><th>흐름</th><th>이 앱에서</th><th>단계 상태</th></tr>
+    {% for e in ecosystem.ECOSYSTEM if e.group == g %}
+    {% set keys = ([e.new] if e.new else []) + (e.covers | list) %}
+    {% set ss = [] %}{% for k in keys %}{% set _ = ss.extend(registry.map_stages(k)) %}{% endfor %}
+    <tr id="eco-{{ e.id }}">
+      <td class="nowrap"><b>{{ e.id }}</b></td>
+      <td>{{ e.title }}{% if e.note %}<div class="small muted">{{ e.note }}</div>{% endif %}</td>
+      <td><span class="badge {{ 'warn' if e.maturity == '실험적' else ('new' if e.maturity == '신선' else 'muted') }}">{{ e.maturity }}</span></td>
+      <td class="small nowrap">{{ e.priority }}</td>
+      <td class="small">{{ e.flow }}</td>
+      <td class="small">{% for k in keys %}{% set m = registry.MAP_BY_KEY.get(k) %}{% if m %}<a href="{{ m.href }}">{{ m.title.removesuffix(' 맵') }}</a>{% if k == e.new %} <span class="badge">새 맵</span>{% endif %}{% if not loop.last %} · {% endif %}{% endif %}{% endfor %}</td>
+      <td class="small nowrap">{% for st in registry.STATUSES %}{% set n = ss | selectattr("status", "equalto", st) | list | length %}{% if n %}{{ registry.STATUS_LABEL[st] }} {{ n }}<br>{% endif %}{% endfor %}</td>
+    </tr>
+    {% endfor %}
+  </table></div>
+</div>
+{% endfor %}
+
+<div class="card stack mt-4" id="ontology">
+  <h2>공통 노드 온톨로지</h2>
+  <p class="small muted">맵을 따로 관리해도 노드 종류는 하나로 — 맵 사이를 잇고 같은 질의로 찾으려고. 지식 그래프 맵(K2)의 온톨로지와 같은 방식으로 씁니다.</p>
+  <div class="grid cols-2">
+    <div class="table-wrap"><table><tr><th>노드</th><th>뜻</th><th>예</th></tr>
+      {% for n, d, ex in ecosystem.NODE_TYPES %}<tr><td class="mono small">{{ n }}</td><td class="small">{{ d }}</td><td class="small muted">{{ ex }}</td></tr>{% endfor %}</table></div>
+    <div class="table-wrap"><table><tr><th>관계</th></tr>
+      {% for a, r, b in ecosystem.RELATIONS %}<tr><td class="mono small">{{ a }} -[{{ r }}]-> {{ b }}</td></tr>{% endfor %}</table></div>
+  </div>
+</div>
+
+<div class="card stack mt-4" id="routing">
+  <h2>통합 라우팅</h2>
+  <p class="small muted">입력 하나가 거치는 단계와, 각 단계를 맡는 이 앱의 맵입니다.</p>
+  <div class="table-wrap"><table><tr><th>단계</th><th>나누는 것</th><th>맡는 맵</th></tr>
+    {% for step, what, keys in ecosystem.ROUTING %}<tr><td class="nowrap">{{ step }}</td><td class="small">{{ what }}</td>
+      <td class="small">{% for k in keys %}{% set m = registry.MAP_BY_KEY.get(k) %}{% if m %}<a href="{{ m.href }}">{{ m.title.removesuffix(' 맵') }}</a>{% if not loop.last %} · {% endif %}{% endif %}{% endfor %}</td></tr>{% endfor %}
+  </table></div>
+</div>
+
+<div class="card stack mt-4" id="meta">
+  <h2>맵 메타데이터</h2>
+  <div class="table-wrap"><table><tr><th>맵</th><th>그룹</th><th>생태계</th><th>성숙도</th><th>기대는 맵</th><th>근거 수준</th><th>확인한 날</th></tr>
+    {% for m in registry.MAPS %}<tr><td class="small"><a href="{{ m.href }}">{{ m.title.removesuffix(' 맵') }}</a></td><td>{{ m.group }}</td><td class="small mono">{{ m.eco | join(" ") }}</td>
+      <td class="small">{{ m.maturity }}</td><td class="small">{% for k in m.depends_on %}{{ registry.MAP_BY_KEY[k].title.removesuffix(' 맵') if k in registry.MAP_BY_KEY else k }}{% if not loop.last %} · {% endif %}{% endfor %}</td>
+      <td class="small">{{ ecosystem.EVIDENCE.get(m.evidence_level, m.evidence_level) }}</td><td class="small nowrap">{{ m.last_verified_at }}</td></tr>{% endfor %}
+  </table></div>
+</div>
+{% endblock %}

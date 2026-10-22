@@ -7,6 +7,8 @@ function filterMaps() {
     c.hidden = !ok;
     shown += ok;
   });
+  // 그룹 안의 맵이 모두 걸러지면 그룹 제목도 숨긴다
+  $$(".map-group").forEach(g => { g.hidden = !g.querySelector(".map-card:not([hidden])"); });
   $("#m-none").hidden = shown > 0;
 }
 $("#m-q").addEventListener("input", filterMaps);

@@ -5,7 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 DONE, BASIC, PLANNED = "done", "basic", "planned"
-STATUS_LABEL = {DONE: "구현됨", BASIC: "기초 있음", PLANNED: "예정"}
+# 연구 = 이 PC · 공개 모델로는 아직 제대로 돌릴 수 없어 설계 · 문헌 정리와 작은 흉내 실험만(생성 미디어 · 풀듀플렉스 등),
+# 보류 = 하지 않기로 미룬 것(이유를 plans 에). 예정과 나눈 이유: '곧 만든다'와 '지금은 만들 수 없다'를 같은 표시로 두면 계획이 흐려진다
+RESEARCH, HOLD = "research", "hold"
+STATUS_LABEL = {DONE: "구현됨", BASIC: "기초 있음", PLANNED: "예정", RESEARCH: "연구", HOLD: "보류"}
+STATUSES = (DONE, BASIC, PLANNED, RESEARCH, HOLD)
 
 
 @dataclass(frozen=True)
@@ -22,6 +26,13 @@ class Map:
     principles: tuple[str, ...] = ()  # 설계 원칙 (기반 실측에서 가져온 것)
     example: str = ""
     template: str = ""  # 따로 만든 화면이 있으면 그 템플릿, 비우면 공통 화면
+    # 생태계 자리(registry/ecosystem.py) — 구현 상태(단계 상태)와 기술 성숙도를 따로 적는다
+    group: str = ""  # 상위 그룹 A~F
+    eco: tuple[str, ...] = ()  # 이 맵이 덮는 생태계 맵 번호(M1~M30 · E1~E4)
+    maturity: str = ""  # 기초 · 성숙 · 신선 · 실험적
+    depends_on: tuple[str, ...] = ()  # 이 맵이 기대는 다른 앱 맵 키
+    last_verified_at: str = ""  # 이 맵의 기술 설명을 마지막으로 확인한 날(YYYY-MM-DD)
+    evidence_level: str = ""  # measured · implemented · documented · survey (ecosystem.EVIDENCE)
 
     @property
     def slug(self) -> str:

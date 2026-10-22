@@ -13,7 +13,7 @@ from app.core import auth
 from app.core.config import APP_DIR, get_settings
 from app.stages import registry
 from app.stages.embedding.catalog import CATALOG_VERSION
-from app.stages.registry import Page
+from app.stages.registry import Page, ecosystem
 
 router = APIRouter(include_in_schema=False)
 templates = Jinja2Templates(directory=APP_DIR / "web" / "templates")
@@ -21,7 +21,9 @@ templates = Jinja2Templates(directory=APP_DIR / "web" / "templates")
 # 단계 밖 공통 화면: (nav 키, 주소, 이름, 템플릿)
 COMMON_PAGES = [
     Page("dashboard", "/", "대시보드", "연결 상태 · 맵 진행 · 최근 실험 · 작업", "dashboard.html"),
-    Page("maps", "/maps", "모든 맵", "맵 18개 · 단계 상태", "maps/index.html"),
+    Page("maps", "/maps", "모든 맵", f"맵 {len(registry.MAPS)}개 · 그룹 A~F · 단계 상태", "maps/index.html"),
+    # 생태계 구조는 맵이 아니라 맵들을 잇는 대응표라 공통 화면 — /maps/{slug} 보다 먼저 등록되어야 맵 주소로 오인되지 않는다
+    Page("ecosystem", "/maps/ecosystem", "LLM 생태계 구조", "생태계 맵 34개 대응 · 온톨로지 · 통합 라우팅", "maps/ecosystem.html"),
     Page("history", "/history", "이력", "실행 기록 · 비교 · 삭제", "history.html"),
     Page("settings_llm", "/settings/llm", "LLM 연결", "로컬 · OpenAI 호환 · Claude", "settings/llm.html"),
 ]
@@ -124,7 +126,7 @@ def doc_url(path: str) -> str:
 
 
 templates.env.globals.update(
-    app_name=get_settings().app_name, catalog_version=CATALOG_VERSION, sidebar=sidebar(), crumbs=crumbs, registry=registry,
+    app_name=get_settings().app_name, catalog_version=CATALOG_VERSION, sidebar=sidebar(), crumbs=crumbs, registry=registry, ecosystem=ecosystem,
     stage_for_nav=registry.stage_for_nav, doc_url=doc_url,
     auth_enabled=auth.enabled,  # 함수로 둬 테스트 · 설정 변경이 바로 반영되게
 )  # fmt: skip
