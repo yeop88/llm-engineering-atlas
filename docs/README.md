@@ -30,7 +30,7 @@ docs/
 | A | **문서 처리 (Document Intelligence) 맵** | 수집 → 파싱(HWP · PDF · OCR) → 레이아웃 · 표 · 그림 → 정제 · 중복 · 버전 → 청킹 → 메타데이터 · 증분 갱신 → 품질 점검 — 자료를 제대로 읽는 흐름 | 7 — ✅ 7 | [docintel.md](maps/docintel.md) | `/maps/docintel` |
 | A | **대화 · 메모리 맵** | 대화 맥락 질의 재작성 → 되묻기 → 대화 요약 메모리 → 사용자 · 제품 프로필 → 긴 대화 압축 → 상담원 이관 — 한 번이 아니라 이어지는 상담을 다루는 흐름 | 6 — ✅ 6 | [conversation.md](maps/conversation.md) | `/maps/conversation` |
 | A | **장기 메모리 · 메모리 DB 맵** | 대화에서 기억 뽑기 → 메모리 DB 저장 · 연결 → 관련 · 최근 · 중요도로 찾기 → 갱신 · 충돌 해결 → 통합 · 망각 → 메모리 계층 → 여러 세션 평가 — 긴 맥락을 DB 로 유지하는 흐름 | 7 — ✅ 7 | [memory.md](maps/memory.md) | `/maps/memory` |
-| A | **데이터 계보 · 근거 맵** | 원본 소스 → 수집 시각 → 변환 파이프라인 → 청크 → 주장 → 답 문장 → 인용 → 검증 결과 — 모든 답 문장을 원본까지 거슬러 올라가게 | 8 — ⬜ 8 | [provenance.md](maps/provenance.md) | `/maps/provenance` |
+| A | **데이터 계보 · 근거 맵** | 원본 소스 → 수집 시각 → 변환 파이프라인 → 청크 → 주장 → 답 문장 → 인용 → 검증 결과 — 모든 답 문장을 원본까지 거슬러 올라가게 | 8 — ✅ 8 | [provenance.md](maps/provenance.md) | `/maps/provenance` |
 | B | **서빙 · 추론 최적화 · 비용 맵** | 캐시 → 근거 길이 관리 → 경량 모델 → 추론 서버 · 배치 · 스트리밍 → KV 캐시 · 추측 디코딩 → 하드웨어 → 비용 · 지연 예산 — 싸고 빠르게 돌리는 흐름 | 7 — ✅ 7 | [serving.md](maps/serving.md) | `/maps/serving` |
 | B | **후학습 (Post-training) 맵** | 합성 데이터 → 선별 · 누수 방지 → SFT → 선호 학습(DPO) → 어댑터 · 병합 → 평가 · 안전성 → 배포 형식 변환 — 우리 데이터로 LLM 자체를 고치는 흐름 | 7 — ✅ 7 | [posttrain.md](maps/posttrain.md) | `/maps/posttrain` |
 | B | **강화학습 기반 에이전트 학습 (RLVR) 맵** | 검증 가능한 과제 → 환경 · 도구 시뮬레이터 → 보상 설계 → 보상 해킹 감시 → 정책 학습(GRPO 등) → 일반화 · 안전성 평가 — 정답을 확인할 수 있는 과제로 에이전트를 학습 | 6 — ✅ 6 | [rlvr.md](maps/rlvr.md) | `/maps/rlvr` |

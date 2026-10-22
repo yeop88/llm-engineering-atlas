@@ -474,6 +474,16 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 데이터 계보 · 근거 (`/api/provenance`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/provenance/traces` | 답이 있는 최근 요청 기록 |
+| GET | `/api/provenance/trace/{id}` | 요청 하나의 계보(근거 → 청크 → 청크 세트 → 문서 · 판 → 컬렉션)와 주장 분석 |
+| POST | `/api/provenance/analyze` | 답 · 근거를 직접 넣어 주장 나누기 `{"answer", "sources": [{"text"}]}` |
+| GET | `/api/provenance/contradictions?days=30` | 같은 질문의 다른 답에서 숫자 · 조문 · 코드가 다른 것 |
+| POST | `/api/provenance/eval` | 주장 단위 근거 평가 작업 `{"eval_set_id", "max_queries", "provider", "model"}` |
+
 ## 모델 라우팅 (`/api/model-routing`)
 
 | 메서드 | 경로 | 설명 |

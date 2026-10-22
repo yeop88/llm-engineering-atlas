@@ -23,8 +23,6 @@ def _kind(name: str) -> str:
         return "reasoning"
     if any(k in n for k in ("e2b", "0.6b", "1b", "mini", "small", "q2")):
         return "small"
-    if "claude" in n or "gpt" in n:
-        return "api"
     return "local"
 
 
@@ -44,7 +42,8 @@ def defaults() -> list[dict[str, Any]]:
     out = []
     for prov, m in names:
         mm = ["text", "image"] if "gemma-4" in m.lower() or "vl" in m.lower() or prov == "anthropic" else ["text"]
-        out.append({"name": m, "provider": prov, "model": m, "kind": _kind(m), "modalities": mm, "quality": {}, "p95_ms": None, "cost": None,
+        # 외부 API(단가가 있는 제공자)는 이름이 아니라 제공자로 가른다
+        out.append({"name": m, "provider": prov, "model": m, "kind": "api" if prov == "anthropic" else _kind(m), "modalities": mm, "quality": {}, "p95_ms": None, "cost": None,
                     "reliability": 0.95, "measured_at": None})  # fmt: skip
     return out
 

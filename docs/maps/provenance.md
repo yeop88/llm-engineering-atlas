@@ -22,14 +22,14 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| PV1 | [원본 소스](../stages/provenance/pv1-source/README.md) | ⬜ 예정 | 문서의 원본(파일 · URL · API)과 그 해시 · 권리를 남긴다 | [D1 수집](../stages/docintel/d1-ingest/README.md) | — |
-| PV2 | [수집 시각 · 판](../stages/provenance/pv2-ingest/README.md) | ⬜ 예정 | 언제 받은 어느 판인지, 판이 바뀌면 무엇이 바뀌었나 | [D6 증분 갱신](../stages/docintel/d6-meta/README.md) · [RC3 데이터 근거](../stages/compliance/rc3-data/README.md) | — |
-| PV3 | [변환 파이프라인](../stages/provenance/pv3-transform/README.md) | ⬜ 예정 | 파싱 · OCR · 표 복원 · 정제의 각 단계를 기록한다 | [D2 파싱](../stages/docintel/d2-parse/README.md) · [D3 레이아웃 · 표](../stages/docintel/d3-layout/README.md) | — |
-| PV4 | [청크](../stages/provenance/pv4-chunk/README.md) | ⬜ 예정 | 청크가 원본의 어디(쪽 · 조문 · 글자 범위)에서 왔는지 남긴다 | [D5 청킹](../stages/docintel/d5-chunk/README.md) | — |
-| PV5 | [주장](../stages/provenance/pv5-claim/README.md) | ⬜ 예정 | 답을 확인 가능한 주장 단위로 나눈다 | [AS6 검증](../stages/as-service/as6-verify/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | — |
-| PV6 | [답 문장](../stages/provenance/pv6-sentence/README.md) | ⬜ 예정 | 답 문장 → 주장 → 근거를 요청 기록에 남긴다 | [E3 트레이싱](../stages/evalops/e3-tracing/README.md) | — |
-| PV7 | [인용](../stages/provenance/pv7-cite/README.md) | ⬜ 예정 | 인용 번호가 실제 근거를 가리키고, 근거가 주장을 뒷받침하는지 본다 | [2 RAG](../stages/llm/2-rag/README.md) · [RC4 설명 가능성](../stages/compliance/rc4-explain/README.md) | — |
-| PV8 | [검증 결과 · 부딪힘](../stages/provenance/pv8-verify/README.md) | ⬜ 예정 | 주장끼리 · 판끼리 부딪히는 것을 찾고 검증 결과를 남긴다 | [K4 융합 · 정제](../stages/knowledge-graph/k4-fusion/README.md) · [E6 드리프트](../stages/evalops/e6-drift/README.md) | — |
+| PV1 | [원본 소스](../stages/provenance/pv1-source/README.md) | ✅ 구현됨 | 문서의 원본(파일 · URL · API)과 그 해시 · 권리를 남긴다 | [D1 수집](../stages/docintel/d1-ingest/README.md) | [데이터 계보 · 근거 — 요청 → 청크 → 문서 · 판 사슬 · 주장 나누기 · 표시 일치 · 부딪힘 · 주장 단위 평가 · 실측](../stages/provenance/pv1-source/provenance.md) |
+| PV2 | [수집 시각 · 판](../stages/provenance/pv2-ingest/README.md) | ✅ 구현됨 | 언제 받은 어느 판인지, 판이 바뀌면 무엇이 바뀌었나 | [D6 증분 갱신](../stages/docintel/d6-meta/README.md) · [RC3 데이터 근거](../stages/compliance/rc3-data/README.md) | [데이터 계보 · 근거 — 요청 → 청크 → 문서 · 판 사슬 · 주장 나누기 · 표시 일치 · 부딪힘 · 주장 단위 평가 · 실측](../stages/provenance/pv1-source/provenance.md) |
+| PV3 | [변환 파이프라인](../stages/provenance/pv3-transform/README.md) | ✅ 구현됨 | 파싱 · OCR · 표 복원 · 정제의 각 단계를 기록한다 | [D2 파싱](../stages/docintel/d2-parse/README.md) · [D3 레이아웃 · 표](../stages/docintel/d3-layout/README.md) | [데이터 계보 · 근거 — 요청 → 청크 → 문서 · 판 사슬 · 주장 나누기 · 표시 일치 · 부딪힘 · 주장 단위 평가 · 실측](../stages/provenance/pv1-source/provenance.md) |
+| PV4 | [청크](../stages/provenance/pv4-chunk/README.md) | ✅ 구현됨 | 청크가 원본의 어디(쪽 · 조문 · 글자 범위)에서 왔는지 남긴다 | [D5 청킹](../stages/docintel/d5-chunk/README.md) | [데이터 계보 · 근거 — 요청 → 청크 → 문서 · 판 사슬 · 주장 나누기 · 표시 일치 · 부딪힘 · 주장 단위 평가 · 실측](../stages/provenance/pv1-source/provenance.md) |
+| PV5 | [주장](../stages/provenance/pv5-claim/README.md) | ✅ 구현됨 | 답을 확인 가능한 주장 단위로 나눈다 | [AS6 검증](../stages/as-service/as6-verify/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | [데이터 계보 · 근거 — 요청 → 청크 → 문서 · 판 사슬 · 주장 나누기 · 표시 일치 · 부딪힘 · 주장 단위 평가 · 실측](../stages/provenance/pv1-source/provenance.md) |
+| PV6 | [답 문장](../stages/provenance/pv6-sentence/README.md) | ✅ 구현됨 | 답 문장 → 주장 → 근거를 요청 기록에 남긴다 | [E3 트레이싱](../stages/evalops/e3-tracing/README.md) | [데이터 계보 · 근거 — 요청 → 청크 → 문서 · 판 사슬 · 주장 나누기 · 표시 일치 · 부딪힘 · 주장 단위 평가 · 실측](../stages/provenance/pv1-source/provenance.md) |
+| PV7 | [인용](../stages/provenance/pv7-cite/README.md) | ✅ 구현됨 | 인용 번호가 실제 근거를 가리키고, 근거가 주장을 뒷받침하는지 본다 | [2 RAG](../stages/llm/2-rag/README.md) · [RC4 설명 가능성](../stages/compliance/rc4-explain/README.md) | [데이터 계보 · 근거 — 요청 → 청크 → 문서 · 판 사슬 · 주장 나누기 · 표시 일치 · 부딪힘 · 주장 단위 평가 · 실측](../stages/provenance/pv1-source/provenance.md) |
+| PV8 | [검증 결과 · 부딪힘](../stages/provenance/pv8-verify/README.md) | ✅ 구현됨 | 주장끼리 · 판끼리 부딪히는 것을 찾고 검증 결과를 남긴다 | [K4 융합 · 정제](../stages/knowledge-graph/k4-fusion/README.md) · [E6 드리프트](../stages/evalops/e6-drift/README.md) | [데이터 계보 · 근거 — 요청 → 청크 → 문서 · 판 사슬 · 주장 나누기 · 표시 일치 · 부딪힘 · 주장 단위 평가 · 실측](../stages/provenance/pv1-source/provenance.md) |
 
 ## 설계 원칙
 

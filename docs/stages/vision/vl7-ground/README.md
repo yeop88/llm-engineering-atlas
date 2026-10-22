@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [PV7 인용](../../provenance/pv7-cite/README.md) — 데이터 계보 · 근거 맵 · ⬜ 예정
+- [PV7 인용](../../provenance/pv7-cite/README.md) — 데이터 계보 · 근거 맵 · ✅ 구현됨
 
 ---
 

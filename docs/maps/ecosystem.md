@@ -26,7 +26,7 @@ LLM 생태계를 기술 영역 34개(M1~M30 · 확장 E1~E4)로 나누고, 이 �
 | M7 | 고급 RAG 검색 전략 | 성숙 | 높음 | 질문 분석 → 재작성 → 검색 방식 선택(밀집 · 희소 · 혼합 · 메타 · 다중) → 재정렬 → 압축 → 근거 병합 | [LLM 시스템 엔지니어링](llm.md) · [컨텍스트 엔지니어링](context.md) | ✅ 18 |
 | M8 | GraphRAG · 지식 그래프 | 성숙 | 높음 | 요구 → 온톨로지 → 추출 → 정규화 · 융합 → 저장 → Text2Query → 하위 그래프 → 커뮤니티 요약 → 근거 | [지식 그래프 · GraphRAG](knowledge-graph.md) · [데이터 분석 에이전트 · Text-to-SQL](analytics.md) | ✅ 15 |
 | M9 | 문서 지능 | 성숙 | 높음 | 분류 → OCR · 레이아웃 → 표 · 그림 → 구조 복원 → 엔터티 → 문서 간 연결 → 색인 | [문서 처리 (Document Intelligence)](docintel.md) | ✅ 7 |
-| M10 | 데이터 계보 · 근거 | 성숙 | 높음 | 원본 → 수집 시각 → 변환 → 청크 → 주장 → 답 문장 → 인용 → 검증 | [데이터 계보 · 근거](provenance.md) (새 맵) · [평가 · 관측 (LLMOps)](evalops.md) · [규제 대응 · 컴플라이언스](compliance.md) | ✅ 16 · ⬜ 8 |
+| M10 | 데이터 계보 · 근거 | 성숙 | 높음 | 원본 → 수집 시각 → 변환 → 청크 → 주장 → 답 문장 → 인용 → 검증 | [데이터 계보 · 근거](provenance.md) (새 맵) · [평가 · 관측 (LLMOps)](evalops.md) · [규제 대응 · 컴플라이언스](compliance.md) | ✅ 24 |
 | M11 | 대화 컨텍스트 | 기초 | 필수 | 재작성 → 모호성 → 되묻기 → 상태 갱신 → 답 → 후속 행동 | [대화 · 메모리](conversation.md) | ✅ 6 |
 | M12 | 장기 메모리 | 신선 | 높음 | 후보 추출 → 가치 평가 → 민감도 → 저장 → 감쇠 → 검색 → 적용 → 수정 · 삭제 | [장기 메모리 · 메모리 DB](memory.md) · [대화 · 메모리](conversation.md) | ✅ 13 |
 
@@ -185,7 +185,7 @@ LLM 생태계를 기술 영역 34개(M1~M30 · 확장 E1~E4)로 나누고, 이 �
 | [Transformer · MoE 구조](architecture.md) | B | M2 | 성숙 | [해석 가능성 · 모델 내부](interp.md) · [적은 메모리로 큰 모델 돌리기](bigmodel.md) | 동향 정리 | 2026-10-22 |
 | [토크나이저 · 표현 공간](tokenizer.md) | B | M3 | 성숙 | [해석 가능성 · 모델 내부](interp.md) · [LLM 시스템 엔지니어링](llm.md) | 동향 정리 | 2026-10-22 |
 | [학습 생애주기](training.md) | B | M4 | 성숙 | [후학습 (Post-training)](posttrain.md) · [강화학습 기반 에이전트 학습 (RLVR)](rlvr.md) · [데이터 플라이휠](flywheel.md) | 동향 정리 | 2026-10-22 |
-| [데이터 계보 · 근거](provenance.md) | A | M10 | 성숙 | [LLM 시스템 엔지니어링](llm.md) · [평가 · 관측 (LLMOps)](evalops.md) · [문서 처리 (Document Intelligence)](docintel.md) | 동향 정리 | 2026-10-22 |
+| [데이터 계보 · 근거](provenance.md) | A | M10 | 성숙 | [LLM 시스템 엔지니어링](llm.md) · [평가 · 관측 (LLMOps)](evalops.md) · [문서 처리 (Document Intelligence)](docintel.md) | 이 앱에 구현(실측 전) | 2026-10-22 |
 | [개인화 · 적응](personalize.md) | F | M14 | 신선 | [장기 메모리 · 메모리 DB](memory.md) · [대화 · 메모리](conversation.md) | 동향 정리 | 2026-10-22 |
 | [에이전트 경제 · 거래](economy.md) | C | M20 | 실험적 | [에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)](interop.md) · [장기 실행 에이전트 · 업무 자동화](longrun.md) · [엔터프라이즈 AI 플랫폼 아키텍처](platform.md) | 동향 정리 | 2026-10-22 |
 | [실시간 스트리밍 LLM](realtime.md) | D | M21 | 신선 | [실시간 음성 상담](voice.md) · [옴니채널 · 실시간 멀티모달 에이전트](omni.md) · [서빙 · 추론 최적화 · 비용](serving.md) | 동향 정리 | 2026-10-22 |

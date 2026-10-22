@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}근거 검증 · 부딪힘{% endblock %}
+{% block content %}
+{% call ui.page_header("근거 검증 · 부딪힘") %}같은 질문(글자가 거의 같은 질문)의 다른 답에서 숫자 · 조문 번호 · 코드가 다르면 부딪힘 후보로 보여 줍니다(PV8). 평가는 평가 세트의 질문을 서비스 답변으로 답하게 해, 주장마다 근거 강함 · 약함 · 없음 · 인용 안 함, 빠진 표시, 인용 정확도, 원본까지 추적 가능한 비율, 옛 판 근거를 셉니다.{% endcall %}
+
+<div class="card stack" id="contradictions">
+  <h2>부딪히는 답 (PV8)</h2>
+  <div class="row">
+    <div class="field"><label for="x-days">최근 며칠</label><input id="x-days" type="number" value="30" min="1" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="x-run">찾기</button></div>
+  </div>
+  <div id="x-out"></div>
+</div>
+
+<div class="card stack mt-4" id="eval">
+  <h2>주장 단위 근거 평가</h2>
+  <div class="row">
+    <div class="field"><label for="e-col">컬렉션</label><select id="e-col" data-ctx="col"></select></div>
+    <div class="field"><label for="e-set">평가 세트</label><select id="e-set" data-ctx="set"></select></div>
+    <div class="field"><label for="e-n">질문 수</label><input id="e-n" type="number" value="12" min="1" class="w-md"></div>
+    <div class="field"><label for="e-provider">제공자</label><select id="e-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="e-model">모델</label><input id="e-model" data-ctx="model"></div>
+    <div class="self-end"><button class="btn primary" id="e-run">평가</button></div>
+  </div>
+  <div id="e-progress" hidden></div>
+  <div id="e-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/provenance/check.js') }}"></script>
+{% endblock %}

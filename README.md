@@ -27,7 +27,7 @@
 | A | **문서 처리 (Document Intelligence)** | 자료를 제대로 읽는 흐름 | 7 | 7 | — | — | — | `/maps/docintel` · [개요](docs/maps/docintel.md) |
 | A | **대화 · 메모리** | 한 번이 아니라 이어지는 상담을 다루는 흐름 | 6 | 6 | — | — | — | `/maps/conversation` · [개요](docs/maps/conversation.md) |
 | A | **장기 메모리 · 메모리 DB** | 긴 맥락을 DB 로 유지하는 흐름 | 7 | 7 | — | — | — | `/maps/memory` · [개요](docs/maps/memory.md) |
-| A | **데이터 계보 · 근거** | 모든 답 문장을 원본까지 거슬러 올라가게 | 8 | — | — | 8 | — | `/maps/provenance` · [개요](docs/maps/provenance.md) |
+| A | **데이터 계보 · 근거** | 모든 답 문장을 원본까지 거슬러 올라가게 | 8 | 8 | — | — | — | `/maps/provenance` · [개요](docs/maps/provenance.md) |
 | B | **서빙 · 추론 최적화 · 비용** | 싸고 빠르게 돌리는 흐름 | 7 | 7 | — | — | — | `/maps/serving` · [개요](docs/maps/serving.md) |
 | B | **후학습 (Post-training)** | 우리 데이터로 LLM 자체를 고치는 흐름 | 7 | 7 | — | — | — | `/maps/posttrain` · [개요](docs/maps/posttrain.md) |
 | B | **강화학습 기반 에이전트 학습 (RLVR)** | 정답을 확인할 수 있는 과제로 에이전트를 학습 | 6 | 6 | — | — | — | `/maps/rlvr` · [개요](docs/maps/rlvr.md) |
@@ -66,7 +66,7 @@
 | F | **엔터프라이즈 AI 플랫폼 아키텍처** | 맵들을 실제 운영 시스템으로 묶는 흐름 | 7 | 7 | — | — | — | `/maps/platform` · [개요](docs/maps/platform.md) |
 | F | **개인화 · 적응** | 개인화 데이터 · 인증 · 민감 정보 · 학습 동의를 나눠서 | 7 | — | — | 7 | — | `/maps/personalize` · [개요](docs/maps/personalize.md) |
 | F | **모델 라우팅 · 비용 최적화** | 점수 = 품질 · 근거 · 지연 · 비용 · 신뢰성 | 8 | 8 | — | — | — | `/maps/routing` · [개요](docs/maps/routing.md) |
-| | **합계 44개** | | 316 | 214 | 0 | 77 | 25 | `/maps` · [생태계 구조](docs/maps/ecosystem.md) |
+| | **합계 44개** | | 316 | 222 | 0 | 69 | 25 | `/maps` · [생태계 구조](docs/maps/ecosystem.md) |
 <!-- /맵 표 -->
 
 ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정 — 맵 · 단계의 정의와 상태는 `app/stages/registry/` 한 곳에서 관리하고, 이 표와 문서가 거기서 만들어집니다.

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}근거 계보{% endblock %}
+{% block content %}
+{% call ui.page_header("근거 계보") %}요청 기록 하나를 골라 답 문장 → 주장 → 인용 · 근거 → 청크(쪽 · 조문 · 글자 범위) → 청크 세트(나눈 방식) → 문서(해시 · 수집 시각 · 판) → 컬렉션까지 따라갑니다(PV1~PV7). 주장마다 근거와 글자가 얼마나 겹치는지, 숫자 · 조문 번호 · 코드가 근거에 그대로 있는지 봅니다 — 글은 겹치는데 숫자가 근거에 없으면 '근거 약함'입니다.{% endcall %}
+
+<div class="card stack" id="trace">
+  <h2>요청 기록 고르기</h2>
+  <div class="row">
+    <div class="field grow"><label for="t-pick">요청 기록</label><select id="t-pick"></select></div>
+    <div class="self-end"><button class="btn primary" id="t-run">따라가기</button></div>
+  </div>
+  <div id="t-out"></div>
+</div>
+
+<div class="card stack mt-4" id="claims">
+  <h2>답 · 근거를 직접 넣어 주장 나누기</h2>
+  <div class="field"><label for="a-answer">답</label><textarea id="a-answer" rows="3">임금은 매월 1회 이상 일정한 날짜를 정하여 지급하여야 합니다 [1]. 위반하면 3년 이하의 징역에 처합니다 [2].</textarea></div>
+  <div class="field"><label for="a-src">근거 (한 줄에 하나, 순서대로 [1] · [2] …)</label><textarea id="a-src" rows="3">제43조(임금 지급) ② 임금은 매월 1회 이상 일정한 날짜를 정하여 지급하여야 한다.
+제109조(벌칙) 제43조를 위반한 자는 3년 이하의 징역 또는 3천만원 이하의 벌금에 처한다.</textarea></div>
+  <div><button class="btn" id="a-run">나누기</button></div>
+  <div id="a-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/provenance/trace.js') }}"></script>
+{% endblock %}

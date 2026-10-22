@@ -49,6 +49,7 @@ from app.stages.multiagent import api as multiagent_api  # noqa: E402
 from app.stages.omni import api as omni_api  # noqa: E402
 from app.stages.platform import api as platform_api  # noqa: E402
 from app.stages.posttrain import api as posttrain_api  # noqa: E402
+from app.stages.provenance import api as provenance_api  # noqa: E402
 from app.stages.quant import api as quant_api  # noqa: E402
 from app.stages.rag import answer_api, collections_api, eval_api, verify_api  # noqa: E402
 from app.stages.reasoning import api as reasoning_api  # noqa: E402
@@ -172,6 +173,7 @@ for module in (
     bigmodel_api,  # 적은 메모리로 큰 모델 — 메모리 계획 · 층 단위 스트리밍 · 전문가 오프로드 · 페이지 KV · 연속 배칭 · 극저비트 · 여러 기기
     inference_api,  # 추론 최적화 — 워크로드 측정 · 미리 채우기 · 생성 분리 · 최적화 사다리 · 품질 게이트
     model_routing_api,  # 모델 라우팅 — 분류 · 위험 · 품질 하한 · 예산 · 후보 점수 · 승격 · 보정 · 채점
+    provenance_api,  # 데이터 계보 · 근거 — 요청 → 청크 → 문서 · 판, 주장 · 근거 · 표시 일치, 부딪힘, 주장 단위 평가
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

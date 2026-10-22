@@ -33,7 +33,7 @@ AI 생성물 표시는 규제 의무가 되었고(고지 RC6), 출처가 없으�
 
 이미 있는 단계 위에 짓습니다.
 
-- [PV1 원본 소스](../../provenance/pv1-source/README.md) — 데이터 계보 · 근거 맵 · ⬜ 예정
+- [PV1 원본 소스](../../provenance/pv1-source/README.md) — 데이터 계보 · 근거 맵 · ✅ 구현됨
 - [RC6 사용자 고지 · 이의 제기](../../compliance/rc6-notice/README.md) — 규제 대응 · 컴플라이언스 맵 · ✅ 구현됨
 
 ---
