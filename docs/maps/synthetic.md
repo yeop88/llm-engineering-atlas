@@ -22,14 +22,14 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| SD1 | [데이터 부족 분석](../stages/synthetic/sd1-gap/README.md) | ⬜ 예정 | 실패 유형 · 유형별 데이터 수에서 무엇이 부족한지 찾는다 | [FW2 실패 분류](../stages/flywheel/fw2-triage/README.md) · [E6 드리프트](../stages/evalops/e6-drift/README.md) | — |
-| SD2 | [생성 전략 선택](../stages/synthetic/sd2-strategy/README.md) | ⬜ 예정 | 템플릿 · LLM 바꿔 쓰기 · 그래프 · 역번역 중 유형에 맞는 방법을 고른다 | [P1 합성 데이터](../stages/posttrain/p1-synth/README.md) · [RV1 과제 설계](../stages/rlvr/rv1-tasks/README.md) | — |
-| SD3 | [합성 데이터 생성](../stages/synthetic/sd3-generate/README.md) | ⬜ 예정 | 고른 전략으로 만들고 만든 방법 · 원본을 남긴다 | [P1 합성 데이터](../stages/posttrain/p1-synth/README.md) | — |
-| SD4 | [다양성 검사](../stages/synthetic/sd4-diversity/README.md) | ⬜ 예정 | 임베딩 군집 · 표현 반복으로 다양성을 재고 비슷한 것을 줄인다 | [A 의미 응용](../stages/llm/a-apps/README.md) | — |
-| SD5 | [중복 · 오염 제거](../stages/synthetic/sd5-dedup/README.md) | ⬜ 예정 | 중복 · 평가 질문 누수 · 개인정보를 제거한다 | [P2 선별](../stages/posttrain/p2-select/README.md) · [FW4 자산화](../stages/flywheel/fw4-assets/README.md) | — |
-| SD6 | [인간 검토](../stages/synthetic/sd6-review/README.md) | ⬜ 예정 | 표본을 사람이 검토해 오류율을 재고 묶음을 통과 · 반려한다 | [FW3 검토 우선순위](../stages/flywheel/fw3-review/README.md) | — |
-| SD7 | [학습](../stages/synthetic/sd7-train/README.md) | ⬜ 예정 | 합성 · 실제 데이터 비율을 바꿔 학습한다 | [P3 SFT](../stages/posttrain/p3-sft/README.md) · [FW5 재학습](../stages/flywheel/fw5-retrain/README.md) | — |
-| SD8 | [실제 데이터 평가](../stages/synthetic/sd8-eval/README.md) | ⬜ 예정 | 합성이 아닌 실제 질문으로 나아졌는지 잰다 | [P6 후학습 평가](../stages/posttrain/p6-eval/README.md) · [E2 회귀 평가](../stages/evalops/e2-offline/README.md) | — |
+| SD1 | [데이터 부족 분석](../stages/synthetic/sd1-gap/README.md) | ✅ 구현됨 | 실패 유형 · 유형별 데이터 수에서 무엇이 부족한지 찾는다 | [FW2 실패 분류](../stages/flywheel/fw2-triage/README.md) · [E6 드리프트](../stages/evalops/e6-drift/README.md) | [합성 데이터 — 부족 분석 · 전략 · 생성 · 다양성 · 중복 · 누수 거르기 · 검토 표본 · 실제 질문으로 효과 평가(질문 유형 분류)](../stages/synthetic/sd1-gap/synthetic.md) |
+| SD2 | [생성 전략 선택](../stages/synthetic/sd2-strategy/README.md) | ✅ 구현됨 | 템플릿 · LLM 바꿔 쓰기 · 그래프 · 역번역 중 유형에 맞는 방법을 고른다 | [P1 합성 데이터](../stages/posttrain/p1-synth/README.md) · [RV1 과제 설계](../stages/rlvr/rv1-tasks/README.md) | [합성 데이터 — 부족 분석 · 전략 · 생성 · 다양성 · 중복 · 누수 거르기 · 검토 표본 · 실제 질문으로 효과 평가(질문 유형 분류)](../stages/synthetic/sd1-gap/synthetic.md) |
+| SD3 | [합성 데이터 생성](../stages/synthetic/sd3-generate/README.md) | ✅ 구현됨 | 고른 전략으로 만들고 만든 방법 · 원본을 남긴다 | [P1 합성 데이터](../stages/posttrain/p1-synth/README.md) | [합성 데이터 — 부족 분석 · 전략 · 생성 · 다양성 · 중복 · 누수 거르기 · 검토 표본 · 실제 질문으로 효과 평가(질문 유형 분류)](../stages/synthetic/sd1-gap/synthetic.md) |
+| SD4 | [다양성 검사](../stages/synthetic/sd4-diversity/README.md) | ✅ 구현됨 | 임베딩 군집 · 표현 반복으로 다양성을 재고 비슷한 것을 줄인다 | [A 의미 응용](../stages/llm/a-apps/README.md) | [합성 데이터 — 부족 분석 · 전략 · 생성 · 다양성 · 중복 · 누수 거르기 · 검토 표본 · 실제 질문으로 효과 평가(질문 유형 분류)](../stages/synthetic/sd1-gap/synthetic.md) |
+| SD5 | [중복 · 오염 제거](../stages/synthetic/sd5-dedup/README.md) | ✅ 구현됨 | 중복 · 평가 질문 누수 · 개인정보를 제거한다 | [P2 선별](../stages/posttrain/p2-select/README.md) · [FW4 자산화](../stages/flywheel/fw4-assets/README.md) | [합성 데이터 — 부족 분석 · 전략 · 생성 · 다양성 · 중복 · 누수 거르기 · 검토 표본 · 실제 질문으로 효과 평가(질문 유형 분류)](../stages/synthetic/sd1-gap/synthetic.md) |
+| SD6 | [인간 검토](../stages/synthetic/sd6-review/README.md) | ✅ 구현됨 | 표본을 사람이 검토해 오류율을 재고 묶음을 통과 · 반려한다 | [FW3 검토 우선순위](../stages/flywheel/fw3-review/README.md) | [합성 데이터 — 부족 분석 · 전략 · 생성 · 다양성 · 중복 · 누수 거르기 · 검토 표본 · 실제 질문으로 효과 평가(질문 유형 분류)](../stages/synthetic/sd1-gap/synthetic.md) |
+| SD7 | [학습](../stages/synthetic/sd7-train/README.md) | ✅ 구현됨 | 합성 · 실제 데이터 비율을 바꿔 학습한다 | [P3 SFT](../stages/posttrain/p3-sft/README.md) · [FW5 재학습](../stages/flywheel/fw5-retrain/README.md) | [합성 데이터 — 부족 분석 · 전략 · 생성 · 다양성 · 중복 · 누수 거르기 · 검토 표본 · 실제 질문으로 효과 평가(질문 유형 분류)](../stages/synthetic/sd1-gap/synthetic.md) |
+| SD8 | [실제 데이터 평가](../stages/synthetic/sd8-eval/README.md) | ✅ 구현됨 | 합성이 아닌 실제 질문으로 나아졌는지 잰다 | [P6 후학습 평가](../stages/posttrain/p6-eval/README.md) · [E2 회귀 평가](../stages/evalops/e2-offline/README.md) | [합성 데이터 — 부족 분석 · 전략 · 생성 · 다양성 · 중복 · 누수 거르기 · 검토 표본 · 실제 질문으로 효과 평가(질문 유형 분류)](../stages/synthetic/sd1-gap/synthetic.md) |
 
 ## 설계 원칙
 

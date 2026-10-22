@@ -488,6 +488,17 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/architecture/layers` | `{"gguf"}` 또는 `{"hf_id", "bits"}` → 층마다 어텐션 종류 · KV 차원 · FFN 밀집/MoE · 바이트, 요약(전문가 몫 · 토큰당 읽는 양 · 임베딩 · 출력층 몫), 맥락 길이별 KV 대 단순 어림 |
 | POST | `/api/architecture/scaling` | 맥락 길이별 실측 작업 `{"lengths"}` → 작은 LM 의 미리 채우기 시간 · 토큰당 ms · 실제 KV · 길이 두 배당 시간 배율 |
 
+## 합성 데이터 (`/api/synthetic`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/synthetic/sources` | 유형이 붙은 평가 세트 · 유형 이름 · 만든 묶음 |
+| POST | `/api/synthetic/gap` | `{"eval_set_id", "split_seed"}` → 학습용 · 시험용 수, 유형별 학습 수 · 교차 검증 재현율 · 부족 · 이유 · 전략 |
+| POST | `/api/synthetic/batches` | 묶음 작업 `{"name", "eval_set_id", "split_seed", "per_type", "keep", "use_llm", "llm", "review_n"}` → 생성 · 다양성 · 거르기 보고 · 검토 표본 |
+| GET | `/api/synthetic/batches/{name}` | 묶음 메타 · 질문(200개까지) |
+| POST | `/api/synthetic/batches/{name}/review` | `{"id", "ok", "note"}` → 검토 진행 · 오류율 95% 구간 · 통과 · 반려 |
+| POST | `/api/synthetic/experiment` | 효과 평가 작업 `{"eval_set_id", "seeds", "per_type", "keep", "use_llm", "llm"}` → 조건별 실제 · 합성 시험 정확 · 유형별 재현 |
+
 ## 비디오 이해 (`/api/video`)
 
 | 메서드 | 경로 | 설명 |

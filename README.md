@@ -42,7 +42,7 @@
 | B | **토크나이저 · 표현 공간** | 한국어 토큰 효율 · 코드 · 이미지 패치 · 오디오 토큰 | 6 | 6 | — | — | — | `/maps/tokenizer` · [개요](docs/maps/tokenizer.md) |
 | B | **학습 생애주기** | 후학습 · RLVR · 플라이휠을 한 생애주기로 | 8 | 8 | — | — | — | `/maps/training` · [개요](docs/maps/training.md) |
 | B | **추론 최적화** | 기준선부터 카나리까지 한 순서로 | 9 | 9 | — | — | — | `/maps/inference` · [개요](docs/maps/inference.md) |
-| B | **합성 데이터** | 합성으로 늘리되 실제로 잰다 | 8 | — | — | 8 | — | `/maps/synthetic` · [개요](docs/maps/synthetic.md) |
+| B | **합성 데이터** | 합성으로 늘리되 실제로 잰다 | 8 | 8 | — | — | — | `/maps/synthetic` · [개요](docs/maps/synthetic.md) |
 | C | **멀티에이전트 · 멀티모달** | 멀티모달 입력 · 검색 → 오케스트레이터가 전문가 에이전트(검색 · 분석 · 작성 · 검증)에게 분배 → 교차 검증 → 텍스트 · 차트 · 음성 출력 | 8 | 8 | — | — | — | `/maps/multi-agent` · [개요](docs/maps/multi-agent.md) |
 | C | **에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)** | 신뢰 경계를 넘나드는 에이전트 연결 | 6 | 6 | — | — | — | `/maps/interop` · [개요](docs/maps/interop.md) |
 | C | **장기 실행 에이전트 · 업무 자동화** | 며칠짜리 업무를 맡기는 흐름 | 7 | 7 | — | — | — | `/maps/longrun` · [개요](docs/maps/longrun.md) |
@@ -66,7 +66,7 @@
 | F | **엔터프라이즈 AI 플랫폼 아키텍처** | 맵들을 실제 운영 시스템으로 묶는 흐름 | 7 | 7 | — | — | — | `/maps/platform` · [개요](docs/maps/platform.md) |
 | F | **개인화 · 적응** | 개인화 데이터 · 인증 · 민감 정보 · 학습 동의를 나눠서 | 7 | 7 | — | — | — | `/maps/personalize` · [개요](docs/maps/personalize.md) |
 | F | **모델 라우팅 · 비용 최적화** | 점수 = 품질 · 근거 · 지연 · 비용 · 신뢰성 | 8 | 8 | — | — | — | `/maps/routing` · [개요](docs/maps/routing.md) |
-| | **합계 44개** | | 316 | 283 | 0 | 12 | 21 | `/maps` · [생태계 구조](docs/maps/ecosystem.md) |
+| | **합계 44개** | | 316 | 291 | 0 | 4 | 21 | `/maps` · [생태계 구조](docs/maps/ecosystem.md) |
 <!-- /맵 표 -->
 
 ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정 — 맵 · 단계의 정의와 상태는 `app/stages/registry/` 한 곳에서 관리하고, 이 표와 문서가 거기서 만들어집니다.

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}합성 데이터{% endblock %}
+{% block content %}
+{% call ui.page_header("합성 데이터") %}질문 유형 분류기(사실 · 바꿔 말하기 · 조건 · 상황 · 긴 상황 · 답 없음 · 여러 질문)를 예로, 합성 데이터의 흐름을 잇습니다.
+<ul class="small">
+  <li>부족 분석: 유형별 학습 수 · 교차 검증 재현율(SD1), 유형별 생성 전략(SD2)</li>
+  <li>생성: 만든 방법 · 원본 기록(SD3)</li>
+  <li>거르기: 다양성 고르기(SD4), 중복 · 평가 누수 · 개인정보(SD5), 검토 표본 · 오류율 구간(SD6)</li>
+  <li>학습 · 평가: 실제만 · 실제 + 합성 · 합성만으로 학습(SD7), 시험용 실제 질문으로 평가(SD8)</li>
+</ul>
+합성 시험 점수도 함께 보여, 합성 평가를 믿으면 안 되는 이유를 숫자로 봅니다.{% endcall %}
+
+<div class="card stack" id="gap">
+  <h2>부족 분석 · 전략 (SD1 · SD2)</h2>
+  <div class="row">
+    <div class="field grow"><label for="g-set">실제 질문(유형이 붙은 평가 세트)</label><select id="g-set" data-ctx="set"></select></div>
+    <div class="field"><label for="g-seed">나누기 씨앗</label><input id="g-seed" type="number" value="0" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="g-run">분석</button></div>
+  </div>
+  <div id="g-out"></div>
+</div>
+
+<div class="card stack mt-4" id="batch">
+  <h2>생성 · 거르기 · 검토 (SD3~SD6)</h2>
+  <div class="row">
+    <div class="field"><label for="b-name">묶음 이름</label><input id="b-name" value="legal-types-1"></div>
+    <div class="field"><label for="b-per">유형마다 만들 수</label><input id="b-per" type="number" value="60" min="5" class="w-md"></div>
+    <div class="field"><label for="b-keep">다양성으로 고를 수</label><input id="b-keep" type="number" value="25" min="1" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="b-llm"> LLM 바꿔 쓰기도</label>
+    <div class="self-end"><button class="btn primary" id="b-run">만들기</button></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="b-provider">제공자</label><select id="b-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="b-model">모델</label><input id="b-model" data-ctx="model"></div>
+    <div class="field"><label for="b-open">만든 묶음</label><select id="b-open"></select></div>
+    <div class="self-end"><button class="btn" id="b-load">열기</button></div>
+  </div>
+  <div id="b-progress" hidden></div>
+  <div id="b-out"></div>
+</div>
+
+<div class="card stack mt-4" id="experiment">
+  <h2>학습 · 실제 질문으로 평가 (SD7 · SD8)</h2>
+  <p class="small muted">나누기 씨앗마다 위 흐름을 처음부터 돌려, 실제만 · 실제 + 합성(거르기 전 · 후) · 합성만(· LLM 합성)으로 분류기를 학습합니다. 시험용 실제 질문과 합성 시험 질문으로 잽니다.</p>
+  <div class="row">
+    <div class="field"><label for="x-seeds">씨앗 수</label><input id="x-seeds" type="number" value="5" min="1" max="20" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="x-llm"> LLM 합성 비교(느림)</label>
+    <div class="self-end"><button class="btn" id="x-run">평가</button></div>
+  </div>
+  <div id="x-progress" hidden></div>
+  <div id="x-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/synthetic/data.js') }}"></script>
+{% endblock %}

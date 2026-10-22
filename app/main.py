@@ -63,6 +63,7 @@ from app.stages.rl import api as rl_api  # noqa: E402
 from app.stages.rlvr import api as rlvr_api  # noqa: E402
 from app.stages.routing import api as routing_api  # noqa: E402
 from app.stages.serving import api as serving_api  # noqa: E402
+from app.stages.synthetic import api as synthetic_api  # noqa: E402
 from app.stages.tokenizer import api as tokenizer_api  # noqa: E402
 from app.stages.training import api as training_api  # noqa: E402
 from app.stages.video import api as video_api  # noqa: E402
@@ -192,6 +193,7 @@ for module in (
     audio_api,  # 오디오 이해 — 침묵 · 말 · 음악 · 환경음 구간, 소리 사건 · 화자 색인, 검색 · 요약
     vision_api,  # 이미지 · VL — 표시창 · 호스 영역 규칙, 표시창만 읽기, 매뉴얼 근거 답과 근거 영역, VLM 하나에 vs 나눠서
     video_api,  # 비디오 이해 — 컷 · 추적 · 소리 사건 시간축 색인, 처음 · 마지막 · 몇 번 · 무엇 다음 계산
+    synthetic_api,  # 합성 데이터 — 부족 분석 · 생성 · 다양성 · 누수 거르기 · 검토 표본 · 실제 질문으로 효과 평가
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):
