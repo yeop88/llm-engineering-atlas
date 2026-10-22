@@ -53,11 +53,12 @@ def _offsets(tok: Any, text: str, ids: list[int]) -> list[tuple[int, int]]:
         om = None
     if om and len(om) >= len(ids):
         return [tuple(x) for x in om[: len(ids)]]
-    out, pos = [], 0
-    for i in ids:
-        n = len(tok.decode([i]))
-        out.append((pos, pos + max(1, n)))
-        pos += n
+    # 앞에서부터 이어 푼 글의 길이로 — 토큰 하나만 풀면 바이트 조각이 '�' 한 글자로 세어져 한글에서 범위가 어긋났다
+    out, prev = [], 0
+    for k in range(len(ids)):
+        cur = len(tok.decode(ids[: k + 1]).rstrip("�"))
+        out.append((prev, max(cur, prev + 1)))
+        prev = max(prev, cur)
     return out
 
 
@@ -70,19 +71,49 @@ def _protected(tok: Any, text: str, ids: list[int]) -> list[bool]:
     return [any(a < e and s < b for s, e in spans) for a, b in _offsets(tok, text, ids)]
 
 
-def token_compress(model: Any, tok: Any, text: str, ratio: float, prefix: str = "") -> dict[str, Any]:
-    """남길 비율 ratio(0~1) 만큼 놀람이 높은 토큰 + 보호 토큰을 남긴다."""
+def units(tok: Any, ids: list[int], mode: str = "char") -> list[list[int]]:
+    """지우고 남기는 단위(토큰 위치 묶음). 바이트 단위 BPE(Qwen 등)는 한글 한 글자를 토큰 여러 개로 쪼갠다 — 토큰 하나씩 지우면 글자가
+    깨져(�) 압축한 글을 LLM 이 읽지 못했다(압축 평가 실측에서 정답률 50% → 10%). char: 온전한 글자가 될 때까지 토큰을 묶음,
+    word: 띄어쓰기로 시작하는 토큰에서 새 단위(어절) — 조사만 떼어 지우지 않아 한국어 글이 덜 부서진다."""
+    out, cur = [], []
+    for i, t in enumerate(ids):
+        if mode == "word" and cur and tok.decode([t])[:1].isspace() and "\ufffd" not in tok.decode([ids[j] for j in cur]):
+            out.append(cur)
+            cur = []
+        cur.append(i)
+        if mode == "char" and "\ufffd" not in tok.decode([ids[j] for j in cur]):
+            out.append(cur)
+            cur = []
+    if cur:
+        out.append(cur)
+    return out
+
+
+def token_compress(model: Any, tok: Any, text: str, ratio: float, prefix: str = "", unit: str = "char") -> dict[str, Any]:
+    """남길 비율 ratio(0~1, 토큰 수 기준) 만큼 놀람이 높은 단위 + 보호 단위를 남긴다. 단위의 점수 = 그 안 토큰 놀람의 평균."""
     ids, s = surprisal(model, tok, text, prefix)
     if not ids:
         return {"text": "", "kept": 0, "total": 0}
     prot = _protected(tok, text, ids)
-    budget = max(sum(prot), int(round(len(ids) * ratio)))
-    order = sorted(range(len(ids)), key=lambda i: (not prot[i], -s[i]))  # 보호 토큰 먼저, 그다음 놀람이 높은 순
-    keep = sorted(order[:budget])
-    return {"text": tok.decode([ids[i] for i in keep]).strip(), "kept": len(keep), "total": len(ids), "protected": sum(prot)}
+    us = units(tok, ids, unit)
+    u_prot = [any(prot[i] for i in u) for u in us]
+    u_score = [sum(s[i] for i in u) / len(u) for u in us]
+    budget = max(sum(len(u) for u, p in zip(us, u_prot, strict=True) if p), int(round(len(ids) * ratio)))
+    order = sorted(range(len(us)), key=lambda k: (not u_prot[k], -u_score[k]))  # 보호 단위 먼저, 그다음 놀람이 높은 순
+    keep: list[int] = []
+    n = 0
+    for k in order:
+        if n >= budget:
+            break
+        keep += us[k]
+        n += len(us[k])
+    keep.sort()
+    return {"text": tok.decode([ids[i] for i in keep]).strip(), "kept": len(keep), "total": len(ids), "protected": sum(prot), "unit": unit}
 
 
-def query_compress(model: Any, tok: Any, text: str, question: str, ratio: float, sent_mult: float = 2.0) -> dict[str, Any]:
+def query_compress(
+    model: Any, tok: Any, text: str, question: str, ratio: float, sent_mult: float = 2.0, unit: str = "char"
+) -> dict[str, Any]:
     """문장 단계(대조 점수로 고름, 목표의 sent_mult 배까지 남김) → 토큰 단계(질문 조건으로 목표 비율까지)."""
     ss = sentences(text)
     if not ss:
@@ -103,7 +134,7 @@ def query_compress(model: Any, tok: Any, text: str, question: str, ratio: float,
         n += x["chars"]
     kept_text = " ".join(x["text"] for x in scored if x in keep_s)  # 원래 순서로
     inner = min(1.0, ratio * total_chars / max(1, n))
-    tc = token_compress(model, tok, kept_text, inner, prefix=f"질문: {question}\n근거: ")
+    tc = token_compress(model, tok, kept_text, inner, prefix=f"질문: {question}\n근거: ", unit=unit)
     total = len(tok(text, add_special_tokens=False)["input_ids"])
     return {"text": tc["text"], "kept": tc["kept"], "total": total, "sentences": [{**x, "kept": x in keep_s} for x in scored]}
 

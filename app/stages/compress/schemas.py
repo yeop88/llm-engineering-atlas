@@ -7,19 +7,19 @@ from pydantic import BaseModel, Field
 from app.core.schemas import LLMRef
 from app.stages.compress.kv import POLICIES
 
-METHODS = ("none", "token", "query", "lexical", "random")
+METHODS = ("none", "token", "word", "query", "lexical", "random")
 
 
 class PreviewIn(BaseModel):
     text: str = Field(min_length=1, max_length=20000)
     question: str = Field(default="", max_length=2000)
-    method: Literal["token", "query", "lexical", "random"] = "token"
+    method: Literal["token", "word", "query", "lexical", "random"] = "token"
     ratio: float = Field(default=0.5, gt=0, le=1)
 
 
 class EvalIn(LLMRef):
     eval_set_id: int
-    methods: list[Literal["none", "token", "query", "lexical", "random"]] = Field(default_factory=lambda: list(METHODS))
+    methods: list[Literal["none", "token", "word", "query", "lexical", "random"]] = Field(default_factory=lambda: list(METHODS))
     ratios: list[float] = Field(default_factory=lambda: [0.5, 0.3], min_length=1, max_length=6)
     max_queries: int = Field(default=15, ge=1, le=300)
     max_tokens: int = Field(default=300, ge=16, le=2000)

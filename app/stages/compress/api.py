@@ -26,6 +26,7 @@ DB = Annotated[Session, Depends(get_db)]
 LABEL = {
     "none": "압축 없음",
     "token": "토큰 단위(KC1)",
+    "word": "어절 단위(KC1)",
     "query": "질문을 아는(KC2)",
     "lexical": "글자 겹침 문장(LM 없음)",
     "random": "무작위 토큰",
@@ -40,6 +41,8 @@ def apply(method: str, text: str, question: str, ratio: float) -> dict[str, Any]
     model, tok = lm.load()
     if method == "token":
         return prompt.token_compress(model, tok, text, ratio)
+    if method == "word":
+        return prompt.token_compress(model, tok, text, ratio, unit="word")
     if method == "query":
         return prompt.query_compress(model, tok, text, question, ratio)
     return prompt.random_compress(tok, text, ratio)

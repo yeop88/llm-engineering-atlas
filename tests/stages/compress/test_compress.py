@@ -81,6 +81,39 @@ def test_protection_spans_cover_split_tokens():
     assert [c for c, p in zip(chars, prot, strict=True) if p] == ["E", "4", "제", "3", "조"]
 
 
+class ByteTok(CharTok):
+    """바이트 단위 BPE 흉내: 한글 한 글자(3바이트)를 토큰 3개로 쪼갠다 — 실제 Qwen 토크나이저처럼 토큰 하나만 지우면 글자가 깨진다."""
+
+    def __call__(self, text, add_special_tokens=False, **kw):
+        return {"input_ids": [b + 1 for b in text.encode("utf-8")]}
+
+    def decode(self, ids, skip_special_tokens=True):
+        return bytes(int(i) - 1 for i in ids).decode("utf-8", errors="replace")
+
+
+@pytest.fixture
+def tiny_bytes(monkeypatch):
+    torch.manual_seed(0)
+    model = Qwen2ForCausalLM(Qwen2Config(vocab_size=260, hidden_size=32, intermediate_size=64, num_hidden_layers=2, num_attention_heads=2,
+                                         num_key_value_heads=1, max_position_embeddings=4096, attn_implementation="eager"))  # fmt: skip
+    model.eval()
+    return model.eval(), ByteTok()
+
+
+def test_compression_never_breaks_characters(tiny_bytes):
+    """바이트로 쪼개지는 토크나이저에서도 압축한 글에 깨진 글자(�)가 없어야 한다 — 실측에서 이것 때문에 정답률이 무너졌다."""
+    model, tok = tiny_bytes
+    for unit in ("char", "word"):
+        for ratio in (0.2, 0.4, 0.7):
+            r = prompt.token_compress(model, tok, TEXT, ratio, unit=unit)
+            assert "\ufffd" not in r["text"], (unit, ratio, r["text"])
+            assert prompt.preserved(TEXT, r["text"]) == 1.0
+    words = prompt.token_compress(model, tok, TEXT, 0.4, unit="word")["text"].split()
+    assert all(w in TEXT.split() for w in words)  # 어절 단위는 원문 어절을 통째로 남기거나 지운다
+    q = prompt.query_compress(model, tok, TEXT, "E4 오류는?", 0.4)
+    assert "\ufffd" not in q["text"]
+
+
 def test_query_compress_scores_sentences_then_tokens(tiny):
     model, tok = tiny
     r = prompt.query_compress(model, tok, TEXT, "E4 오류는 어떻게 하나요?", 0.3)
@@ -171,7 +204,7 @@ def test_quantize_levels():
 # ── API ─────────────────────────────────────────────────────────────────
 def test_api_options_and_preview(client, tiny):
     o = client.get("/api/compress/options").json()
-    assert set(o["methods"]) == {"none", "token", "query", "lexical", "random"} and "snap" in o["policies"]
+    assert set(o["methods"]) == {"none", "token", "word", "query", "lexical", "random"} and "snap" in o["policies"]
     lex = client.post("/api/compress/preview", json={"text": TEXT, "question": "배수 필터", "method": "lexical", "ratio": 0.3}).json()
     assert lex["char_ratio"] < 1 and lex["orig_chars"] == len(TEXT)
     tk = client.post("/api/compress/preview", json={"text": TEXT, "method": "token", "ratio": 0.3}).json()
