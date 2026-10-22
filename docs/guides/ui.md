@@ -82,7 +82,7 @@ base.html
 
 - 색은 `style.css` 의 토큰(`--text` · `--muted` · `--accent` · `--ok` · `--warn` · `--err` …)만. 차트 색은 `--series-*`(바꾸면 색각이상 검증, [시각화](../stages/llm/1-embedding/visualization.md)).
 - 다크 테마 값은 `@media (prefers-color-scheme: dark)` 와 `:root[data-theme="dark"]` 두 곳에 같이 있습니다 — 하나를 고치면 둘 다.
-- 간격 · 크기는 유틸리티: `mt-1…5` `mb-2` `mb-4` `m-0` `my-1` `my-2` `p-1…3` `gap-1` `gap-2` `gap-4` `grow` `self-end` `items-start` `items-end` `justify-end` `nowrap-row` `w-xs…xl` `pre` `scroll` `scroll-sm/md/lg` `text-right` `bg-code` `min-0`. 인라인 `style=""` 은 값이 바뀌는 것(막대 폭 등)에만 — 늘면 테스트가 실패합니다.
+- 간격 · 크기는 유틸리티: `mt-1…5` `mb-2` `mb-4` `m-0` `my-1` `my-2` `p-1…3` `gap-1` `gap-2` `gap-4` `grow` `self-end` `items-start` `items-end` `justify-end` `nowrap-row` `w-xs…xl` `w-full` `pre` `scroll` `scroll-sm/md/lg` `text-right` `bg-code` `min-0`. 인라인 `style=""` 은 값이 바뀌는 것(막대 폭 등)에만 — 늘면 테스트가 실패합니다.
 - 화면 폭 900px 이하: 사이드바는 서랍, 2 · 3 · 4열 격자는 1열, 위쪽 바의 글자 버튼은 아이콘만.
 
 ## 접근성 점검

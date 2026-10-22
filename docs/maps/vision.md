@@ -22,13 +22,13 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| VL1 | [이미지 입력](../stages/vision/vl1-input/README.md) | ⬜ 예정 | 사진 · 스크린샷 · 스캔을 받고 크기 · 형식 · 개인정보를 확인한다 | [AS4 사진 진단](../stages/as-service/as4-photo/README.md) | — |
-| VL2 | [전처리](../stages/vision/vl2-prep/README.md) | ⬜ 예정 | 기울기 · 밝기 · 반사 · 잘라내기로 읽기 좋게 만든다 | [D2 파싱](../stages/docintel/d2-parse/README.md) | — |
-| VL3 | [객체 · 영역 인식](../stages/vision/vl3-detect/README.md) | ⬜ 예정 | 관심 물체 · 영역(표시창 · 버튼 · 부품)의 위치를 찾는다 | [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) | — |
-| VL4 | [OCR](../stages/vision/vl4-ocr/README.md) | ⬜ 예정 | 영역 안의 글자 · 코드를 읽고 알려진 목록에 맞춘다 | [D2 파싱](../stages/docintel/d2-parse/README.md) · [AS4 사진 진단](../stages/as-service/as4-photo/README.md) | — |
-| VL5 | [관계 추론](../stages/vision/vl5-relation/README.md) | ⬜ 예정 | 물체 사이의 관계(꺾임 · 연결 · 위치)를 판단한다 | [K3 추출](../stages/knowledge-graph/k3-extract/README.md) | — |
-| VL6 | [시각 질의응답](../stages/vision/vl6-vqa/README.md) | ⬜ 예정 | 사진 + 질문 + 매뉴얼 근거로 답한다 | [MA2 멀티모달 RAG](../stages/multi-agent/ma2-rag/README.md) · [MA4 검색 에이전트](../stages/multi-agent/ma4-retrieval-agent/README.md) | — |
-| VL7 | [근거 영역 표시](../stages/vision/vl7-ground/README.md) | ⬜ 예정 | 답의 각 주장이 이미지의 어느 영역에 기대는지 표시한다 | [PV7 인용](../stages/provenance/pv7-cite/README.md) | — |
+| VL1 | [이미지 입력](../stages/vision/vl1-input/README.md) | ✅ 구현됨 | 사진 · 스크린샷 · 스캔을 받고 크기 · 형식 · 개인정보를 확인한다 | [AS4 사진 진단](../stages/as-service/as4-photo/README.md) | [이미지 · Vision-Language — 입력 확인 · 전처리 · 영역 찾기 · 영역만 읽기 · 꺾임 규칙 · 매뉴얼 근거 답 · 근거 영역, VLM 하나에 vs 나눠서](../stages/vision/vl1-input/vision.md) |
+| VL2 | [전처리](../stages/vision/vl2-prep/README.md) | ✅ 구현됨 | 기울기 · 밝기 · 반사 · 잘라내기로 읽기 좋게 만든다 | [D2 파싱](../stages/docintel/d2-parse/README.md) | [이미지 · Vision-Language — 입력 확인 · 전처리 · 영역 찾기 · 영역만 읽기 · 꺾임 규칙 · 매뉴얼 근거 답 · 근거 영역, VLM 하나에 vs 나눠서](../stages/vision/vl1-input/vision.md) |
+| VL3 | [객체 · 영역 인식](../stages/vision/vl3-detect/README.md) | ✅ 구현됨 | 관심 물체 · 영역(표시창 · 버튼 · 부품)의 위치를 찾는다 | [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) | [이미지 · Vision-Language — 입력 확인 · 전처리 · 영역 찾기 · 영역만 읽기 · 꺾임 규칙 · 매뉴얼 근거 답 · 근거 영역, VLM 하나에 vs 나눠서](../stages/vision/vl1-input/vision.md) |
+| VL4 | [OCR](../stages/vision/vl4-ocr/README.md) | ✅ 구현됨 | 영역 안의 글자 · 코드를 읽고 알려진 목록에 맞춘다 | [D2 파싱](../stages/docintel/d2-parse/README.md) · [AS4 사진 진단](../stages/as-service/as4-photo/README.md) | [이미지 · Vision-Language — 입력 확인 · 전처리 · 영역 찾기 · 영역만 읽기 · 꺾임 규칙 · 매뉴얼 근거 답 · 근거 영역, VLM 하나에 vs 나눠서](../stages/vision/vl1-input/vision.md) |
+| VL5 | [관계 추론](../stages/vision/vl5-relation/README.md) | ✅ 구현됨 | 물체 사이의 관계(꺾임 · 연결 · 위치)를 판단한다 | [K3 추출](../stages/knowledge-graph/k3-extract/README.md) | [이미지 · Vision-Language — 입력 확인 · 전처리 · 영역 찾기 · 영역만 읽기 · 꺾임 규칙 · 매뉴얼 근거 답 · 근거 영역, VLM 하나에 vs 나눠서](../stages/vision/vl1-input/vision.md) |
+| VL6 | [시각 질의응답](../stages/vision/vl6-vqa/README.md) | ✅ 구현됨 | 사진 + 질문 + 매뉴얼 근거로 답한다 | [MA2 멀티모달 RAG](../stages/multi-agent/ma2-rag/README.md) · [MA4 검색 에이전트](../stages/multi-agent/ma4-retrieval-agent/README.md) | [이미지 · Vision-Language — 입력 확인 · 전처리 · 영역 찾기 · 영역만 읽기 · 꺾임 규칙 · 매뉴얼 근거 답 · 근거 영역, VLM 하나에 vs 나눠서](../stages/vision/vl1-input/vision.md) |
+| VL7 | [근거 영역 표시](../stages/vision/vl7-ground/README.md) | ✅ 구현됨 | 답의 각 주장이 이미지의 어느 영역에 기대는지 표시한다 | [PV7 인용](../stages/provenance/pv7-cite/README.md) | [이미지 · Vision-Language — 입력 확인 · 전처리 · 영역 찾기 · 영역만 읽기 · 꺾임 규칙 · 매뉴얼 근거 답 · 근거 영역, VLM 하나에 vs 나눠서](../stages/vision/vl1-input/vision.md) |
 
 ## 설계 원칙
 

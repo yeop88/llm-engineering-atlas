@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [VL6 시각 질의응답](../../vision/vl6-vqa/README.md) — 이미지 · Vision-Language 맵 · ⬜ 예정
+- [VL6 시각 질의응답](../../vision/vl6-vqa/README.md) — 이미지 · Vision-Language 맵 · ✅ 구현됨
 - [E2 오프라인 평가 · 회귀](../../evalops/e2-offline/README.md) — 평가 · 관측 (LLMOps) 맵 · ✅ 구현됨
 
 ---

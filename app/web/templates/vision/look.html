@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}사진 읽기 · 근거 영역{% endblock %}
+{% block content %}
+{% call ui.page_header("사진 읽기 · 근거 영역") %}VLM 하나에 다 맡기지 않고 나눕니다.
+<ul class="small">
+  <li>입력 확인(형식 · 크기 · 위치 정보 지우기, VL1)</li>
+  <li>기울기 되돌리기 · 반사 누르기(VL2)</li>
+  <li>표시창 · 호스 영역 찾기(VL3), 잘라 키운 표시창만 읽기 · 알려진 코드에 맞추기(VL4)</li>
+  <li>호스 꺾임 규칙(VL5)</li>
+  <li>읽은 것을 붙인 매뉴얼 근거 답(VL6), 답 문장마다 기댄 영역 표시(VL7)</li>
+</ul>
+같은 사진으로 'VLM 하나에'와 '나눠서'를 비교합니다.{% endcall %}
+
+<div class="card stack" id="look">
+  <h2>영역 · 읽기 (VL1~VL5 · VL7)</h2>
+  <div class="row">
+    <div class="field"><label for="v-code">시험 사진 코드</label><input id="v-code" value="d80" maxlength="4" class="w-md"></div>
+    <div class="field"><label for="v-seed">씨앗</label><input id="v-seed" type="number" value="3" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="v-hard" checked> 기울기 · 반사 · 흐림</label>
+    <label class="row small m-0 self-end"><input type="checkbox" id="v-far" checked> 멀리서</label>
+    <div class="field grow"><label for="v-file">또는 사진 파일</label><input id="v-file" type="file" accept="image/*"></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="v-provider">제공자</label><select id="v-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="v-model">비전 모델</label><input id="v-model" data-ctx="model"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="v-read" checked> 표시창 읽기(VLM)</label>
+    <div class="self-end"><button class="btn primary" id="v-run">보기</button></div>
+  </div>
+  <div class="grid cols-2"><div><img id="v-img" alt="영역 표시" class="w-full" hidden></div><div id="v-out" class="small"></div></div>
+</div>
+
+<div class="card stack mt-4" id="answer">
+  <h2>사진 + 질문 + 매뉴얼 (VL6 · VL7)</h2>
+  <div class="row">
+    <div class="field grow"><label for="q-text">질문</label><input id="q-text" value="이 표시가 뜨는데 어떻게 하나요?"></div>
+    <div class="field"><label for="q-col">컬렉션</label><select id="q-col"></select></div>
+    <div class="self-end"><button class="btn" id="q-run">답하기</button></div>
+  </div>
+  <div id="q-out"></div>
+</div>
+
+<div class="card stack mt-4" id="compare">
+  <h2>VLM 하나에 vs 나눠서</h2>
+  <p class="small muted">조건 4개(깨끗 · 멀리서 · 기울기 반사 흐림 · 둘 다) × n 장의 합성 사진으로 코드 정답률 · 호스 꺾임 정답률 · 시간을 비교합니다. 규칙을 맞출 때 쓴 사진과 겹치지 않는 씨앗을 씁니다.</p>
+  <div class="row">
+    <div class="field"><label for="c-n">조건마다 장 수</label><input id="c-n" type="number" value="12" min="1" max="100" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="c-run">비교</button></div>
+  </div>
+  <div id="c-progress" hidden></div>
+  <div id="c-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/vision/look.js') }}"></script>
+{% endblock %}

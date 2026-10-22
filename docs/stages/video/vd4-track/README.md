@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [VL3 객체 · 영역 인식](../../vision/vl3-detect/README.md) — 이미지 · Vision-Language 맵 · ⬜ 예정
+- [VL3 객체 · 영역 인식](../../vision/vl3-detect/README.md) — 이미지 · Vision-Language 맵 · ✅ 구현됨
 
 ---
 

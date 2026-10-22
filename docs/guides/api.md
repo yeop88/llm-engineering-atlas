@@ -488,6 +488,15 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/architecture/layers` | `{"gguf"}` 또는 `{"hf_id", "bits"}` → 층마다 어텐션 종류 · KV 차원 · FFN 밀집/MoE · 바이트, 요약(전문가 몫 · 토큰당 읽는 양 · 임베딩 · 출력층 몫), 맥락 길이별 KV 대 단순 어림 |
 | POST | `/api/architecture/scaling` | 맥락 길이별 실측 작업 `{"lengths"}` → 작은 LM 의 미리 채우기 시간 · 토큰당 ms · 실제 KV · 길이 두 배당 시간 배율 |
 
+## 이미지 · Vision-Language (`/api/vision`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/vision/sample.png` | 시험 사진 `?code&seed&hard&far` |
+| POST | `/api/vision/look` | 폼 `file` 또는 `code · seed · hard · far`, `read`, `provider` · `model` → 입력 확인 · 전처리 · 표시창 · 호스 영역 · 꺾임 · 읽은 코드 · 영역 그림(data URL) |
+| POST | `/api/vision/answer` | 위 폼 + `question` · `collection_id` → 읽은 것을 붙인 질문 · 매뉴얼 근거 답 · 문장마다 기댄 영역 |
+| POST | `/api/vision/evaluate` | 비교 작업 `{"n", "llm"}` → 조건 4개의 코드 · 꺾임 정답률 · 시간(VLM 하나에 vs 나눠서) |
+
 ## 오디오 이해 (`/api/audio`)
 
 | 메서드 | 경로 | 설명 |

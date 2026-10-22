@@ -65,6 +65,7 @@ app/
                        offline(기능 범위 · 미룸) · sync(판 증분 · 지문 확인 · 기기 상태) · privacy(전송 정책 · 서버 재검사)
     tokenizer/         토크나이저 맵(TK1~TK6): analyze(토큰 효율 · 표시 쪼개짐 · 어휘 · 정규화 · 설정 비용)
     architecture/      Transformer · MoE 구조 맵(TA2~TA4 · TA6): structure(층별 어텐션 종류 · KV · FFN/전문가 · 읽는 양, bigmodel.plan 을 씀) · scaling(맥락 길이별 실측)
+    vision/            이미지 · VL 맵(VL1~VL7): see(입력 확인 · 기울기 · 읽기용 보정 · 표시창 · 호스 영역 · 꺾임 · 영역 그림) · synth(정답을 아는 시험 사진) · pipeline(VLM 하나에 vs 나눠서 · 근거 영역, as_service.photo 를 씀)
     audio/             오디오 이해 맵(AU1~AU7): scene(특징 · 종류 · 사건 · 화자, voice.audio 를 씀) · synth(정답을 아는 합성 장면) · index(색인 · 검색 · 요약 · 채점), presets/
     realtime/          실시간 스트리밍 맵(RT1~RT8): sim(망 · 지터 버퍼 · 조각 인식 · 확정 · 상태 · 첫 소리 · 끼어들기 · 복구 재생기, OM2 · C3 를 씀) · live(LLM 첫 토큰 실측), presets/
     personalize/       개인화 · 적응 맵(PS1~PS7): store(범위별 동의 · 선호 · 신호 · 반감기 특성, profiles 행의 ps 칸) · respond(전략 · 고르고 줄이기 · 사실 보존 · 평가), presets/

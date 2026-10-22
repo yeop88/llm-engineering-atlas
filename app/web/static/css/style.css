@@ -372,7 +372,7 @@ a.flow-box:hover { border-color: var(--accent); text-decoration: none; }
 .grow { flex: 1; } .self-end { align-self: end; } .items-start { align-items: flex-start; } .items-end { align-items: flex-end; }
 .nowrap-row { flex-wrap: nowrap; } .wrap-row { flex-wrap: wrap; } .justify-end { justify-content: flex-end; }
 input.w-xs, .w-xs { width: 44px; } input.w-sm, select.w-sm, .w-sm { width: 70px; } input.w-md, select.w-md, .w-md { width: 90px; }
-input.w-lg, select.w-lg, .w-lg { width: 120px; } input.w-xl, select.w-xl, .w-xl { width: 170px; }
+input.w-lg, select.w-lg, .w-lg { width: 120px; } input.w-xl, select.w-xl, .w-xl { width: 170px; } .w-full { width: 100%; height: auto; }  /* 그림을 칸 폭에 맞춤(영역 표시 사진) */
 .pre { white-space: pre-wrap; } .break-all { word-break: break-all; } .scroll { overflow: auto; } .text-right { text-align: right; }
 .inherit { color: inherit; } .min-0 { min-width: 0; } .fw-normal { font-weight: 400; } .text-lg { font-size: var(--text-lg); }
 .track { flex: 1; background: var(--code); border-radius: 4px; }
