@@ -175,7 +175,11 @@ def drill(db: Session, n: int = 200, dup_rate: float = 0.3, shuffle: float = 0.3
             # 같은 처리를 다시 해도(일꾼이 두 번 집어 감) 답은 한 번 — 전달 멱등 확인
             _, again = queue.deliver(db, s, m, "messenger", render.render(out["text"], "messenger"))
             sends += again
-    for _ in range(queue.MAX_ATTEMPTS):  # 남은 재시도
+    # 남은 재시도: 대기가 없어질 때까지(실패마다 시도 수가 늘어 결국 처리 또는 실패로 끝난다) — 횟수를 고정하면 앞 메시지가 실패하는
+    # 차례마다 뒤 메시지가 멈춰, 드물게 처리되지 않은 메시지가 남았다
+    for _ in range(queue.MAX_ATTEMPTS * (n + 1)):
+        if not queue.pending(db, s.id):
+            break
         for m in queue.pending(db, s.id):
             if (out := queue.process(db, m, handler)) is None:
                 break

@@ -181,7 +181,10 @@ def ingest(db: Session, channel: str, payload: dict[str, Any], lcfg: llm.LLMConf
     if (link_sid := payload.get("_link_session")) and (s0 := db.get(OmniSession, link_sid)) is not None:
         envelope.link(db, s0.customer, channel, env["address"])
     customer, how = envelope.identify(db, channel, env["address"], (env.get("meta") or {}).get("phone"))
-    s, new = envelope.session_for(db, customer, channel, _collection(db, collection_id))
+    s, new = envelope.session_for(db, customer, channel, collection_id)
+    if new and s.collection_id is None:
+        # 컬렉션은 새 상담을 열 때만 정한다 — 열린 세션에 이어 붙는 영상 통화 · 문자까지 컬렉션을 요구하면 이어 가기가 막혔다
+        s.collection_id = _collection(db, None)
     kind = "scene" if channel == "video" and env["images"] and not env["text"] else None
     msg, dup = queue.accept(db, s, env, kind)
     base = {"session_id": s.id, "customer": customer, "identified": how, "same_session": not new, "message_id": msg.id}

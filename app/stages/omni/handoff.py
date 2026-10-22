@@ -79,10 +79,19 @@ def brief(messages: list[dict[str, Any]], mem: dict[str, Any], scenes: list[dict
             "channels": channels, "scene": (scenes or [None])[-1], "verify": ver}  # fmt: skip
 
 
+def _ro(word: str) -> str:
+    """'으로' · '로' — 받침이 있으면(ㄹ 받침 제외) '으로'. '웹 채팅로' 처럼 조사가 틀리면 첫 말부터 어색하다."""
+    ch = word[-1:] if word else ""
+    if "가" <= ch <= "힣":
+        jong = (ord(ch) - 0xAC00) % 28
+        return "으로" if jong and jong != 8 else "로"
+    return "로"
+
+
 def greeting(b: dict[str, Any], to_channel: str) -> str:
     """새 채널의 첫 말 — 앞 채널 이름 · 아는 사실 · 미해결 질문(있으면)."""
     prev = [CHANNELS.get(c, {}).get("label", c) for c in b["channels"] if c != to_channel]
-    where = f"앞서 {prev[-1]}로" if prev else "앞서"
+    where = f"앞서 {prev[-1]}{_ro(prev[-1])}" if prev else "앞서"
     facts = " ".join(x for x in [b["product"], " · ".join(b["codes"])] if x)
     s = f"{where} 말씀하신 {facts + ' ' if facts else ''}문제 이어서 도와드리겠습니다."
     if b["tried"]:
