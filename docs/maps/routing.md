@@ -22,14 +22,14 @@ LLM 맵의 라우팅(6)은 빠른 경로 · 느린 경로 둘을 골랐고, 추�
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| MR1 | [요청 분류](../stages/routing/mr1-classify/README.md) | ⬜ 예정 | 모달리티 · 작업 유형(요약 · 추론 · 이미지 · 음성 · 관계 · 코드)을 판정한다 | [6 라우팅](../stages/llm/6-routing/README.md) · [RS2 생각 라우팅](../stages/reasoning/rs2-route/README.md) | — |
-| MR2 | [위험도 판정](../stages/routing/mr2-risk/README.md) | ⬜ 예정 | 법률 · 의료 · 금전 · 외부 행동 같은 고위험을 먼저 가른다 | [RC2 위험 등급](../stages/compliance/rc2-risk/README.md) · [G1 입력 방어](../stages/guardrails/g1-injection/README.md) | — |
-| MR3 | [품질 요구 계산](../stages/routing/mr3-quality/README.md) | ⬜ 예정 | 작업 유형 · 위험도로 필요한 품질 수준을 정한다 | [E1 평가 세트](../stages/evalops/e1-sets/README.md) | — |
-| MR4 | [지연 · 예산 계산](../stages/routing/mr4-budget/README.md) | ⬜ 예정 | 채널의 지연 예산과 테넌트 예산 안에서 쓸 수 있는 몫을 계산한다 | [S7 예산](../stages/serving/s7-budget/README.md) · [PF7 비용 배분](../stages/platform/pf7-chargeback/README.md) | — |
-| MR5 | [모델 후보 생성](../stages/routing/mr5-candidates/README.md) | ⬜ 예정 | 모달리티 · 품질 · 지연을 만족하는 모델 · 경로 후보를 만든다 | [LN5 모달리티](../stages/lineage/ln5-modality/README.md) · [ED1 모델 선택](../stages/edge/ed1-select/README.md) | — |
-| MR6 | [모델 선택](../stages/routing/mr6-select/README.md) | ⬜ 예정 | 점수(품질 · 근거 · 지연 · 비용 · 신뢰성 가중합)로 고른다 | [6 라우팅](../stages/llm/6-routing/README.md) | — |
-| MR7 | [실패 시 승격](../stages/routing/mr7-escalate/README.md) | ⬜ 예정 | 검증에 떨어지거나 실패하면 다음 모델 · 사람으로 올린다 | [PF6 장애 대응](../stages/platform/pf6-resilience/README.md) · [AS6 검증](../stages/as-service/as6-verify/README.md) | — |
-| MR8 | [비용 · 품질 기록](../stages/routing/mr8-log/README.md) | ⬜ 예정 | 고른 이유 · 비용 · 품질을 남겨 라우터를 다시 채점한다 | [E3 트레이싱](../stages/evalops/e3-tracing/README.md) · [E8 개선 루프](../stages/evalops/e8-loop/README.md) | — |
+| MR1 | [요청 분류](../stages/routing/mr1-classify/README.md) | ✅ 구현됨 | 모달리티 · 작업 유형(요약 · 추론 · 이미지 · 음성 · 관계 · 코드)을 판정한다 | [6 라우팅](../stages/llm/6-routing/README.md) · [RS2 생각 라우팅](../stages/reasoning/rs2-route/README.md) | [모델 라우팅 · 비용 최적화 — 분류 · 위험 · 품질 하한 · 예산 · 후보 점수 · 승격 · 보정 · 채점 · 실측](../stages/routing/mr1-classify/model_routing.md) |
+| MR2 | [위험도 판정](../stages/routing/mr2-risk/README.md) | ✅ 구현됨 | 법률 · 의료 · 금전 · 외부 행동 같은 고위험을 먼저 가른다 | [RC2 위험 등급](../stages/compliance/rc2-risk/README.md) · [G1 입력 방어](../stages/guardrails/g1-injection/README.md) | [모델 라우팅 · 비용 최적화 — 분류 · 위험 · 품질 하한 · 예산 · 후보 점수 · 승격 · 보정 · 채점 · 실측](../stages/routing/mr1-classify/model_routing.md) |
+| MR3 | [품질 요구 계산](../stages/routing/mr3-quality/README.md) | ✅ 구현됨 | 작업 유형 · 위험도로 필요한 품질 수준을 정한다 | [E1 평가 세트](../stages/evalops/e1-sets/README.md) | [모델 라우팅 · 비용 최적화 — 분류 · 위험 · 품질 하한 · 예산 · 후보 점수 · 승격 · 보정 · 채점 · 실측](../stages/routing/mr1-classify/model_routing.md) |
+| MR4 | [지연 · 예산 계산](../stages/routing/mr4-budget/README.md) | ✅ 구현됨 | 채널의 지연 예산과 테넌트 예산 안에서 쓸 수 있는 몫을 계산한다 | [S7 예산](../stages/serving/s7-budget/README.md) · [PF7 비용 배분](../stages/platform/pf7-chargeback/README.md) | [모델 라우팅 · 비용 최적화 — 분류 · 위험 · 품질 하한 · 예산 · 후보 점수 · 승격 · 보정 · 채점 · 실측](../stages/routing/mr1-classify/model_routing.md) |
+| MR5 | [모델 후보 생성](../stages/routing/mr5-candidates/README.md) | ✅ 구현됨 | 모달리티 · 품질 · 지연을 만족하는 모델 · 경로 후보를 만든다 | [LN5 모달리티](../stages/lineage/ln5-modality/README.md) · [ED1 모델 선택](../stages/edge/ed1-select/README.md) | [모델 라우팅 · 비용 최적화 — 분류 · 위험 · 품질 하한 · 예산 · 후보 점수 · 승격 · 보정 · 채점 · 실측](../stages/routing/mr1-classify/model_routing.md) |
+| MR6 | [모델 선택](../stages/routing/mr6-select/README.md) | ✅ 구현됨 | 점수(품질 · 근거 · 지연 · 비용 · 신뢰성 가중합)로 고른다 | [6 라우팅](../stages/llm/6-routing/README.md) | [모델 라우팅 · 비용 최적화 — 분류 · 위험 · 품질 하한 · 예산 · 후보 점수 · 승격 · 보정 · 채점 · 실측](../stages/routing/mr1-classify/model_routing.md) |
+| MR7 | [실패 시 승격](../stages/routing/mr7-escalate/README.md) | ✅ 구현됨 | 검증에 떨어지거나 실패하면 다음 모델 · 사람으로 올린다 | [PF6 장애 대응](../stages/platform/pf6-resilience/README.md) · [AS6 검증](../stages/as-service/as6-verify/README.md) | [모델 라우팅 · 비용 최적화 — 분류 · 위험 · 품질 하한 · 예산 · 후보 점수 · 승격 · 보정 · 채점 · 실측](../stages/routing/mr1-classify/model_routing.md) |
+| MR8 | [비용 · 품질 기록](../stages/routing/mr8-log/README.md) | ✅ 구현됨 | 고른 이유 · 비용 · 품질을 남겨 라우터를 다시 채점한다 | [E3 트레이싱](../stages/evalops/e3-tracing/README.md) · [E8 개선 루프](../stages/evalops/e8-loop/README.md) | [모델 라우팅 · 비용 최적화 — 분류 · 위험 · 품질 하한 · 예산 · 후보 점수 · 승격 · 보정 · 채점 · 실측](../stages/routing/mr1-classify/model_routing.md) |
 
 ## 설계 원칙
 

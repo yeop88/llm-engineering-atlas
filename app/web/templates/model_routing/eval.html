@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}라우터 채점{% endblock %}
+{% block content %}
+{% call ui.page_header("라우터 채점") %}먼저 후보마다 같은 질문 · 같은 근거로 유형별 품질 · p95 · 호출당 비용을 재 후보 목록에 덧씌웁니다(보정). 그다음 같은 질문을 라우터(승격 포함) · 늘 가장 강한 후보 · 늘 가장 싼 후보로 답하게 해, 라우터가 강한 후보 대비 품질을 얼마나 지키며 비용을 얼마나 줄였는지와 승격률을 봅니다(MR7 · MR8). 비용은 단가가 있으면 돈, 없으면(로컬) 장치 초입니다.{% endcall %}
+
+<div class="card stack" id="calibrate">
+  <h2>후보 보정</h2>
+  <div class="row">
+    <div class="field"><label for="c-col">컬렉션</label><select id="c-col" data-ctx="col"></select></div>
+    <div class="field"><label for="c-set">평가 세트</label><select id="c-set" data-ctx="set"></select></div>
+    <div class="field"><label for="c-n">질문 수</label><input id="c-n" type="number" value="12" min="2" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="c-run">보정</button></div>
+  </div>
+  <div id="c-progress" hidden></div>
+  <div id="c-out"></div>
+</div>
+
+<div class="card stack mt-4" id="eval">
+  <h2>라우터 · 강한 후보 · 싼 후보 (MR7 · MR8)</h2>
+  <div class="row">
+    <div class="field"><label for="e-n">질문 수</label><input id="e-n" type="number" value="12" min="2" class="w-md"></div>
+    <div class="field"><label for="e-channel">채널</label><select id="e-channel"><option>api</option><option>web_chat</option><option>voice</option><option>email</option></select></div>
+    <div class="self-end"><button class="btn primary" id="e-run">채점</button></div>
+  </div>
+  <div id="e-progress" hidden></div>
+  <div id="e-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/model_routing/eval.js') }}"></script>
+{% endblock %}

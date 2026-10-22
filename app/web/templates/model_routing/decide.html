@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}라우팅 결정{% endblock %}
+{% block content %}
+{% call ui.page_header("라우팅 결정") %}요청 하나를 분류(MR1)하고 위험도(MR2) · 품질 하한(MR3) · 채널 지연 예산 · 비용 상한(MR4)으로 후보(MR5)를 거른 뒤, 점수 = 품질 · 근거 · 지연 · 비용 · 신뢰성의 가중합으로 고릅니다(MR6). 결정은 모델을 부르지 않고, '답하기'는 그 사슬대로 답하며 검증에 떨어지면 다음 후보로 올립니다(마지막은 사람).{% endcall %}
+
+<div class="card stack" id="decide">
+  <h2>결정 (MR1~MR6)</h2>
+  <div class="field"><label for="d-text">요청</label><textarea id="d-text" rows="2">근로계약서 세 조항을 비교해서 위험한 것을 골라 주세요</textarea></div>
+  <div class="row">
+    <div class="field"><label for="d-channel">채널</label><select id="d-channel"></select></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="d-image"> 사진 첨부</label>
+    <div class="field"><label for="d-budget">지연 예산 ms (비우면 채널 기본)</label><input id="d-budget" type="number" min="0" class="w-md"></div>
+    <div class="field"><label for="d-cost">호출 비용 상한</label><input id="d-cost" type="number" min="0" step="0.1" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="d-llm"> 규칙이 못 찾으면 LLM 으로 분류</label>
+  </div>
+  <div class="row" id="d-weights"></div>
+  <div class="row">
+    <button class="btn primary" id="d-run">결정</button>
+    <div class="field"><label for="d-col">컬렉션 (답하기)</label><select id="d-col" data-ctx="col"></select></div>
+    <div class="self-end"><button class="btn" id="d-answer">답하기 (승격 포함)</button></div>
+  </div>
+  <div id="d-out"></div>
+  <div id="a-out"></div>
+</div>
+
+<div class="card stack mt-4" id="candidates">
+  <h2>후보 (MR5)</h2>
+  <p class="small muted">설정의 모델(기본 · 모델별 주소 · 소형 · 대체 · Claude)이 후보가 됩니다. 품질 · p95 · 비용은 '라우터 채점' 화면의 보정이 잰 값이고, 재지 않은 후보는 종류별 추정값을 씁니다.</p>
+  <div id="c-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/model_routing/decide.js') }}"></script>
+{% endblock %}

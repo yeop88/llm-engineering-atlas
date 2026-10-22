@@ -474,6 +474,16 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 모델 라우팅 (`/api/model-routing`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET · PUT | `/api/model-routing/candidates` | 후보 목록(설정에서 자동 + 보정 값) · 유형 · 기본 가중치 · 채널 지연 예산 / 후보 고치기 |
+| POST | `/api/model-routing/decide` | 결정만 `{"text", "channel", "has_image", "budget_ms", "max_cost", "weights", "use_llm"}` → 유형 · 위험 · 하한 · 예산 · 후보 점수 · 승격 사슬 · 경로 |
+| POST | `/api/model-routing/answer` | 결정 + 사슬대로 답 `{... , "collection_id"}` → 시도(후보 · 통과 · 이유) · 답 · 상태(answered · approval · human) |
+| POST | `/api/model-routing/calibrate` | 보정 작업 `{"eval_set_id", "names", "max_queries"}` → 후보마다 유형별 품질 · p95 · 호출당 비용 · 성공률(후보 목록에 저장) |
+| POST | `/api/model-routing/eval` | 채점 작업 `{"eval_set_id", "max_queries", "channel", "weights"}` → 라우터 · 늘 강한 · 늘 싼 후보의 품질 · p95 · 비용 · 승격률 · 지킨 품질 · 아낀 비용 |
+
 ## 추론 최적화 (`/api/inference`)
 
 | 메서드 | 경로 | 설명 |
