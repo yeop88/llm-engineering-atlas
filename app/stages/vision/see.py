@@ -26,7 +26,12 @@ def inspect_input(data: bytes) -> tuple[Image.Image, dict[str, Any]]:
     fmt = im.format
     exif = im.getexif()
     had_gps = GPS_TAG in exif
-    im = ImageOps.exif_transpose(im).convert("RGB")  # 휴대폰 사진의 회전 표시를 실제 회전으로(그 뒤 EXIF 는 버림)
+    im = ImageOps.exif_transpose(im).convert("RGB")  # 휴대폰 사진의 회전 표시를 실제 회전으로
+    # EXIF 는 화소만 새 그림에 옮겨 버린다. convert 한 그림도 info['exif'] 를 들고 있고, Pillow 는 JPEG 로 저장할 때 그것을 그대로 써서
+    # 위치 정보가 잘라 낸 표시창 · 비전 LLM 요청까지 따라갔다(테스트로 찾음)
+    clean = Image.new("RGB", im.size)
+    clean.paste(im)
+    im = clean
     w, h = im.size
     if max(w, h) > MAX_SIDE:
         im.thumbnail((MAX_SIDE, MAX_SIDE))
