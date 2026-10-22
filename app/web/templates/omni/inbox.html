@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}통합 받은 편지함{% endblock %}
+{% block content %}
+{% call ui.page_header("통합 받은 편지함") %}채팅 · 메신저 · 카톡형 채널 · 문자 · 이메일 · 전화 · 영상 통화를 한 봉투와 고객 세션으로 받습니다(OM1). 같은 주소 · 같은 전화번호(계정에 확인된 번호 포함)면 채널을 바꿔도 같은 세션으로 이어지고, 웹훅이 같은 메시지를 다시 보내도 한 번만 처리 · 답합니다(OM6). 채널을 바꿀 때 넘길 요약 · 미해결 질문 · 다음 할 일을 만들어 새 채널의 첫 말로 씁니다(OM5).{% endcall %}
+
+<div class="card stack" id="channel">
+  <h2>채널 흉내로 보내기 (OM1)</h2>
+  <p class="small muted">실제 서비스는 <span class="mono">POST /api/omni/webhook/{채널}</span> 로 그 채널의 웹훅을 그대로 보냅니다. 여기서는 같은 모양을 만들어 보냅니다.</p>
+  <div class="row">
+    <div class="field"><label for="s-channel">채널</label><select id="s-channel"></select></div>
+    <div class="field"><label for="s-address">보낸 사람 주소</label><input id="s-address" value="010-2345-6789" class="w-md"></div>
+    <div class="field"><label for="s-phone">계정에 확인된 번호 (선택)</label><input id="s-phone" class="w-md" placeholder="010-…"></div>
+    <div class="field"><label for="s-col">컬렉션</label><select id="s-col" data-ctx="col"></select></div>
+  </div>
+  <div class="field"><label for="s-text">메시지</label><textarea id="s-text" rows="2">WM-200 세탁기 문이 안 열려요. E4 가 떠요</textarea></div>
+  <div class="row">
+    <div class="field"><label for="s-image">사진 첨부 (선택)</label><input id="s-image" type="file" accept="image/*"></div>
+    <div class="field"><label for="s-provider">제공자</label><select id="s-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="s-model">모델</label><input id="s-model" data-ctx="model"></div>
+  </div>
+  <div class="row">
+    <button class="btn primary" id="s-send">보내기</button>
+    <button class="btn" id="s-again" disabled>같은 메시지 다시 보내기 (웹훅 재전송)</button>
+  </div>
+  <div id="s-out"></div>
+</div>
+
+<div class="card stack mt-4" id="handoff">
+  <h2>고객 세션 · 채널 이어 가기 (OM1 · OM5)</h2>
+  <div class="row">
+    <div class="field grow"><label for="v-session">세션</label><select id="v-session"></select></div>
+    <div class="self-end"><button class="btn" id="v-load">보기</button></div>
+    <div class="self-end"><button class="btn danger" id="v-del">세션 지우기</button></div>
+  </div>
+  <div id="v-out"></div>
+  <div class="row">
+    <div class="field"><label for="h-to">넘길 채널</label><select id="h-to"></select></div>
+    <div class="self-end"><button class="btn" id="h-run">넘김 요약 만들기</button></div>
+  </div>
+  <div id="h-out"></div>
+</div>
+
+<div class="card stack mt-4" id="async">
+  <h2>비동기 메시지 훈련 (OM6)</h2>
+  <p class="small muted">메시지를 재전송 · 순서 뒤섞임 · 일시 처리 실패를 섞어 보내고, 고유 메시지마다 처리 한 번 · 답 한 번인지, 한 세션 안에서 보낸 시각 순서로 처리했는지 봅니다(LLM 없음).</p>
+  <div class="row">
+    <div class="field"><label for="d-n">메시지 수</label><input id="d-n" type="number" value="200" min="1" max="2000" class="w-md"></div>
+    <div class="field"><label for="d-dup">재전송 확률</label><input id="d-dup" type="number" value="0.3" min="0" max="0.9" step="0.05" class="w-md"></div>
+    <div class="field"><label for="d-shuffle">순서 뒤섞임</label><input id="d-shuffle" type="number" value="0.3" min="0" max="1" step="0.05" class="w-md"></div>
+    <div class="field"><label for="d-fail">처리 실패 확률</label><input id="d-fail" type="number" value="0.2" min="0" max="0.9" step="0.05" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="d-run">훈련</button></div>
+  </div>
+  <div id="d-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/omni/inbox.js') }}"></script>
+{% endblock %}

@@ -799,3 +799,51 @@ class MemLink(Base):
     b: Mapped[int] = mapped_column(Integer, index=True)
     kind: Mapped[str] = mapped_column(String(20), default="similar")  # similar · entity · summary_of
     weight: Mapped[float] = mapped_column(Float, default=1.0)
+
+
+class OmniIdentity(Base):
+    """채널 주소(메신저 id · 전화번호 · 이메일) → 고객(옴니채널 OM1, 마이그레이션 0021). 채널을 바꿔도 같은 고객 세션으로 잇기 위해."""
+
+    __tablename__ = "omni_identities"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    customer: Mapped[str] = mapped_column(String(100), index=True)
+    channel: Mapped[str] = mapped_column(String(20))
+    address: Mapped[str] = mapped_column(String(200), index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class OmniSession(Base):
+    """고객 한 명의 옴니채널 상담(OM1 · OM5): 지금까지 쓴 채널 · 대화 메모리 · 넘김 요약 · 미해결 질문."""
+
+    __tablename__ = "omni_sessions"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    customer: Mapped[str] = mapped_column(String(100), index=True)
+    collection_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    channels: Mapped[list[Any]] = mapped_column(default=list)
+    memory: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    handoffs: Mapped[list[Any]] = mapped_column(default=list)
+    status: Mapped[str] = mapped_column(String(20), default="open")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class OmniMessage(Base):
+    """채널을 가리지 않는 메시지 하나(OM1 · OM3 · OM6): 들어온 · 나간 글 · 첨부 · 영상 장면. (channel, external_id) 로 같은 메시지를 한 번만."""
+
+    __tablename__ = "omni_messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    session_id: Mapped[str] = mapped_column(String(32), index=True)
+    channel: Mapped[str] = mapped_column(String(20))
+    direction: Mapped[str] = mapped_column(String(4), default="in")  # in · out
+    external_id: Mapped[str] = mapped_column(String(200), default="", index=True)
+    kind: Mapped[str] = mapped_column(String(20), default="text")  # text · image · audio · scene · event
+    text: Mapped[str] = mapped_column(Text, default="")
+    meta: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    status: Mapped[str] = mapped_column(String(20), default="received")  # received · processed · duplicate · failed · sent
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    reply_to: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

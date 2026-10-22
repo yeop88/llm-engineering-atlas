@@ -1,0 +1,56 @@
+{
+  "_note": "옴니 평가(OM8) 시나리오 — 고객 AS 예시 자료(WM-200 · WM-100 · DR-300 매뉴얼) 기준. 걸음마다 channel · text, frame 은 영상 프레임에 띄울 오류 코드, repeat 는 같은 외부 id 로 다시 보내는 횟수(웹훅 재전송), expect 는 답에 있어야 할 표기, carry 는 채널을 바꿀 때 넘김 요약에 있어야 할 사실, group 은 채널을 바꿔 같은 것을 묻는 질문 묶음(일관성).",
+  "scenarios": [
+    {
+      "id": "chat-to-video",
+      "title": "채팅 → 영상 통화: '이거' 를 화면으로",
+      "steps": [
+        {"channel": "web_chat", "text": "WM-200 드럼세탁기를 쓰는데 물이 안 빠져요"},
+        {"channel": "video", "text": "지금 화면에 이거 뜨는데 뭐예요?", "frame": "E4", "expect": ["E4"], "carry": ["WM-200"]},
+        {"channel": "video", "text": "어떻게 하면 돼요?", "expect": ["필터"]}
+      ]
+    },
+    {
+      "id": "kakao-retry",
+      "title": "카톡형 채널 재전송: 같은 메시지 세 번",
+      "steps": [
+        {"channel": "kakao", "text": "WM-100 에서 OE 가 떠요 어떻게 해요?", "repeat": 2, "expect": ["OE"], "group": "oe"},
+        {"channel": "sms", "text": "OE 오류 해결 방법 다시 알려 주세요", "expect": ["OE"], "group": "oe", "carry": ["WM-100", "OE"]}
+      ]
+    },
+    {
+      "id": "voice-drop-messenger",
+      "title": "전화가 끊겨 메신저로 이어 가기",
+      "steps": [
+        {"channel": "voice", "text": "건조기 DR-300 인데요 d80 이 표시돼요"},
+        {"channel": "voice", "text": "필터 청소는 했어요 그래도 그래요"},
+        {"channel": "messenger", "text": "아까 통화하다 끊겼는데 이어서 알려 주세요", "carry": ["DR-300", "d80"], "expect": ["d80"]}
+      ]
+    },
+    {
+      "id": "email-to-chat",
+      "title": "이메일 문의 → 웹 채팅 후속",
+      "steps": [
+        {"channel": "email", "text": "WM-200 세탁기에서 E1 오류가 납니다. 급수 문제인가요?", "expect": ["E1"], "group": "e1"},
+        {"channel": "web_chat", "text": "E1 은 왜 생기는 거예요?", "expect": ["E1"], "group": "e1", "carry": ["WM-200", "E1"]}
+      ]
+    },
+    {
+      "id": "video-past-scene",
+      "title": "영상: 장면이 바뀐 뒤 '아까 그거'",
+      "steps": [
+        {"channel": "video", "text": "WM-100 세탁기 보여 드릴게요", "frame": "UE"},
+        {"channel": "video", "text": "지금은 이렇게 바뀌었어요", "frame": "dE"},
+        {"channel": "video", "text": "아까 처음 뜬 거는 뭐였어요?", "expect": ["UE"]}
+      ]
+    },
+    {
+      "id": "sms-pii",
+      "title": "문자: 개인정보가 든 문의",
+      "steps": [
+        {"channel": "sms", "text": "DR-300 HE 오류요. 방문 예약은 010-2345-6789 로 연락 주세요", "expect": ["HE"]},
+        {"channel": "web_chat", "text": "HE 가 뜨면 바로 써도 되나요?", "expect": ["HE"], "carry": ["DR-300", "HE"]}
+      ]
+    }
+  ]
+}

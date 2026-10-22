@@ -474,6 +474,26 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 옴니채널 (`/api/omni`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/omni/channels` | 채널 7종(이름 · 동기 여부 · 지연 예산 · 주소)과 채널별 형식 규칙 |
+| POST | `/api/omni/webhook/{channel}` | 채널 웹훅 그대로 → 봉투 → 고객 · 세션 → 받기(멱등) → 장면 → 답 → 형식 → 전달. 같은 외부 id 는 `duplicate: true` 와 처음 답 |
+| POST | `/api/omni/send` | 화면의 채널 흉내 `{"channel", "address", "text", "external_id", "image_b64", "verified_phone", "link_session", "collection_id", "provider", "model"}` → 웹훅과 같은 결과(`reply` · `fuse` · `same_session` · `seconds`) |
+| GET | `/api/omni/sessions` · `/api/omni/sessions/{sid}` | 열린 세션 목록 · 세션(메시지 · 채널 주소 · 대화 메모리 · 장면 색인 · 넘김 · 대기열 통계) |
+| DELETE | `/api/omni/sessions/{sid}` | 세션 · 메시지 · 키프레임 삭제(고객의 마지막 세션이면 채널 주소 연결도) |
+| POST | `/api/omni/sessions/{sid}/frame` | 영상 통화 프레임 하나(multipart `file`) → 장면이 바뀌었을 때만 비전 읽기 · 색인 |
+| POST | `/api/omni/sessions/{sid}/video` | 녹화 영상 작업(multipart `file`, `interval`) → 키프레임만 읽어 색인 |
+| GET | `/api/omni/frames/{sid}/{fid}` | 키프레임 사진(서버 메모리에만 잠시) |
+| POST | `/api/omni/sessions/{sid}/handoff` | 넘김 요약 `{"to_channel"}` → 요약 · 사실 · 미해결 질문 · 다음 할 일 · 새 채널의 첫 말 |
+| POST | `/api/omni/render` | 같은 답을 채널마다 `{"text", "channels"}` → 글 · 버튼 · 읽는 글 · 가림 · 규칙 위반 |
+| POST | `/api/omni/stabilize` | 인식 확정 `{"text"\|"hypotheses", "agree", "noise"}` → 가설마다 확정 · 잠정, 확정 오류 · 깜빡임 · 지연 |
+| POST | `/api/omni/keyframes` | 키프레임 채점 `{"codes", "scene_seconds", "threshold", "min_gap"}` → 놓친 장면 · 더 남긴 프레임 · 절약률 |
+| POST | `/api/omni/drill` | 대기열 훈련 `{"n", "dup_rate", "shuffle", "fail_rate"}` → 한 번만 처리 · 답, 순서, 재시도 · 실패 · 늦게 도착 |
+| GET | `/api/omni/scenarios` | 평가 시나리오 목록 |
+| POST | `/api/omni/eval` | 옴니 평가 작업 `{"collection_id", "scenarios", "provider", "model"}` → 표기 · 넘김 · 같은 세션 · 중복 · 형식 · 지연 · 일관성, 채널별 지연 |
+
 ## 프롬프트 · KV 캐시 압축 (`/api/compress`)
 
 | 메서드 | 경로 | 설명 |

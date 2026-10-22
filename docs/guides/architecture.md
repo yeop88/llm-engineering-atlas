@@ -63,6 +63,9 @@ app/
                        reward(항목별 보상 · 해킹 감시) · policy(GRPO, posttrain.trainer 를 씀)
     edge/              온디바이스 · 엣지 맵(ED1~ED6): devices(기기 프로필 · 조합 추천) · pack(기기용 팩 · 압축 · 정확 검색 · 평가) ·
                        offline(기능 범위 · 미룸) · sync(판 증분 · 지문 확인 · 기기 상태) · privacy(전송 정책 · 서버 재검사)
+    omni/              옴니채널 맵(OM1~OM8): envelope(채널 어댑터 · 고객 식별 · 세션) · queue(멱등 받기 · 순서 · 재시도 · 전달) ·
+                       realtime(인식 확정) · video(장면 변화 · 비전 읽기 · 시간 색인) · fuse(가리킴 풀기) · handoff(넘김 요약) ·
+                       render(채널별 형식 · 개인정보) · evaluate(시나리오 · 대기열 훈련)
     compress/          프롬프트 · KV 압축 맵(KC1~KC6): prompt(토큰 놀람 · 질문 대조 · 기준선 · 보존률) · kv(KV 위치 고르기 · 자르기 · 양자화 · 충실도) —
                        작은 LM 은 interp.lm
     memory/            장기 메모리 맵(ME1~ME7): extract(규칙 · LLM 기억 추출) · store(갱신 규칙 · 시점 기록 · 연결 · 통합 · 망각) ·
@@ -211,8 +214,9 @@ FastAPI 라우터 ── core/system_api · llm_api / stages/*/…_api / web/pag
 | `edge_devices` · `edge_events` | EdgeDevice · EdgeEvent | 기기(받은 팩 · 판 · 마지막 동기화) · 기기가 올린 기록 · 피드백 · 미룬 요청(서버 재검사 위반)(0018) |
 | `voice_calls` | VoiceCall | 음성 상담 통화(턴: 전사 · 운율 · 감정 · 단계별 지연, 추천과 채택, 끼어들기 · 이관 사건, 요약)(0019) |
 | `mem_items` · `mem_links` | MemItem · MemLink | 장기 기억(key · 값 · 계층 · 벡터 · 일어난 날 · 맞았던 기간 · 바뀐 기억) · 기억 사이 연결(0020) |
+| `omni_identities` · `omni_sessions` · `omni_messages` | OmniIdentity · OmniSession · OmniMessage | 채널 주소 → 고객 · 고객의 옴니채널 세션(채널 · 대화 메모리 · 장면 색인 · 넘김) · 채널을 가리지 않는 메시지(외부 id 멱등 · 상태 · 시도 수)(0021) |
 
-마이그레이션은 `migrations/versions/0001_initial` … `0020_memory` 입니다.
+마이그레이션은 `migrations/versions/0001_initial` … `0021_omni` 입니다.
 
 ## 검색 저장 방식
 
