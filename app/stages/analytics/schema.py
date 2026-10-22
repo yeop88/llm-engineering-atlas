@@ -105,13 +105,18 @@ def tables_in(sql: str, names: list[str]) -> set[str]:
 PLAN_SYSTEM = (
     "업무 지표 정의 중에서 질문에 맞는 것을 고릅니다. 반드시 JSON 만: "
     '{"metric": 지표 이름, "dimensions": [차원 이름…], "filters": {필터 이름: 값}, "date_from": "YYYY-MM-DD" 또는 null, "date_to": "YYYY-MM-DD"(포함 안 함) 또는 null, '
-    '"order": "desc"|"asc"|null, "limit": 수 또는 null}. 정의에 없는 지표 · 차원은 쓰지 않습니다.'
+    '"order": "desc"|"asc"|null, "limit": 수 또는 null}. 정의에 없는 지표 · 차원은 쓰지 않습니다. '
+    # 차원 규칙이 없으면 '전체 접수 건수'에도 월을, 해결률에는 차원 8개를 모두 붙여 한 숫자를 묻는 질문이 표가 됐다(실측) — 예를 들어 막는다
+    "dimensions 는 질문이 '…별'로 나눠 달라고 할 때만 넣고, 한 숫자를 묻는 질문(전체 · 몇 건 · 비율은?)은 빈 목록 [] 입니다. "
+    "질문에 나온 조건(의도 · 모델 · 채널 등)은 dimensions 가 아니라 filters 에 넣습니다."
 )
 
 
 def plan(cfg: llm.LLMConfig, question: str, sem: dict[str, Any]) -> dict[str, Any]:
-    defs = "\n".join(f"- 지표 {k}: {v['desc']}" for k, v in sem["metrics"].items())
-    defs += "\n- 차원: " + ", ".join(sem["dimensions"]) + "\n- 필터: " + ", ".join(sem["filters"])
+    # 지표를 '- 지표 이름: 설명'으로 나열했더니 LLM 이 '지표 접수 건수'처럼 머리말까지 이름으로 옮겨, 모든 계획이 '정의에 없는 지표'가 됐다
+    # (실측 24문항 모두) — 이름만 줄에 두고, 컴파일에서도 머리말을 떼어 낸다
+    defs = "지표:\n" + "\n".join(f"- {k}: {v['desc']}" for k, v in sem["metrics"].items())
+    defs += "\n차원: " + ", ".join(sem["dimensions"]) + "\n필터: " + ", ".join(sem["filters"])
     data, _ = llm.chat_json(cfg, PLAN_SYSTEM, f"[정의]\n{defs}\n\n[질문]\n{question}", max_tokens=200, temperature=0.0)
     return data if isinstance(data, dict) else {}
 
@@ -124,7 +129,10 @@ def _lit(v: Any) -> str:
 
 def compile_plan(p: dict[str, Any], sem: dict[str, Any]) -> str:
     """계획 → SQL. 정의에 없는 이름은 오류 — LLM 이 지표를 지어내면 SQL 을 만들지 않는다."""
-    m = sem["metrics"].get(p.get("metric") or "")
+    name = str(p.get("metric") or "").strip()
+    name = name[3:].strip() if name.startswith("지표 ") else name  # 정의 목록의 머리말을 옮겨 쓴 경우(지어낸 이름이 아님)
+    p = p | {"metric": name}
+    m = sem["metrics"].get(name)
     if m is None:
         raise ValueError(f"정의에 없는 지표: {p.get('metric')}")
     dims = [d for d in p.get("dimensions") or [] if d]
