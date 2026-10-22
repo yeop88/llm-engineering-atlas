@@ -91,7 +91,7 @@ def test_server_command_per_variant(fake_server):
     spec = launcher.Server(model, launcher.Variant("spec", draft="small.gguf", draft_max=8, extra=["--foo"]))
     # 초안 모델은 LLM_MODELS_DIR 안에서 찾고, 초안도 같은 GPU 층 수로 올린다
     assert spec.cmd[spec.cmd.index("-md") + 1] == str(fake_server["dir"] / "small.gguf")
-    assert spec.cmd[spec.cmd.index("--draft-max") + 1] == "8" and "-ngld" in spec.cmd and spec.cmd[-1] == "--foo"
+    assert spec.cmd[spec.cmd.index("--spec-draft-n-max") + 1] == "8" and "-ngld" in spec.cmd and spec.cmd[-1] == "--foo"
 
 
 def test_kv_log_is_not_double_counted():

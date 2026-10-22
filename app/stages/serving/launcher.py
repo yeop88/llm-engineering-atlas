@@ -69,9 +69,11 @@ class Server:
             cmd += [
                 "-md",
                 str(Path(st.llm_models_dir or model.parent) / v.draft),
-                "--draft-max",
+                # llama.cpp 판이 오르며 --draft-max · --draft-min 이 --spec-draft-n-max · --spec-draft-n-min 으로 바뀌었다(b11669 에서 옛 이름은 오류로
+                # 서버가 뜨지 않음 — 추측 디코딩 실측에서 찾음). -md · -ngld 는 두 판 모두 받는다
+                "--spec-draft-n-max",
                 str(v.draft_max),
-                "--draft-min",
+                "--spec-draft-n-min",
                 "1",
                 "-ngld",
                 str(ngl),
