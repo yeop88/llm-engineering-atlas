@@ -6,25 +6,23 @@
 
 import random
 import time
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core import crud, llm
 from app.core.config import get_settings
 from app.core.db import EvalSet, SessionLocal, get_db
 from app.core.jobs import Job, jobs
-from app.core.schemas import LLMRef
 from app.pipeline.search import default_config, run_search
 from app.stages.compress import kv, prompt
+from app.stages.compress.schemas import EvalIn, KvIn, PreviewIn
 from app.stages.interp import lm
 from app.stages.rag import answer, evaluation
 
 router = APIRouter(prefix="/api/compress", tags=["compress"])
 DB = Annotated[Session, Depends(get_db)]
-METHODS = ("none", "token", "query", "lexical", "random")
 LABEL = {
     "none": "압축 없음",
     "token": "토큰 단위(KC1)",
@@ -47,13 +45,6 @@ def apply(method: str, text: str, question: str, ratio: float) -> dict[str, Any]
     return prompt.random_compress(tok, text, ratio)
 
 
-class PreviewIn(BaseModel):
-    text: str = Field(min_length=1, max_length=20000)
-    question: str = Field(default="", max_length=2000)
-    method: Literal["token", "query", "lexical", "random"] = "token"
-    ratio: float = Field(default=0.5, gt=0, le=1)
-
-
 @router.post("/preview")
 def preview(body: PreviewIn) -> dict:
     t = time.perf_counter()
@@ -74,15 +65,6 @@ def _items(db: Session, eval_set_id: int, n: int, seed: int) -> tuple[EvalSet, l
     if cfg is None:
         raise HTTPException(400, "컬렉션에 준비된 청크 세트가 없습니다")
     return s, items, {k: v for k, v in cfg.items() if not k.startswith("_")}
-
-
-class EvalIn(LLMRef):
-    eval_set_id: int
-    methods: list[Literal["none", "token", "query", "lexical", "random"]] = Field(default_factory=lambda: list(METHODS))
-    ratios: list[float] = Field(default_factory=lambda: [0.5, 0.3], min_length=1, max_length=6)
-    max_queries: int = Field(default=15, ge=1, le=300)
-    max_tokens: int = Field(default=300, ge=16, le=2000)
-    seed: int = 7
 
 
 @router.post("/eval", status_code=202)
@@ -134,17 +116,6 @@ def run_eval(body: EvalIn, db: DB) -> dict:
         return res | {"run_id": run.id}
 
     return jobs.submit("compress_eval", f"프롬프트 압축 · {s.name}", work).to_dict()
-
-
-class KvIn(BaseModel):
-    eval_set_id: int
-    policies: list[Literal["full", "window", "sink_window", "heavy", "snap"]] = Field(default_factory=lambda: list(kv.POLICIES))
-    keeps: list[float] = Field(default_factory=lambda: [0.5, 0.25], min_length=1, max_length=6)
-    kv_bits: list[tuple[int | None, int | None]] = Field(default_factory=lambda: [(8, 8), (4, 8), (8, 4), (4, 4)], max_length=8)
-    max_queries: int = Field(default=8, ge=1, le=100)
-    max_new: int = Field(default=40, ge=4, le=300)
-    max_chars: int = Field(default=2500, ge=200, le=20000)
-    seed: int = 7
 
 
 @router.post("/kv", status_code=202)

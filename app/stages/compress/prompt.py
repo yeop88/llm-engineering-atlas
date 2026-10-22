@@ -19,7 +19,8 @@ import torch
 
 from app.stages.rag import evaluation
 
-PROTECT = re.compile(r"\d|제\s*\d+\s*조|[A-Z]{1,3}-?\d{1,4}|[A-Z]{2}")
+# 지키는 표시: 조문 번호 · 모델 · 오류 코드 · 숫자 — 보존률(preserved)과 같은 규칙. 원문에서 글자 범위로 찾는다
+MARKS = re.compile(r"제\s*\d+\s*조(?:의\s*\d+)?|\b[A-Za-z]{1,3}-?\d{1,4}\b|\d+(?:\.\d+)?")
 SENT = re.compile(r"(?<=[.!?。다요])\s+|\n+")
 
 
@@ -43,8 +44,30 @@ def surprisal(model: Any, tok: Any, text: str, prefix: str = "", max_tokens: int
     return ids, out
 
 
-def _protected(tok: Any, ids: list[int]) -> list[bool]:
-    return [bool(PROTECT.search(tok.decode([i]))) for i in ids]
+def _offsets(tok: Any, text: str, ids: list[int]) -> list[tuple[int, int]]:
+    """토큰마다 원문 글자 범위. 빠른 토크나이저는 offset_mapping, 없으면 한 토큰씩 풀어 길이를 누적한다(바이트 단위 토큰이 글자를
+    가르면 조금 어긋날 수 있다 — 그래도 보호 범위가 넓어지는 쪽이라, 지킬 것을 지우는 것보다 낫다)."""
+    try:
+        om = tok(text, add_special_tokens=False, return_offsets_mapping=True).get("offset_mapping")
+    except TypeError:
+        om = None
+    if om and len(om) >= len(ids):
+        return [tuple(x) for x in om[: len(ids)]]
+    out, pos = [], 0
+    for i in ids:
+        n = len(tok.decode([i]))
+        out.append((pos, pos + max(1, n)))
+        pos += n
+    return out
+
+
+def _protected(tok: Any, text: str, ids: list[int]) -> list[bool]:
+    """보호 표시에 걸치는 토큰. 토큰 하나씩 보면 'E4' 가 'E' · '4' 로 나뉠 때 'E' 를 지워 코드가 깨졌다 — 원문에서 표시의 글자 범위를
+    먼저 찾고, 그 범위에 조금이라도 걸치는 토큰을 모두 지킨다."""
+    spans = [m.span() for m in MARKS.finditer(text)]
+    if not spans:
+        return [False] * len(ids)
+    return [any(a < e and s < b for s, e in spans) for a, b in _offsets(tok, text, ids)]
 
 
 def token_compress(model: Any, tok: Any, text: str, ratio: float, prefix: str = "") -> dict[str, Any]:
@@ -52,7 +75,7 @@ def token_compress(model: Any, tok: Any, text: str, ratio: float, prefix: str = 
     ids, s = surprisal(model, tok, text, prefix)
     if not ids:
         return {"text": "", "kept": 0, "total": 0}
-    prot = _protected(tok, ids)
+    prot = _protected(tok, text, ids)
     budget = max(sum(prot), int(round(len(ids) * ratio)))
     order = sorted(range(len(ids)), key=lambda i: (not prot[i], -s[i]))  # 보호 토큰 먼저, 그다음 놀람이 높은 순
     keep = sorted(order[:budget])
@@ -107,7 +130,7 @@ def random_compress(tok: Any, text: str, ratio: float, seed: int = 7) -> dict[st
 
 def preserved(original: str, compressed: str) -> float | None:
     """원문 근거의 숫자 · 조문 번호 · 코드가 압축 뒤에도 남은 비율 — 하나만 빠져도 답이 틀린다."""
-    marks = set(re.findall(r"제\s*\d+\s*조(?:의\s*\d+)?|\b[A-Z]{1,3}-?\d{1,4}\b|\d+(?:\.\d+)?", original or ""))
+    marks = set(MARKS.findall(original or ""))
     if not marks:
         return None
     c = (compressed or "").replace(" ", "")
