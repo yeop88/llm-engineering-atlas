@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}기억 쌓기 · 갱신{% endblock %}
+{% block content %}
+{% call ui.page_header("기억 쌓기 · 갱신") %}대화에서 기억할 사실(이름 · 주소 · 보유 제품 · 선호 · 수리 이력 등)을 한 문장 한 사실로 뽑아 기억 DB 에 넣습니다(ME1). 새 기억마다 '그대로 · 고치기 · 추가'를 정하고, 바뀐 사실은 덮어쓰지 않고 예전 기억에 '언제까지 맞았다'를 남깁니다(ME4). 같은 대상의 이력 · 비슷한 기억은 서로 연결해 하나를 찾으면 함께 따라오게 합니다(ME2).{% endcall %}
+
+<div class="card stack" id="extract">
+  <h2>대화에서 기억 뽑기 (ME1 · ME4)</h2>
+  <div class="row">
+    <div class="field"><label for="m-owner">고객 (기억의 주인)</label><input id="m-owner" value="customer-1" class="w-md"></div>
+    <div class="field"><label for="m-at">말한 날</label><input id="m-at" type="date"></div>
+    <div class="field"><label for="m-ext">추출</label><select id="m-ext"><option value="rule">규칙</option><option value="both">규칙 + LLM</option><option value="llm">LLM</option></select></div>
+    <div class="field"><label for="m-provider">제공자</label><select id="m-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="m-model">모델</label><input id="m-model" data-ctx="model"></div>
+  </div>
+  <div class="field"><label for="m-text">대화</label><textarea id="m-text" rows="3">안녕하세요. 저는 김하나이에요. 서울시 강남구에 살아요. WM-200 세탁기를 써요. 오후에 방문해 주시면 좋아요.</textarea></div>
+  <div><button class="btn primary" id="m-run">기억하기</button></div>
+  <div id="m-out"></div>
+</div>
+
+<div class="card stack mt-4" id="store">
+  <h2>기억 DB · 이력 · 연결 (ME2)</h2>
+  <div class="row">
+    <div class="field"><label for="v-owner">고객</label><select id="v-owner"></select></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="v-hist" checked> 무효가 된 이력까지</label>
+    <div class="self-end"><button class="btn" id="v-load">보기</button></div>
+    <div class="self-end"><button class="btn danger" id="v-del">이 고객 기억 지우기</button></div>
+  </div>
+  <div id="v-core" class="small"></div>
+  <div id="v-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/memory/store.js') }}"></script>
+{% endblock %}

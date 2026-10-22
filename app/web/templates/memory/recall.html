@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}기억 꺼내기 · 정리{% endblock %}
+{% block content %}
+{% call ui.page_header("기억 꺼내기 · 정리") %}질문과 비슷함 · 최근 · 중요도를 합친 점수로 기억을 고르고, 이어진 기억을 함께 꺼냅니다. 과거를 묻는 질문('예전' · '처음' · '언제')이면 무효가 된 이력까지 시점과 함께 넣습니다(ME3). 이름 · 주소 · 보유 제품 · 선호 같은 핵심 기억은 질문과 상관없이 늘 맥락 맨 앞에 짧게 두고, 계층별로 쓴 글자 수를 보입니다(ME6). 아래에서는 오래된 사건을 요약으로 합치고 쓰이지 않는 기억을 잊습니다 — 먼저 미리 보기로 확인합니다(ME5).{% endcall %}
+
+<div class="card stack" id="retrieve">
+  <h2>기억 검색 · 맥락 (ME3 · ME6)</h2>
+  <div class="row">
+    <div class="field"><label for="r-owner">고객</label><select id="r-owner"></select></div>
+    <div class="field grow"><label for="r-q">질문</label><input id="r-q" value="기사님 방문 가능한 주소가 어디죠?"></div>
+    <div class="field"><label for="r-k">개수</label><input id="r-k" type="number" value="6" min="1" class="w-md"></div>
+  </div>
+  <div class="row small">
+    <div class="field"><label for="r-ws">비슷함 가중</label><input id="r-ws" type="number" value="0.6" step="0.1" class="w-md"></div>
+    <div class="field"><label for="r-wr">최근 가중</label><input id="r-wr" type="number" value="0.2" step="0.1" class="w-md"></div>
+    <div class="field"><label for="r-wi">중요도 가중</label><input id="r-wi" type="number" value="0.2" step="0.1" class="w-md"></div>
+    <div class="self-end"><button class="btn primary" id="r-run">꺼내기</button></div>
+  </div>
+  <div id="r-out"></div>
+</div>
+
+<div class="card stack mt-4" id="consolidate">
+  <h2>통합 · 망각 (ME5)</h2>
+  <div class="row">
+    <div class="field"><label for="c-min">합칠 최소 사건 수</label><input id="c-min" type="number" value="3" min="2" class="w-md"></div>
+    <div class="field"><label for="c-days">이보다 오래된 사건(일)</label><input id="c-days" type="number" value="60" min="0" class="w-md"></div>
+    <div class="field"><label for="c-forget">망각 문턱</label><input id="c-forget" type="number" value="0.05" step="0.01" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="c-preview">미리 보기</button></div>
+    <div class="self-end"><button class="btn danger" id="c-apply">실제로 정리</button></div>
+  </div>
+  <div id="c-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/memory/recall.js') }}"></script>
+{% endblock %}

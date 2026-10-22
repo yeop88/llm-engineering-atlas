@@ -759,3 +759,43 @@ class VoiceCall(Base):
     summary: Mapped[dict[str, Any]] = mapped_column(default=dict)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
     ended_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
+class MemItem(Base):
+    """장기 기억 하나(장기 메모리 ME1~ME6, 마이그레이션 0020): 한 문장 한 사실 + 무엇에 관한 것인지(key) + 언제부터 · 언제까지 맞았나.
+
+    덮어쓰지 않는다 — 바뀐 사실은 새 행을 만들고 예전 행에 valid_to · superseded_by 를 남긴다(예전 주소를 묻는 질문에도 답할 수 있게).
+    """
+
+    __tablename__ = "mem_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner: Mapped[str] = mapped_column(String(100), index=True)  # 기억의 주인(고객 · 사용자 키)
+    kind: Mapped[str] = mapped_column(String(20), default="fact")  # fact · preference · event · summary
+    key: Mapped[str] = mapped_column(String(80), default="", index=True)  # 무엇에 관한 것(주소 · 보유 제품 · 선호 시간 …), 없으면 ""
+    value: Mapped[str] = mapped_column(Text, default="")
+    text: Mapped[str] = mapped_column(Text)
+    importance: Mapped[float] = mapped_column(Float, default=0.5)
+    tier: Mapped[str] = mapped_column(String(10), default="recall")  # core · recall · archive
+    vector: Mapped[list[Any]] = mapped_column(default=list)
+    keywords: Mapped[list[Any]] = mapped_column(default=list)
+    source: Mapped[str] = mapped_column(String(200), default="")
+    happened_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)  # 사건이 일어난 때(말한 때와 다를 수 있음)
+    valid_from: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    valid_to: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True, index=True)  # None = 지금도 맞음
+    superseded_by: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    access_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_access_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class MemLink(Base):
+    """기억 사이 연결(ME2): 같은 대상(제품 · 사건) · 비슷한 내용 · 통합(요약 ← 원래 기억). 하나를 찾으면 이어진 기억도 따라오게."""
+
+    __tablename__ = "mem_links"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    a: Mapped[int] = mapped_column(Integer, index=True)
+    b: Mapped[int] = mapped_column(Integer, index=True)
+    kind: Mapped[str] = mapped_column(String(20), default="similar")  # similar · entity · summary_of
+    weight: Mapped[float] = mapped_column(Float, default=1.0)

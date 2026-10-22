@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}여러 세션 평가{% endblock %}
+{% block content %}
+{% call ui.page_header("여러 세션 평가") %}몇 달에 걸친 상담 대화(고객마다 세션 4개 — 이사 · 제품 추가 · 선호 변경 · 수리 날짜, 잡담 섞음)를 정해진 씨앗으로 만들고, 같은 질문을 세 방식으로 답하게 합니다: 전체 기록 넣기 · 메모리(핵심 + 관련 기억) · 아무것도 없이. 질문은 갱신(지금 주소 · 선호) · 과거(처음 주소) · 누적(보유 제품 전부) · 시간(최근 수리 날짜) · 없는 기억(이메일 — 모른다고 해야 맞음)입니다. 채점은 정답 값이 답에 있는지로, LLM 판정을 쓰지 않습니다(ME7).{% endcall %}
+
+<div class="card stack" id="eval">
+  <h2>방식별 정답률 · 맥락 글자 (ME7)</h2>
+  <div class="row">
+    <div class="field"><label for="e-n">고객 수</label><input id="e-n" type="number" value="4" min="1" max="8" class="w-md"></div>
+    <div class="field"><label for="e-ext">기억 추출</label><select id="e-ext"><option value="rule">규칙</option><option value="both">규칙 + LLM</option><option value="llm">LLM</option></select></div>
+    <div class="field"><label for="e-k">꺼낼 기억 수</label><input id="e-k" type="number" value="6" min="1" class="w-md"></div>
+    <div class="field"><label for="e-provider">제공자</label><select id="e-provider" data-ctx="provider"><option value="">.env 기본값</option><option value="openai">OpenAI 호환</option><option value="anthropic">Claude</option></select></div>
+    <div class="field grow"><label for="e-model">모델</label><input id="e-model" data-ctx="model"></div>
+    <div class="self-end"><button class="btn primary" id="e-run">평가</button></div>
+  </div>
+  <div id="e-progress" hidden></div>
+  <div id="e-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/memory/eval.js') }}"></script>
+{% endblock %}

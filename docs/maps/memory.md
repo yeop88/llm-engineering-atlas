@@ -22,13 +22,13 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| ME1 | [기억 추출](../stages/memory/me1-extract/README.md) | ⬜ 예정 | 대화에서 기억할 사실 · 선호 · 사건을 한 문장 단위로 뽑는다 | [C3 대화 메모리](../stages/conversation/c3-memory/README.md) | — |
-| ME2 | [메모리 DB 저장 · 연결](../stages/memory/me2-store/README.md) | ⬜ 예정 | 기억을 DB 에 벡터 · 낱말 · 연결과 함께 저장한다 | [CX5 외부 메모리](../stages/context/cx5-memory/README.md) · [K4 융합 · 정제](../stages/knowledge-graph/k4-fusion/README.md) | — |
-| ME3 | [기억 검색](../stages/memory/me3-retrieve/README.md) | ⬜ 예정 | 질문과 비슷함 · 최근 · 중요도 · 연결을 합쳐 기억을 고른다 | [2 RAG](../stages/llm/2-rag/README.md) · [K7 하이브리드 검색](../stages/knowledge-graph/k7-graph-hybrid/README.md) | — |
-| ME4 | [갱신 · 충돌 해결](../stages/memory/me4-update/README.md) | ⬜ 예정 | 새 기억이 기존 기억과 같은지 · 바꾸는지 · 부딪히는지 판단해 고친다 | [K4 융합 · 정제](../stages/knowledge-graph/k4-fusion/README.md) | — |
-| ME5 | [통합 · 망각](../stages/memory/me5-consolidate/README.md) | ⬜ 예정 | 비슷한 기억을 합치고 낡고 안 쓰는 기억은 요약하거나 지운다 | [C5 대화 압축](../stages/conversation/c5-compress/README.md) | — |
-| ME6 | [메모리 계층](../stages/memory/me6-tier/README.md) | ⬜ 예정 | 항상 넣는 핵심 기억 · 꺼내 쓰는 기억 · 보관 기억으로 나눠 맥락 예산을 지킨다 | [CX1 맥락 배치](../stages/context/cx1-budget/README.md) | — |
-| ME7 | [여러 세션 평가](../stages/memory/me7-eval/README.md) | ⬜ 예정 | 여러 세션에 걸친 대화로 기억 · 갱신 · 시간 질문을 묻고 전체 기록 넣기와 비교한다 | [E1 평가 세트](../stages/evalops/e1-sets/README.md) | — |
+| ME1 | [기억 추출](../stages/memory/me1-extract/README.md) | ✅ 구현됨 | 대화에서 기억할 사실 · 선호 · 사건을 한 문장 단위로 뽑는다 | [C3 대화 메모리](../stages/conversation/c3-memory/README.md) | [장기 메모리 — 기억 추출 · 시점 기록 · 연결 · 점수 검색 · 계층 · 통합 · 망각 · 여러 세션 평가 · 실측](../stages/memory/me1-extract/memory.md) |
+| ME2 | [메모리 DB 저장 · 연결](../stages/memory/me2-store/README.md) | ✅ 구현됨 | 기억을 DB 에 벡터 · 낱말 · 연결과 함께 저장한다 | [CX5 외부 메모리](../stages/context/cx5-memory/README.md) · [K4 융합 · 정제](../stages/knowledge-graph/k4-fusion/README.md) | [장기 메모리 — 기억 추출 · 시점 기록 · 연결 · 점수 검색 · 계층 · 통합 · 망각 · 여러 세션 평가 · 실측](../stages/memory/me1-extract/memory.md) |
+| ME3 | [기억 검색](../stages/memory/me3-retrieve/README.md) | ✅ 구현됨 | 질문과 비슷함 · 최근 · 중요도 · 연결을 합쳐 기억을 고른다 | [2 RAG](../stages/llm/2-rag/README.md) · [K7 하이브리드 검색](../stages/knowledge-graph/k7-graph-hybrid/README.md) | [장기 메모리 — 기억 추출 · 시점 기록 · 연결 · 점수 검색 · 계층 · 통합 · 망각 · 여러 세션 평가 · 실측](../stages/memory/me1-extract/memory.md) |
+| ME4 | [갱신 · 충돌 해결](../stages/memory/me4-update/README.md) | ✅ 구현됨 | 새 기억이 기존 기억과 같은지 · 바꾸는지 · 부딪히는지 판단해 고친다 | [K4 융합 · 정제](../stages/knowledge-graph/k4-fusion/README.md) | [장기 메모리 — 기억 추출 · 시점 기록 · 연결 · 점수 검색 · 계층 · 통합 · 망각 · 여러 세션 평가 · 실측](../stages/memory/me1-extract/memory.md) |
+| ME5 | [통합 · 망각](../stages/memory/me5-consolidate/README.md) | ✅ 구현됨 | 비슷한 기억을 합치고 낡고 안 쓰는 기억은 요약하거나 지운다 | [C5 대화 압축](../stages/conversation/c5-compress/README.md) | [장기 메모리 — 기억 추출 · 시점 기록 · 연결 · 점수 검색 · 계층 · 통합 · 망각 · 여러 세션 평가 · 실측](../stages/memory/me1-extract/memory.md) |
+| ME6 | [메모리 계층](../stages/memory/me6-tier/README.md) | ✅ 구현됨 | 항상 넣는 핵심 기억 · 꺼내 쓰는 기억 · 보관 기억으로 나눠 맥락 예산을 지킨다 | [CX1 맥락 배치](../stages/context/cx1-budget/README.md) | [장기 메모리 — 기억 추출 · 시점 기록 · 연결 · 점수 검색 · 계층 · 통합 · 망각 · 여러 세션 평가 · 실측](../stages/memory/me1-extract/memory.md) |
+| ME7 | [여러 세션 평가](../stages/memory/me7-eval/README.md) | ✅ 구현됨 | 여러 세션에 걸친 대화로 기억 · 갱신 · 시간 질문을 묻고 전체 기록 넣기와 비교한다 | [E1 평가 세트](../stages/evalops/e1-sets/README.md) | [장기 메모리 — 기억 추출 · 시점 기록 · 연결 · 점수 검색 · 계층 · 통합 · 망각 · 여러 세션 평가 · 실측](../stages/memory/me1-extract/memory.md) |
 
 ## 설계 원칙
 

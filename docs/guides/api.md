@@ -474,6 +474,17 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 장기 메모리 (`/api/memory`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/memory/owners` · `/items` | 기억의 주인 목록 · key 목록 / 한 고객의 기억 `?owner=&history=`(시점 이력 · 연결 · 핵심 기억) |
+| POST | `/api/memory/remember` | 기억하기 `{"owner", "text", "at", "extractor": "rule"\|"llm"\|"both", "model_id", "source"}` → 뽑은 기억 · 갱신 판단(추가 · 고치기 · 그대로) |
+| POST | `/api/memory/recall` | 꺼내기 `{"owner", "question", "k", "w_sim", "w_rec", "w_imp"}` → 점수 · 항목별 점수 · 핵심 기억 · 맥락 글 · 계층별 글자 수 |
+| POST | `/api/memory/consolidate` | 통합 · 망각 `{"owner", "min_events", "older_days", "forget_below", "dry_run"}` → 요약 · 보관 · 잊음 |
+| DELETE | `/api/memory/owners/{owner}` | 한 고객의 기억 · 연결 지우기 |
+| POST | `/api/memory/eval` | 여러 세션 평가 작업 `{"personas", "methods", "extractor", "k"}` → 방식별 · 유형별 정답률 · 맥락 글자 |
+
 ## 해석 가능성 · 모델 내부 (`/api/interp`)
 
 | 메서드 | 경로 | 설명 |

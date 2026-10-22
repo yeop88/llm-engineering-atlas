@@ -40,6 +40,7 @@ from app.stages.interop import api as interop_api  # noqa: E402
 from app.stages.interp import api as interp_api  # noqa: E402
 from app.stages.kg import api as kg_api  # noqa: E402
 from app.stages.longrun import api as longrun_api  # noqa: E402
+from app.stages.memory import api as memory_api  # noqa: E402
 from app.stages.multiagent import api as multiagent_api  # noqa: E402
 from app.stages.platform import api as platform_api  # noqa: E402
 from app.stages.posttrain import api as posttrain_api  # noqa: E402
@@ -160,6 +161,7 @@ for module in (
     coding_api,  # 코딩 에이전트 — 코드 검색 · 계획 · 패치 · 테스트 실행 · 리뷰 · 해결률
     computer_use_api,  # 컴퓨터 사용 · 브라우저 에이전트 — 화면 이해 · 행동 · 상태 확인 · 승인 · 웹 인젝션 · 재생 평가
     interp_api,  # 해석 가능성 — 임베딩 공간 · 근거 기여 · 탐침 · 희소 특징 · 조종 · 내부 신호 환각 탐지
+    memory_api,  # 장기 메모리 — 기억 추출 · 저장 · 연결 · 검색 · 갱신 · 통합 · 망각 · 계층 · 여러 세션 평가
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):
