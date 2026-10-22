@@ -19,9 +19,11 @@ FAMILIES = [
     (re.compile(r"llama", re.I), "Llama", "Meta"), (re.compile(r"exaone", re.I), "EXAONE", "LG AI Research"),
     (re.compile(r"kanana", re.I), "Kanana", "Kakao"), (re.compile(r"mistral|mixtral|ministral", re.I), "Mistral", "Mistral AI"),
     (re.compile(r"\bphi[-\d]", re.I), "Phi", "Microsoft"), (re.compile(r"deepseek", re.I), "DeepSeek", "DeepSeek"),
-    (re.compile(r"hyperclova|hcx", re.I), "HyperCLOVA X", "NAVER"), (re.compile(r"gpt-oss", re.I), "gpt-oss", "OpenAI"),
+    (re.compile(r"hyperclova|hcx", re.I), "HyperCLOVA X", "NAVER"),
+    # SKT A.X — 이름에 점이 들어가 'ax' 로는 잡히지 않는다(실측에서 '기타' 로 나옴)
+    (re.compile(r"A\.X|skt/a\.x", re.I), "A.X", "SKT"), (re.compile(r"gpt-oss", re.I), "gpt-oss", "OpenAI"),
 ]  # fmt: skip
-GEN = re.compile(r"(?:qwen|gemma|llama|exaone|kanana|phi|deepseek|mistral)[-_ ]?v?(\d+(?:\.\d+)?)", re.I)
+GEN = re.compile(r"(?:qwen|gemma|llama|exaone|kanana|phi|deepseek|mistral|a\.x)[-_ ]?v?(\d+(?:\.\d+)?)", re.I)
 LICENSE_HINT = [
     ("gemma", "Gemma 라이선스"),
     ("llama", "Llama 커뮤니티 라이선스"),
