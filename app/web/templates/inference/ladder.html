@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}최적화 사다리{% endblock %}
+{% block content %}
+{% call ui.page_header("최적화 사다리") %}기준선 위에 한 칸씩 설정을 바꿔 같은 모델 · 같은 질문 · 같은 근거로 잽니다 — KV 비트(IF4) · 슬롯과 연속 배칭(IF5) · 앞부분 캐시(IF6) · 추측 디코딩(IF7) · 다른 비트의 GGUF(IF3). 칸마다 동시 부하의 p95 · 처리량 · 성공 작업당 장치 시간과, 기준선과 질문마다 짝지은 품질 차이를 봅니다. 품질이 떨어졌다고 볼 수 없고 빨라진 칸만 통과해 다음 칸의 바탕이 됩니다(IF9). 칸마다 llama-server 를 띄우므로 관리자만 실행합니다.{% endcall %}
+
+<div class="card stack" id="ladder">
+  <h2>사다리 실행 (IF3~IF9)</h2>
+  <div class="row">
+    <div class="field"><label for="l-model">모델 GGUF</label><select id="l-model"></select></div>
+    <div class="field"><label for="l-alt">다른 비트 GGUF (선택)</label><select id="l-alt"><option value="">없음</option></select></div>
+    <div class="field"><label for="l-draft">초안 GGUF (선택)</label><select id="l-draft"><option value="">없음</option></select></div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="l-col">컬렉션</label><select id="l-col" data-ctx="col"></select></div>
+    <div class="field"><label for="l-set">평가 세트</label><select id="l-set" data-ctx="set"></select></div>
+    <div class="field"><label for="l-n">질문 수</label><input id="l-n" type="number" value="10" min="2" class="w-md"></div>
+    <div class="field"><label for="l-conc">동시 수 (0 = 워크로드)</label><input id="l-conc" type="number" value="0" min="0" class="w-md"></div>
+    <div class="field"><label for="l-drop">허용 품질 하락</label><input id="l-drop" type="number" value="0.02" min="0" max="0.5" step="0.01" class="w-md"></div>
+  </div>
+  <div id="l-steps" class="row small"></div>
+  <div><button class="btn primary" id="l-run">사다리 오르기</button></div>
+  <div id="l-progress" hidden></div>
+  <div id="l-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/inference/ladder.js') }}"></script>
+{% endblock %}

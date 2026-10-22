@@ -44,7 +44,7 @@ docs/
 | B | **Transformer · MoE 구조 맵** | 토큰화 → 임베딩 → 어텐션 → FFN · 전문가 → 라우팅 → 출력 헤드 — 밀집 · MoE · 슬라이딩 창 · 선형 어텐션 · 상태 공간이 메모리 · 연산에 미치는 영향 | 6 — ⬜ 6 | [architecture.md](maps/architecture.md) | `/maps/architecture` |
 | B | **토크나이저 · 표현 공간 맵** | 원문 정규화 → 토큰 분할 → 어휘 → 임베딩 → 위치 표현 → 멀티모달 공통 공간 — 한국어 토큰 효율 · 코드 · 이미지 패치 · 오디오 토큰 | 6 — ⬜ 6 | [tokenizer.md](maps/tokenizer.md) | `/maps/tokenizer` |
 | B | **학습 생애주기 맵** | 데이터 수집 → 전처리 · 중복 제거 → 사전학습 → 지시 튜닝 → 선호 정렬 → 안전 정렬 → 평가 → 배포 — 후학습 · RLVR · 플라이휠을 한 생애주기로 | 8 — ⬜ 7 · 🔬 1 | [training.md](maps/training.md) | `/maps/training` |
-| B | **추론 최적화 맵** | 워크로드 측정 → 미리 채우기 · 생성 분리 → 양자화 → KV 캐시 관리 → 연속 배칭 → 앞부분 캐시 → 추측 디코딩 → 병렬화 → 품질 회귀 — 기준선부터 카나리까지 한 순서로 | 9 — ⬜ 9 | [inference.md](maps/inference.md) | `/maps/inference` |
+| B | **추론 최적화 맵** | 워크로드 측정 → 미리 채우기 · 생성 분리 → 양자화 → KV 캐시 관리 → 연속 배칭 → 앞부분 캐시 → 추측 디코딩 → 병렬화 → 품질 회귀 — 기준선부터 카나리까지 한 순서로 | 9 — ✅ 9 | [inference.md](maps/inference.md) | `/maps/inference` |
 | B | **합성 데이터 맵** | 데이터 부족 분석 → 생성 전략 → 합성 데이터 생성 → 다양성 검사 → 중복 · 오염 제거 → 인간 검토 → 학습 → 실제 데이터 평가 — 합성으로 늘리되 실제로 잰다 | 8 — ⬜ 8 | [synthetic.md](maps/synthetic.md) | `/maps/synthetic` |
 | C | **멀티에이전트 · 멀티모달 맵** | 멀티모달 입력 · 검색 → 오케스트레이터가 전문가 에이전트(검색 · 분석 · 작성 · 검증)에게 분배 → 교차 검증 → 텍스트 · 차트 · 음성 출력 | 8 — ✅ 8 | [multi-agent.md](maps/multi-agent.md) | `/maps/multi-agent` |
 | C | **에이전트 상호운용 · 도구 생태계 맵 (MCP · A2A)** | 도구 정의 · 검색(MCP) → 권한 · 샌드박스 → 에이전트 간 위임(A2A) → 장기 작업 · 복구 → 호출 · 비용 상한 → 감사 추적 — 신뢰 경계를 넘나드는 에이전트 연결 | 6 — ✅ 6 | [interop.md](maps/interop.md) | `/maps/interop` |

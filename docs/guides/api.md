@@ -474,6 +474,15 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/posttrain/evaluate` | 학습 전후 작업 `{"models": [...], "eval_set_id", "max_queries", "redteam"}` → 품질(7b 채점) · 기준 대비 · 레드팀 |
 | POST | `/api/posttrain/export` | GGUF 변환 · 양자화 작업 `{"model_id": 병합 모델, "quant"}` (스크립트가 없으면 명령) |
 
+## 추론 최적화 (`/api/inference`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/inference/workload?days=30` | 요청 기록의 프롬프트 · 답 토큰 · 전체 · 단계별 시간(p50 · p95 · p99) · 동시 수 |
+| POST | `/api/inference/probe` | 미리 채우기 · 생성 탐침 작업 `{"prompt_tokens", "out_tokens", "provider", "model"}` → 토큰/초 · 워크로드 시간 몫 · 병목 |
+| GET | `/api/inference/steps` | 사다리 칸 목록(단계 번호 · 묶음 · 설정) |
+| POST | `/api/inference/ladder` | 최적화 사다리 작업(관리자) `{"model", "steps", "eval_set_id", "max_queries", "concurrency", "draft", "alt_model", "max_drop"}` → 칸마다 품질 · p50 · p95 · 처리량 · 성공 작업당 장치 시간 · 게이트, 요약(남긴 칸 · 배율 · 카나리) |
+
 ## 적은 메모리로 큰 모델 (`/api/bigmodel`)
 
 | 메서드 | 경로 | 설명 |

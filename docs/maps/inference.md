@@ -22,15 +22,15 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| IF1 | [워크로드 측정](../stages/inference/if1-measure/README.md) | ⬜ 예정 | 실제 요청의 프롬프트 · 답 길이 · 동시 수 · 지연 분포를 잰다 | [E4 비용 · 지연](../stages/evalops/e4-cost/README.md) · [E3 트레이싱](../stages/evalops/e3-tracing/README.md) | — |
-| IF2 | [미리 채우기 · 생성 분리](../stages/inference/if2-split/README.md) | ⬜ 예정 | 미리 채우기(연산 한계)와 생성(대역폭 한계)을 따로 재고 따로 다룬다 | [S4 추론 서버](../stages/serving/s4-server/README.md) · [BM1 메모리 계획](../stages/bigmodel/bm1-plan/README.md) | — |
-| IF3 | [양자화](../stages/inference/if3-quant/README.md) | ⬜ 예정 | 가중치 비트를 모델 · 장치마다 품질과 함께 고른다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [BM6 극저비트](../stages/bigmodel/bm6-lowbit/README.md) | — |
-| IF4 | [KV 캐시 관리](../stages/inference/if4-kv/README.md) | ⬜ 예정 | KV 형식 · 블록 · 자르기를 워크로드에 맞춰 고른다 | [KC5 KV 양자화](../stages/compress/kc5-kvquant/README.md) · [BM4 페이지 KV](../stages/bigmodel/bm4-paged/README.md) | — |
-| IF5 | [연속 배칭](../stages/inference/if5-batch/README.md) | ⬜ 예정 | 슬롯 수 · 배칭 방식으로 처리량과 꼬리 지연을 맞춘다 | [BM5 연속 배칭](../stages/bigmodel/bm5-batch/README.md) | — |
-| IF6 | [앞부분 캐시](../stages/inference/if6-prefix/README.md) | ⬜ 예정 | 같은 시스템 프롬프트 · 근거의 미리 채우기를 다시 쓴다 | [CX4 프롬프트 캐시](../stages/context/cx4-cache/README.md) · [BM4 페이지 KV](../stages/bigmodel/bm4-paged/README.md) | — |
-| IF7 | [추측 디코딩](../stages/inference/if7-spec/README.md) | ⬜ 예정 | 작은 초안 모델이 미리 쓰고 큰 모델이 확인한다 | [S5 디코딩 최적화](../stages/serving/s5-decode/README.md) | — |
-| IF8 | [병렬화](../stages/inference/if8-parallel/README.md) | ⬜ 예정 | 텐서 · 파이프라인 · 전문가 병렬과 CPU-GPU 혼합을 고른다 | [BM7 여러 기기](../stages/bigmodel/bm7-dist/README.md) · [BM3 혼합 · 오프로드](../stages/bigmodel/bm3-offload/README.md) | — |
-| IF9 | [품질 회귀 · 카나리](../stages/inference/if9-regress/README.md) | ⬜ 예정 | 최적화마다 품질 회귀를 확인하고 일부 트래픽부터 넓힌다 | [E2 회귀 평가](../stages/evalops/e2-offline/README.md) · [FW7 단계적 배포](../stages/flywheel/fw7-rollout/README.md) | — |
+| IF1 | [워크로드 측정](../stages/inference/if1-measure/README.md) | ✅ 구현됨 | 실제 요청의 프롬프트 · 답 길이 · 동시 수 · 지연 분포를 잰다 | [E4 비용 · 지연](../stages/evalops/e4-cost/README.md) · [E3 트레이싱](../stages/evalops/e3-tracing/README.md) | [추론 최적화 — 워크로드 · 미리 채우기 · 생성 분리 · 최적화 사다리 · 품질 게이트 · 실측](../stages/inference/if1-measure/inference.md) |
+| IF2 | [미리 채우기 · 생성 분리](../stages/inference/if2-split/README.md) | ✅ 구현됨 | 미리 채우기(연산 한계)와 생성(대역폭 한계)을 따로 재고 따로 다룬다 | [S4 추론 서버](../stages/serving/s4-server/README.md) · [BM1 메모리 계획](../stages/bigmodel/bm1-plan/README.md) | [추론 최적화 — 워크로드 · 미리 채우기 · 생성 분리 · 최적화 사다리 · 품질 게이트 · 실측](../stages/inference/if1-measure/inference.md) |
+| IF3 | [양자화](../stages/inference/if3-quant/README.md) | ✅ 구현됨 | 가중치 비트를 모델 · 장치마다 품질과 함께 고른다 | [7b 양자화](../stages/llm/7b-quant/README.md) · [BM6 극저비트](../stages/bigmodel/bm6-lowbit/README.md) | [추론 최적화 — 워크로드 · 미리 채우기 · 생성 분리 · 최적화 사다리 · 품질 게이트 · 실측](../stages/inference/if1-measure/inference.md) |
+| IF4 | [KV 캐시 관리](../stages/inference/if4-kv/README.md) | ✅ 구현됨 | KV 형식 · 블록 · 자르기를 워크로드에 맞춰 고른다 | [KC5 KV 양자화](../stages/compress/kc5-kvquant/README.md) · [BM4 페이지 KV](../stages/bigmodel/bm4-paged/README.md) | [추론 최적화 — 워크로드 · 미리 채우기 · 생성 분리 · 최적화 사다리 · 품질 게이트 · 실측](../stages/inference/if1-measure/inference.md) |
+| IF5 | [연속 배칭](../stages/inference/if5-batch/README.md) | ✅ 구현됨 | 슬롯 수 · 배칭 방식으로 처리량과 꼬리 지연을 맞춘다 | [BM5 연속 배칭](../stages/bigmodel/bm5-batch/README.md) | [추론 최적화 — 워크로드 · 미리 채우기 · 생성 분리 · 최적화 사다리 · 품질 게이트 · 실측](../stages/inference/if1-measure/inference.md) |
+| IF6 | [앞부분 캐시](../stages/inference/if6-prefix/README.md) | ✅ 구현됨 | 같은 시스템 프롬프트 · 근거의 미리 채우기를 다시 쓴다 | [CX4 프롬프트 캐시](../stages/context/cx4-cache/README.md) · [BM4 페이지 KV](../stages/bigmodel/bm4-paged/README.md) | [추론 최적화 — 워크로드 · 미리 채우기 · 생성 분리 · 최적화 사다리 · 품질 게이트 · 실측](../stages/inference/if1-measure/inference.md) |
+| IF7 | [추측 디코딩](../stages/inference/if7-spec/README.md) | ✅ 구현됨 | 작은 초안 모델이 미리 쓰고 큰 모델이 확인한다 | [S5 디코딩 최적화](../stages/serving/s5-decode/README.md) | [추론 최적화 — 워크로드 · 미리 채우기 · 생성 분리 · 최적화 사다리 · 품질 게이트 · 실측](../stages/inference/if1-measure/inference.md) |
+| IF8 | [병렬화](../stages/inference/if8-parallel/README.md) | ✅ 구현됨 | 텐서 · 파이프라인 · 전문가 병렬과 CPU-GPU 혼합을 고른다 | [BM7 여러 기기](../stages/bigmodel/bm7-dist/README.md) · [BM3 혼합 · 오프로드](../stages/bigmodel/bm3-offload/README.md) | [추론 최적화 — 워크로드 · 미리 채우기 · 생성 분리 · 최적화 사다리 · 품질 게이트 · 실측](../stages/inference/if1-measure/inference.md) |
+| IF9 | [품질 회귀 · 카나리](../stages/inference/if9-regress/README.md) | ✅ 구현됨 | 최적화마다 품질 회귀를 확인하고 일부 트래픽부터 넓힌다 | [E2 회귀 평가](../stages/evalops/e2-offline/README.md) · [FW7 단계적 배포](../stages/flywheel/fw7-rollout/README.md) | [추론 최적화 — 워크로드 · 미리 채우기 · 생성 분리 · 최적화 사다리 · 품질 게이트 · 실측](../stages/inference/if1-measure/inference.md) |
 
 ## 설계 원칙
 
