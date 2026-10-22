@@ -2,12 +2,11 @@
 
 import time
 from datetime import datetime
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any
 
 import numpy as np
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.core import crud, llm
@@ -18,6 +17,7 @@ from app.core.schemas import LLMRef
 from app.stages.apps import common as apps_common
 from app.stages.embedding.model_manager import ModelSpec
 from app.stages.memory import evaluate, extract, recall, store
+from app.stages.memory.schemas import ConsolidateIn, EvalIn, RecallIn, RememberIn
 
 router = APIRouter(prefix="/api/memory", tags=["memory"])
 DB = Annotated[Session, Depends(get_db)]
@@ -67,7 +67,9 @@ def _item(r: MemItem) -> dict[str, Any]:
 
 @router.get("/owners")
 def owners(db: DB) -> dict:
-    rows = db.execute(select(MemItem.owner, func.count(), func.sum(MemItem.valid_to.is_(None))).group_by(MemItem.owner)).all()
+    # sum(조건) 은 결과 형식이 참/거짓으로 잡혀 2 이상이 True(=1)로 바뀌었다 — case 로 숫자를 더한다
+    current = func.sum(case((MemItem.valid_to.is_(None), 1), else_=0))
+    rows = db.execute(select(MemItem.owner, func.count(), current).group_by(MemItem.owner)).all()
     return {
         "owners": [{"owner": o, "items": n, "current": int(c or 0)} for o, n, c in rows if not o.startswith("eval-")],
         "keys": list(extract.KEYS),
@@ -86,15 +88,6 @@ def items(owner: str, db: DB, history: bool = True) -> dict:
             "core": recall.core_block(db, owner)}  # fmt: skip
 
 
-class RememberIn(LLMRef):
-    owner: str = Field(min_length=1, max_length=100)
-    text: str = Field(min_length=1, max_length=20000)
-    at: datetime | None = None
-    extractor: Literal["rule", "llm", "both"] = "rule"
-    model_id: int | None = None
-    source: str = Field(default="", max_length=200)
-
-
 @router.post("/remember")
 def remember(body: RememberIn, db: DB) -> dict:
     """대화 → 기억 추출(ME1) → 갱신 규칙(ME4)으로 저장 · 연결(ME2)."""
@@ -104,30 +97,12 @@ def remember(body: RememberIn, db: DB) -> dict:
     return out
 
 
-class RecallIn(BaseModel):
-    owner: str
-    question: str = Field(min_length=1, max_length=2000)
-    k: int = Field(default=6, ge=1, le=50)
-    w_sim: float = Field(default=0.6, ge=0, le=5)
-    w_rec: float = Field(default=0.2, ge=0, le=5)
-    w_imp: float = Field(default=0.2, ge=0, le=5)
-    model_id: int | None = None
-
-
 @router.post("/recall")
 def do_recall(body: RecallIn, db: DB) -> dict:
     qv = apps_common.embed(_spec(db, body.model_id), [body.question], "query")[0]
     out = recall.context(db, body.owner, body.question, qv, body.k, {"sim": body.w_sim, "rec": body.w_rec, "imp": body.w_imp})
     db.commit()
     return out
-
-
-class ConsolidateIn(BaseModel):
-    owner: str
-    min_events: int = Field(default=3, ge=2, le=100)
-    older_days: float = Field(default=60, ge=0, le=3650)
-    forget_below: float = Field(default=0.05, ge=0, le=1)
-    dry_run: bool = True
 
 
 @router.post("/consolidate")
@@ -147,15 +122,6 @@ def delete_owner(owner: str, db: DB) -> dict:
         db.query(MemItem).filter(MemItem.id.in_(ids)).delete(synchronize_session=False)
         db.commit()
     return {"deleted": len(ids)}
-
-
-class EvalIn(LLMRef):
-    personas: int = Field(default=4, ge=1, le=8)
-    methods: list[Literal["full", "memory", "none"]] = Field(default_factory=lambda: ["full", "memory", "none"])
-    extractor: Literal["rule", "llm", "both"] = "rule"
-    k: int = Field(default=6, ge=1, le=30)
-    model_id: int | None = None
-    seed: int = 7
 
 
 @router.post("/eval", status_code=202)

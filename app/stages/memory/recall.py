@@ -17,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.db import MemItem, MemLink, utcnow
-from app.stages.memory.store import decay
+from app.stages.memory.store import aware, decay
 
 PAST = re.compile(r"예전|처음|전에|이전|언제|과거|원래|그때")
 W = {"sim": 0.6, "rec": 0.2, "imp": 0.2}
@@ -50,7 +50,7 @@ def recall(
     link_hops: int = 1,
 ) -> dict[str, Any]:
     w = W | (w or {})
-    now = now or utcnow()
+    now = aware(now) or utcnow()
     past = bool(PAST.search(question or ""))
     q = select(MemItem).where(MemItem.owner == owner)
     if not past:
