@@ -19,7 +19,7 @@ from app.stages.vision import see, synth
 
 WHOLE_SYSTEM = "당신은 가전제품 사진을 보고 상태를 읽는 도구입니다. 반드시 JSON 만 출력합니다."
 WHOLE_PROMPT = ('사진을 보고 답하세요. 1) 표시창에 보이는 오류 코드 2) 사진에 배수 호스가 보이면 꺾여 있는지. JSON 으로만: '
-                '{"code": "E4", "hose_visible": true, "hose_kinked": false}. 모르면 code 는 "", hose_kinked 는 null.')  # fmt: skip
+                '{"code": "E4", "display": "표시창 전체 글자", "hose_visible": true, "hose_kinked": false}. 모르면 code 는 "", hose_kinked 는 null.')  # fmt: skip
 CODES = ["E4", "OE", "d80", "LE", "HE", "UE", "IE", "PE", "dE", "tE"]
 
 
@@ -36,6 +36,13 @@ def whole(lcfg: llm.LLMConfig, im: Image.Image, known: list[str]) -> dict[str, A
         data = None
     data = data if isinstance(data, dict) else {}
     raw = str(data.get("code") or "")
+    if not raw:
+        # 나눠서 쪽(사진 진단 read_code)과 같은 안전망 — 낱말 같은 코드(LE · HE)는 code 를 비우고 display 에만 적는 일이 잦다.
+        # 처음 비교에서는 이 안전망이 한쪽에만 있어 'VLM 하나에'의 코드 정답률이 그만큼 낮게 나왔다(run #367)
+        for tok in re.findall(r"[A-Za-z0-9]{1,4}", str(data.get("display") or "")):
+            if photo.snap(tok, known)[0] in known:
+                raw = tok
+                break
     code, fixed = photo.snap(raw, known) if raw else ("", False)
     kink = data.get("hose_kinked")
     return {"code": code, "raw_code": raw, "snapped": fixed, "kinked": kink if isinstance(kink, bool) else None, "regions": [], "calls": 1,
