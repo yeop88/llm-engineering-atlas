@@ -1,0 +1,21 @@
+{
+  "name": "AS 소리 장면 6개(합성) · 검색 질문 8개",
+  "scenes": [
+    {"name": "탈수 덜컹 신고", "parts": [{"kind": "speech", "dur": 3.0, "spk": "A", "text": "탈수할 때만 덜컹거려요"}, {"kind": "silence", "dur": 0.6}, {"kind": "thump", "dur": 6.0, "period": 0.9}, {"kind": "silence", "dur": 0.5}, {"kind": "speech", "dur": 2.5, "spk": "A", "text": "이 소리예요 들리시죠"}]},
+    {"name": "상담원 · 고객 통화", "parts": [{"kind": "speech", "dur": 3.0, "spk": "B", "text": "네 고객센터입니다 무엇을 도와드릴까요"}, {"kind": "silence", "dur": 0.5}, {"kind": "speech", "dur": 3.5, "spk": "A", "text": "냉장고에서 웅웅 소리가 계속 나요"}, {"kind": "silence", "dur": 0.4}, {"kind": "speech", "dur": 2.5, "spk": "B", "text": "모델명을 알려 주시겠어요"}, {"kind": "silence", "dur": 0.4}, {"kind": "speech", "dur": 2.0, "spk": "A", "text": "RF-500 이에요"}]},
+    {"name": "냉장고 웅웅", "parts": [{"kind": "hum", "dur": 4.0}, {"kind": "silence", "dur": 0.5}, {"kind": "speech", "dur": 3.0, "spk": "C", "text": "밤새 이렇게 웅웅거려요"}]},
+    {"name": "경고음 반복", "parts": [{"kind": "speech", "dur": 2.0, "spk": "A", "text": "삐 소리가 계속 나요"}, {"kind": "silence", "dur": 0.4}, {"kind": "beep", "dur": 3.0}, {"kind": "silence", "dur": 0.5}, {"kind": "noise", "dur": 2.0}]},
+    {"name": "대기 음악 뒤 연결", "parts": [{"kind": "music", "dur": 5.0}, {"kind": "silence", "dur": 0.4}, {"kind": "speech", "dur": 3.0, "spk": "B", "text": "기다려 주셔서 감사합니다"}, {"kind": "silence", "dur": 0.3}, {"kind": "speech", "dur": 3.0, "spk": "A", "text": "건조기 d80 이 떠요"}]},
+    {"name": "물소리 · 말 섞임", "parts": [{"kind": "noise", "dur": 3.0}, {"kind": "speech", "dur": 3.0, "spk": "C", "text": "배수할 때 물이 안 빠져요"}, {"kind": "silence", "dur": 0.5}, {"kind": "thump", "dur": 4.0, "period": 1.2}]}
+  ],
+  "queries": [
+    {"q": "덜컹거리는 소리가 언제 났나", "scene": "탈수 덜컹 신고", "type": "thump"},
+    {"q": "고객이 모델명을 말한 부분", "scene": "상담원 · 고객 통화", "text": "RF-500"},
+    {"q": "웅웅 소리 구간", "scene": "냉장고 웅웅", "type": "hum"},
+    {"q": "삐 경고음", "scene": "경고음 반복", "type": "beep"},
+    {"q": "대기 음악", "scene": "대기 음악 뒤 연결", "type": "music"},
+    {"q": "d80 오류를 말한 곳", "scene": "대기 음악 뒤 연결", "text": "d80"},
+    {"q": "물이 안 빠진다고 한 부분", "scene": "물소리 · 말 섞임", "text": "물이 안 빠져요"},
+    {"q": "1.2초 간격 덜컹", "scene": "물소리 · 말 섞임", "type": "thump"}
+  ]
+}

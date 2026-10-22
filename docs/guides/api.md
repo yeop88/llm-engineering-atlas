@@ -488,6 +488,16 @@ Invoke-RestMethod -Method Post "http://127.0.0.1:8000/api/embed" -ContentType "a
 | POST | `/api/architecture/layers` | `{"gguf"}` 또는 `{"hf_id", "bits"}` → 층마다 어텐션 종류 · KV 차원 · FFN 밀집/MoE · 바이트, 요약(전문가 몫 · 토큰당 읽는 양 · 임베딩 · 출력층 몫), 맥락 길이별 KV 대 단순 어림 |
 | POST | `/api/architecture/scaling` | 맥락 길이별 실측 작업 `{"lengths"}` → 작은 LM 의 미리 채우기 시간 · 토큰당 ms · 실제 KV · 길이 두 배당 시간 배율 |
 
+## 오디오 이해 (`/api/audio`)
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/audio/preset` | 예시 장면(합성) 이름 · 검색 질문 · 종류 · 사건 이름 |
+| GET | `/api/audio/scenes/{name}.wav` | 예시 장면 소리 |
+| POST | `/api/audio/analyze` | 폼 `file` 또는 `scene_name`, `transcribe`, `threshold`(화자 기준 반음) → 구간(종류 · 화자) · 사건 · 색인 항목 · 시간 순 요약 |
+| POST | `/api/audio/search` | `{"items", "q", "k"}` → 구간 검색(글자 2-gram + 소리 낱말 → 사건 종류) |
+| POST | `/api/audio/evaluate` | `{"held_out"}` → 예시 · 무작위 장면의 프레임 정확(기준선 대비) · 사건 정밀 · 재현 · 화자 순도 · 덮음 · 검색 적중 |
+
 ## 실시간 스트리밍 (`/api/realtime`)
 
 | 메서드 | 경로 | 설명 |

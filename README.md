@@ -53,7 +53,7 @@
 | D | **실시간 음성 상담** | 전화 AS 상담 | 7 | 7 | — | — | — | `/maps/voice` · [개요](docs/maps/voice.md) |
 | D | **옴니채널 · 실시간 멀티모달 에이전트** | 전화 · 영상 · 메신저를 한 에이전트로 | 8 | 8 | — | — | — | `/maps/omni` · [개요](docs/maps/omni.md) |
 | D | **실시간 스트리밍 LLM** | TTFT · 첫 소리 · p95 · p99 · 복구율 | 8 | 8 | — | — | — | `/maps/realtime` · [개요](docs/maps/realtime.md) |
-| D | **오디오 이해** | 말 이외의 소리까지 | 7 | — | — | 5 | 2 | `/maps/audio` · [개요](docs/maps/audio.md) |
+| D | **오디오 이해** | 말 이외의 소리까지 | 7 | 7 | — | — | — | `/maps/audio` · [개요](docs/maps/audio.md) |
 | D | **이미지 · Vision-Language** | VLM 하나에 다 맡기지 않고 탐지 · OCR · 규칙을 나눠서 | 7 | — | — | 7 | — | `/maps/vision` · [개요](docs/maps/vision.md) |
 | D | **비디오 이해** | '처음 일어난 때' 에 답하기 | 8 | — | — | 7 | 1 | `/maps/video` · [개요](docs/maps/video.md) |
 | D | **실시간 오디오 · 비디오 풀듀플렉스** | 내용 이해와 대화 타이밍을 나눠서 | 7 | — | — | — | 7 | `/maps/duplex` · [개요](docs/maps/duplex.md) |
@@ -66,7 +66,7 @@
 | F | **엔터프라이즈 AI 플랫폼 아키텍처** | 맵들을 실제 운영 시스템으로 묶는 흐름 | 7 | 7 | — | — | — | `/maps/platform` · [개요](docs/maps/platform.md) |
 | F | **개인화 · 적응** | 개인화 데이터 · 인증 · 민감 정보 · 학습 동의를 나눠서 | 7 | 7 | — | — | — | `/maps/personalize` · [개요](docs/maps/personalize.md) |
 | F | **모델 라우팅 · 비용 최적화** | 점수 = 품질 · 근거 · 지연 · 비용 · 신뢰성 | 8 | 8 | — | — | — | `/maps/routing` · [개요](docs/maps/routing.md) |
-| | **합계 44개** | | 316 | 261 | 0 | 31 | 24 | `/maps` · [생태계 구조](docs/maps/ecosystem.md) |
+| | **합계 44개** | | 316 | 268 | 0 | 26 | 22 | `/maps` · [생태계 구조](docs/maps/ecosystem.md) |
 <!-- /맵 표 -->
 
 ✅ 구현됨 · 🟡 기초 있음(기능은 다른 맵에 있고, 이 맵의 관점으로 묶은 화면 · 측정은 아직) · ⬜ 예정 — 맵 · 단계의 정의와 상태는 `app/stages/registry/` 한 곳에서 관리하고, 이 표와 문서가 거기서 만들어집니다.

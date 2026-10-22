@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% import "_ui/macros.html" as ui %}
+{% block title %}소리 장면 · 사건{% endblock %}
+{% block content %}
+{% call ui.page_header("소리 장면 · 사건") %}녹음을 침묵 · 말 · 음악 · 환경음 구간으로 나누고(AU2), 말 구간에 화자를 붙이고(AU3), 덜컹 반복 · 경고음 · 웅웅 같은 소리 사건을 시각과 함께 찾습니다(AU4 · AU5). 구간을 한 줄 글로 색인해 '덜컹거린 때' 같은 질문으로 찾고 시간 순 요약을 만듭니다(AU6 · AU7). 소리 모델 없이 신호 특징만 쓰므로 빠르고, 왜 그렇게 나눴는지 설명할 수 있습니다. 말 구간의 글은 음성 인식(VC4)이 설정돼 있을 때 붙입니다.{% endcall %}
+
+<div class="card stack" id="analyze">
+  <h2>나누기 · 사건 · 화자 (AU1~AU5)</h2>
+  <div class="row">
+    <div class="field"><label for="a-scene">예시 장면(합성)</label><select id="a-scene"><option value="">(녹음 파일 쓰기)</option></select></div>
+    <div class="field grow"><label for="a-file">또는 녹음 파일</label><input id="a-file" type="file" accept="audio/*"></div>
+    <div class="field"><label for="a-th">화자 나누기 기준(반음)</label><input id="a-th" type="number" value="2.5" step="0.5" min="0.5" max="12" class="w-md"></div>
+    <label class="row small m-0 self-end"><input type="checkbox" id="a-stt"> 말 구간 인식(파일)</label>
+    <div class="self-end"><button class="btn primary" id="a-run">분석</button></div>
+  </div>
+  <audio id="a-play" controls hidden></audio>
+  <div id="a-out"></div>
+</div>
+
+<div class="card stack mt-4" id="search">
+  <h2>구간 검색 · 요약 (AU6 · AU7)</h2>
+  <div class="row">
+    <div class="field grow"><label for="s-q">질문</label><input id="s-q" value="덜컹거리는 소리가 언제 났나"></div>
+    <div class="self-end"><button class="btn" id="s-run">찾기</button></div>
+  </div>
+  <div id="s-out"></div>
+</div>
+
+<div class="card stack mt-4" id="evaluate">
+  <h2>평가 (합성 장면)</h2>
+  <p class="small muted">예시 장면 6개와, 규칙을 맞출 때 쓰지 않은 무작위 장면으로 잽니다. 프레임 종류 정확(크기만 보는 말소리 감지와 비교), 사건 정밀 · 재현, 화자 순도 · 덮음, 검색 질문 8개의 1위 적중을 봅니다.</p>
+  <div class="row">
+    <div class="field"><label for="e-n">무작위 장면 수</label><input id="e-n" type="number" value="40" min="1" max="300" class="w-md"></div>
+    <div class="self-end"><button class="btn" id="e-run">평가</button></div>
+  </div>
+  <div id="e-out"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/audio/scene.js') }}"></script>
+{% endblock %}

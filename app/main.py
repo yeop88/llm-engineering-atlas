@@ -23,6 +23,7 @@ from app.stages.analytics import api as analytics_api  # noqa: E402
 from app.stages.apps import api as apps_api  # noqa: E402
 from app.stages.architecture import api as architecture_api  # noqa: E402
 from app.stages.as_service import api as as_api  # noqa: E402
+from app.stages.audio import api as audio_api  # noqa: E402
 from app.stages.bigmodel import api as bigmodel_api  # noqa: E402
 from app.stages.coding import api as coding_api  # noqa: E402
 from app.stages.compliance import api as compliance_api  # noqa: E402
@@ -186,6 +187,7 @@ for module in (
     training_api,  # 학습 생애주기 — 모델 하나의 데이터 · 학습 · 평가 · 배포 기록을 잇는 원장, 학습 데이터 감사
     personalize_api,  # 개인화 · 적응 — 동의 범위별 선호 · 행동 신호 → 프로필 → 응답 형식, 사실 보존 검사
     realtime_api,  # 실시간 스트리밍 — 지터 · 손실 · 끊김을 섞은 스트림 재생으로 첫 소리 꼬리 · 확정 오류 · 끼어들기 · 복구율
+    audio_api,  # 오디오 이해 — 침묵 · 말 · 음악 · 환경음 구간, 소리 사건 · 화자 색인, 검색 · 요약
     flow_api,  # 단계 연결 실행 — 단계 API 다음, 화면 앞
     pages,
 ):

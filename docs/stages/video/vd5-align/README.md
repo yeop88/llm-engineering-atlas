@@ -33,7 +33,7 @@
 
 이미 있는 단계 위에 짓습니다.
 
-- [AU5 시간 구간 추출](../../audio/au5-segment/README.md) — 오디오 이해 맵 · ⬜ 예정
+- [AU5 시간 구간 추출](../../audio/au5-segment/README.md) — 오디오 이해 맵 · ✅ 구현됨
 - [VC1 스트리밍 음성 인식](../../voice/vc1-stt/README.md) — 실시간 음성 상담 맵 · ✅ 구현됨
 
 ---

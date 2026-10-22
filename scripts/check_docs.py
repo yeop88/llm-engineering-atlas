@@ -18,7 +18,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PATH_RE = re.compile(r"`((?:app|tests|docs|scripts|migrations)/[^`\s]*)`")
 URL_RE = re.compile(r"`(/[a-z][a-z0-9/_-]*)(?:[?#][^`]*)?`")
-SKIP_URL = ("/api", "/docs", "/static", "/login", "/logout", "/ui/", "/v1")
+# OpenAI 호환 음성 경로(/audio/transcriptions · /audio/speech)는 바깥 서버(STT_URL · TTS_URL) 뒤에 붙는 경로다 — 오디오 맵 화면(/audio/…)이 생겨
+# 첫 마디가 같아져도 화면 주소로 보지 않는다
+SKIP_URL = ("/api", "/docs", "/static", "/login", "/logout", "/ui/", "/v1", "/audio/transcriptions", "/audio/speech")
 IGNORE = "<!-- 예전 이름 -->"
 
 

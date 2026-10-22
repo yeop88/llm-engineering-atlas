@@ -22,13 +22,13 @@
 
 | # | 단계 | 상태 | 무엇을 | 기반 단계 | 상세 문서 |
 |---|---|---|---|---|---|
-| AU1 | [음원 입력](../stages/audio/au1-input/README.md) | ⬜ 예정 | 녹음 · 통화 · 영상 소리를 같은 표본률 · 형식으로 맞춘다 | [VC1 음성 인식](../stages/voice/vc1-stt/README.md) | — |
-| AU2 | [음성 · 음악 · 환경음 분리](../stages/audio/au2-separate/README.md) | ⬜ 예정 | 구간마다 음성 · 음악 · 환경음 · 침묵을 나눈다 | [AU1 음원 입력](../stages/audio/au1-input/README.md) | — |
-| AU3 | [화자 · 언어 탐지](../stages/audio/au3-speaker/README.md) | ⬜ 예정 | 누가 말했는지(화자 분리)와 어떤 언어인지를 구간마다 붙인다 | [VC5 감정 감지](../stages/voice/vc5-emotion/README.md) | — |
-| AU4 | [이벤트 인식](../stages/audio/au4-event/README.md) | 🔬 연구 | 기계 이상음 · 경고음 · 박수 같은 소리 사건을 알아본다 | [AS4 사진 진단](../stages/as-service/as4-photo/README.md) | — |
-| AU5 | [시간 구간 추출](../stages/audio/au5-segment/README.md) | ⬜ 예정 | 사건 · 발화를 시작 · 끝 시각으로 색인한다 | [OM3 영상 분석](../stages/omni/om3-video/README.md) | — |
-| AU6 | [의미 표현](../stages/audio/au6-semantic/README.md) | 🔬 연구 | 구간을 글 · 임베딩으로 바꿔 검색할 수 있게 한다 | [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) | — |
-| AU7 | [검색 · 요약](../stages/audio/au7-search/README.md) | ⬜ 예정 | 회의 · 통화를 구간 근거와 함께 찾고 요약한다 | [VC7 통화 요약](../stages/voice/vc7-summary/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | — |
+| AU1 | [음원 입력](../stages/audio/au1-input/README.md) | ✅ 구현됨 | 녹음 · 통화 · 영상 소리를 같은 표본률 · 형식으로 맞춘다 | [VC1 음성 인식](../stages/voice/vc1-stt/README.md) | [오디오 이해 — 신호 특징으로 침묵 · 말 · 음악 · 환경음 구간, 소리 사건 · 화자, 구간 색인 · 검색 · 요약, 합성 장면 평가](../stages/audio/au1-input/audio.md) |
+| AU2 | [음성 · 음악 · 환경음 분리](../stages/audio/au2-separate/README.md) | ✅ 구현됨 | 구간마다 음성 · 음악 · 환경음 · 침묵을 나눈다 | [AU1 음원 입력](../stages/audio/au1-input/README.md) | [오디오 이해 — 신호 특징으로 침묵 · 말 · 음악 · 환경음 구간, 소리 사건 · 화자, 구간 색인 · 검색 · 요약, 합성 장면 평가](../stages/audio/au1-input/audio.md) |
+| AU3 | [화자 · 언어 탐지](../stages/audio/au3-speaker/README.md) | ✅ 구현됨 | 누가 말했는지(화자 분리)와 어떤 언어인지를 구간마다 붙인다 | [VC5 감정 감지](../stages/voice/vc5-emotion/README.md) | [오디오 이해 — 신호 특징으로 침묵 · 말 · 음악 · 환경음 구간, 소리 사건 · 화자, 구간 색인 · 검색 · 요약, 합성 장면 평가](../stages/audio/au1-input/audio.md) |
+| AU4 | [이벤트 인식](../stages/audio/au4-event/README.md) | ✅ 구현됨 | 기계 이상음 · 경고음 · 박수 같은 소리 사건을 알아본다 | [AS4 사진 진단](../stages/as-service/as4-photo/README.md) | [오디오 이해 — 신호 특징으로 침묵 · 말 · 음악 · 환경음 구간, 소리 사건 · 화자, 구간 색인 · 검색 · 요약, 합성 장면 평가](../stages/audio/au1-input/audio.md) |
+| AU5 | [시간 구간 추출](../stages/audio/au5-segment/README.md) | ✅ 구현됨 | 사건 · 발화를 시작 · 끝 시각으로 색인한다 | [OM3 영상 분석](../stages/omni/om3-video/README.md) | [오디오 이해 — 신호 특징으로 침묵 · 말 · 음악 · 환경음 구간, 소리 사건 · 화자, 구간 색인 · 검색 · 요약, 합성 장면 평가](../stages/audio/au1-input/audio.md) |
+| AU6 | [의미 표현](../stages/audio/au6-semantic/README.md) | ✅ 구현됨 | 구간을 글 · 임베딩으로 바꿔 검색할 수 있게 한다 | [MA1 멀티모달 임베딩](../stages/multi-agent/ma1-input/README.md) | [오디오 이해 — 신호 특징으로 침묵 · 말 · 음악 · 환경음 구간, 소리 사건 · 화자, 구간 색인 · 검색 · 요약, 합성 장면 평가](../stages/audio/au1-input/audio.md) |
+| AU7 | [검색 · 요약](../stages/audio/au7-search/README.md) | ✅ 구현됨 | 회의 · 통화를 구간 근거와 함께 찾고 요약한다 | [VC7 통화 요약](../stages/voice/vc7-summary/README.md) · [2 RAG](../stages/llm/2-rag/README.md) | [오디오 이해 — 신호 특징으로 침묵 · 말 · 음악 · 환경음 구간, 소리 사건 · 화자, 구간 색인 · 검색 · 요약, 합성 장면 평가](../stages/audio/au1-input/audio.md) |
 
 ## 설계 원칙
 
